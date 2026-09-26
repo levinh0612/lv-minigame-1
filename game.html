@@ -1,0 +1,1192 @@
+<title>Tiệm Bánh Matcha</title>
+<meta name="theme-color" content="#fdf3e4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Patrick+Hand&display=swap">
+<style>
+/* Một giao diện sáng duy nhất (kem hồng + matcha), cố ý không đổi theo chế độ tối */
+:root{color-scheme:light;
+  --bg:#fdf3e4;--panel:#fffaf2;--line:#ead7bd;--ink:#3a2317;--soft:#7a5a48;
+  --pink:#ef6f8e;--pink-d:#c24c69;--pink-l:#fde3ea;
+  --matcha:#86ad5c;--matcha-d:#5b7f3d;--matcha-l:#e6f0d6;
+  --gold:#f0b43c;--warn:#e2574c;--wood:#8a5a3b;--wood-l:#a8714c;
+  --hand:"Patrick Hand","Baloo 2",system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Baloo 2",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.app{max-width:500px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-inline:16px}
+
+/* Header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding-block:12px 8px}
+.hbtn{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:grid;place-items:center;padding:0;font-size:1.1rem}
+.hmid{text-align:center;min-width:0}
+.hmid b{display:block;font-size:1.2rem;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmid small{display:block;color:var(--pink-d);font-weight:700;font-size:.78rem}
+.coins{display:flex;align-items:center;gap:4px;font-weight:800;background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:4px 10px;font-variant-numeric:tabular-nums}
+.coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe28a,var(--gold) 60%,#c98a12);display:inline-block;box-shadow:inset 0 -1px 0 rgba(0,0,0,.15)}
+.awning{height:22px;border-radius:10px 10px 0 0;background:repeating-linear-gradient(90deg,var(--matcha) 0 26px,#fff 26px 52px);position:relative;margin-top:4px}
+.awning::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:9px;background:radial-gradient(circle at 13px 0,var(--matcha) 9px,transparent 10px) 0 0/52px 9px repeat-x,radial-gradient(circle at 39px 0,#fff 9px,transparent 10px) 0 0/52px 9px repeat-x}
+
+/* Shop scene */
+.scene{background:linear-gradient(#fff7ec,#fbe9d3);border:3px solid var(--wood);border-top:0;border-radius:0 0 16px 16px;padding:18px 12px 0;position:relative;overflow:hidden}
+.scene .shelf{display:flex;justify-content:center;gap:10px;font-size:1.5rem;min-height:34px;border-bottom:5px solid var(--wood-l);padding-bottom:2px}
+.scene .pets{display:flex;justify-content:space-around;align-items:flex-end;padding-top:6px}
+.scene .pets button{border:0;background:none;padding:0;width:84px}
+.scene .pets small{display:block;font-weight:700;font-size:.75rem;color:var(--soft)}
+.counter{height:16px;background:var(--wood-l);border-top:5px solid var(--wood);margin:0 -12px}
+
+.lvlbar{display:flex;align-items:center;gap:10px;margin-top:12px;font-weight:800;font-size:.9rem}
+.lvlbar .gb{flex:1}
+.gb{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.gb i{display:block;height:100%;background:var(--gold);border-radius:4px;transition:width .3s}
+
+/* Cards */
+.card{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:12px 14px;margin-top:12px}
+.card h3{margin:0 0 6px;font-size:1rem;font-weight:800;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h3 small{font-size:.75rem;color:var(--soft);font-weight:600}
+.event{border-color:var(--pink);background:var(--pink-l)}
+.event.today{background:linear-gradient(135deg,#ffe1ea,#fff3d6);animation:glow 2s ease-in-out infinite alternate}
+@keyframes glow{to{box-shadow:0 0 0 4px rgba(239,111,142,.25)}}
+.event p{margin:0;line-height:1.35}
+.evlist{margin:6px 0 0;padding:0;list-style:none;font-size:.82rem;color:var(--soft)}
+.evlist li{display:flex;justify-content:space-between;border-top:1px dashed var(--line);padding:3px 0}
+.evlist b{color:var(--ink);font-variant-numeric:tabular-nums}
+.letterbtn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:2px dashed var(--pink);background:#fff;border-radius:16px;padding:10px 14px;margin-top:12px}
+.env{font-size:2rem;line-height:1;position:relative}
+.env.new::after{content:"";position:absolute;right:-3px;top:-2px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:2px solid #fff}
+.letterbtn b{display:block}.letterbtn small{color:var(--soft);font-size:.8rem}
+.goal{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin-top:8px;font-size:.88rem;font-weight:700}
+.goal .gv{color:var(--soft);font-variant-numeric:tabular-nums;font-size:.8rem}
+.goal .gb{grid-column:1/-1}
+.goal.ok{color:var(--matcha-d)}.goal.ok .gb i{background:var(--matcha)}
+.claim{margin-top:10px;width:100%;border:0;border-radius:12px;padding:8px;background:var(--matcha);color:#fff;font-weight:800}
+.claim:disabled{background:var(--line);color:var(--soft);cursor:default}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-top:14px;background:#f3e3cb;border-radius:16px 16px 0 0;padding:5px 5px 0;position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:5}
+.tab{flex:1;border:0;background:transparent;border-radius:12px 12px 0 0;padding:6px 0;display:flex;flex-direction:column;align-items:center;font-size:.68rem;font-weight:700;opacity:.7;line-height:1.1}
+.tab span{font-size:1.25rem}
+.tab.on{background:var(--panel);opacity:1}
+.pane{background:var(--panel);border-radius:0 0 16px 16px;padding:12px 14px;margin-bottom:100px;min-height:200px}
+.sec{font-weight:800;margin:4px 0 8px}
+.note{color:var(--soft);font-size:.82rem;line-height:1.4;margin:0 0 8px}
+.row{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .nm{font-weight:800;line-height:1.15}
+.row .sub{font-size:.76rem;color:var(--soft);line-height:1.3}
+.row.locked{opacity:.55}
+.row .ic{font-size:2rem;text-align:center}
+.sbtn{border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:5px 10px;font-weight:800;font-size:.82rem;white-space:nowrap}
+.sbtn.pri{background:var(--pink);border-color:var(--pink);color:#fff}
+.sbtn.gr{background:var(--matcha);border-color:var(--matcha);color:#fff}
+.sbtn:disabled{opacity:.45;cursor:default}
+.pill{display:inline-block;font-size:.68rem;font-weight:800;border-radius:6px;padding:0 6px;background:var(--matcha-l);color:var(--matcha-d)}
+.pill.pk{background:var(--pink-l);color:var(--pink-d)}
+
+.openbar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 35%);display:flex;justify-content:center;z-index:20}
+.big{width:100%;max-width:468px;border:0;border-radius:18px;padding:13px;background:var(--pink);color:#fff;font-size:1.15rem;font-weight:800;box-shadow:0 4px 0 var(--pink-d)}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 var(--pink-d)}
+.big.gr{background:var(--matcha);box-shadow:0 4px 0 var(--matcha-d)}
+
+/* Pets */
+.petgrid{display:grid;gap:10px}
+.pet{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center;background:var(--bg);border-radius:16px;padding:10px}
+.pet button.face{border:0;background:none;padding:0;width:110px;touch-action:manipulation}
+.pet .nm{font-weight:800;font-size:1.05rem}
+.pet .sub{font-size:.78rem;color:var(--soft);line-height:1.3}
+.pet .act{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.hearts{color:var(--pink);letter-spacing:1px;font-size:.9rem}
+
+/* Letters & reviews */
+.lt{border-bottom:1px dashed var(--line);padding:8px 0}
+.lt:last-child{border:0}
+.lt small{color:var(--soft);font-size:.72rem;font-weight:700}
+.lt p{margin:2px 0 0;font-family:var(--hand);font-size:1.15rem;line-height:1.3}
+.rev{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rev:last-child{border:0}
+.rev .top{display:flex;justify-content:space-between;font-size:.8rem;font-weight:800}
+.rev .top span{color:var(--gold);letter-spacing:1px}
+.rev p{margin:1px 0 0;font-size:.88rem;line-height:1.35}
+.rev.love p{font-family:var(--hand);font-size:1.1rem;color:var(--pink-d)}
+.revsum{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.revsum b{font-size:2.2rem;line-height:1}
+
+/* ===== Selling ===== */
+body.selling .home{display:none}
+.sell{display:none;flex-direction:column;height:100%;max-width:500px;margin:0 auto;padding-inline:12px}
+body.selling .sell{display:flex}
+body.selling{overflow:hidden}
+body.selling .app{display:none}
+.stop{display:flex;align-items:center;gap:8px;padding-block:10px 6px}
+.stop .left{flex:1;font-weight:800;line-height:1.1}
+.stop .left small{display:block;color:var(--soft);font-size:.75rem;font-weight:600}
+.lane{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:linear-gradient(#fff7ec,#fbe9d3);border:3px solid var(--wood);border-radius:14px 14px 0 0;padding:8px 6px 0;min-height:204px}
+.seat{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;min-width:0}
+.seat.pick .bub{border-color:var(--pink);box-shadow:0 0 0 3px rgba(239,111,142,.25)}
+.bub{background:#fff;border:2px solid var(--line);border-radius:12px;padding:4px 4px 3px;width:100%;text-align:center;position:relative;margin-bottom:6px}
+.bub::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff}
+.bub .cake{width:64px;height:48px;display:block;margin:0 auto}
+.bub .rn{font-size:.66rem;font-weight:800;line-height:1.1;display:block;min-height:1.5em}
+.bub .pill{font-size:.6rem}
+.pat{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:3px}
+.pat i{display:block;height:100%;width:100%;background:var(--matcha);transform-origin:left center;will-change:transform;transition:background .3s}
+.pat i.mid{background:var(--gold)}.pat i.low{background:var(--warn)}
+.cust{width:78px;height:78px;border:0;background:none;padding:0}
+.cust svg{width:100%;height:100%}
+.seat .who{font-size:.64rem;font-weight:800;color:var(--soft);margin-top:-4px;height:1.2em;white-space:nowrap}
+.seat.enter .cust{animation:walkin .75s ease-out}
+.seat.enter .bub,.seat.enter .who{animation:pop .3s ease-out .6s both}
+@keyframes walkin{0%{transform:translateX(-70px);opacity:0}20%{opacity:1}25%{transform:translateX(-52px) translateY(-7px)}50%{transform:translateX(-30px)}75%{transform:translateX(-12px) translateY(-7px)}100%{transform:none}}
+.seat.low .cust{animation:fidget .3s ease-in-out infinite alternate}
+@keyframes fidget{from{transform:rotate(-4deg)}to{transform:rotate(4deg) translateY(-2px)}}
+/* nhân vật: thở, lắc đầu, vẫy đuôi, chớp mắt (lệch pha ngẫu nhiên qua --d) */
+.ani g{transform-box:view-box}
+.ani .a-body{transform-origin:60px 112px;animation:breathe 2.8s ease-in-out var(--d,0s) infinite}
+.ani .a-head{transform-origin:60px 88px;animation:headbob 4.2s ease-in-out var(--d,0s) infinite}
+.ani .a-tail{transform-origin:86px 104px;animation:tail 1.3s ease-in-out var(--d,0s) infinite alternate}
+.ani .a-eyes{animation:blink 4.6s linear var(--d,0s) infinite}
+.ani.happy .a-head{animation:joy .32s ease-in-out infinite alternate}
+.ani.happy .a-tail{animation-duration:.25s}
+.ani.sad .a-head{animation:none;transform:rotate(5deg) translateY(3px)}
+.ani.sad .a-tail{animation:none}
+@keyframes breathe{50%{transform:scale(1.025,.975)}}
+@keyframes headbob{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) translateY(1px)}}
+@keyframes tail{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}95.5%{transform:scaleY(.08)}}
+@keyframes joy{from{transform:rotate(-7deg) translateY(-2px)}to{transform:rotate(7deg)}}
+.rev .ani *,.row .ani *{animation:none!important}
+.squish svg{animation:squish .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes squish{0%{transform:scale(1)}30%{transform:scale(1.12,.86)}60%{transform:scale(.94,1.08)}100%{transform:scale(1)}}
+.plate svg.plop{animation:plop .38s cubic-bezier(.3,1.6,.5,1)}
+@keyframes plop{0%{transform:translateY(-10px) scale(.92,1.08)}55%{transform:scale(1.07,.93)}100%{transform:none}}
+.coins.pulse{animation:cpulse .35s ease-out}
+@keyframes cpulse{40%{transform:scale(1.18)}}
+.scene .pets button:nth-child(2){margin-bottom:6px}
+.hr{display:flex;align-items:center;gap:6px}
+.hbtn.sm{width:34px;height:34px;font-size:.95rem}
+.seat.happy .cust{animation:hop .5s ease-out}
+@keyframes hop{40%{transform:translateY(-12px)}}
+.seat.bye{animation:bye .5s ease-in forwards}
+@keyframes bye{to{transform:translateX(40px);opacity:0}}
+.lanecounter{height:12px;background:var(--wood-l);border:3px solid var(--wood);border-top-width:5px;border-radius:0 0 8px 8px;margin-bottom:8px}
+
+.bench{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:8px 10px;display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center}
+.plate svg{width:120px;height:96px;display:block}
+.picked{font-size:.78rem;line-height:1.35}
+.picked div{display:flex;gap:6px}
+.picked span{color:var(--soft);width:52px;flex:none}
+.picked b.no{color:var(--line)}
+.ings{flex:1;overflow-y:auto;margin-top:8px;padding-bottom:8px}
+.ig{margin-bottom:6px}
+.ig h4{margin:0 0 3px;font-size:.75rem;font-weight:800;color:var(--soft)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:2px solid var(--line);background:#fff;border-radius:12px;padding:4px 9px 4px 5px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:5px;line-height:1.1}
+.chip i{width:18px;height:18px;border-radius:50%;flex:none;border:1.5px solid rgba(0,0,0,.12)}
+.chip.on{border-color:var(--matcha-d);background:var(--matcha-l)}
+.actions{display:grid;grid-template-columns:1fr 2fr;gap:8px;padding-block:6px calc(10px + env(safe-area-inset-bottom,0px))}
+.actions .big{box-shadow:0 4px 0 var(--matcha-d)}
+.trash{border:2px solid var(--line);background:var(--panel);border-radius:18px;font-weight:800}
+
+/* Modal, toast, float hearts */
+.modal{position:fixed;inset:0;background:rgba(58,35,23,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.mbox{background:var(--panel);border-radius:20px;padding:18px 18px 16px;width:100%;max-width:400px;max-height:88vh;overflow-y:auto;text-align:center;animation:pop .3s ease-out}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.mbox h2{margin:0 0 6px;font-size:1.35rem;text-wrap:balance}
+.mbox .paper{background:#fffdf7 repeating-linear-gradient(transparent 0 27px,#f1e3cf 27px 28px);border-radius:12px;padding:12px 14px;text-align:left;font-family:var(--hand);font-size:1.3rem;line-height:28px;border:2px solid var(--line);margin:8px 0 12px;white-space:pre-line}
+.mbox .paper .sig{display:block;text-align:right;color:var(--pink-d)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.kpis div{background:var(--bg);border-radius:12px;padding:6px 2px;font-size:.72rem;color:var(--soft);font-weight:700}
+.kpis b{display:block;font-size:1.2rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.mbtns{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.field{display:block;text-align:left;font-size:.8rem;font-weight:700;color:var(--soft);margin-top:8px}
+.field input{display:block;width:100%;margin-top:2px;border:2px solid var(--line);background:var(--bg);border-radius:12px;padding:8px 10px;font:inherit;font-weight:700;color:var(--ink)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:14px;padding:8px 16px;font-weight:700;z-index:60;max-width:90vw;text-align:center;pointer-events:none;animation:pop .25s ease-out}
+.fh{position:fixed;pointer-events:none;z-index:70;font-size:1.4rem;animation:fh 1.1s ease-out forwards}
+@keyframes fh{to{transform:translate(var(--dx),-90px) scale(1.3);opacity:0}}
+.coinfly{position:fixed;pointer-events:none;z-index:70;font-weight:800;color:var(--matcha-d);animation:fh 1s ease-out forwards;--dx:0px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+</style>
+
+<div class="app home" id="home"></div>
+<div class="sell" id="sell"></div>
+<div id="layer"></div>
+<script>
+/* =====================================================================
+   CẤU HÌNH RIÊNG — sửa ở đây cho hợp với hai đứa mình
+   ===================================================================== */
+const CFG = {
+  herName: "Em",               // tên bạn nữ (đổi trong ⚙️ cũng được)
+  hisName: "Anh",              // tên bạn nam
+  shopName: "Tiệm Bánh Matcha Nhỏ",
+  metDate: "2023-08-10",       // ngày quen nhau
+  herBirthday: "1998-12-28",
+  hisBirthday: "2000-12-06",
+  pets: [
+    {id:"dog",   name:"Milo",  kind:"dog",      desc:"Cún trắng lông xù như cục bông, đeo khăn matcha, thích chạy vòng vòng quanh quầy"},
+    {id:"gold",  name:"Siro",  kind:"goldcat",  desc:"Mèo Anh lông ngắn golden bạc xỉu, mặt tròn phúng phính, mê ngủ trên tủ bánh"},
+    {id:"white", name:"Cacao", kind:"whitecat", desc:"Mèo trắng mắt xanh, đeo chuông vàng, hay ngồi canh khay bánh"}
+  ],
+  // Thư mỗi ngày: mỗi ngày mở 1 lá, hết thì quay vòng. Thêm bớt tuỳ thích.
+  notes: [
+    "Hôm nay Em đã làm việc chăm lắm rồi. Nghỉ tay ăn miếng bánh matcha ít ngọt nha, Anh bao.",
+    "Nếu Em là bánh thì Em là bánh matcha: nhìn thì dịu dàng, nếm vào mới thấy thương.",
+    "Anh không cần bánh ngọt, có Em cười là đủ ngọt rồi.",
+    "Nhớ uống đủ nước nha. Milo với Siro với Cacao nhắc giùm Anh đó.",
+    "Cảm ơn Em đã chọn Anh, hôm qua, hôm nay và cả mai nữa.",
+    "Hôm nay trời có đẹp không? Không đẹp bằng Em đâu.",
+    "Tiệm mình ế cũng được, miễn chủ tiệm vui là được.",
+    "Siro lại ngủ quên trên tủ bánh rồi. Giống ai đó hay ngủ nướng ghê.",
+    "Anh để dành một phần bánh ngon nhất cho Em, lúc nào Em về cũng có.",
+    "Mệt thì nói Anh nghe. Anh không giỏi nấu nhưng giỏi ôm.",
+    "Ít đường, nhiều matcha, và thật nhiều thương. Công thức của tụi mình đó.",
+    "Cacao vừa dụi đầu vào tay Anh, chắc nó nhớ Em.",
+    "Mỗi ngày bên Em đều là một ngày Anh muốn ghi lại.",
+    "Hôm nay Em giỏi lắm. Anh tự hào về Em.",
+    "Dù Em có làm cháy bánh, Anh vẫn ăn hết.",
+    "Milo hỏi bao giờ Em dắt nó đi dạo. Anh cũng hỏi câu đó.",
+    "Anh thích cách Em nhăn mặt khi uống đồ quá ngọt.",
+    "Tối nay đi ăn gì? Anh để Em chọn, nhưng Anh đoán là có matcha.",
+    "Có những ngày không ổn, nhưng mình vẫn có nhau mà.",
+    "Nụ cười của Em là món đắt nhất tiệm, không bán cho ai hết.",
+    "Anh đếm ngày bên Em mà chưa thấy chán lần nào.",
+    "Nếu hôm nay Em buồn, mở game ra vuốt ve ba bé một chút nha.",
+    "Anh hứa sẽ luôn nhớ Em thích ít ngọt.",
+    "Cảm ơn Em vì đã kiên nhẫn với Anh.",
+    "Hôm nay Anh cũng thương Em nhiều như hôm qua. Có khi còn hơn.",
+    "Tiệm mình nhỏ thôi, nhưng đủ chỗ cho hai đứa với ba bé.",
+    "Ước gì giờ được ngồi cạnh Em, chia nhau miếng bánh cuộn.",
+    "Em là điều dễ thương nhất xảy ra với Anh.",
+    "Nhớ ăn sáng nha. Bánh matcha không tính là bữa sáng đâu!",
+    "Ngủ ngon nha chủ tiệm. Mai lại mở cửa tiếp."
+  ],
+  eventNotes: {
+    anniversary: "Chúc mừng {n} năm mình yêu nhau!\nCảm ơn Em đã ở bên Anh suốt {d} ngày qua. Năm nay mình đi ăn bánh matcha thật nha.",
+    monthly: "Tròn {n} tháng bên nhau rồi đó!\nMỗi tháng Anh lại thương Em thêm một chút.",
+    herBirthday: "Chúc mừng sinh nhật {her}!\nTuổi {age} thật vui, thật khoẻ, và luôn được thương. Hôm nay tiệm tặng Em gấp đôi xu.",
+    hisBirthday: "Hôm nay sinh nhật {his} đó nha!\nEm nhớ chúc Anh một câu nhé.",
+    milestone: "Ngày thứ {d} bên nhau!\nMột con số tròn trịa cho một chuyện tình tròn trịa.",
+    valentine: "Valentine vui vẻ nha Em!\nSocola thì Em chê ngọt, nên Anh tặng Em matcha.",
+    women83: "Chúc mừng 8/3 chủ tiệm xinh đẹp của Anh!",
+    women2010: "Chúc mừng 20/10! Hôm nay Em chỉ cần ngồi thu tiền thôi, để Anh làm bánh."
+  }
+};
+
+/* ===================== DỮ LIỆU GAME ===================== */
+const ING = {
+  base: [
+    {id:"sponge", n:"Bông lan matcha", c:"#bcd27f"},
+    {id:"roll",   n:"Bánh cuộn",       c:"#c7da8c"},
+    {id:"cookie", n:"Cookie",          c:"#d9a86a"},
+    {id:"tart",   n:"Đế tart",         c:"#e0b070"},
+    {id:"mochi",  n:"Vỏ mochi",        c:"#dfeab8"},
+    {id:"crepe",  n:"Lá crepe",        c:"#f3dfa8"}
+  ],
+  cream: [
+    {id:"mcream", n:"Kem matcha",     c:"#9cc26a"},
+    {id:"fresh",  n:"Kem tươi",       c:"#fffaf0"},
+    {id:"bean",   n:"Đậu đỏ",         c:"#8e3b3b"},
+    {id:"cheese", n:"Phô mai",        c:"#fff0b3"},
+    {id:"wchoc",  n:"Socola trắng",   c:"#f6ecd6"}
+  ],
+  top: [
+    {id:"powder", n:"Bột matcha", c:"#6e9a45"},
+    {id:"straw",  n:"Dâu tây",    c:"#e8505b"},
+    {id:"almond", n:"Hạnh nhân",  c:"#c99a64"},
+    {id:"dollop", n:"Kem viên",   c:"#ffffff"},
+    {id:"dango",  n:"Mochi viên", c:"#f7b8c8"}
+  ],
+  sugar: [
+    {id:"low", n:"Ít ngọt", c:"#e6f0d6"},
+    {id:"mid", n:"Vừa ngọt", c:"#fde3ea"}
+  ]
+};
+const RECIPES = [
+  {id:"r1", n:"Bông lan matcha",        base:"sponge", cream:"mcream", top:"powder", price:18, lv:1},
+  {id:"r2", n:"Bánh cuộn matcha đậu đỏ",base:"roll",   cream:"bean",   top:"powder", price:20, lv:1},
+  {id:"r3", n:"Cookie matcha socola",   base:"cookie", cream:"wchoc",  top:"almond", price:16, lv:2},
+  {id:"r4", n:"Tart matcha dâu",        base:"tart",   cream:"mcream", top:"straw",  price:24, lv:3},
+  {id:"r5", n:"Mochi matcha kem tươi",  base:"mochi",  cream:"fresh",  top:"powder", price:22, lv:4},
+  {id:"r6", n:"Cheesecake matcha",      base:"cookie", cream:"cheese", top:"straw",  price:28, lv:5},
+  {id:"r7", n:"Crepe ngàn lớp matcha",  base:"crepe",  cream:"mcream", top:"dollop", price:32, lv:6},
+  {id:"r8", n:"Tiramisu matcha",        base:"sponge", cream:"cheese", top:"powder", price:30, lv:7},
+  {id:"r9", n:"Dango matcha đậu đỏ",    base:"mochi",  cream:"bean",   top:"dango",  price:26, lv:8}
+];
+const DECOR = [
+  {id:"plant",  n:"Chậu cây nhỏ",   ic:"🪴", cost:60,  d:"Khách thư giãn hơn, chờ lâu hơn 10%", fx:{pat:.10}},
+  {id:"lights", n:"Dây đèn vàng",   ic:"💡", cost:120, d:"Khách vui nên tip nhiều hơn 10%",     fx:{tip:.10}},
+  {id:"vase",   n:"Bình hoa cúc",   ic:"💐", cost:180, d:"Chờ lâu hơn thêm 10%",                  fx:{pat:.10}},
+  {id:"frame",  n:"Tranh ba bé",    ic:"🖼️", cost:260, d:"Thú cưng ghé tiệm thường hơn",         fx:{pet:.10}},
+  {id:"bell",   n:"Chuông gió",     ic:"🎐", cost:350, d:"Thêm 1 khách mỗi ca",                   fx:{cust:1}},
+  {id:"bear",   n:"Gấu bông",       ic:"🧸", cost:480, d:"Tip nhiều hơn thêm 15%",                fx:{tip:.15}},
+  {id:"tea",    n:"Ấm trà sứ",      ic:"🫖", cost:650, d:"Bánh bán giá cao hơn 10%",              fx:{price:.10}},
+  {id:"ribbon", n:"Nơ hồng bảng hiệu", ic:"🎀", cost:900, d:"Thêm 1 khách và chờ lâu hơn 10%",   fx:{cust:1,pat:.10}}
+];
+const CUSTOMERS = [
+  {kind:"cat",  n:"Mèo mướp", fur:"#f2b872", fur2:"#fbe3c2", stripe:"#d98a3a"},
+  {kind:"cat",  n:"Mèo mun",  fur:"#4a4040", fur2:"#6a5d5d"},
+  {kind:"dog",  n:"Cún Corgi",fur:"#f0a653", fur2:"#fff4e4"},
+  {kind:"dog",  n:"Cún nâu",  fur:"#b98158", fur2:"#e9cfb4"},
+  {kind:"bunny",n:"Thỏ hồng", fur:"#fff4f6", fur2:"#f9c9d5"},
+  {kind:"bunny",n:"Thỏ xám",  fur:"#cfc8c4", fur2:"#f2ecea"},
+  {kind:"bear", n:"Gấu mật",  fur:"#c98a4b", fur2:"#f0d3ad"},
+  {kind:"bear", n:"Gấu trúc", fur:"#ffffff", fur2:"#3a3434", panda:true},
+  {kind:"duck", n:"Vịt vàng", fur:"#ffd956", fur2:"#ff9d3b"},
+  {kind:"frog", n:"Ếch xanh", fur:"#9fd07a", fur2:"#e9f6d8"}
+];
+const REVIEWS = {
+  5:["Bánh ít ngọt đúng gu, ăn hoài không ngán!","Matcha thơm đậm, sẽ quay lại mỗi ngày.","Chủ tiệm dễ thương, bánh cũng dễ thương.","Làm nhanh ghê, bánh còn đẹp nữa.","Mèo trong tiệm cute xỉu, bánh ngon xỉu.","Ăn xong muốn ôm chủ tiệm một cái.","Đắng nhẹ, béo vừa, 10 điểm!"],
+  4:["Ngon nè, chờ hơi lâu xíu thôi.","Bánh ổn áp, lần sau ghé nữa.","Vị matcha chuẩn, tiệm xinh.","Thơm ngon, mong tiệm có thêm món mới."],
+  3:["Bánh ngon mà tui đói quá chờ không nổi.","Tạm ổn, hơi chậm xíu.","Được á, nhưng tui mong nhanh hơn."],
+  1:["Chờ lâu quá tui đi mất tiêu...","Hông ai để ý tui hết huhu.","Tiệm đông quá, hẹn lần sau nha."]
+};
+const PET_REVIEWS = {
+  dog:["Gâu! (ý là bánh ngon quá)","Gâu gâu! Cho Milo thêm miếng nữa!","*vẫy đuôi liên tục*"],
+  goldcat:["Meo~ (nằm lên quầy luôn không đi)","Siro chấm 5 sao rồi đi ngủ tiếp.","*dụi má vào tay chủ tiệm*"],
+  whitecat:["Meo! (Cacao ưng rồi đó)","*ngồi nghiêm túc canh khay bánh*","Meo meo, mai Cacao ghé nữa."]
+};
+
+/* ===================== LƯU TIẾN TRÌNH ===================== */
+const KEY = "tiem-banh-matcha-v1";
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const DAY = 86400000;
+const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const fmtD = d => pad(d.getDate())+"/"+pad(d.getMonth()+1);
+const rnd = (a,b) => a + Math.random()*(b-a);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function fresh(){
+  return {
+    coins:40, xp:0, decor:[], reviews:[], letters:[], served:0, shifts:0,
+    names:{her:CFG.herName, his:CFG.hisName, shop:CFG.shopName, pets:Object.fromEntries(CFG.pets.map(p=>[p.id,p.name]))},
+    pets:Object.fromEntries(CFG.pets.map(p=>[p.id,{aff:0,petDay:"",pets:0,fedDay:""}])),
+    daily:{day:"",served:0,earned:0,five:0,claimed:false},
+    streak:0, lastDay:"", sound:true, music:true
+  };
+}
+let S;
+try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)||"{}")); } catch(e){ S = fresh(); }
+const OLD_NAMES = ["Bông","Mơ","Tuyết"];
+CFG.pets.forEach(p=>{ if (!S.names.pets[p.id] || OLD_NAMES.includes(S.names.pets[p.id])) S.names.pets[p.id] = p.name; });
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+function rollDay(){
+  const t = ymd(today());
+  if (S.daily.day !== t){
+    S.daily = {day:t, served:0, earned:0, five:0, claimed:false};
+  }
+  if (S.lastDay !== t){
+    const y = ymd(new Date(today()-DAY));
+    S.streak = S.lastDay === y ? S.streak+1 : 1;
+    S.lastDay = t;
+  }
+  save();
+}
+
+/* ===================== NGÀY ĐẶC BIỆT ===================== */
+const daysTogether = () => Math.floor((today() - parse(CFG.metDate))/DAY) + 1;
+function nextOn(m, d){
+  const t = today(); let x = new Date(t.getFullYear(), m-1, d);
+  if (x < t) x = new Date(t.getFullYear()+1, m-1, d);
+  return x;
+}
+function fill(s, v){ return s.replace(/\{(\w+)\}/g, (_,k)=> v[k] ?? ""); }
+function events(){
+  const t = today(), met = parse(CFG.metDate), her = parse(CFG.herBirthday), his = parse(CFG.hisBirthday);
+  const list = [];
+  const an = nextOn(met.getMonth()+1, met.getDate());
+  list.push({key:"anniversary", date:an, t:"Kỷ niệm "+(an.getFullYear()-met.getFullYear())+" năm yêu nhau", v:{n:an.getFullYear()-met.getFullYear()}});
+  const hb = nextOn(her.getMonth()+1, her.getDate());
+  list.push({key:"herBirthday", date:hb, t:"Sinh nhật "+S.names.her, v:{age:hb.getFullYear()-her.getFullYear()}});
+  const sb = nextOn(his.getMonth()+1, his.getDate());
+  list.push({key:"hisBirthday", date:sb, t:"Sinh nhật "+S.names.his, v:{age:sb.getFullYear()-his.getFullYear()}});
+  // tròn tháng (ngày 10 hằng tháng), bỏ qua tháng trùng kỷ niệm năm
+  let mo = new Date(t.getFullYear(), t.getMonth(), met.getDate());
+  if (mo < t) mo = new Date(t.getFullYear(), t.getMonth()+1, met.getDate());
+  const months = (mo.getFullYear()-met.getFullYear())*12 + mo.getMonth()-met.getMonth();
+  if (months % 12) list.push({key:"monthly", date:mo, t:"Tròn "+months+" tháng", v:{n:months}});
+  const dt = daysTogether(), nextHund = Math.ceil(dt/100)*100 || 100;
+  list.push({key:"milestone", date:new Date(met.getTime() + (nextHund-1)*DAY), t:"Ngày thứ "+nextHund+" bên nhau", v:{}});
+  list.push({key:"valentine", date:nextOn(2,14), t:"Valentine", v:{}});
+  list.push({key:"women83", date:nextOn(3,8), t:"Quốc tế Phụ nữ 8/3", v:{}});
+  list.push({key:"women2010", date:nextOn(10,20), t:"Phụ nữ Việt Nam 20/10", v:{}});
+  list.forEach(e => { e.in = Math.round((e.date - t)/DAY); });
+  return list.sort((a,b)=>a.in-b.in);
+}
+const todayEvents = () => events().filter(e => e.in === 0);
+const coinMult = () => todayEvents().length ? 2 : 1;
+function eventNote(e){
+  return fill(CFG.eventNotes[e.key]||"", {...e.v, d:daysTogether(), her:S.names.her, his:S.names.his});
+}
+
+/* ===================== CẤP & HIỆU ỨNG ===================== */
+const lvl = () => Math.floor(Math.sqrt(S.xp/40)) + 1;
+const xpFor = L => 40*(L-1)*(L-1);
+function fx(k){ return S.decor.reduce((a,id)=> a + ((DECOR.find(x=>x.id===id)||{}).fx?.[k]||0), 0); }
+const unlocked = () => RECIPES.filter(r => r.lv <= lvl());
+function goals(){
+  const L = lvl();
+  return [
+    {t:"Phục vụ "+(5+L)+" khách", cur:S.daily.served, need:5+L},
+    {t:"Kiếm "+(80+20*L)+" xu", cur:S.daily.earned, need:80+20*L},
+    {t:"Nhận 3 đánh giá 5 sao", cur:S.daily.five, need:3}
+  ];
+}
+
+/* ===================== VẼ BÁNH ===================== */
+const col = (grp,id) => (ING[grp].find(x=>x.id===id)||{}).c;
+function shade(hex, f){ // f<0 tối hơn, f>0 sáng hơn
+  const n = parseInt(hex.slice(1),16); let r=n>>16, g=n>>8&255, b=n&255;
+  const m = v => Math.round(f<0 ? v*(1+f) : v+(255-v)*f);
+  return "#"+((1<<24)+(m(r)<<16)+(m(g)<<8)+m(b)).toString(16).slice(1);
+}
+function cakeSVG(p){
+  const b = p.base, c = p.cream ? col("cream",p.cream) : null, t = p.top;
+  const bc = b ? col("base",b) : null;
+  let s = '<ellipse cx="50" cy="71" rx="42" ry="8" fill="#3a2317" opacity=".08"/><ellipse cx="50" cy="68" rx="40" ry="8" fill="#fff" stroke="#e2cdb0" stroke-width="2"/><ellipse cx="50" cy="67" rx="30" ry="5" fill="none" stroke="#f1e4d2" stroke-width="1.5"/>';
+  let top = 58;
+  const frost = (y,w) => c ? `<path d="M${50-w} ${y+4} q0 -6 6 -6 ${Array.from({length:Math.round(w/6)},()=> "q3 -4 6 0").join(" ")} q6 0 6 6 z" fill="${c}" stroke="${shade(c,-.15)}" stroke-width="1"/>` : "";
+  if (!b){ return svgWrap(s + (c||t ? '<text x="50" y="50" text-anchor="middle" font-size="9" fill="#b9a38c">chọn đế trước</text>' : '')); }
+  if (b==="sponge"){
+    s += `<rect x="22" y="40" width="56" height="26" rx="4" fill="${bc}" stroke="${shade(bc,-.2)}" stroke-width="1.5"/>`;
+    if (c) s += `<rect x="22" y="51" width="56" height="4" fill="${c}"/>` + frost(36,28);
+    top = c ? 34 : 40;
+  } else if (b==="roll"){
+    s += `<circle cx="50" cy="48" r="19" fill="${bc}" stroke="${shade(bc,-.2)}" stroke-width="1.5"/>`;
+    s += `<path d="M48 48 a2 2 0 1 1 4 0 a4.5 4.5 0 1 1 -9 0 a8.5 8.5 0 1 1 17 0 a12.5 12.5 0 1 1 -25 0" fill="none" stroke="${c||shade(bc,.4)}" stroke-width="3.2" stroke-linecap="round"/>`;
+    top = 30;
+  } else if (b==="cookie"){
+    s += `<ellipse cx="50" cy="60" rx="30" ry="8" fill="${shade(bc,-.1)}"/><ellipse cx="50" cy="57" rx="30" ry="8" fill="${bc}" stroke="${shade(bc,-.25)}" stroke-width="1.2"/>`;
+    s += `<circle cx="38" cy="57" r="1.6" fill="#7a4a2a"/><circle cx="60" cy="59" r="1.6" fill="#7a4a2a"/><circle cx="52" cy="54" r="1.4" fill="#7a4a2a"/>`;
+    if (c) s += `<rect x="26" y="42" width="48" height="13" rx="6" fill="${c}" stroke="${shade(c,-.15)}"/>`;
+    top = c ? 40 : 50;
+  } else if (b==="tart"){
+    s += `<path d="M20 50 L80 50 L73 66 L27 66 Z" fill="${bc}" stroke="${shade(bc,-.25)}" stroke-width="1.5"/>`;
+    s += Array.from({length:7},(_,i)=>`<line x1="${27+i*7.5}" y1="52" x2="${28+i*7}" y2="64" stroke="${shade(bc,-.15)}"/>`).join("");
+    s += `<ellipse cx="50" cy="50" rx="30" ry="5" fill="${c||shade(bc,.3)}" stroke="${shade(bc,-.2)}"/>`;
+    top = 46;
+  } else if (b==="mochi"){
+    s += `<ellipse cx="50" cy="52" rx="24" ry="16" fill="${bc}" stroke="${shade(bc,-.2)}" stroke-width="1.5"/><ellipse cx="42" cy="46" rx="6" ry="3" fill="#fff" opacity=".55"/>`;
+    if (c) s += `<path d="M62 50 q10 -4 12 4 q-6 8 -14 4 z" fill="${c}" stroke="${shade(c,-.15)}"/>`;
+    top = 36;
+  } else if (b==="crepe"){
+    for (let i=0;i<6;i++) s += `<rect x="24" y="${62-i*5}" width="52" height="5" rx="2" fill="${i%2? (c||shade(bc,.4)) : bc}" stroke="${shade(bc,-.2)}" stroke-width=".6"/>`;
+    top = 34;
+  }
+  if (t){
+    const y = top;
+    if (t==="powder") s += Array.from({length:22},(_,i)=>`<circle cx="${30+((i*37)%40)}" cy="${y+((i*13)%5)}" r="1.3" fill="#5f8a3a"/>`).join("");
+    if (t==="straw") s += [38,50,62].map(x=>`<path d="M${x} ${y-8} q6 0 5 6 q-2 6 -5 7 q-3 -1 -5 -7 q-1 -6 5 -6z" fill="#e8505b"/><path d="M${x-3} ${y-8} l3 -3 l3 3z" fill="#5f8a3a"/><circle cx="${x-1}" cy="${y-4}" r=".7" fill="#fff"/>`).join("");
+    if (t==="almond") s += [36,46,56,64].map((x,i)=>`<ellipse cx="${x}" cy="${y-2-(i%2)*2}" rx="4" ry="2.4" transform="rotate(${i*35} ${x} ${y})" fill="#c99a64" stroke="#9a6d3e" stroke-width=".6"/>`).join("");
+    if (t==="dollop") s += `<path d="M40 ${y} q10 -18 20 0 z" fill="#fff" stroke="#e6dccb"/><path d="M44 ${y-5} q6 -10 12 0" fill="none" stroke="#e6dccb"/><circle cx="50" cy="${y-14}" r="3" fill="#86ad5c"/>`;
+    if (t==="dango") s += `<line x1="30" y1="${y-4}" x2="72" y2="${y-8}" stroke="#c99a64" stroke-width="2"/>` + [["#f7b8c8",38],["#fff",50],["#9cc26a",62]].map(([f,x])=>`<circle cx="${x}" cy="${y-6}" r="6" fill="${f}" stroke="#d9c6b3"/>`).join("");
+  }
+  return svgWrap(s);
+}
+const svgWrap = s => `<svg class="cake" viewBox="0 0 100 80" aria-hidden="true">${s}</svg>`;
+
+/* ===================== VẼ KHÁCH / THÚ CƯNG ===================== */
+// Nhân vật chibi ngồi, vẽ bằng SVG: thân + đầu to + bóng mềm. mood: ok | happy | sad
+let GID = 0;
+function animalSVG(a, mood){
+  mood = mood || "ok";
+  const id = "g" + (++GID);
+  const f = a.fur, f2 = a.fur2, edge = a.edge || shade(f, -.18), ln = a.line || shade(f, -.45);
+  const isCat = a.kind==="cat"||a.kind==="goldcat"||a.kind==="whitecat";
+  const W = a.kind==="goldcat" ? 44 : 40;                // BSH mặt tròn bầu bĩnh hơn
+  const defs = `<defs>
+    <radialGradient id="${id}f" cx=".42" cy=".35" r=".75"><stop offset="0" stop-color="${shade(f,.35)}"/><stop offset=".6" stop-color="${f}"/><stop offset="1" stop-color="${edge}"/></radialGradient>
+    <radialGradient id="${id}m" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="${f2}"/></radialGradient>
+    <radialGradient id="${id}e" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${a.eye?shade(a.eye,.35):"#6b4a3a"}"/><stop offset=".7" stop-color="${a.eye||"#3a2317"}"/><stop offset="1" stop-color="${shade(a.eye||"#3a2317",-.4)}"/></radialGradient>
+  </defs>`;
+  const S2 = `stroke="${ln}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"`;
+  let back = "", tail = "", body = "", ears = "", head = "", face = "", front = "", headAcc = "";
+
+  // bóng dưới chân
+  back += `<ellipse cx="60" cy="113" rx="34" ry="5" fill="#3a2317" opacity=".12"/>`;
+
+  // ----- thân + đuôi -----
+  if (a.kind==="boy"){
+    body = `<path d="M26 118 q2 -30 34 -32 q32 2 34 32z" fill="${a.shirt||"#86ad5c"}" ${S2}/><path d="M50 88 l10 10 l10 -10" fill="none" stroke="#fff" stroke-width="3"/>`;
+  } else {
+    if (isCat) tail += `<path d="M84 104 q24 -2 20 -28 q-2 -10 -8 -8 q-4 2 -1 8 q4 16 -12 20z" fill="url(#${id}f)" ${S2}/>`;
+    if (a.kind==="dog"||a.kind==="fluffy") tail += `<path d="M86 96 q18 -6 14 -24 q-6 4 -8 10 q-4 8 -10 8z" fill="url(#${id}f)" ${S2}/>`;
+    if (a.kind==="bunny"||a.kind==="bear") tail += `<circle cx="88" cy="100" r="8" fill="url(#${id}f)" ${S2}/>`;
+    const bodyPath = a.kind==="fluffy"
+      ? `M34 110 q-8 -6 -4 -14 q-6 -8 2 -14 q0 -8 10 -8 h36 q10 0 10 8 q8 6 2 14 q4 8 -4 14z`
+      : `M34 110 q-6 -30 26 -34 q32 4 26 34z`;
+    body = `<path d="${bodyPath}" fill="url(#${id}f)" ${S2}/>`;
+    body += `<ellipse cx="60" cy="96" rx="14" ry="12" fill="url(#${id}m)" opacity=".95"/>`;
+    // chân trước
+    body += `<ellipse cx="49" cy="109" rx="8" ry="5.5" fill="${shade(f,.2)}" ${S2}/><ellipse cx="71" cy="109" rx="8" ry="5.5" fill="${shade(f,.2)}" ${S2}/>`;
+    if (isCat || a.kind==="fluffy") body += `<path d="M46 110 v-3 M50 110 v-3 M68 110 v-3 M72 110 v-3" stroke="${ln}" stroke-width="1.2" opacity=".5"/>`;
+  }
+
+  // ----- tai -----
+  if (isCat){
+    const tip = a.kind==="goldcat";  // tai nhỏ, đặt rộng
+    const L = tip ? "M22 44 Q20 18 42 28 Z" : "M24 42 Q18 10 46 26 Z";
+    const R = tip ? "M98 44 Q100 18 78 28 Z" : "M96 42 Q102 10 74 26 Z";
+    ears = `<path d="${L}" fill="url(#${id}f)" ${S2}/><path d="${R}" fill="url(#${id}f)" ${S2}/>`;
+    ears += tip ? `<path d="M26 38 Q25 25 37 30Z" fill="#f4b9b2"/><path d="M94 38 Q95 25 83 30Z" fill="#f4b9b2"/>`
+                : `<path d="M29 36 Q25 19 41 28Z" fill="#f7b8c8"/><path d="M91 36 Q95 19 79 28Z" fill="#f7b8c8"/>`;
+  } else if (a.kind==="dog"){
+    ears = `<path d="M26 30 q-16 6 -10 34 q10 4 16 -8z" fill="${f2}" ${S2}/><path d="M94 30 q16 6 10 34 q-10 4 -16 -8z" fill="${f2}" ${S2}/>`;
+  } else if (a.kind==="bunny"){
+    ears = `<ellipse cx="44" cy="16" rx="9" ry="22" transform="rotate(-8 44 16)" fill="url(#${id}f)" ${S2}/><ellipse cx="76" cy="16" rx="9" ry="22" transform="rotate(8 76 16)" fill="url(#${id}f)" ${S2}/><ellipse cx="44" cy="18" rx="4.5" ry="15" transform="rotate(-8 44 18)" fill="${f2}"/><ellipse cx="76" cy="18" rx="4.5" ry="15" transform="rotate(8 76 18)" fill="${f2}"/>`;
+  } else if (a.kind==="bear"){
+    const ec = a.panda ? f2 : f;
+    ears = `<circle cx="30" cy="24" r="12" fill="${ec}" ${S2}/><circle cx="90" cy="24" r="12" fill="${ec}" ${S2}/>` + (a.panda?"":`<circle cx="30" cy="25" r="6" fill="${f2}"/><circle cx="90" cy="25" r="6" fill="${f2}"/>`);
+  } else if (a.kind==="frog"){
+    ears = `<circle cx="38" cy="24" r="13" fill="url(#${id}f)" ${S2}/><circle cx="82" cy="24" r="13" fill="url(#${id}f)" ${S2}/>`;
+  }
+
+  // ----- đầu -----
+  if (a.kind==="fluffy"){
+    // đầu xù như cục bông + tai rủ xù
+    const puff = [[60,10],[40,14],[80,14],[26,28],[94,28]].map(([x,y])=>`<circle cx="${x}" cy="${y+8}" r="15" fill="url(#${id}f)" ${S2}/>`).join("");
+    ears = `<path d="M22 32 q-16 10 -8 38 q4 8 12 4 q6 -4 4 -12 q6 -6 2 -14z" fill="url(#${id}f)" ${S2}/><path d="M98 32 q16 10 8 38 q-4 8 -12 4 q-6 -4 -4 -12 q-6 -6 -2 -14z" fill="url(#${id}f)" ${S2}/>`;
+    head = puff + `<ellipse cx="60" cy="50" rx="38" ry="32" fill="url(#${id}f)" ${S2}/>` +
+      [[34,28],[60,20],[86,28]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="${shade(f,.3)}"/>`).join("");
+  } else if (a.kind==="boy"){
+    head = `<ellipse cx="60" cy="52" rx="34" ry="32" fill="#ffe3cc" stroke="#d9a784" stroke-width="2.2"/>` +
+      `<ellipse cx="26" cy="56" rx="5" ry="7" fill="#ffd6b8" stroke="#d9a784" stroke-width="2"/><ellipse cx="94" cy="56" rx="5" ry="7" fill="#ffd6b8" stroke="#d9a784" stroke-width="2"/>` +
+      `<path d="M24 52 q-4 -36 36 -38 q40 2 36 38 q-6 -12 -14 -16 q-2 8 -14 8 q4 -6 2 -10 q-8 10 -26 10 q4 -4 4 -8 q-10 6 -24 16z" fill="#3b2a22" stroke="#2a1d17" stroke-width="2" stroke-linejoin="round"/>` +
+      `<path d="M44 22 q8 -4 16 -2" stroke="#6b5147" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  } else if (a.kind==="duck"){
+    head = `<ellipse cx="60" cy="52" rx="36" ry="32" fill="url(#${id}f)" ${S2}/><path d="M56 22 q4 -12 12 -8 q-6 2 -4 9" fill="${f}" ${S2}/>`;
+  } else {
+    head = `<ellipse cx="60" cy="54" rx="${W}" ry="${a.kind==="goldcat"?34:32}" fill="url(#${id}f)" ${S2}/>`;
+  }
+
+  // ----- hoa văn -----
+  if (a.kind==="goldcat"){ // golden bạc xỉu: đầu lông ánh bạc, má phúng phính sáng màu
+    face += `<path d="M44 28 q16 8 32 0" stroke="${shade(f,-.25)}" stroke-width="2" fill="none" opacity=".45" stroke-linecap="round"/><path d="M50 34 q10 4 20 0" stroke="${shade(f,-.25)}" stroke-width="1.6" fill="none" opacity=".4" stroke-linecap="round"/>`;
+    face += `<ellipse cx="60" cy="70" rx="24" ry="15" fill="url(#${id}m)"/>`;
+  }
+  if (a.kind==="whitecat") face += `<ellipse cx="60" cy="70" rx="18" ry="12" fill="#fff"/>`;
+  if (a.kind==="cat" && a.stripe) face += `<path d="M48 26 l3 10 M60 24 v12 M72 26 l-3 10" stroke="${a.stripe}" stroke-width="3" stroke-linecap="round"/>`;
+  if (a.kind==="dog") face += `<ellipse cx="60" cy="68" rx="18" ry="13" fill="url(#${id}m)"/>`;
+  if (a.kind==="fluffy") face += `<ellipse cx="60" cy="66" rx="16" ry="12" fill="#fff"/>`;
+  if (a.kind==="bear") face += `<ellipse cx="60" cy="68" rx="15" ry="11" fill="${a.panda?"#fff":f2}"/>` +
+    (a.panda?`<ellipse cx="44" cy="54" rx="9" ry="11" transform="rotate(-25 44 54)" fill="${f2}"/><ellipse cx="76" cy="54" rx="9" ry="11" transform="rotate(25 76 54)" fill="${f2}"/>`:"");
+  if (a.kind==="frog") face += `<circle cx="38" cy="24" r="8" fill="#fff"/><circle cx="82" cy="24" r="8" fill="#fff"/>`;
+
+  // ----- mắt -----
+  const ey = a.kind==="frog" ? 24 : a.kind==="fluffy" ? 50 : 54;
+  const ex = a.kind==="frog" ? 22 : a.kind==="goldcat" ? 17 : 15;
+  const lidCol = a.panda ? "#fff" : "#3a2317";
+  if (mood==="happy"){
+    face += [60-ex,60+ex].map(x=>`<path d="M${x-6} ${ey+2} q6 -9 12 0" stroke="${lidCol}" stroke-width="3" fill="none" stroke-linecap="round"/>`).join("");
+  } else {
+    const rx = a.eye ? 6.5 : 5.2, ry = a.eye ? 7.5 : 6.2;
+    face += `<g class="a-eyes" style="transform-origin:60px ${ey}px">` + [60-ex,60+ex].map(x=>`<ellipse cx="${x}" cy="${ey}" rx="${rx}" ry="${ry}" fill="url(#${id}e)" stroke="#2a1a12" stroke-width="1"/>` +
+      (a.eye?`<ellipse cx="${x}" cy="${ey+.5}" rx="2.4" ry="4.5" fill="#1d120c"/>`:"") +
+      `<circle cx="${x+2}" cy="${ey-2.8}" r="2.3" fill="#fff"/><circle cx="${x-2.2}" cy="${ey+3}" r="1.1" fill="#fff" opacity=".85"/>`).join("") + `</g>`;
+    if (mood==="sad") face += `<path d="M${60-ex-7} ${ey-8} l9 -4" stroke="#3a2317" stroke-width="2.2" stroke-linecap="round"/><path d="M${60+ex+7} ${ey-8} l-9 -4" stroke="#3a2317" stroke-width="2.2" stroke-linecap="round"/><path d="M${60+ex+4} ${ey+7} q3 6 0 8 q-3 -2 0 -8z" fill="#8fd0f0"/>`;
+  }
+  // má hồng
+  face += `<ellipse cx="${60-ex-9}" cy="${ey+13}" rx="7" ry="4" fill="#f79ab2" opacity=".55"/><ellipse cx="${60+ex+9}" cy="${ey+13}" rx="7" ry="4" fill="#f79ab2" opacity=".55"/>`;
+
+  // ----- mũi & miệng -----
+  const my = ey + 12;
+  if (a.kind==="duck") face += `<ellipse cx="60" cy="${my}" rx="12" ry="6" fill="${f2}" ${S2}/><path d="M50 ${my} h20" stroke="${ln}" stroke-width="1.2" opacity=".5"/>`;
+  else if (a.kind==="boy") face += mood==="sad" ? `<path d="M53 ${my+4} q7 -5 14 0" stroke="#8a4b3a" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+                                               : `<path d="M52 ${my} q8 9 16 0 z" fill="#e5737f" stroke="#8a4b3a" stroke-width="2" stroke-linejoin="round"/>`;
+  else {
+    const dogNose = a.kind==="dog"||a.kind==="fluffy"||a.kind==="bear";
+    if (dogNose) face += `<ellipse cx="60" cy="${my-2}" rx="5.5" ry="4" fill="#2e2320"/><ellipse cx="58.5" cy="${my-3.2}" rx="1.8" ry="1" fill="#fff" opacity=".7"/>`;
+    else if (a.kind!=="frog") face += `<path d="M56.5 ${my-3} h7 q-.5 3 -3.5 4 q-3 -1 -3.5 -4z" fill="${a.nose||"#f28ca5"}"/>`;
+    if (mood==="sad") face += `<path d="M53 ${my+7} q7 -5 14 0" stroke="#3a2317" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    else if (mood==="happy") face += `<path d="M52 ${my+2} q4 4 8 0 q4 4 8 0" stroke="#3a2317" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M55 ${my+4} q5 8 10 0z" fill="#f07a8e"/>`;
+    else face += `<path d="M52 ${my+2} q4 4 8 0 q4 4 8 0" stroke="#3a2317" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    if (isCat) face += `<g stroke="${a.kind==="whitecat"||a.kind==="goldcat"?"#b9a58f":"#3a2317"}" stroke-width="1.2" opacity=".55" stroke-linecap="round"><path d="M16 ${my-4} l18 3 M16 ${my+4} l18 -2 M104 ${my-4} l-18 3 M104 ${my+4} l-18 -2"/></g>`;
+  }
+
+  // ----- phụ kiện -----
+  if (a.acc==="bandana") front += `<path d="M38 80 q22 12 44 0 l-4 8 q-18 16 -36 0z" fill="#86ad5c" stroke="#5b7f3d" stroke-width="2" stroke-linejoin="round"/><circle cx="52" cy="86" r="1.6" fill="#fff"/><circle cx="66" cy="88" r="1.6" fill="#fff"/><circle cx="60" cy="92" r="1.6" fill="#fff"/>`;
+  if (a.acc==="bell") front += `<path d="M40 82 q20 8 40 0" stroke="#ef6f8e" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="60" cy="89" r="5" fill="#f0b43c" stroke="#b9831c" stroke-width="1.5"/><path d="M57 90 h6" stroke="#8a5a1a" stroke-width="1.2"/>`;
+  if (a.acc==="bow") headAcc += `<g transform="translate(84 20) rotate(15)"><path d="M0 0 l-12 -7 v14z M0 0 l12 -7 v14z" fill="#ef6f8e" stroke="#c24c69" stroke-width="1.5" stroke-linejoin="round"/><circle r="3.5" fill="#c24c69"/></g>`;
+  if (a.kind==="boy") headAcc += `<path d="M84 22 q4 -6 8 0 q4 -6 8 0 q0 6 -8 11 q-8 -5 -8 -11z" fill="#ef6f8e" stroke="#c24c69" stroke-width="1.2"/>`;
+
+  return `<svg class="ani ${mood}" style="--d:-${(Math.random()*4).toFixed(2)}s" viewBox="0 0 120 120" aria-hidden="true">${defs}${back}<g class="a-tail">${tail}</g><g class="a-body">${body}</g><g class="a-head">${ears}${head}${face}${headAcc}</g><g class="a-body">${front}</g></svg>`;
+}
+const PET_LOOK = {
+  // Milo: cún trắng lông xù, khăn matcha
+  dog:     {kind:"fluffy", fur:"#ffffff", fur2:"#fff6ec", edge:"#ece2d6", line:"#b8a794", acc:"bandana"},
+  // Siro: mèo Anh lông ngắn golden bạc xỉu, mắt xanh lục, nơ hồng
+  goldcat: {kind:"goldcat", fur:"#efd7a6", fur2:"#fbf4e6", edge:"#d4b27a", line:"#a88452", eye:"#5fa35a", nose:"#e79a8f", acc:"bow"},
+  // Cacao: mèo trắng mắt xanh dương, vòng cổ chuông
+  whitecat:{kind:"whitecat", fur:"#ffffff", fur2:"#ffffff", edge:"#e8e0d8", line:"#b8a99a", eye:"#6fb2e6", acc:"bell"}
+};
+const BOY = {kind:"boy", fur:"#ffe3cc", fur2:"#ffe3cc", shirt:"#86ad5c"};
+
+/* ===================== MÀN HÌNH TIỆM ===================== */
+let tab = "shop";
+try { tab = localStorage.getItem(KEY+"-tab") || "shop"; } catch(e){}
+const TABS = [["shop","🏠","Tiệm"],["menu","🍰","Công thức"],["decor","🎀","Trang trí"],["pets","🐾","Thú cưng"],["rev","⭐","Đánh giá"],["mail","💌","Hộp thư"]];
+const petName = id => S.names.pets[id] || CFG.pets.find(p=>p.id===id).name;
+const hearts = n => "♥".repeat(Math.min(5, Math.floor(n/10))) + "♡".repeat(5-Math.min(5, Math.floor(n/10)));
+
+function renderHome(){
+  rollDay();
+  const L = lvl(), cur = S.xp - xpFor(L), need = xpFor(L+1) - xpFor(L);
+  const ev = events(), te = ev.filter(e=>e.in===0), up = ev.filter(e=>e.in>0).slice(0,4);
+  const letterNew = !S.letters.some(l=>l.day===S.daily.day);
+  const g = goals(), allOk = g.every(x=>x.cur>=x.need);
+  const shelf = S.decor.map(id=>DECOR.find(d=>d.id===id)?.ic).join("") || '<span style="font-size:.8rem;color:var(--soft)">Kệ còn trống, qua tab Trang trí sắm đồ nha</span>';
+  $("#home").innerHTML = `
+  <header>
+    <button class="hbtn" id="setBtn" aria-label="Cài đặt">⚙️</button>
+    <div class="hmid"><b>${esc(S.names.shop)}</b><small>Ngày thứ ${daysTogether()} bên nhau 💚</small></div>
+    <div class="hr"><button class="hbtn sm" data-music aria-label="Bật/tắt nhạc">${S.music?"🎵":"🔇"}</button><div class="coins"><i class="coin"></i><span>${S.coins}</span></div></div>
+  </header>
+  <div class="awning"></div>
+  <div class="scene">
+    <div class="shelf">${shelf}</div>
+    <div class="pets">${CFG.pets.map(p=>`<button data-pet="${p.id}" aria-label="Vuốt ve ${esc(petName(p.id))}">${animalSVG(PET_LOOK[p.kind])}<small>${esc(petName(p.id))}</small></button>`).join("")}</div>
+    <div class="counter"></div>
+  </div>
+  <div class="lvlbar"><span>Cấp ${L}</span><div class="gb"><i style="width:${Math.min(100,cur/need*100)}%"></i></div><span style="font-size:.75rem;color:var(--soft);font-variant-numeric:tabular-nums">${cur}/${need}</span></div>
+
+  ${te.length ? te.map(e=>`<div class="card event today"><h3>🎉 Hôm nay: ${esc(e.t)} <small>xu x2</small></h3><p>${esc(eventNote(e)).replace(/\n/g,"<br>")}</p></div>`).join("") : ""}
+
+  <button class="letterbtn" id="letterBtn"><span class="env ${letterNew?"new":""}">💌</span><span><b>${letterNew?"Có thư mới từ "+esc(S.names.his)+"!":"Thư hôm nay đã mở"}</b><small>${letterNew?"Mỗi ngày một lá, bấm để mở":"Mai quay lại có thư mới nha · chuỗi "+S.streak+" ngày"}</small></span></button>
+
+  <div class="tabs" role="tablist">${TABS.map(([id,ic,n])=>`<button class="tab ${tab===id?"on":""}" data-tab="${id}" role="tab" aria-selected="${tab===id}"><span>${ic}</span>${n}</button>`).join("")}</div>
+  <div class="pane" id="pane">${pane(tab, {g, allOk, up})}</div>
+  <div class="openbar"><button class="big" id="openBtn">Mở cửa tiệm · ca ${S.shifts+1}</button></div>`;
+}
+
+function pane(t, o){
+  if (t==="shop"){
+    const g = o.g;
+    return `<div class="sec">Mục tiêu hôm nay</div>
+      ${g.map(x=>`<div class="goal ${x.cur>=x.need?"ok":""}"><span>${x.cur>=x.need?"✔ ":""}${x.t}</span><span class="gv">${Math.min(x.cur,x.need)}/${x.need}</span><div class="gb"><i style="width:${Math.min(100,x.cur/x.need*100)}%"></i></div></div>`).join("")}
+      <button class="claim" id="claimBtn" ${!o.allOk||S.daily.claimed?"disabled":""}>${S.daily.claimed?"Đã nhận quà hôm nay 💚":o.allOk?"Nhận quà: 60 xu + 1 lá thư bí mật":"Hoàn thành cả 3 để nhận quà"}</button>
+      <div class="sec" style="margin-top:14px">Sắp tới</div>
+      <ul class="evlist">${o.up.map(e=>`<li><span>${esc(e.t)} · ${fmtD(e.date)}</span><b>còn ${e.in} ngày</b></li>`).join("")}</ul>
+      <p class="note" style="margin-top:10px">Đã bán ${S.served} bánh qua ${S.shifts} ca. Ngày đặc biệt được nhân đôi xu.</p>`;
+  }
+  if (t==="menu"){
+    const L = lvl();
+    return `<p class="note">Mỗi bánh ghép từ 3 phần: đế, kem, topping. Khách còn dặn thêm độ ngọt nữa. Lên cấp để mở công thức mới.</p>` +
+      RECIPES.map(r=>`<div class="row ${r.lv>L?"locked":""}"><div>${r.lv>L?'<div class="ic">🔒</div>':cakeSVG(r)}</div>
+        <div><div class="nm">${esc(r.n)}</div><div class="sub">${r.lv>L?"Mở ở cấp "+r.lv:[["base",r.base],["cream",r.cream],["top",r.top]].map(([g,id])=>ING[g].find(x=>x.id===id).n).join(" + ")}</div></div>
+        <div class="pill">${Math.round(r.price*(1+fx("price")))} xu</div></div>`).join("");
+  }
+  if (t==="decor"){
+    return `<p class="note">Đồ trang trí làm tiệm xinh hơn và giúp buôn bán tốt hơn.</p>` +
+      DECOR.map(d=>{ const own = S.decor.includes(d.id);
+        return `<div class="row"><div class="ic">${d.ic}</div><div><div class="nm">${esc(d.n)}</div><div class="sub">${esc(d.d)}</div></div>
+        ${own?'<span class="pill">Đã có</span>':`<button class="sbtn pri" data-buy="${d.id}" ${S.coins<d.cost?"disabled":""}>${d.cost} xu</button>`}</div>`}).join("");
+  }
+  if (t==="pets"){
+    const td = S.daily.day;
+    return `<p class="note">Bấm vào mặt các bé để vuốt ve. Mỗi ngày cho ăn một lần để các bé thương mình hơn. Bé càng thương thì càng hay ghé tiệm.</p><div class="petgrid">` +
+      CFG.pets.map(p=>{ const st = S.pets[p.id];
+        return `<div class="pet"><button class="face" data-pet="${p.id}" aria-label="Vuốt ve ${esc(petName(p.id))}">${animalSVG(PET_LOOK[p.kind])}</button>
+        <div><div class="nm">${esc(petName(p.id))}</div><div class="sub">${esc(p.desc)}</div>
+        <div class="hearts" title="Độ thân thiết">${hearts(st.aff)}</div>
+        <div class="act"><button class="sbtn gr" data-feed="${p.id}" ${st.fedDay===td||S.coins<5?"disabled":""}>${st.fedDay===td?"Đã no bụng":"Cho ăn · 5 xu"}</button></div></div></div>`}).join("") + `</div>`;
+  }
+  if (t==="rev"){
+    const r = S.reviews;
+    if (!r.length) return `<p class="note">Chưa có đánh giá nào. Mở cửa bán vài ca là có ngay.</p>`;
+    const avg = r.reduce((a,x)=>a+x.s,0)/r.length;
+    return `<div class="revsum"><b>${avg.toFixed(1)}</b><div><div style="color:var(--gold);font-size:1.2rem">${"★".repeat(Math.round(avg))}${"☆".repeat(5-Math.round(avg))}</div><div class="note" style="margin:0">${r.length} đánh giá gần nhất</div></div></div>` +
+      r.map(x=>`<div class="rev ${x.love?"love":""}"><div>${animalSVG(x.look, x.s<3?"sad":"ok")}</div><div><div class="top">${esc(x.who)}<span>${"★".repeat(x.s)}</span></div><p>${esc(x.txt)}</p></div></div>`).join("");
+  }
+  if (t==="mail"){
+    if (!S.letters.length) return `<p class="note">Hộp thư còn trống. Mở lá thư hôm nay ở phía trên nha.</p>`;
+    return `<p class="note">Những lá thư Em đã mở (${S.letters.length}).</p>` +
+      S.letters.slice().reverse().map(l=>`<div class="lt"><small>${fmtD(parse(l.day))}/${l.day.slice(0,4)}${l.tag?" · "+esc(l.tag):""}</small><p>${esc(l.txt).replace(/\n/g,"<br>")}</p></div>`).join("");
+  }
+  return "";
+}
+
+/* ===================== BÁN HÀNG ===================== */
+let SH = null, raf = 0, lastT = 0;
+const B0 = () => ({base:null, cream:null, top:null, sugar:null});
+
+function startShift(){
+  const L = lvl();
+  SH = { total: Math.min(16, 6+L+fx("cust")), spawned:0, served:0, left:0, earned:0, stars:[],
+    seats:[null,null,null], build:B0(), t:0, next:1, paused:false, boyDone:!!S.daily.boy, petsDone:[], wrong:0, xp0:S.xp, lv0:L, sel:-1 };
+  document.body.classList.add("selling");
+  renderSell();
+  lastT = performance.now();
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+  sfx("open"); Sound.play("shift");
+}
+
+function spawn(){
+  const free = SH.seats.map((s,i)=>s?null:i).filter(i=>i!==null);
+  if (!free.length) return;
+  const i = pick(free), L = lvl(), rs = unlocked();
+  let c;
+  const petChance = .12 + fx("pet") + CFG.pets.reduce((a,p)=>a+S.pets[p.id].aff,0)/1500;
+  const petsLeft = CFG.pets.filter(p=>!SH.petsDone.includes(p.id));
+  if (!SH.boyDone && SH.spawned >= 2 && Math.random() < .35 || (!SH.boyDone && SH.spawned === SH.total-1)){
+    SH.boyDone = true; S.daily.boy = true; save();
+    c = {who:S.names.his, look:BOY, boy:true, r:rs[0], sugar:"low", max:70};
+  } else if (petsLeft.length && Math.random() < petChance){
+    const p = pick(petsLeft); SH.petsDone.push(p.id);
+    c = {who:petName(p.id), look:PET_LOOK[p.kind], pet:p.kind, r:pick(rs), sugar:"low", max:55};
+  } else {
+    const k = pick(CUSTOMERS);
+    // công thức mới mở được gọi nhiều hơn một chút
+    const r = Math.random()<.3 ? rs[rs.length-1] : pick(rs);
+    c = {who:k.n, look:k, r, sugar: Math.random()<.6?"low":"mid", max: Math.max(26, 42 - L*1.5) * (1+fx("pat"))};
+  }
+  c.pat = c.max; c.id = Math.random();
+  SH.seats[i] = c; SH.spawned++;
+  renderSeat(i, true); sfx("bell");
+}
+
+function loop(now){
+  const dt = Math.min(.1, (now-lastT)/1000); lastT = now;
+  if (SH && !SH.paused){
+    SH.t += dt;
+    if (SH.spawned < SH.total && SH.t >= SH.next && SH.seats.some(s=>!s)){
+      spawn(); SH.next = SH.t + rnd(2.5, 5.5) - Math.min(1.5, lvl()*.12);
+    }
+    SH.seats.forEach((c,i)=>{
+      if (!c || c.gone) return;
+      c.pat -= dt;
+      const f = Math.max(0, c.pat/c.max), cls = f<.3?"low":f<.6?"mid":"";
+      if (c.bar){ c.bar.style.transform = `scaleX(${f.toFixed(3)})`; if (c.cls !== cls){ c.cls = cls; c.bar.className = cls; c.el.classList.toggle("low", cls==="low"); } }
+      if (c.pat <= 0) leave(i);
+    });
+    const left = SH.total - SH.served - SH.left;
+    if (SH.leftShown !== left){ SH.leftShown = left; $("#shLeft").textContent = left + " khách nữa"; }
+    if (SH.spawned >= SH.total && SH.seats.every(s=>!s)) return endShift();
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+function leave(i){
+  const c = SH.seats[i]; c.gone = true; SH.left++;
+  SH.stars.push(1);
+  addReview(c, 1);
+  const el = $("#seat"+i);
+  if (el){ el.querySelector(".cust").innerHTML = animalSVG(c.look,"sad"); el.classList.add("bye"); }
+  sfx("leave");
+  const sh = SH; setTimeout(()=>{ if (SH!==sh) return; SH.seats[i] = null; renderSeat(i); }, 500);
+}
+
+function renderSell(){
+  $("#sell").innerHTML = `
+    <div class="stop">
+      <button class="hbtn" id="pauseBtn" aria-label="Tạm dừng">⏸</button>
+      <div class="left">Ca ${S.shifts+1}<small id="shLeft">${SH.total} khách nữa</small></div>
+      <button class="hbtn sm" data-music aria-label="Bật/tắt nhạc">${S.music?"🎵":"🔇"}</button><div class="coins" id="shCoinBox"><i class="coin"></i><span id="shCoins">+${SH.earned}</span></div>
+    </div>
+    <div class="lane">${[0,1,2].map(i=>`<div class="seat" id="seat${i}"></div>`).join("")}</div>
+    <div class="lanecounter"></div>
+    <div class="bench"><div class="plate" id="plate"></div><div class="picked" id="picked"></div></div>
+    <div class="ings">${[["base","Đế bánh"],["cream","Kem / nhân"],["top","Topping"],["sugar","Độ ngọt"]].map(([g,n])=>
+      `<div class="ig"><h4>${n}</h4><div class="chips">${ING[g].map(x=>`<button class="chip" data-ing="${g}:${x.id}"><i style="background:${x.c}"></i>${x.n}</button>`).join("")}</div></div>`).join("")}</div>
+    <div class="actions"><button class="trash" id="trashBtn">Làm lại</button><button class="big gr" id="serveBtn">Giao bánh</button></div>`;
+  SH.seats.forEach((_,i)=>renderSeat(i));
+  renderBuild();
+}
+
+function renderSeat(i, enter){
+  const el = $("#seat"+i); if (!el) return;
+  const c = SH.seats[i];
+  el.className = "seat" + (enter?" enter":"") + (SH.sel===i?" pick":"");
+  if (!c){ el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="bub">${cakeSVG(c.r)}<span class="rn">${esc(c.r.n)}</span>
+    <span class="pill ${c.sugar==="low"?"":"pk"}">${c.sugar==="low"?"Ít ngọt":"Vừa ngọt"}</span>
+    <div class="pat"><i style="transform:scaleX(${(c.pat/c.max).toFixed(3)})"></i></div></div>
+    <button class="cust" data-seat="${i}" aria-label="${esc(c.who)}">${animalSVG(c.look)}</button><div class="who">${c.boy?"💚 ":""}${esc(c.who)}</div>`;
+  c.el = el; c.bar = el.querySelector(".pat i"); c.cls = "";
+}
+
+function renderBuild(added){
+  const b = SH.build;
+  $("#plate").innerHTML = cakeSVG(b);
+  if (added) $("#plate svg").classList.add("plop");
+  $("#picked").innerHTML = [["base","Đế"],["cream","Kem"],["top","Topping"],["sugar","Độ ngọt"]].map(([g,n])=>{
+    const x = b[g] && ING[g].find(v=>v.id===b[g]);
+    return `<div><span>${n}</span>${x?`<b>${x.n}</b>`:'<b class="no">chưa chọn</b>'}</div>`;
+  }).join("");
+  document.querySelectorAll("[data-ing]").forEach(el=>{
+    const [g,id] = el.dataset.ing.split(":"); el.classList.toggle("on", b[g]===id);
+  });
+}
+
+const matches = (c,b) => c && !c.gone && c.r.base===b.base && c.r.cream===b.cream && c.r.top===b.top && c.sugar===b.sugar;
+
+function serve(){
+  const b = SH.build;
+  if (!b.base || !b.cream || !b.top || !b.sugar) return toast("Bánh chưa xong: cần đủ đế, kem, topping và độ ngọt");
+  let idx = SH.sel>=0 && matches(SH.seats[SH.sel], b) ? SH.sel : -1;
+  if (idx<0){
+    const cands = SH.seats.map((c,i)=>matches(c,b)?i:-1).filter(i=>i>=0);
+    if (cands.length) idx = cands.sort((x,y)=>SH.seats[x].pat/SH.seats[x].max - SH.seats[y].pat/SH.seats[y].max)[0];
+  }
+  if (idx<0){
+    SH.wrong++; SH.build = B0(); renderBuild(); sfx("wrong");
+    return toast("Không ai gọi bánh này hết 😿 Xem lại đơn nha");
+  }
+  const c = SH.seats[idx]; c.gone = true;
+  const f = c.pat / c.max;
+  const s = f>.55?5 : f>.3?4 : 3;
+  const price = Math.round(c.r.price * (1+fx("price")));
+  const tip = Math.round(price * f * .5 * (1+fx("tip")));
+  const earn = (price + tip) * coinMult();
+  S.coins += earn; SH.earned += earn; SH.served++; S.served++; SH.stars.push(s);
+  S.xp += 4 + s;
+  S.daily.served++; S.daily.earned += earn; if (s===5) S.daily.five++;
+  if (c.pet) { const p = CFG.pets.find(p=>p.kind===c.pet); S.pets[p.id].aff += 2; }
+  addReview(c, s);
+  save();
+  const el = $("#seat"+idx);
+  el.querySelector(".cust").innerHTML = animalSVG(c.look,"happy");
+  el.classList.add("happy");
+  const r = el.getBoundingClientRect();
+  floatText(r.left+r.width/2, r.top+40, "+"+earn);
+  floatHearts(r.left+r.width/2, r.top+60, c.boy?6:2);
+  sfx("coin"); flyCake(el);
+  $("#shCoins").textContent = "+"+SH.earned;
+  const cb = $("#shCoinBox"); cb.classList.remove("pulse"); void cb.offsetWidth; cb.classList.add("pulse");
+  SH.build = B0(); SH.sel = -1; renderBuild();
+  if (c.boy) setTimeout(()=>{ if (SH){ SH.paused = true; boyNote(c); } }, 500);
+  const sh = SH;
+  setTimeout(()=>{ el.classList.add("bye"); setTimeout(()=>{ if (SH!==sh) return; SH.seats[idx]=null; renderSeat(idx); }, 450); }, 450);
+}
+
+// bánh bay từ đĩa tới bong bóng gọi món của khách
+function flyCake(seatEl){
+  const src = $("#plate svg"), dst = seatEl.querySelector(".bub");
+  if (!src || !dst || !src.animate || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
+  const k = src.cloneNode(true); k.classList.remove("plop");
+  Object.assign(k.style, {position:"fixed", left:a.left+"px", top:a.top+"px", width:a.width+"px", height:a.height+"px", zIndex:65, pointerEvents:"none"});
+  document.body.appendChild(k);
+  const dx = b.left + b.width/2 - (a.left + a.width/2), dy = b.top + b.height/2 - (a.top + a.height/2);
+  k.animate([{transform:"translate(0,0) scale(1)"}, {transform:`translate(${dx*.5}px,${dy*.5-50}px) scale(.8) rotate(-8deg)`, offset:.5}, {transform:`translate(${dx}px,${dy}px) scale(.4)`, opacity:.3}],
+    {duration:480, easing:"cubic-bezier(.4,0,.2,1)"}).onfinish = () => k.remove();
+}
+
+function addReview(c, s){
+  let txt;
+  if (c.boy) txt = s>1 ? pick(CFG.notes) : "Anh chờ Em hoài nè, nhưng không sao, Anh vẫn thương.";
+  else if (c.pet) txt = pick(PET_REVIEWS[c.pet]);
+  else txt = pick(REVIEWS[s]);
+  if (c.boy && s>1) c.note = txt;
+  S.reviews.unshift({who:c.who, look:c.look, s: c.pet||c.boy ? Math.max(s,5) : s, txt, love:!!c.boy});
+  S.reviews = S.reviews.slice(0,40);
+}
+
+function boyNote(c){
+  modal(`<div style="width:110px;margin:0 auto">${animalSVG(BOY,"happy")}</div>
+    <h2>${esc(S.names.his)} ghé tiệm nè!</h2>
+    <p class="note" style="margin:0">Mua bánh matcha ít ngọt, để lại lời nhắn cho chủ tiệm:</p>
+    <div class="paper">${esc(c.note || pick(CFG.notes))}<span class="sig">- ${esc(S.names.his)}</span></div>
+    <div class="mbtns"><button class="big" data-close>Bán tiếp thôi</button></div>`, ()=>{ SH.paused = false; lastT = performance.now(); });
+}
+
+function endShift(){
+  cancelAnimationFrame(raf);
+  S.shifts++; save();
+  const avg = SH.stars.length ? SH.stars.reduce((a,b)=>a+b,0)/SH.stars.length : 0;
+  const L = lvl(), newR = RECIPES.filter(r=>r.lv>SH.lv0 && r.lv<=L);
+  const g = goals();
+  modal(`<h2>${SH.left===0?"Ca bán tuyệt vời!":"Đóng cửa rồi!"}</h2>
+    <div class="kpis"><div><b>${SH.served}</b>đã bán</div><div><b>+${SH.earned}</b>xu</div><div><b>${avg.toFixed(1)}★</b>trung bình</div></div>
+    ${L>SH.lv0?`<div class="card event" style="margin-top:0"><h3>Lên cấp ${L}!</h3><p>${newR.length?"Mở khoá: "+newR.map(r=>esc(r.n)).join(", "):"Khách sẽ đông hơn một chút."}</p></div>`:""}
+    ${SH.left?`<p class="note">${SH.left} khách chờ lâu quá nên bỏ về.</p>`:""}
+    <p class="note">Mục tiêu hôm nay: ${g.filter(x=>x.cur>=x.need).length}/3 hoàn thành</p>
+    <div class="mbtns"><button class="big" id="againBtn">Mở thêm ca nữa</button><button class="sbtn" style="padding:10px" data-close>Về tiệm</button></div>`,
+    ()=>{ document.body.classList.remove("selling"); SH = null; renderHome(); Sound.play("home"); });
+  if (L>SH.lv0){ floatHearts(innerWidth/2, innerHeight/2, 12); sfx("level"); } else sfx("end");
+}
+
+/* ===================== HỘP THOẠI & HIỆU ỨNG ===================== */
+let onClose = null;
+function modal(html, cb){
+  onClose = cb || null;
+  $("#layer").innerHTML = `<div class="modal" id="modal"><div class="mbox" role="dialog" aria-modal="true">${html}</div></div>`;
+}
+function closeModal(){
+  $("#layer").innerHTML = ""; const cb = onClose; onClose = null; cb && cb();
+}
+let toastT;
+function toast(m){
+  clearTimeout(toastT);
+  const old = document.querySelector(".toast"); old && old.remove();
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = m;
+  document.body.appendChild(t); toastT = setTimeout(()=>t.remove(), 2200);
+}
+function floatHearts(x, y, n){
+  for (let i=0;i<n;i++){
+    const h = document.createElement("div"); h.className = "fh";
+    h.textContent = pick(["💚","💗","♥","🍵"]);
+    h.style.left = (x-10+rnd(-20,20))+"px"; h.style.top = (y+rnd(-10,10))+"px";
+    h.style.setProperty("--dx", rnd(-40,40)+"px"); h.style.animationDelay = i*60+"ms";
+    document.body.appendChild(h); setTimeout(()=>h.remove(), 1300+i*60);
+  }
+}
+function floatText(x, y, s){
+  const h = document.createElement("div"); h.className = "coinfly"; h.textContent = s;
+  h.style.left = (x-14)+"px"; h.style.top = y+"px";
+  document.body.appendChild(h); setTimeout(()=>h.remove(), 1000);
+}
+/* ===================== ÂM THANH ===================== */
+// Nhạc nền + hiệu ứng tự tổng hợp bằng Web Audio: không cần file mp3, nhẹ và chạy offline.
+const Sound = (() => {
+  let ctx = null, master, musicBus, sfxBus, noiseBuf, timer = 0, track = null, want = null, step = 0, nextT = 0;
+  const hz = m => 440 * Math.pow(2, (m-69)/12);
+  const N = s => { // "A5" -> midi
+    const m = /^([A-G])(#|b)?(\d)$/.exec(s); if (!m) return null;
+    return {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2]==="#"?1:m[2]==="b"?-1:0) + (+m[3]+1)*12;
+  };
+  const mel = str => str.trim().split(/\s+/).map(x => x==="." ? null : N(x));
+
+  // Hai bài: "Sáng ở tiệm" (hộp nhạc, chậm) và "Giờ cao điểm" (vui, nhanh)
+  const TRACKS = {
+    home: { bpm:84, vol:.55,
+      chords:[[53,57,60],[50,53,57],[46,50,53],[48,52,55],[53,57,60],[45,48,52],[46,50,53],[48,52,55]],
+      mel: mel(`A5 . C6 . A5 G5 F5 .  D5 . F5 . A5 . G5 .  F5 . D5 . F5 G5 A5 .  G5 . . E5 C5 . . .
+                A5 . C6 . D6 C6 A5 .  C6 . A5 . E5 . G5 .  F5 G5 A5 . D5 . F5 .  E5 . G5 . F5 . . .`),
+      lead:"box", bass:[0,4], pad:[2,6], hat:[] },
+    shift: { bpm:112, vol:.5,
+      chords:[[48,52,55],[45,48,52],[41,45,48],[43,47,50],[48,52,55],[40,43,47],[41,45,48],[43,47,50]],
+      mel: mel(`E5 G5 . C6 . G5 E5 .  A5 . C6 . A5 G5 E5 .  F5 A5 . C6 . A5 F5 .  G5 . B5 . D6 . B5 .
+                C6 . G5 . E5 G5 C6 .  B5 . G5 . E5 . G5 .  A5 G5 F5 . A5 . C6 .  D6 . B5 . G5 . . .`),
+      lead:"pluck", bass:[0,3,4,6], pad:[2,6], hat:[1,3,5,7] }
+  };
+
+  function init(){
+    if (ctx) return true;
+    try {
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const comp = ctx.createDynamicsCompressor();
+      master = ctx.createGain(); master.gain.value = .9;
+      musicBus = ctx.createGain(); musicBus.gain.value = 0;
+      sfxBus = ctx.createGain(); sfxBus.gain.value = .9;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 4200;
+      musicBus.connect(lp).connect(master); sfxBus.connect(master); master.connect(comp).connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate*.3, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+      return true;
+    } catch(e){ ctx = null; return false; }
+  }
+
+  // ---- nhạc cụ ----
+  function tone(bus, type, f, t, dur, vol, att, f2){
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur*.6);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + (att||.006));
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(bus); o.start(t); o.stop(t + dur + .05);
+  }
+  function musicBox(m, t, v){ const f = hz(m); tone(musicBus,"sine",f,t,1.3,.16*v); tone(musicBus,"sine",f*2,t,.5,.05*v); tone(musicBus,"triangle",f*3,t,.15,.015*v); }
+  function pluck(m, t, v){ const f = hz(m); tone(musicBus,"triangle",f,t,.35,.14*v); tone(musicBus,"sine",f*2,t,.18,.04*v); }
+  function hat(t, v){
+    const s = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; hp.type = "highpass"; hp.frequency.value = 7000;
+    g.gain.setValueAtTime(.035*v, t); g.gain.exponentialRampToValueAtTime(.0001, t+.04);
+    s.connect(hp).connect(g).connect(musicBus); s.start(t); s.stop(t+.05);
+  }
+
+  function schedule(){
+    if (!ctx || !track) return;
+    const T = TRACKS[track], dt = 60/T.bpm/2;
+    while (nextT < ctx.currentTime + .15){
+      const bar = Math.floor(step/8) % 8, pos = step % 8, ch = T.chords[bar], v = T.vol;
+      const m = T.mel[(bar*8+pos) % T.mel.length];
+      if (m) (T.lead==="box" ? musicBox : pluck)(m, nextT, v);
+      if (T.bass.includes(pos)) tone(musicBus,"sine",hz(ch[0]-12),nextT,T.lead==="box"?.9:.3,.2*v,.01);
+      if (T.pad.includes(pos)) ch.forEach((n,i)=> tone(musicBus,"triangle",hz(n+12),nextT+i*.02,.7,.035*v,.03));
+      if (T.hat.includes(pos)) hat(nextT, v);
+      step++; nextT += dt;
+    }
+  }
+
+  function play(name){
+    want = name;
+    if (!S.music || !ctx || document.hidden) return;
+    if (track === name) return;
+    const now = ctx.currentTime;
+    musicBus.gain.cancelScheduledValues(now);
+    musicBus.gain.setValueAtTime(musicBus.gain.value, now);
+    musicBus.gain.linearRampToValueAtTime(0, now + .35);
+    setTimeout(() => {
+      if (!S.music || want !== name) return;
+      track = name; step = 0; nextT = ctx.currentTime + .05;
+      const t = ctx.currentTime; musicBus.gain.setValueAtTime(0, t); musicBus.gain.linearRampToValueAtTime(1, t + 1.2);
+      clearInterval(timer); timer = setInterval(schedule, 30); schedule();
+    }, track ? 380 : 0);
+  }
+  function stop(){
+    clearInterval(timer); timer = 0; track = null;
+    if (ctx){ const t = ctx.currentTime; musicBus.gain.cancelScheduledValues(t); musicBus.gain.setValueAtTime(musicBus.gain.value,t); musicBus.gain.linearRampToValueAtTime(0,t+.3); }
+  }
+
+  // ---- hiệu ứng ----
+  const SFX = {
+    tap:    t => tone(sfxBus,"sine",620,t,.09,.18,.004,930),
+    untap:  t => tone(sfxBus,"sine",520,t,.09,.14,.004,340),
+    click:  t => tone(sfxBus,"triangle",1400,t,.04,.06),
+    bell:   t => { tone(sfxBus,"sine",hz(84),t,.7,.16); tone(sfxBus,"sine",hz(79),t+.16,.9,.16); },
+    coin:   t => { tone(sfxBus,"triangle",hz(88),t,.18,.16); tone(sfxBus,"triangle",hz(93),t+.07,.35,.16); tone(sfxBus,"sine",hz(100),t+.12,.3,.05); },
+    wrong:  t => { tone(sfxBus,"square",hz(52),t,.14,.05); tone(sfxBus,"square",hz(49),t+.12,.22,.05); },
+    leave:  t => tone(sfxBus,"sine",440,t,.45,.14,.01,190),
+    boop:   t => { tone(sfxBus,"sine",660,t,.12,.14,.005,1100); tone(sfxBus,"sine",hz(88),t+.08,.18,.05); },
+    trash:  t => { const s = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noiseBuf; bp.type="bandpass"; bp.frequency.setValueAtTime(2500,t); bp.frequency.exponentialRampToValueAtTime(400,t+.2); g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.001,t+.22); s.connect(bp).connect(g).connect(sfxBus); s.start(t); s.stop(t+.25); },
+    open:   t => [72,76,79,84].forEach((m,i)=> tone(sfxBus,"triangle",hz(m),t+i*.08,.4,.12)),
+    level:  t => [72,76,79,84,88,91].forEach((m,i)=> tone(sfxBus,"triangle",hz(m),t+i*.07,.5,.12)),
+    letter: t => [65,69,72,77,81,84,89].forEach((m,i)=> tone(sfxBus,"sine",hz(m),t+i*.06,1.1,.08)),
+    end:    t => [79,76,72,74,72].forEach((m,i)=> tone(sfxBus,"triangle",hz(m),t+i*.12,.5,.1))
+  };
+  function sfx(name){
+    if (!S.sound || !ctx || ctx.state !== "running") return;
+    try { SFX[name] && SFX[name](ctx.currentTime + .005); } catch(e){}
+  }
+
+  // Trình duyệt chỉ cho phát tiếng sau khi người chơi chạm lần đầu
+  function unlock(){
+    if (!init()) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (want) play(want);
+  }
+  document.addEventListener("pointerdown", unlock, {passive:true});
+  document.addEventListener("keydown", unlock);
+  document.addEventListener("visibilitychange", () => {
+    if (!ctx) return;
+    if (document.hidden){ clearInterval(timer); timer = 0; ctx.suspend(); }
+    else { ctx.resume().then(()=>{ if (track && S.music){ nextT = ctx.currentTime + .05; clearInterval(timer); timer = setInterval(schedule, 30); } else if (want) play(want); }); }
+  });
+  return { play, stop, sfx, setMusic(on){ S.music = on; save(); on ? (unlock(), play(want||"home")) : stop(); } };
+})();
+const sfx = n => Sound.sfx(n);
+
+/* ===================== THƯ MỖI NGÀY ===================== */
+function openLetter(){
+  const day = S.daily.day;
+  let l = S.letters.find(x=>x.day===day && !x.bonus);
+  if (!l){
+    const te = todayEvents();
+    l = te.length ? {day, txt:eventNote(te[0]), tag:te[0].t} : {day, txt:CFG.notes[(daysTogether()-1) % CFG.notes.length]};
+    S.letters.push(l); save();
+  }
+  modal(`<h2>Gửi ${esc(S.names.her)} 💌</h2><p class="note" style="margin:0">Ngày thứ ${daysTogether()} bên nhau${l.tag?" · "+esc(l.tag):""}</p>
+    <div class="paper">${esc(l.txt)}<span class="sig">- ${esc(S.names.his)}</span></div>
+    <div class="mbtns"><button class="big" data-close>Thương ghê</button></div>`, renderHome);
+  floatHearts(innerWidth/2, innerHeight/2, 6); sfx("letter");
+}
+function claimGoals(){
+  if (S.daily.claimed || !goals().every(x=>x.cur>=x.need)) return;
+  S.daily.claimed = true; S.coins += 60;
+  const used = new Set(S.letters.map(l=>l.txt));
+  const txt = CFG.notes.find(n=>!used.has(n)) || pick(CFG.notes);
+  S.letters.push({day:S.daily.day, txt, tag:"Thư bí mật", bonus:true}); save();
+  modal(`<h2>Xong hết mục tiêu rồi!</h2><p class="note">+60 xu và một lá thư bí mật:</p>
+    <div class="paper">${esc(txt)}<span class="sig">- ${esc(S.names.his)}</span></div>
+    <div class="mbtns"><button class="big" data-close>Nhận nè</button></div>`, renderHome);
+  floatHearts(innerWidth/2, innerHeight/2, 8); sfx("level");
+}
+
+/* ===================== CÀI ĐẶT ===================== */
+let resetArm = false;
+function settings(){
+  resetArm = false;
+  modal(`<h2>Cài đặt tiệm</h2>
+    <form id="setForm">
+      <label class="field">Tên tiệm<input id="fShop" value="${esc(S.names.shop)}" maxlength="30"></label>
+      <label class="field">Tên chủ tiệm (bạn nữ)<input id="fHer" value="${esc(S.names.her)}" maxlength="20"></label>
+      <label class="field">Tên người gửi thư (bạn nam)<input id="fHis" value="${esc(S.names.his)}" maxlength="20"></label>
+      ${CFG.pets.map(p=>`<label class="field">Tên bé ${p.kind==="dog"?"cún trắng":p.kind==="goldcat"?"mèo golden":"mèo trắng"}<input id="fPet_${p.id}" value="${esc(petName(p.id))}" maxlength="16"></label>`).join("")}
+      <label class="field" style="display:flex;align-items:center;gap:8px"><input id="fMusic" type="checkbox" style="width:auto;margin:0" ${S.music?"checked":""}>Nhạc nền</label>
+      <label class="field" style="display:flex;align-items:center;gap:8px"><input id="fSound" type="checkbox" style="width:auto;margin:0" ${S.sound?"checked":""}>Hiệu ứng âm thanh</label>
+      <div class="mbtns"><button class="big" type="submit">Lưu</button>
+      <button class="sbtn" type="button" id="resetBtn" style="padding:8px;color:var(--warn);border-color:var(--warn)">Chơi lại từ đầu</button></div>
+    </form>`, renderHome);
+  $("#setForm").addEventListener("submit", e=>{
+    e.preventDefault();
+    const v = id => $(id).value.trim();
+    S.names.shop = v("#fShop") || CFG.shopName; S.names.her = v("#fHer") || CFG.herName; S.names.his = v("#fHis") || CFG.hisName;
+    CFG.pets.forEach(p=> S.names.pets[p.id] = v("#fPet_"+p.id) || p.name);
+    S.sound = $("#fSound").checked; const m = $("#fMusic").checked; if (m !== S.music) Sound.setMusic(m); save(); closeModal(); toast("Đã lưu");
+  });
+  $("#resetBtn").addEventListener("click", e=>{
+    if (!resetArm){ resetArm = true; e.target.textContent = "Bấm lần nữa để xoá hết tiến trình"; return; }
+    S = fresh(); save(); closeModal(); toast("Đã chơi lại từ đầu");
+  });
+}
+
+/* ===================== SỰ KIỆN BẤM ===================== */
+document.addEventListener("click", e=>{
+  const t = e.target.closest("button, .modal"); if (!t) return;
+  if (t.id==="modal"){ if (e.target===t && !SH) closeModal(); return; }
+  if (t.hasAttribute("data-close")) return closeModal();
+  if (t.id==="againBtn"){ $("#layer").innerHTML=""; onClose=null; return startShift(); }
+  if (t.hasAttribute("data-music")){ Sound.setMusic(!S.music); document.querySelectorAll("[data-music]").forEach(b=>b.textContent = S.music?"🎵":"🔇"); return; }
+  if (t.dataset.tab){ sfx("click"); tab = t.dataset.tab; try{localStorage.setItem(KEY+"-tab",tab);}catch(_){}; renderHome(); return; }
+  if (t.id==="openBtn") return startShift();
+  if (t.id==="letterBtn") return openLetter();
+  if (t.id==="claimBtn") return claimGoals();
+  if (t.id==="setBtn") return settings();
+  if (t.dataset.buy){
+    const d = DECOR.find(x=>x.id===t.dataset.buy);
+    if (S.coins < d.cost || S.decor.includes(d.id)) return;
+    S.coins -= d.cost; S.decor.push(d.id); save(); renderHome(); toast("Đã mua "+d.n);
+    return;
+  }
+  if (t.dataset.pet){
+    const st = S.pets[t.dataset.pet], r = t.getBoundingClientRect();
+    if (st.petDay !== S.daily.day){ st.petDay = S.daily.day; st.pets = 0; }
+    if (st.pets < 10){ st.pets++; st.aff++; save(); }
+    floatHearts(r.left+r.width/2, r.top+r.height/3, 3); sfx("boop");
+    t.classList.remove("squish"); void t.offsetWidth; t.classList.add("squish");
+    const h = t.closest(".pet")?.querySelector(".hearts"); if (h) h.textContent = hearts(st.aff);
+    return;
+  }
+  if (t.dataset.feed){
+    const st = S.pets[t.dataset.feed];
+    if (st.fedDay === S.daily.day || S.coins < 5) return;
+    S.coins -= 5; st.fedDay = S.daily.day; st.aff += 5; save();
+    const r = t.getBoundingClientRect(); floatHearts(r.left+r.width/2, r.top, 5);
+    toast(petName(t.dataset.feed)+" ăn ngon lành!"); renderHome(); return;
+  }
+  if (!SH) return;
+  if (t.dataset.ing){
+    const [g,id] = t.dataset.ing.split(":");
+    const add = SH.build[g] !== id; SH.build[g] = add ? id : null; renderBuild(add); sfx(add?"tap":"untap"); return;
+  }
+  if (t.dataset.seat){
+    const i = +t.dataset.seat; SH.sel = SH.sel===i ? -1 : i;
+    SH.seats.forEach((_,k)=>$("#seat"+k).classList.toggle("pick", SH.sel===k)); return;
+  }
+  if (t.id==="trashBtn"){ SH.build = B0(); renderBuild(); sfx("trash"); return; }
+  if (t.id==="serveBtn") return serve();
+  if (t.id==="pauseBtn") return pauseMenu();
+});
+
+function pauseMenu(){
+  if (!SH) return;
+  SH.paused = true;
+  modal(`<h2>Tạm nghỉ xíu</h2><p class="note">Khách vẫn ngồi chờ, không ai bỏ về đâu.</p>
+    <div class="mbtns"><button class="big gr" data-close>Bán tiếp</button><button class="sbtn" style="padding:10px" id="quitBtn">Đóng cửa sớm</button></div>`,
+    ()=>{ if (SH){ SH.paused = false; lastT = performance.now(); } });
+  $("#quitBtn").addEventListener("click", ()=>{
+    onClose = null; $("#layer").innerHTML = "";
+    SH.total = SH.spawned; SH.seats.forEach((c,i)=>{ if (c && !c.gone){ SH.seats[i] = null; SH.left++; } });
+    SH.paused = false; endShift();
+  });
+}
+document.addEventListener("visibilitychange", ()=>{ if (document.hidden && SH && !SH.paused && !$("#modal")) pauseMenu(); });
+
+renderHome();
+Sound.play("home");
+</script>
