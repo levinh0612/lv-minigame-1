@@ -22,8 +22,8 @@ cat > dist/manifest.webmanifest <<'M'
   "short_name": "Tiệm Bánh",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#fdf3e4",
-  "theme_color": "#fdf3e4",
+  "background_color": "#FFF3F6",
+  "theme_color": "#FFD6E0",
   "lang": "vi",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
