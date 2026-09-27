@@ -128,7 +128,7 @@ body.selling .app{display:none}
 .bub{background:#fff;border:2px solid var(--line);border-radius:12px;padding:4px 4px 3px;width:100%;text-align:center;position:relative;margin-bottom:6px}
 .bub::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff}
 .bub .cake{width:64px;height:48px;display:block;margin:0 auto}
-.bub .rn{font-size:.66rem;font-weight:800;line-height:1.1;display:block;min-height:1.5em}
+.bub .rn{font-size:.78rem;font-weight:800;line-height:1.15;display:block;min-height:2.3em;color:var(--ink)}
 .bub .pill{font-size:.6rem}
 .pat{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:3px}
 .pat i{display:block;height:100%;width:100%;background:var(--matcha);transform-origin:left center;will-change:transform;transition:background .3s}
@@ -172,12 +172,20 @@ body.selling .app{display:none}
 @keyframes bye{to{transform:translateX(40px);opacity:0}}
 .lanecounter{height:12px;background:var(--wood-l);border:3px solid var(--wood);border-top-width:5px;border-radius:0 0 8px 8px;margin-bottom:8px}
 
-.bench{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:8px 10px;display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center}
-.plate svg{width:120px;height:96px;display:block}
-.picked{font-size:.78rem;line-height:1.35}
-.picked div{display:flex;gap:6px}
-.picked span{color:var(--soft);width:52px;flex:none}
-.picked b.no{color:var(--line)}
+.bench{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:8px 10px;display:grid;grid-template-columns:112px 1fr;gap:10px;align-items:center}
+.plate svg{width:112px;height:90px;display:block}
+.plate .pn{font-size:.74rem;font-weight:800;text-align:center;line-height:1.15;color:var(--soft);margin-top:-4px}
+.plate .pn.ok{color:var(--matcha-d)}
+.ticket{min-width:0}
+.ticket h5{margin:0;font-size:1rem;font-weight:800;line-height:1.15;color:var(--pink-d)}
+.ticket small{display:block;font-size:.7rem;color:var(--soft);font-weight:600;margin-bottom:3px}
+.tk{display:grid;grid-template-columns:54px 1fr 16px;gap:4px;align-items:start;font-size:.8rem;line-height:1.2;padding:2px 0;border-top:1px dashed var(--line)}
+.tk span{color:var(--soft);font-weight:600}
+.tk b{font-weight:800}
+.tk em{display:block;font-style:normal;font-size:.7rem;font-weight:700;color:var(--warn)}
+.tk i{font-style:normal;font-weight:800;text-align:center}
+.tk.ok b,.tk.ok i{color:var(--matcha-d)}
+.tk.bad b{color:var(--ink)}.tk.bad i{color:var(--warn)}
 .ings{flex:1;overflow-y:auto;margin-top:8px;padding-bottom:8px}
 .ig{margin-bottom:6px}
 .ig h4{margin:0 0 3px;font-size:.75rem;font-weight:800;color:var(--soft)}
@@ -285,10 +293,10 @@ const ING = {
   ],
   cream: [
     {id:"mcream", n:"Kem matcha",     c:"#9cc26a"},
-    {id:"fresh",  n:"Kem tươi",       c:"#fffaf0"},
+    {id:"fresh",  n:"Kem tươi",       c:"#ffffff"},
     {id:"bean",   n:"Đậu đỏ",         c:"#8e3b3b"},
-    {id:"cheese", n:"Phô mai",        c:"#fff0b3"},
-    {id:"wchoc",  n:"Socola trắng",   c:"#f6ecd6"}
+    {id:"cheese", n:"Phô mai",        c:"#ffd95e"},
+    {id:"wchoc",  n:"Socola trắng",   c:"#ead0a4"}
   ],
   top: [
     {id:"powder", n:"Bột matcha", c:"#6e9a45"},
@@ -789,7 +797,7 @@ function renderSell(){
     </div>
     <div class="lane">${[0,1,2].map(i=>`<div class="seat" id="seat${i}"></div>`).join("")}</div>
     <div class="lanecounter"></div>
-    <div class="bench"><div class="plate" id="plate"></div><div class="picked" id="picked"></div></div>
+    <div class="bench"><div class="plate" id="plate"></div><div class="ticket" id="ticket"></div></div>
     <div class="ings">${[["base","Đế bánh"],["cream","Kem / nhân"],["top","Topping"],["sugar","Độ ngọt"]].map(([g,n])=>
       `<div class="ig"><h4>${n}</h4><div class="chips">${ING[g].map(x=>`<button class="chip" data-ing="${g}:${x.id}"><i style="background:${x.c}"></i>${x.n}</button>`).join("")}</div></div>`).join("")}</div>
     <div class="actions"><button class="trash" id="trashBtn">Làm lại</button><button class="big gr" id="serveBtn">Giao bánh</button></div>`;
@@ -801,25 +809,49 @@ function renderSeat(i, enter){
   const el = $("#seat"+i); if (!el) return;
   const c = SH.seats[i];
   el.className = "seat" + (enter?" enter":"") + (SH.sel===i?" pick":"");
-  if (!c){ el.innerHTML = ""; return; }
+  if (!c){ el.innerHTML = ""; renderTicket(); return; }
   el.innerHTML = `<div class="bub">${cakeSVG(c.r)}<span class="rn">${esc(c.r.n)}</span>
     <span class="pill ${c.sugar==="low"?"":"pk"}">${c.sugar==="low"?"Ít ngọt":"Vừa ngọt"}</span>
     <div class="pat"><i style="transform:scaleX(${(c.pat/c.max).toFixed(3)})"></i></div></div>
     <button class="cust" data-seat="${i}" aria-label="${esc(c.who)}">${animalSVG(c.look)}</button><div class="who">${c.boy?"💚 ":""}${esc(c.who)}</div>`;
   c.el = el; c.bar = el.querySelector(".pat i"); c.cls = "";
+  renderTicket();
 }
 
 function renderBuild(added){
   const b = SH.build;
   $("#plate").innerHTML = cakeSVG(b);
   if (added) $("#plate svg").classList.add("plop");
-  $("#picked").innerHTML = [["base","Đế"],["cream","Kem"],["top","Topping"],["sugar","Độ ngọt"]].map(([g,n])=>{
-    const x = b[g] && ING[g].find(v=>v.id===b[g]);
-    return `<div><span>${n}</span>${x?`<b>${x.n}</b>`:'<b class="no">chưa chọn</b>'}</div>`;
-  }).join("");
+  const made = RECIPES.find(r => r.base===b.base && r.cream===b.cream && r.top===b.top);
+  $("#plate").insertAdjacentHTML("beforeend", `<div class="pn ${made?"ok":""}">${made ? esc(made.n) : b.base ? "Chưa thành bánh" : "Đĩa trống"}</div>`);
+  renderTicket();
   document.querySelectorAll("[data-ing]").forEach(el=>{
     const [g,id] = el.dataset.ing.split(":"); el.classList.toggle("on", b[g]===id);
   });
+}
+
+// Phiếu gọi món: khách được chọn, hoặc khách chờ lâu nhất
+const PARTS = [["base","Đế"],["cream","Kem"],["top","Topping"],["sugar","Độ ngọt"]];
+const ingName = (g,id) => (ING[g].find(x=>x.id===id)||{}).n || "";
+const need = c => ({base:c.r.base, cream:c.r.cream, top:c.r.top, sugar:c.sugar});
+function ticketIdx(){
+  if (!SH) return -1;
+  if (SH.sel>=0 && SH.seats[SH.sel] && !SH.seats[SH.sel].gone) return SH.sel;
+  let best = -1;
+  SH.seats.forEach((c,i)=>{ if (c && !c.gone && (best<0 || c.pat/c.max < SH.seats[best].pat/SH.seats[best].max)) best = i; });
+  return best;
+}
+function renderTicket(){
+  const el = $("#ticket"); if (!el || !SH) return;
+  const i = ticketIdx();
+  SH.seats.forEach((_,k)=>{ const s = $("#seat"+k); s && s.classList.toggle("pick", k===i); });
+  if (i<0){ el.innerHTML = '<p class="note" style="margin:0">Chờ khách vào tiệm…</p>'; return; }
+  const c = SH.seats[i], n = need(c), b = SH.build;
+  el.innerHTML = `<h5>${esc(c.r.n)}</h5><small>Phiếu của ${esc(c.who)} · chạm khách khác để đổi</small>` +
+    PARTS.map(([g,label])=>{
+      const st = !b[g] ? "" : b[g]===n[g] ? "ok" : "bad";
+      return `<div class="tk ${st}"><span>${label}</span><b>${ingName(g,n[g])}${st==="bad"?`<em>đang chọn: ${ingName(g,b[g])}</em>`:""}</b><i>${st==="ok"?"✓":st==="bad"?"✗":""}</i></div>`;
+    }).join("");
 }
 
 const matches = (c,b) => c && !c.gone && c.r.base===b.base && c.r.cream===b.cream && c.r.top===b.top && c.sugar===b.sugar;
@@ -833,8 +865,11 @@ function serve(){
     if (cands.length) idx = cands.sort((x,y)=>SH.seats[x].pat/SH.seats[x].max - SH.seats[y].pat/SH.seats[y].max)[0];
   }
   if (idx<0){
-    SH.wrong++; SH.build = B0(); renderBuild(); sfx("wrong");
-    return toast("Không ai gọi bánh này hết 😿 Xem lại đơn nha");
+    SH.wrong++; sfx("wrong");
+    const ti = ticketIdx();
+    if (ti<0) return toast("Chưa có khách nào gọi món");
+    const c = SH.seats[ti], n = need(c), bad = PARTS.find(([g])=>b[g]!==n[g]);
+    return toast(`Sai ${bad[1].toLowerCase()} rồi: ${c.who} gọi ${ingName(bad[0],n[bad[0]])}, không phải ${ingName(bad[0],b[bad[0]])}`);
   }
   const c = SH.seats[idx]; c.gone = true;
   const f = c.pat / c.max;
@@ -924,7 +959,7 @@ function toast(m){
   clearTimeout(toastT);
   const old = document.querySelector(".toast"); old && old.remove();
   const t = document.createElement("div"); t.className = "toast"; t.textContent = m;
-  document.body.appendChild(t); toastT = setTimeout(()=>t.remove(), 2200);
+  document.body.appendChild(t); toastT = setTimeout(()=>t.remove(), 3200);
 }
 function floatHearts(x, y, n){
   for (let i=0;i<n;i++){
@@ -1165,8 +1200,7 @@ document.addEventListener("click", e=>{
     const add = SH.build[g] !== id; SH.build[g] = add ? id : null; renderBuild(add); sfx(add?"tap":"untap"); return;
   }
   if (t.dataset.seat){
-    const i = +t.dataset.seat; SH.sel = SH.sel===i ? -1 : i;
-    SH.seats.forEach((_,k)=>$("#seat"+k).classList.toggle("pick", SH.sel===k)); return;
+    const i = +t.dataset.seat; SH.sel = SH.sel===i ? -1 : i; renderTicket(); sfx("click"); return;
   }
   if (t.id==="trashBtn"){ SH.build = B0(); renderBuild(); sfx("trash"); return; }
   if (t.id==="serveBtn") return serve();
