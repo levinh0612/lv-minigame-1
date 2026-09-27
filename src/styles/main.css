@@ -284,7 +284,7 @@ body[data-scr="result"]{background:var(--pink-l)}
 .trow .soon-link{margin-top:0}
 .lvchip{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:99px;padding:4px 12px 4px 4px;box-shadow:0 3px 0 var(--sh);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
 .lvchip:active{transform:translateY(3px)}
-.lvb{background:var(--pink);color:#fff;font:800 13px var(--display);border-radius:99px;padding:3px 10px;box-shadow:inset 0 -2px 0 var(--pink-d)}
+.lvb{white-space:nowrap;flex:none;background:var(--pink);color:#fff;font:800 13px var(--display);border-radius:99px;padding:3px 10px;box-shadow:inset 0 -2px 0 var(--pink-d)}
 .lvt{width:64px;height:8px;border-radius:8px;background:#FFDCE5;overflow:hidden}
 .lvt i{display:block;height:100%;border-radius:8px;background:var(--pink-m)}
 .lvchip small{font:800 11px var(--body);color:var(--soft);font-variant-numeric:tabular-nums}
