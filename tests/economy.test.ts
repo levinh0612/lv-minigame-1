@@ -134,9 +134,9 @@ describe("thú cưng làm nhân viên", () => {
   it("bé đi làm tự nhận đơn chưa ai làm, không lấy đơn chủ tiệm đang làm", () => {
     lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 1);
     const { sh } = beginShift(); sh.next = 999;
-    sh.seats[0] = customer({ pat: 10 });                    // chủ tiệm đã chạm chọn khách này
+    sh.seats[0] = customer({ pat: 10 });                    // chủ tiệm đã nhận đơn này
     sh.seats[1] = customer({ who: "Mèo Bơ", r: RECIPES[1] });
-    sh.sel = 0;
+    sh.mine = 0;
     const ev = tick(sh, 0.1);
     expect(ev.claimed.map(b => [b.id, b.seat])).toEqual([["dog", 1]]);
     expect(sh.seats[1]!.by).toBe("dog");
@@ -147,7 +147,7 @@ describe("thú cưng làm nhân viên", () => {
     lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 1);
     const { sh } = beginShift(); sh.next = 999;
     sh.seats[1] = customer({ who: "Mèo Bơ", r: RECIPES[1] });
-    sh.sel = 0;
+    S.autoTake = false;                                      // chủ tiệm rảnh tay
     const coins = S.coins;
     let baked = 0;
     for (let i = 0; i < 105; i++) baked += tick(sh, 0.1).baked.length;   // 10 giây + chút dư số thực
@@ -160,6 +160,7 @@ describe("thú cưng làm nhân viên", () => {
   it("chủ tiệm chưa đụng tay thì bé nhận luôn đơn chờ lâu nhất", () => {
     lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 1);
     const { sh } = beginShift(); sh.next = 999;
+    S.autoTake = false;
     sh.seats[0] = customer({ pat: 30 }); sh.seats[2] = customer({ pat: 12 });
     expect(tick(sh, 0.1).claimed.map(b => b.seat)).toEqual([2]);
   });
@@ -178,11 +179,22 @@ describe("thú cưng làm nhân viên", () => {
     expect(tick(sh, 0.1).claimed).toEqual([]);
   });
 
-  it("thiếu nguyên liệu thì bé không nhận đơn đó", () => {
-    lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 1); S.stock.top[0] = 0;
-    const { sh } = beginShift(); sh.next = 999; sh.sel = 0;
+  it("thiếu nguyên liệu thì bé tự nhập nhanh rồi làm", () => {
+    lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 1); S.stock.top[0] = 0; S.autoTake = false;
+    const { sh } = beginShift(); sh.next = 999;
     sh.seats[1] = customer();                                // cần Dâu tây
+    const coins = S.coins, ev = tick(sh, 0.1);
+    expect(ev.restock).toEqual([{ id: "dog", what: "Dâu tây" }]);
+    expect(ev.claimed.map(b => b.seat)).toEqual([1]);
+    expect(S.coins).toBe(coins - 5);
+  });
+
+  it("thiếu nguyên liệu mà hết xu thì bé báo thiếu gì, không kẹt im lặng", () => {
+    lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 1); S.stock.top[0] = 0; S.autoTake = false;
+    const { sh } = beginShift(); sh.next = 999; S.coins = 0;
+    sh.seats[1] = customer();
     expect(tick(sh, 0.1).claimed).toEqual([]);
+    expect(sh.lack.dog).toBe("Dâu tây");
   });
 
   it("độ nổi tiếng tăng số bàn", () => {

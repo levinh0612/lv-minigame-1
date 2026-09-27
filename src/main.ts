@@ -11,7 +11,7 @@ import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, floatHearts, hasModal, hearts, toast } from "./ui/dom";
 import { backup, claimGoals, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
 import { navigate } from "./ui/router";
-import { SH, doServe, pickIngredient, selectSeat, startShift } from "./ui/screens/play";
+import { SH, doPeek, doServe, pickIngredient, selectSeat, startShift, toggleAuto } from "./ui/screens/play";
 
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
@@ -32,6 +32,8 @@ document.addEventListener("click", e => {
     case "settings": return settings();
     case "pause": return pauseMenu();
     case "serve": return doServe();
+    case "peek": return doPeek();
+    case "auto": return toggleAuto();
   }
   if (d.buy) {
     const x = DECOR.find(v => v.id === d.buy)!;

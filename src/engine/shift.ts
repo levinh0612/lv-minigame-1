@@ -22,7 +22,10 @@ export interface Baker { id: PetId; seat: number; done: number; need: number }
 export interface Shift {
   total: number; spawned: number; served: number; left: number; coins: number; tips: number; stars: number[];
   seats: (Customer | null)[]; build: Build; t: number; next: number; paused: boolean;
-  boyDone: boolean; petsDone: PetId[]; lv0: number; sel: number;
+  boyDone: boolean; petsDone: PetId[]; lv0: number;
+  mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
+  peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
+  bonus: number; lack: Partial<Record<PetId, string>>;
   ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[];
 }
 
@@ -36,7 +39,7 @@ export function createShift(): Shift {
   return {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(fame().seats).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
-    boyDone: !!S.daily.boy, petsDone: [], lv0: L, sel: -1,
+    boyDone: !!S.daily.boy, petsDone: [], lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: []
   };
 }
@@ -70,8 +73,9 @@ export function makeCustomer(sh: Shift): Customer {
 
 /* Chạy thời gian. Trả về ghế vừa có khách và các ghế khách vừa bỏ về. */
 export type StaffDone = { baker: Baker; res: Extract<ServeResult, { ok: true }> };
-export function tick(sh: Shift, dt: number): { spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[] } {
-  const out = { spawned: -1, left: [] as number[], claimed: [] as Baker[], baked: [] as StaffDone[] };
+export interface TickOut { spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: PetId; what: string }[] }
+export function tick(sh: Shift, dt: number): TickOut {
+  const out: TickOut = { spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [] };
   if (sh.paused) return out;
   sh.t += dt;
   const free = sh.seats.findIndex(s => !s);
@@ -84,12 +88,14 @@ export function tick(sh: Shift, dt: number): { spawned: number; left: number[]; 
     c.pat -= c.by ? dt / 2 : dt;          // có bé nhận đơn thì khách bớt sốt ruột
     if (c.pat <= 0) { leaveCustomer(sh, i); out.left.push(i); }
   });
+  // Tự nhận đơn: đang rảnh tay thì chủ tiệm được gán đơn chờ lâu nhất
+  if (S.autoTake && mineIdx(sh) < 0) { const u = urgentIdx(sh); if (u >= 0) { take(sh, u); out.assigned = u; } }
   bake(sh, dt, out);
   return out;
 }
 
 /* Thợ bánh: bé rảnh nhận đơn chưa ai làm (trừ đơn chủ tiệm đang làm, và phải đủ nguyên liệu); làm xong tự giao */
-function bake(sh: Shift, dt: number, out: ReturnType<typeof tick>) {
+function bake(sh: Shift, dt: number, out: TickOut) {
   sh.bakers = sh.bakers.filter(b => { const c = sh.seats[b.seat]; if (c && !c.gone && c.by === b.id) return true; if (c?.by === b.id) c.by = undefined; return false; });
   sh.bakers.forEach(b => {
     b.done += dt;
@@ -103,13 +109,24 @@ function bake(sh: Shift, dt: number, out: ReturnType<typeof tick>) {
   STAFF_IDS.forEach(id => {
     const lv = dutyLv(id);
     if (!lv || sh.bakers.some(b => b.id === id) || !sh.working.includes(id)) return;
-    const mine = playerSeat(sh);
-    let seat = -1;
-    sh.seats.forEach((c, i) => {
-      if (!c || c.gone || c.by || i === mine || !STOCK_KEYS.every(k => stockOf(k, c.r[k]) > 0)) return;
-      if (seat < 0 || c.pat / c.max < sh.seats[seat]!.pat / sh.seats[seat]!.max) seat = i;   // khách chờ lâu nhất trước
-    });
-    if (seat < 0) return;
+    const mine = mineIdx(sh);
+    // khách chờ lâu nhất trước; thiếu nguyên liệu thì bé tự nhập nhanh, hết xu thì bỏ qua và báo thiếu gì
+    const order = sh.seats.map((_, i) => i).filter(i => { const c = sh.seats[i]; return c && !c.gone && !c.by && i !== mine; })
+      .sort((a, b) => sh.seats[a]!.pat / sh.seats[a]!.max - sh.seats[b]!.pat / sh.seats[b]!.max);
+    let seat = -1, lack = "";
+    for (const i of order) {
+      const r = sh.seats[i]!.r, miss = STOCK_KEYS.filter(k => stockOf(k, r[k]) <= 0);
+      const cost = miss.reduce((a, k) => a + quickPrice(k, r[k]), 0);
+      if (miss.length && cost > S.coins) { lack ||= miss.map(k => CATS[k][r[k]][0]).join(", "); continue; }
+      if (miss.length) {
+        S.coins -= cost; sh.quickCost += cost;
+        miss.forEach(k => { S.stock[k][r[k]] = stockOf(k, r[k]) + 1; });
+        out.restock.push({ id, what: miss.map(k => CATS[k][r[k]][0]).join(", ") });
+      }
+      seat = i; break;
+    }
+    if (seat < 0) { if (lack) sh.lack[id] = lack; else delete sh.lack[id]; return; }
+    delete sh.lack[id];
     const c = sh.seats[seat]!;
     c.by = id;
     STOCK_KEYS.forEach(k => { S.stock[k][c.r[k]]--; sh.ingUsed += unitCost(k, c.r[k]); });
@@ -120,33 +137,41 @@ function bake(sh: Shift, dt: number, out: ReturnType<typeof tick>) {
 export const isOver = (sh: Shift) => sh.spawned >= sh.total && sh.seats.every(s => !s);
 export const remaining = (sh: Shift) => sh.total - sh.served - sh.left;
 
-/* Đơn chủ tiệm thật sự đang làm (đã chạm chọn khách hoặc đã chọn nguyên liệu); bé thợ bánh chừa đơn này ra */
-export function playerSeat(sh: Shift): number {
-  const s = sh.seats[sh.sel];
-  if (sh.sel >= 0 && s && !s.gone && !s.by) return sh.sel;
-  return KEYS.some(k => sh.build[k] != null) ? targetIdx(sh) : -1;
-}
-
-/* Khách đang được làm bánh cho: khách được chạm chọn, hoặc khách chờ lâu nhất */
-export function targetIdx(sh: Shift): number {
-  if (sh.sel >= 0 && sh.seats[sh.sel] && !sh.seats[sh.sel]!.gone && !sh.seats[sh.sel]!.by) return sh.sel;
+/* ===== Đơn của chủ tiệm ===== */
+const free = (c: Customer | null | undefined): c is Customer => !!c && !c.gone && !c.by;
+/* ghế đơn chủ tiệm đang làm, -1 nếu đang rảnh tay */
+export const mineIdx = (sh: Shift) => (sh.mine >= 0 && free(sh.seats[sh.mine]) ? sh.mine : -1);
+/* khách chưa ai nhận, chờ lâu nhất */
+export function urgentIdx(sh: Shift): number {
   let best = -1;
-  sh.seats.forEach((c, i) => { if (c && !c.gone && !c.by && (best < 0 || c.pat / c.max < sh.seats[best]!.pat / sh.seats[best]!.max)) best = i; });
+  sh.seats.forEach((c, i) => { if (free(c) && (best < 0 || c.pat / c.max < sh.seats[best]!.pat / sh.seats[best]!.max)) best = i; });
   return best;
 }
+/* đơn để so khi giao bánh: đơn của mình, không có thì khách chờ lâu nhất */
+export const targetIdx = (sh: Shift) => { const m = mineIdx(sh); return m >= 0 ? m : urgentIdx(sh); };
+/* chủ tiệm nhận một đơn (chạm vào khách). Đổi đơn thì phải nhớ công thức lại từ đầu */
+export function take(sh: Shift, i: number): boolean {
+  if (!free(sh.seats[i])) return false;
+  if (sh.mine !== i) { sh.mine = i; sh.peek = false; }
+  return true;
+}
+export function release(sh: Shift) { sh.mine = -1; sh.peek = false; }
+export function peek(sh: Shift) { sh.peek = true; }
 
 export type ServeResult =
-  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean }
+  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number }
   | { ok: false; msg: string };
 
 export function serve(sh: Shift): ServeResult {
   const b = sh.build;
   if (!isComplete(b)) return { ok: false, msg: "Chọn đủ Đế, Kem, Topping và Độ ngọt nha" };
   const ti = targetIdx(sh);
-  const idx = matches(sh.seats[ti], b) ? ti : sh.seats.findIndex(c => matches(c, b));
+  let idx = matches(sh.seats[ti], b) ? ti : -1;
+  if (idx < 0) sh.seats.forEach((c, i) => { if (matches(c, b) && (idx < 0 || c!.pat / c!.max < sh.seats[idx]!.pat / sh.seats[idx]!.max)) idx = i; });
   if (idx < 0) {
     if (ti < 0) return { ok: false, msg: "Chưa có khách nào gọi món" };
     const c = sh.seats[ti]!, n = needOf(c), bad = KEYS.find(k => b[k] !== n[k])!;
+    sh.peek = true;                      // đã được mách nguyên liệu: mất thưởng nhớ bài
     return { ok: false, msg: `Sai ${LABELS[bad].toLowerCase()} rồi: ${c.who} gọi ${CATS[bad][n[bad]][0]}, không phải ${CATS[bad][b[bad]!][0]}` };
   }
   // lấy nguyên liệu trong kho; thiếu thì nhập nhanh (đắt hơn)
@@ -165,12 +190,15 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   const f = c.pat / c.max, stars = f > 0.55 ? 3 : f > 0.3 ? 2 : 1, mult = coinMult();
   const price = Math.round(c.r.price * (1 + fx("price"))) * mult;
   const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip"))) * mult;
-  S.coins += price + tip; S.xp += 4 + stars * 2; S.served++;
-  sh.coins += price; sh.tips += tip; sh.served++; sh.stars.push(stars); if (!byStaff) sh.sel = -1;
+  // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
+  const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
+  S.coins += price + tip + bonus; S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
+  sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.served++; sh.stars.push(stars);
+  if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
   if (c.pet) S.pets[c.pet].aff += 2;
   addReview(c, stars); save();
-  return { ok: true, idx, c, stars, price, tip, quick, byStaff };
+  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus };
 }
 
 export function leaveCustomer(sh: Shift, i: number) {
@@ -206,7 +234,7 @@ export function finishShift(sh: Shift) {
   return ledger(sh);
 }
 export const ledger = (sh: Shift) => {
-  const revenue = sh.coins + sh.tips;
+  const revenue = sh.coins + sh.tips + sh.bonus;
   return { revenue, ingUsed: sh.ingUsed, quick: sh.quickCost, wages: sh.wages, profit: revenue - sh.ingUsed - sh.quickCost - sh.wages };
 };
 

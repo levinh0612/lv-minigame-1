@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RECIPES } from "../src/content/game";
 import { coinMult, daysTogether, events, todayEvents } from "../src/engine/dates";
 import { goals, rollDay } from "../src/engine/progress";
-import { closeEarly, createShift, serve, tick, type Customer } from "../src/engine/shift";
+import { closeEarly, createShift, mineIdx, peek, serve, take, tick, type Customer } from "../src/engine/shift";
 import { S, fresh, loadState, resetState } from "../src/engine/state";
 
 const at = (y: number, m: number, d: number) => vi.setSystemTime(new Date(y, m - 1, d, 10, 0, 0));
@@ -98,7 +98,7 @@ describe("ca bán", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.stars).toBe(3);
-    expect(S.coins).toBe(coins + r.price + r.tip);
+    expect(S.coins).toBe(coins + r.price + r.tip + r.bonus);
     expect(S.daily.served).toBe(1);
   });
 
@@ -136,6 +136,46 @@ describe("ca bán", () => {
     expect(ev.left).toEqual([1]);
     expect(S.daily.angry).toBe(1);
     expect(goals()[2].cur).toBe(0);
+  });
+
+  it("Tự nhận đơn bật: rảnh tay thì được gán khách chờ lâu nhất", () => {
+    const sh = createShift(); sh.next = 999;
+    sh.seats[0] = customer({ pat: 30 }); sh.seats[1] = customer({ pat: 10 });
+    expect(tick(sh, 0.1).assigned).toBe(1);
+    expect(mineIdx(sh)).toBe(1);
+  });
+
+  it("Tự nhận đơn tắt: rảnh tay, chạm vào khách mới nhận đơn", () => {
+    S.autoTake = false;
+    const sh = createShift(); sh.next = 999;
+    sh.seats[0] = customer();
+    expect(tick(sh, 0.1).assigned).toBe(-1);
+    expect(take(sh, 0)).toBe(true);
+    expect(mineIdx(sh)).toBe(0);
+    sh.seats[1] = customer({ by: "dog" });
+    expect(take(sh, 1)).toBe(false);                         // đơn của bé thì không nhận được
+  });
+
+  it("không xem công thức mà giao đúng: thưởng +50% tiền bánh", () => {
+    const sh = createShift();
+    sh.seats[0] = customer(); take(sh, 0);
+    sh.build = { base: 0, cream: 0, top: 0, sweet: 0 };
+    const r = serve(sh);
+    expect(r.ok && r.bonus).toBe(Math.round(RECIPES[0].price * 0.5));
+    expect(mineIdx(sh)).toBe(-1);                            // giao xong thì rảnh tay
+  });
+
+  it("đã xem công thức hoặc giao sai thì mất thưởng", () => {
+    const sh = createShift();
+    sh.seats[0] = customer(); take(sh, 0); peek(sh);
+    sh.build = { base: 0, cream: 0, top: 0, sweet: 0 };
+    const r = serve(sh);
+    expect(r.ok && r.bonus).toBe(0);
+    const sh2 = createShift();
+    sh2.seats[0] = customer(); take(sh2, 0);
+    sh2.build = { base: 0, cream: 0, top: 0, sweet: 2 };
+    expect(serve(sh2).ok).toBe(false);
+    expect(sh2.peek).toBe(true);
   });
 
   it("đóng cửa sớm: khách đang chờ tính là bỏ về", () => {

@@ -15,7 +15,7 @@ export interface State {
   pets: Record<PetId, PetState>;
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
-  food: Record<FoodId, number>; welcome: boolean;
+  food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
 }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
@@ -28,7 +28,7 @@ export function fresh(): State {
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
-    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false
+    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true
   };
 }
 

@@ -2,15 +2,15 @@
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
-import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, recipeOf, type PartKey, type StockKey } from "../../content/game";
+import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, type PartKey, type StockKey } from "../../content/game";
 import { daysTogether } from "../../engine/dates";
 import { fame, quickBuy, quickPrice, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
-  beginShift, emptyBuild, finishShift, isComplete, isOver, ledger, needOf, remaining, serve, summary, targetIdx, tick,
+  beginShift, emptyBuild, finishShift, isComplete, isOver, ledger, mineIdx, needOf, peek, remaining, serve, summary, take, tick,
   type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
-import { S, petName } from "../../engine/state";
+import { S, petName, save } from "../../engine/state";
 import { fmtN, pick } from "../../engine/util";
 import { cakeSVG, charSVG, critterSVG } from "../art";
 import { $, bump, coinPill, esc, floatText, haptic, toast } from "../dom";
@@ -23,9 +23,9 @@ let raf = 0, lastT = 0, leftShown = -1, drop: PartKey | null = null;
 type Result = { sh: Shift; lv: number; led: ReturnType<typeof ledger> };
 let result: Result | null = null;
 
-// phần tử DOM của từng ghế, cache để vòng lặp không phải tìm lại mỗi khung hình
-interface SeatView { el: HTMLElement; bar: HTMLElement; art: HTMLElement; cls: string }
-const views: (SeatView | null)[] = [];
+// phần tử DOM của từng khách trong hàng, cache để vòng lặp không phải tìm lại mỗi khung hình
+interface SlotView { el: HTMLElement; bar: HTMLElement; art: HTMLElement; cls: string }
+const views: (SlotView | null)[] = [];
 
 /* ---------- Giữ màn hình sáng trong ca (nếu trình duyệt cho phép) ---------- */
 let wake: { release(): Promise<void> } | null = null;
@@ -52,10 +52,13 @@ function loop(now: number) {
   const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
   if (!SH.paused) {
     const ev = tick(SH, dt);
-    if (ev.spawned >= 0) { renderSeat(ev.spawned, true); sfx("bell"); }
+    if (ev.spawned >= 0) { renderSlot(ev.spawned, true); sfx("bell"); }
     ev.left.forEach(onLeave);
-    ev.claimed.forEach(b => { renderSeat(b.seat); renderCrew(); });
+    ev.claimed.forEach(b => renderSlot(b.seat));
     ev.baked.forEach(x => showServed(x.res, x.baker.id));
+    ev.restock.forEach(r => toast(`${petName(r.id)} nhập nhanh ${r.what}`));
+    if (ev.assigned >= 0) { renderTicket(); sfx("click"); }
+    if (ev.claimed.length || ev.restock.length || ev.baked.length) { renderCrew(); refreshCoins(false); }
     SH.seats.forEach((c, i) => { if (c && !c.gone) updatePatience(c, i); });
     updateBaking();
     const left = remaining(SH);
@@ -73,9 +76,9 @@ function updatePatience(c: Customer, i: number) {
   v.cls = cls; v.bar.style.background = cls === "low" ? "#FF6F91" : cls === "mid" ? "#FFD66B" : "#8FD9B6";
   v.el.classList.toggle("low", cls === "low");
   const mood = cls === "low" ? "impatient" : "happy";
-  if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, 84); }
+  if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, faceSize(SH!)); }
 }
-/* tiến độ các bé thợ bánh: trên thẻ đơn và ở cột nhân viên */
+/* tiến độ các bé thợ bánh: dưới mặt khách và ở quầy */
 function updateBaking() {
   SH!.bakers.forEach(b => {
     const pct = Math.min(100, Math.round(b.done / b.need * 100));
@@ -88,27 +91,44 @@ function updateBaking() {
 }
 
 /* ================= HTML thuần ================= */
+const faceSize = (sh: Shift) => ({ 3: 78, 4: 66, 5: 58, 6: 50 } as Record<number, number>)[sh.seats.length] ?? 50;
 const sweetIcon = (i: number) => `<i class="cube" style="background:${CATS.sweet[i][1]}"></i>`;
-/* thẻ gọi món: tên bánh + 3 chấm màu Đế/Kem/Topping giống hệt nút nguyên liệu + độ ngọt */
-export function orderHTML(c: Customer, sh?: Shift) {
-  const baker = c.by && sh ? sh.bakers.find(b => b.id === c.by) : null, pct = baker ? Math.round(baker.done / baker.need * 100) : 0;
-  return `<div class="ord ${c.by ? "by" : ""}"><div class="rn">${esc(c.r.n)}</div>
-    <div class="ings">${STOCK_KEYS.map(k => `<span title="${LABELS[k]}"><i style="background:${CATS[k][c.r[k]][1]}"></i>${CATS[k][c.r[k]][0]}</span>`).join("")}</div>
-    <div class="sw">${sweetIcon(c.sweet)}${CATS.sweet[c.sweet][0]}</div>
-    ${c.by ? `<div class="bybar" data-bake="${c.by}">${critterSVG({ ...PETS[c.by], ledge: false }, 22)}<b>${esc(petName(c.by))}</b><span>${pct}%</span><div class="pb"><i style="width:${pct}%"></i></div></div>` : ""}</div>`;
+const cakeOf = (c: Customer, size: number) => cakeSVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, sweet: c.sweet }, { size, still: true });
+
+/* một khách trong hàng đợi: bong bóng hình bánh đã gọi (không ghi nguyên liệu), mặt, kiên nhẫn, ai đang làm */
+export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
+  const c = sh.seats[i]; if (!c) return "";
+  const f = c.pat / c.max, S2 = faceSize(sh), mine = mineIdx(sh) === i;
+  const b = c.by ? sh.bakers.find(x => x.id === c.by) : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
+  const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.62)}</div>`;
+  const who = c.by ? `<div class="who by" data-bake="${c.by}">${critterSVG({ ...PETS[c.by], ledge: false }, 18)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
+    : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
+  return `<div class="burst"></div>${bub}
+    <button class="face" data-seat="${i}" aria-label="${c.by ? `${esc(petName(c.by))} đang làm cho ${esc(c.who)}` : `Nhận đơn của ${esc(c.who)}`}">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</button>
+    <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
+    <div class="nm">${c.him ? "♥︎ " : ""}${esc(c.who)}</div>${who}`;
 }
-export function seatHTML(c: Customer | null, i: number, state: "" | "tgt" | "low" | "ok" = "", sh?: Shift) {
-  if (!c) return "";
-  const f = c.pat / c.max;
-  const ord = state === "ok" ? `<div class="ord ok">+3 ★ · +${c.r.price} xu<small>Cảm ơn nha!</small></div>` : orderHTML(c, sh);
-  return `<div class="burst"></div>${ord}
-    <div class="who-art"><button data-seat="${i}" aria-label="${c.by ? `${esc(petName(c.by))} đang làm cho ${esc(c.who)}` : `Làm bánh cho ${esc(c.who)}`}">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", 84)}</button></div>
-    <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div><div class="nm">${c.him ? "♥︎ " : ""}${esc(c.who)}</div>`;
+const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (extra ? " " + extra : ""); };
+
+/* Đơn của bạn: hình bánh + tên + độ ngọt; nguyên liệu ẩn tới khi bấm Xem công thức */
+export function ticketHTML(sh: Shift) {
+  const m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null;
+  const toggle = `<button class="toggle ${S.autoTake ? "on" : ""}" data-act="auto" role="switch" aria-checked="${S.autoTake}"><span>Tự nhận đơn</span><i></i></button>`;
+  if (!c) {
+    const any = sh.seats.some(x => x && !x.gone), busy = sh.seats.some(x => x && !x.gone && !x.by);
+    return `<div class="th"><b>Đơn của bạn</b>${toggle}</div><div class="tb idle"><b>Đang rảnh tay</b><small>${
+      busy ? "Chạm vào một khách ở trên để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small></div>`;
+  }
+  const ings = STOCK_KEYS.map(k => `<span><i style="background:${CATS[k][c.r[k]][1]}"></i>${CATS[k][c.r[k]][0]}</span>`).join("");
+  return `<div class="th"><b>Đơn của bạn</b>${toggle}</div>
+    <div class="tb">${cakeOf(c, 86)}<div class="ti"><b>${esc(c.r.n)}</b><small>cho ${esc(c.who)}</small>
+      <div class="sweet">${sweetIcon(c.sweet)}${CATS.sweet[c.sweet][0]}</div>
+      ${sh.peek ? `<div class="ings">${ings}</div>` : `<div class="peekrow"><button class="peek" data-act="peek">Xem công thức</button><span class="bonus">Tự nhớ: +50% thưởng</span></div>`}</div></div>`;
 }
 
-/* trạng thái 1 nút nguyên liệu: chọn đúng / sai / chưa chọn, còn bao nhiêu trong kho */
+/* nút nguyên liệu: chỉ hiện đúng/sai khi đã xem công thức; luôn hiện số tồn kho */
 function chipState(sh: Shift, k: PartKey, i: number) {
-  const b = sh.build, ti = targetIdx(sh), c = ti >= 0 ? sh.seats[ti] : null, n = c ? needOf(c) : null;
+  const b = sh.build, m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null, n = c && sh.peek ? needOf(c) : null;
   const on = b[k] === i, st = !on ? "" : !n ? "on" : n[k] === i ? "ok" : "bad";
   const q = k === "sweet" ? -1 : stockOf(k as StockKey, i);
   return { cls: "chip" + (k === "sweet" ? " sq" : "") + (st ? " " + st : "") + (q === 0 && !on ? " out" : ""),
@@ -118,25 +138,21 @@ const chipHTML = (sh: Shift, k: PartKey, i: number) => {
   const s = chipState(sh, k, i), [n, c] = CATS[k][i];
   return `<button class="${s.cls}" data-ing="${k}:${i}"><i style="background:${c}"></i><span class="cn">${n}</span><b class="q">${s.qty}</b><em>${s.mark}</em></button>`;
 };
-export function forBoxHTML(sh: Shift) {
-  const ti = targetIdx(sh), b = sh.build, c = ti >= 0 ? sh.seats[ti] : null, made = recipeOf(b);
-  return c
-    ? `<small>Đang làm cho</small><b>${esc(c.who)}</b><div class="rc">${esc(c.r.n)}</div><div class="sw">${b.sweet != null ? CATS.sweet[b.sweet][0] : "Chọn độ ngọt"}</div>`
-    : `<small>${sh.seats.some(x => x && !x.gone) ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small><b>${made ? esc(made.n) : "Đĩa trống"}</b>`;
-}
-/* cột thợ bánh: mỗi bé đang làm cho ai, được bao nhiêu phần trăm */
+
+/* cột thợ bánh: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì */
 export function crewHTML(sh: Shift) {
   const ids = STAFF.map(d => d.id).filter(id => sh.working.includes(id));
-  if (!ids.length) return "";
+  if (!ids.length) return `<div class="crew empty"><small>Chưa có bé nào đi làm</small></div>`;
   return `<div class="crew">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
-    return `<div class="cm ${b ? "busy" : ""}" data-crew="${id}">${critterSVG({ ...PETS[id], mood: b ? "happy" : "open", ledge: false }, 30)}
-      <div class="ct"><b>${esc(petName(id))}</b>${b && c ? `<small>${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i><span>${pct}%</span></div>` : `<small>Đang rảnh</small>`}</div></div>`;
+    const status = b && c ? `<small>Làm cho ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i><span>${pct}%</span></div>`
+      : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang rảnh</small>`;
+    return `<div class="cm ${b ? "busy" : ""}" data-crew="${id}">${critterSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false }, 32)}<div class="ct"><b>${esc(petName(id))}</b>${status}</div></div>`;
   }).join("")}</div>`;
 }
 
-export function playHTML(sh: Shift, opts: { done?: boolean; seatStates?: ("" | "tgt" | "low" | "ok")[] } = {}) {
-  const L = lvl(), cur = S.xp - xpFor(L), need = xpFor(L + 1) - xpFor(L), ti = targetIdx(sh), f = fame(), n = sh.seats.length;
+export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low" | "ok")[] } = {}) {
+  const L = lvl(), cur = S.xp - xpFor(L), need = xpFor(L + 1) - xpFor(L), f = fame();
   return `<div class="scr play">
     <div class="ptop">
       <div class="lv">Lv${L}</div>
@@ -144,16 +160,12 @@ export function playHTML(sh: Shift, opts: { done?: boolean; seatStates?: ("" | "
       ${coinPill(true, "shCoins")}
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
-    ${n > 3 ? `<div class="fame">✦ ${f.n} · ${n} bàn <span>vuốt ngang để xem thêm</span></div>` : ""}
-    <div class="lane ${n > 3 ? "wide" : ""}">${sh.seats.map((c, i) => {
-      const st = opts.seatStates?.[i] ?? "";
-      return `<div class="seat ${i === ti ? "tgt" : ""} ${st === "low" ? "low" : ""}" id="seat${i}">${seatHTML(c, i, st, sh)}</div>`;
-    }).join("")}</div>
-    <div class="ctr"></div>
-    <div class="bench ${sh.working.length ? "crewed" : ""}"><div id="cake">${cakeSVG(sh.build, { size: sh.working.length ? 118 : 136, done: opts.done })}</div><div class="for" id="forBox">${forBoxHTML(sh)}</div><div id="crewBox">${crewHTML(sh)}</div></div>
+    <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
+    <div class="queue" style="--n:${sh.seats.length}">${sh.seats.map((_, i) => `<div class="${slotClass(sh, i, opts.states?.[i] === "low" ? "low" : "")}" id="seat${i}">${slotHTML(sh, i, opts.states?.[i] ?? "")}</div>`).join("")}</div>
+    <div class="ticket" id="ticket">${ticketHTML(sh)}</div>
+    <div class="bench"><div class="plate"><div id="cake">${cakeSVG(sh.build, { size: 112, done: opts.done })}</div></div><div id="crewBox">${crewHTML(sh)}</div></div>
     <div class="sheet">
       ${KEYS.map(k => `<div class="crow"><span>${LABELS[k]}</span><div class="g3">${CATS[k].map((_, i) => chipHTML(sh, k, i)).join("")}</div></div>`).join("")}
-      <div class="grow" style="min-height:4px"></div>
       <button class="b3 give" id="give" data-act="serve" ${isComplete(sh.build) ? "" : "disabled"}>Giao bánh</button>
     </div>
   </div>`;
@@ -164,26 +176,28 @@ export function renderPlay() {
   if (!SH) return;
   leftShown = -1; views.length = 0;
   $("#app")!.innerHTML = playHTML(SH);
-  SH.seats.forEach((_, i) => renderSeat(i));
+  SH.seats.forEach((_, i) => renderSlot(i));
   lastT = performance.now();
   cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
 }
-
-function renderSeat(i: number, enter = false) {
+function renderSlot(i: number, enter = false) {
   const el = $("#seat" + i); if (!el || !SH) return;
   const c = SH.seats[i];
-  el.className = "seat" + (enter ? " enter" : "");
-  el.innerHTML = seatHTML(c, i, "", SH);
-  views[i] = c ? { el, bar: el.querySelector<HTMLElement>(".pat i")!, art: el.querySelector<HTMLElement>(".who-art button")!, cls: "" } : null;
-  renderTarget();
+  el.className = slotClass(SH, i, enter ? "enter" : "");
+  el.innerHTML = slotHTML(SH, i);
+  views[i] = c ? { el, bar: el.querySelector<HTMLElement>(".pat i")!, art: el.querySelector<HTMLElement>(".face")!, cls: "" } : null;
 }
 const renderCrew = () => { const b = $("#crewBox"); if (b && SH) b.innerHTML = crewHTML(SH); };
-
-export function renderTarget() {
-  if (!SH || !$("#forBox")) return;
-  const ti = targetIdx(SH);
-  SH.seats.forEach((c, k) => { const el = $("#seat" + k); el?.classList.toggle("tgt", k === ti); el?.classList.toggle("taken", !!c?.by); });
-  $("#forBox")!.innerHTML = forBoxHTML(SH);
+/* thẻ Đơn của bạn + đánh dấu khách của mình + nút nguyên liệu */
+export function renderTicket() {
+  if (!SH || !$("#ticket")) return;
+  $("#ticket")!.innerHTML = ticketHTML(SH);
+  SH.seats.forEach((c, i) => {
+    const el = $("#seat" + i); if (!el || !c || c.gone) return;
+    const was = el.classList.contains("mine"), now = mineIdx(SH!) === i;
+    if (was !== now) { el.classList.toggle("mine", now); const w = el.querySelector(".who"); if (w && !c.by) w.outerHTML = now ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`; }
+    el.classList.toggle("taken", !!c.by);
+  });
   document.querySelectorAll<HTMLElement>("[data-ing]").forEach(el => {
     const [k, i] = el.dataset.ing!.split(":") as [PartKey, string], s = chipState(SH!, k, +i);
     el.className = s.cls; el.querySelector("em")!.textContent = s.mark; el.querySelector(".q")!.textContent = s.qty;
@@ -192,11 +206,11 @@ export function renderTarget() {
 }
 function renderBuild(done = false) {
   if (!SH) return;
-  $("#cake")!.innerHTML = cakeSVG(SH.build, { size: SH.working.length ? 118 : 136, done, drop });
+  $("#cake")!.innerHTML = cakeSVG(SH.build, { size: 112, done, drop });
   drop = null;
-  renderTarget();
+  renderTicket();
 }
-const refreshCoins = () => { const cp = $("#shCoins"); if (cp) { cp.querySelector("span:last-child")!.textContent = fmtN(S.coins); bump(cp, "pulse"); } };
+const refreshCoins = (pulse = true) => { const cp = $("#shCoins"); if (cp) { cp.querySelector("span:last-child")!.textContent = fmtN(S.coins); if (pulse) bump(cp, "pulse"); } };
 
 export function pickIngredient(k: PartKey, i: number) {
   if (!SH) return;
@@ -209,51 +223,60 @@ export function pickIngredient(k: PartKey, i: number) {
   SH.build[k] = add ? i : null; drop = add && k !== "sweet" ? k : null;
   renderBuild(); sfx(add ? "tap" : "untap"); haptic(8);
 }
+/* chạm vào khách: nhận đơn đó (đơn các bé đã nhận thì không được) */
 export function selectSeat(i: number) {
   if (!SH) return;
   const c = SH.seats[i];
   if (c?.by) { sfx("untap"); return toast(`${petName(c.by)} đang làm đơn này rồi`); }
-  SH.sel = SH.sel === i ? -1 : i; renderTarget(); sfx("click");
+  if (take(SH, i)) { renderTicket(); sfx("click"); }
+}
+export function doPeek() { if (!SH || mineIdx(SH) < 0) return; peek(SH); renderTicket(); sfx("tap"); }
+export function toggleAuto() {
+  S.autoTake = !S.autoTake; save();
+  if (SH) renderTicket();
+  toast(S.autoTake ? "Tự nhận đơn: bật. Làm xong sẽ được gán đơn mới" : "Rảnh tay: các bé nhận hết, chạm vào khách để tự làm");
 }
 
 export function doServe() {
   if (!SH) return;
   const res = serve(SH);
-  if (!res.ok) { sfx("wrong"); haptic([60, 40, 60]); return toast(res.msg); }
+  if (!res.ok) { sfx("wrong"); haptic([60, 40, 60]); renderTicket(); return toast(res.msg); }
   showServed(res);
   renderBuild(true);
+  if (res.bonus) toast(`Nhớ công thức giỏi quá! +${res.bonus} xu thưởng`);
   const sh = SH;
   setTimeout(() => { if (SH !== sh) return; sh.build = emptyBuild(); renderBuild(); }, 900);
 }
 
-/* hiệu ứng giao bánh (chủ tiệm hoặc bé thợ bánh): thẻ đơn thành xanh, khách thả tim, bắn tim */
+/* hiệu ứng giao bánh (chủ tiệm hoặc bé thợ bánh): bong bóng thành xu, khách thả tim, bắn tim */
 function showServed(res: Extract<ServeResult, { ok: true }>, by?: PetId) {
-  const { idx, c, stars, price, tip } = res, v = views[idx];
+  const { idx, c, price, tip, bonus } = res, v = views[idx];
   if (!v || !SH) return;
-  v.el.querySelector(".ord")!.outerHTML = `<div class="ord ok">+${stars} ★ · +${price} xu${tip ? ` · tip ${tip}` : ""}<small>${by ? `${esc(petName(by))} làm đó!` : c.him ? "Thương em!" : "Cảm ơn nha!"}</small></div>`;
-  v.art.innerHTML = charSVG(c.look, "love", 84);
-  v.el.classList.remove("low", "taken");
+  v.el.querySelector(".bub")!.outerHTML = `<div class="bub ok">+${price + tip + bonus}<small>${by ? esc(petName(by)) : "xu"}</small></div>`;
+  v.art.innerHTML = charSVG(c.look, "love", faceSize(SH));
+  v.el.classList.remove("low", "taken", "mine");
   v.el.querySelector(".burst")!.innerHTML = Array.from({ length: 14 }, (_, i) => {
-    const a = i / 14 * Math.PI * 2, d = 55 + (i % 3) * 20;
-    return `<i style="font-size:${14 + (i % 3) * 7}px;color:${["#FF8FAB", "#FFC94D", "#8FD9B6"][i % 3]};--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px">${i % 2 ? "♥︎" : "✦"}</i>`;
+    const a = i / 14 * Math.PI * 2, d = 45 + (i % 3) * 18;
+    return `<i style="font-size:${13 + (i % 3) * 6}px;color:${["#FF8FAB", "#FFC94D", "#8FD9B6"][i % 3]};--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px">${i % 2 ? "♥︎" : "✦"}</i>`;
   }).join("");
-  const r = v.el.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + 60, "+" + (price + tip));
+  const r = v.el.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + 40, "+" + (price + tip + bonus));
   sfx("coin"); haptic(by ? 10 : 25); refreshCoins();
   if (by) { renderCrew(); bump($(`[data-crew="${by}"]`), "squish"); }
   const L = lvl(); $("#xpBar")!.style.width = Math.min(100, (S.xp - xpFor(L)) / (xpFor(L + 1) - xpFor(L)) * 100) + "%";
+  renderTicket();
   const sh = SH;
   setTimeout(() => {
     if (SH !== sh) return; v.el.classList.add("bye");
-    setTimeout(() => { if (SH !== sh) return; sh.seats[idx] = null; renderSeat(idx); }, 450);
-  }, 1300);
+    setTimeout(() => { if (SH !== sh) return; sh.seats[idx] = null; renderSlot(idx); }, 450);
+  }, 1200);
   if (c.him && !by) setTimeout(() => { if (SH === sh) { pause(); himNote(c); } }, 700);
 }
 
 function onLeave(i: number) {
   const c = SH!.seats[i]!, v = views[i];
-  if (v) { v.art.innerHTML = charSVG(c.look, "impatient", 84); v.el.classList.add("bye"); }
-  sfx("leave"); haptic(30); renderCrew();
-  const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSeat(i); }, 500);
+  if (v) { v.art.innerHTML = charSVG(c.look, "impatient", faceSize(SH!)); v.el.classList.add("bye"); }
+  sfx("leave"); haptic(30); renderCrew(); renderTicket();
+  const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSlot(i); }, 500);
 }
 
 export function endShift() {
@@ -284,7 +307,7 @@ export function resultHTML(r: Result | null = result) {
       <div class="mas">${critterSVG({ ...pick([PETS.white, PETS.gold, PETS.dog]), mood: "love" }, 88)}</div>
       <div class="kp"><div style="background:#FFF6DA"><b style="color:#A77A0E">${led.profit >= 0 ? "+" : ""}${fmtN(led.profit)}</b><small>Lãi</small></div><div style="background:var(--mint-bg)"><b style="color:var(--mint-d)">+${fmtN(sh.tips)}</b><small>Tip</small></div><div style="background:#FFE9EF"><b style="color:var(--pink-d)">${sh.served}/${total}</b><small>Khách vui</small></div></div>
       <div class="ledger">
-        ${row("Tiền bánh + tip", led.revenue, "+")}${row("Nguyên liệu đã dùng", led.ingUsed)}${row("Nhập nhanh", led.quick)}${row("Lương thú cưng (đồ ăn)", led.wages)}
+        ${row("Tiền bánh + tip", sh.coins + sh.tips, "+")}${row("Thưởng nhớ công thức", sh.bonus, "+")}${row("Nguyên liệu đã dùng", led.ingUsed)}${row("Nhập nhanh", led.quick)}${row("Lương thú cưng (đồ ăn)", led.wages)}
         <div class="lg tot"><span>Lãi ca này</span><b>${led.profit >= 0 ? "+" : ""}${fmtN(led.profit)} xu</b></div>
       </div>
       ${lv > sh.lv0 ? `<div class="lvup">Lên Lv ${lv}!${newR.length ? " Mở khoá: " + newR.map(x => esc(x.n)).join(", ") : ""}${STAFF.filter(d => d.unlock > sh.lv0 && d.unlock <= lv).map(d => ` · ${esc(petName(d.id))} xin vào làm ${d.role.toLowerCase()}`).join("")}</div>` : ""}
