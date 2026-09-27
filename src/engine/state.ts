@@ -1,0 +1,65 @@
+/* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
+import { CFG, type PetId } from "../content/couple";
+import { DECOR, type Look } from "../content/game";
+
+export const KEY = "tiem-banh-matcha-v1";
+
+export interface Review { who: string; look: Look; s: number; txt: string; love: boolean }
+export interface Letter { day: string; txt: string; tag?: string; bonus?: boolean }
+export interface PetState { aff: number; petDay: string; pets: number; fedDay: string }
+export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
+export interface State {
+  v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
+  names: { her: string; his: string; girls: string; boys: string; pets: Record<PetId, string> };
+  pets: Record<PetId, PetState>;
+  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; refund?: number;
+}
+
+const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
+
+export function fresh(): State {
+  return {
+    v: 3, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
+    names: { her: CFG.herName, his: CFG.hisName, girls: CFG.girlNames, boys: CFG.boyNames, pets: petMap((_, i) => CFG.pets[i].name) },
+    pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
+    daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true
+  };
+}
+
+// giá đồ trang trí của bản 1 (để hoàn xu)
+const OLD_DECOR: Record<string, number> = { plant: 60, lights: 120, vase: 180, frame: 260, bell: 350, bear: 480, tea: 650, ribbon: 900 };
+const validLook = (l: unknown) => { const x = l as { gender?: string; kind?: string } | null; return !!x && (!!x.gender || ["cat", "dog", "bunny", "bear"].includes(x.kind || "")); };
+
+/* Đọc dữ liệu đã lưu và chuyển từ các bản cũ.
+   Phiên bản đọc từ dữ liệu gốc: bản 1 không có trường `v`. */
+export function loadState(raw: string | null): State {
+  let saved: Partial<State>;
+  try { saved = JSON.parse(raw || "{}"); } catch { saved = {}; }
+  const ver = saved.v ?? (raw && Object.keys(saved).length ? 1 : 3);
+  const s: State = Object.assign(fresh(), saved);
+  let refund = 0;
+  // v1 -> v2: đồ trang trí cũ được hoàn xu, đánh giá hình kiểu cũ bỏ đi
+  if (ver < 2) {
+    refund += (s.decor || []).reduce((a, id) => a + (OLD_DECOR[id] || 0), 0);
+    s.decor = []; s.reviews = [];
+  }
+  // v2 -> v3: bản 2.0 từng bỏ sót bước trên; dọn đồ không còn tồn tại (hoàn xu) và đánh giá hình cũ
+  if (ver < 3) {
+    const known = new Set(DECOR.map(d => d.id));
+    refund += s.decor.filter(id => !known.has(id)).reduce((a, id) => a + (OLD_DECOR[id] || 0), 0);
+    s.decor = s.decor.filter(id => known.has(id));
+    s.reviews = (s.reviews || []).filter(r => validLook(r.look));
+  }
+  s.v = 3; s.coins += refund; if (refund) s.refund = refund;
+  s.names = Object.assign(fresh().names, s.names || {});
+  s.names.pets = Object.assign(fresh().names.pets, s.names.pets || {});
+  s.pets = Object.assign(fresh().pets, s.pets || {});
+  ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
+  return s;
+}
+
+function read(): string | null { try { return localStorage.getItem(KEY); } catch { return null; } }
+export let S: State = loadState(read());
+export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* chế độ riêng tư: bỏ qua */ } }
+export function resetState() { S = fresh(); save(); }
+export const petName = (id: PetId) => S.names.pets[id] || CFG.pets.find(p => p.id === id)!.name;

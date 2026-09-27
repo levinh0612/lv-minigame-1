@@ -2,8 +2,39 @@
 
 Game mini chơi mỗi ngày trên điện thoại: mở tiệm bánh, ghép bánh có mặt cười cho khách, nuôi Milo, Siro, Cacao và mở thư tình mỗi ngày. Giao diện theo thiết kế "Kẹo dâu phồng" (1a) từ Claude Design.
 
-- `game.html`: toàn bộ game (HTML/CSS/JS thuần, không cần thư viện). Sửa tên, ngày kỷ niệm, thư tình trong object `CFG` ở đầu script.
-- `build.sh`: tạo `dist/index.html` + manifest để deploy.
-- Deploy: Vercel tự chạy `sh build.sh` và phục vụ thư mục `dist/` mỗi lần push lên `main`.
+## Chạy
 
-Chạy thử local: `./build.sh && open dist/index.html`
+```bash
+npm install
+npm run dev        # chạy thử ở http://localhost:5173
+npm test           # unit test phần luật chơi
+npm run build      # kiểm tra kiểu + build ra dist/ (có service worker để chơi offline)
+```
+
+Push lên `main` là Vercel tự build và deploy.
+
+## Cấu trúc
+
+```
+src/
+  content/   dữ liệu: couple.ts (tên, ngày, thư tình), game.ts (bánh, khách, đồ trang trí), roadmap.ts (trang Sắp ra mắt)
+  engine/    luật chơi, không đụng DOM: state (lưu + chuyển dữ liệu cũ), dates (ngày đặc biệt), progress (cấp, mục tiêu), shift (một ca bán)
+  audio/     nhạc nền và hiệu ứng tổng hợp bằng Web Audio
+  ui/        art (vẽ SVG), router (đường dẫn theo hash), modals, screens/*
+tests/       vitest cho engine
+public/      icon app
+```
+
+## Đường dẫn
+
+| Đường dẫn | Màn |
+|---|---|
+| `#/` | Bắt đầu |
+| `#/muc-tieu` | Mục tiêu, công thức, đánh giá |
+| `#/cua-hang`, `#/cua-hang/thu-cung`, `#/cua-hang/qua-tang` | Cửa hàng |
+| `#/sap-ra-mat` | Lộ trình nâng cấp + Có gì mới |
+| `#/choi`, `#/ket-qua` | Ca bán, kết quả (chỉ vào được từ trong game) |
+
+## Cập nhật lộ trình
+
+Sửa `src/content/roadmap.ts`: đổi `status` (`done` / `doing` / `soon` / `later`), thêm mục, thêm bản vào `CHANGELOG`, rồi push.
