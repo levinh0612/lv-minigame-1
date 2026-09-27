@@ -20,7 +20,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
-        globIgnores: ["storybook.html", "assets/storybook-*"],
+        globIgnores: ["storybook.html", "assets/storybook-*", "splash/**"],
         navigateFallbackDenylist: [/storybook/],
         navigateFallback: "/index.html",
         runtimeCaching: [

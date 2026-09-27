@@ -25,7 +25,7 @@ src/
   ui/        art (vẽ SVG), router (đường dẫn theo hash), modals, screens/*
   storybook/ trang /storybook.html (không ghi vào tiến trình thật)
 tests/       vitest cho engine
-scripts/     capture.mjs: chụp Storybook bằng Chrome headless
+scripts/     capture.mjs: chụp Storybook; splash.mjs: sinh màn hình chờ iPhone (public/splash)
 public/      icon app
 ```
 

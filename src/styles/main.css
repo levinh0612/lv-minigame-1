@@ -8,7 +8,13 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;
+  -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+button{touch-action:manipulation}
+svg,img{-webkit-user-drag:none}
+/* vẫn cho chọn / dán chữ ở ô nhập và mã sao lưu */
+input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--pink-m);outline-offset:2px}
 .scr{max-width:430px;margin:0 auto;min-height:100%;position:relative;display:flex;flex-direction:column;overflow-x:hidden}
@@ -41,7 +47,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .rbtn:active{transform:translateY(3px)}
 
 /* ===== Bắt đầu ===== */
-.awn{height:34px;background:repeating-linear-gradient(90deg,var(--pink-m) 0 39px,var(--cream) 39px 78px);flex:none}
+.awn{height:calc(34px + env(safe-area-inset-top,0px));background:repeating-linear-gradient(90deg,var(--pink-m) 0 39px,var(--cream) 39px 78px);flex:none}
 .awn2{height:20px;margin-top:-1px;background-image:radial-gradient(circle at 19.5px 0,var(--pink-m) 19px,transparent 19.5px),radial-gradient(circle at 58.5px 0,var(--cream) 19px,transparent 19.5px);background-size:78px 20px;filter:drop-shadow(0 3px 0 rgba(224,86,122,.18));flex:none}
 .hrow{display:flex;align-items:center;gap:8px;padding:12px 20px 0;position:relative;z-index:2}
 .hrow .sp{flex:1}
@@ -239,7 +245,7 @@ body[data-scr="result"]{background:var(--pink-l)}
 .mbtns{display:flex;flex-direction:column;gap:10px;margin-top:12px}
 .mbtns .b3{height:54px;font-size:19px;border-radius:20px}
 .field{display:block;text-align:left;font:800 13px var(--body);color:var(--soft);margin-top:10px}
-.field input,.field textarea{display:block;width:100%;margin-top:4px;border:2px solid var(--pink-b);background:#FFF7F9;border-radius:14px;padding:9px 12px;font:700 14px/1.4 var(--body);color:var(--ink);resize:vertical}
+.field input,.field textarea{display:block;width:100%;margin-top:4px;border:2px solid var(--pink-b);background:#FFF7F9;border-radius:14px;padding:9px 12px;font:700 16px/1.4 var(--body);color:var(--ink);resize:vertical}
 .field input:focus,.field textarea:focus{border-color:var(--pink-m);background:#fff;outline:none}
 .tg{display:flex;align-items:center;gap:8px;font:800 14px var(--body);color:var(--ink);margin-top:10px}
 .tg input{width:20px;height:20px;accent-color:var(--pink)}
@@ -417,7 +423,7 @@ body[data-scr="result"]{background:var(--pink-l)}
 /* hàng đợi dài hơn 3 bàn: trượt ngang */
 .fame{margin:6px 14px 0;font:800 12px var(--body);color:var(--lav-d);display:flex;gap:6px;align-items:baseline}
 .fame span{font-weight:600;color:var(--soft3)}
-.lane.wide{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;scrollbar-width:none;padding-right:24px}
+.lane.wide{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;scrollbar-width:none;padding:10px 24px 0 18px;scroll-padding-left:18px;overscroll-behavior-x:contain}
 .lane.wide::-webkit-scrollbar{display:none}
 .lane.wide .seat{flex:0 0 31%;scroll-snap-align:start}
 /* cột thợ bánh ở quầy */
