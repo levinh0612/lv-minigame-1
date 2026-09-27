@@ -6,7 +6,7 @@ import { daysTogether } from "../../engine/dates";
 import { onDuty, quickBuy, quickPrice, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
-  autoPrep, createShift, emptyBuild, finishShift, isComplete, isOver, ledger, needOf, remaining, serve, summary, targetIdx, tick,
+  autoPrep, beginShift, emptyBuild, finishShift, isComplete, isOver, ledger, needOf, remaining, serve, summary, targetIdx, tick,
   type Customer, type Shift
 } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
@@ -37,8 +37,9 @@ async function keepAwake(on: boolean) {
 document.addEventListener("visibilitychange", () => { if (!document.hidden && SH) { wake = null; void keepAwake(true); } });
 
 export function startShift() {
-  SH = createShift(); result = null;
+  const { sh, pay } = beginShift(); SH = sh; result = null;
   navigate("/choi", true);
+  if (pay.hungry.length) setTimeout(() => toast(`${pay.hungry.map(petName).join(", ")} đói nên nghỉ ca này. Nhớ mua đồ ăn nha!`), 400);
   sfx("open"); Sound.play("shift"); void keepAwake(true);
 }
 export const hasResult = () => !!result;
@@ -259,7 +260,7 @@ export function resultHTML(r: Result | null = result) {
       <div class="mas">${critterSVG({ ...pick([PETS.white, PETS.gold, PETS.dog]), mood: "love" }, 88)}</div>
       <div class="kp"><div style="background:#FFF6DA"><b style="color:#A77A0E">${led.profit >= 0 ? "+" : ""}${fmtN(led.profit)}</b><small>Lãi</small></div><div style="background:var(--mint-bg)"><b style="color:var(--mint-d)">+${fmtN(sh.tips)}</b><small>Tip</small></div><div style="background:#FFE9EF"><b style="color:var(--pink-d)">${sh.served}/${total}</b><small>Khách vui</small></div></div>
       <div class="ledger">
-        ${row("Tiền bánh + tip", led.revenue, "+")}${row("Nguyên liệu đã dùng", led.ingUsed)}${row("Nhập nhanh", led.quick)}${row("Lương nhân viên", led.wages)}
+        ${row("Tiền bánh + tip", led.revenue, "+")}${row("Nguyên liệu đã dùng", led.ingUsed)}${row("Nhập nhanh", led.quick)}${row("Lương thú cưng (đồ ăn)", led.wages)}
         <div class="lg tot"><span>Lãi ca này</span><b>${led.profit >= 0 ? "+" : ""}${fmtN(led.profit)} xu</b></div>
       </div>
       ${lv > sh.lv0 ? `<div class="lvup">Lên Lv ${lv}!${newR.length ? " Mở khoá: " + newR.map(x => esc(x.n)).join(", ") : ""}${STAFF.filter(d => d.unlock > sh.lv0 && d.unlock <= lv).map(d => ` · ${esc(petName(d.id))} xin vào làm ${d.role.toLowerCase()}`).join("")}</div>` : ""}

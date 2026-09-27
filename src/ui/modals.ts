@@ -1,13 +1,14 @@
 /* Các hộp thoại: thư, quà, cài đặt, tạm dừng, Anh ghé tiệm */
 import { Sound, sfx } from "../audio/sound";
 import { CFG } from "../content/couple";
-import { HIM, PETS, RECIPES } from "../content/game";
+import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
+import { claimWelcome } from "../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
 import { giftReady } from "../engine/progress";
 import { closeEarly, type Customer } from "../engine/shift";
 import { KEY, S, loadState, petName, resetState, save } from "../engine/state";
 import { fmtN, nameList, pick } from "../engine/util";
-import { cakeSVG, critterSVG, guestSVG } from "./art";
+import { cakeSVG, critterSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
@@ -95,7 +96,7 @@ const TUT = [
   { art: () => `<div class="tart">${cakeSVG({ base: 0, cream: 0, top: 0, sweet: 0 }, { size: 150 })}</div>`,
     t: "Ghép bánh", d: "Chạm Đế → Kem → Topping → Độ ngọt. Dấu ✓ xanh là đúng, ✕ đỏ là sai. Đủ rồi thì bấm Giao bánh. Giao nhanh được nhiều sao và tip." },
   { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}${critterSVG({ ...PETS.dog, mood: "wink" }, 70)}</div>`,
-    t: "Đi chợ & thuê nhân viên", d: "Mỗi bánh dùng 1 đế, 1 kem, 1 topping trong kho, nhớ nhập hàng trước ca. Lên cấp thì Milo, Siro, Cacao xin vào làm phụ, cuối ca trả lương cho các bé nha." },
+    t: "Đi chợ & thú cưng đi làm", d: "Mỗi bánh dùng 1 đế, 1 kem, 1 topping trong kho, nhớ nhập hàng trước ca. Lên cấp thì Milo, Siro, Cacao xin vào làm phụ. Lương của các bé là Hạt, Pate, Ức gà, mua ở mục Thú cưng." },
   { art: () => `<div class="tart"><div class="env big"></div></div>`,
     t: "Mỗi ngày một lá thư", d: "Mở thư mỗi ngày, xong 3 mục tiêu để nhận thêm thư bí mật. Ngày đặc biệt được nhân đôi xu." }
 ];
@@ -104,7 +105,7 @@ export function tutorial(step = 0) {
   modal(`${x.art()}<h2>${x.t}</h2><p class="tdesc">${x.d}</p>
     <div class="tdots">${TUT.map((_, i) => `<i class="${i === step ? "on" : ""}"></i>`).join("")}</div>
     <div class="mbtns"><button class="b3" id="tNext">${last ? "Bắt đầu thôi" : "Tiếp"}</button>${last ? "" : '<button class="b3 w" data-close>Bỏ qua</button>'}</div>`,
-    () => { S.tut = true; save(); });
+    () => { S.tut = true; save(); welcome(); });
   $("#tNext")!.addEventListener("click", () => { if (last) closeModal(); else tutorial(step + 1); });
 }
 
@@ -136,4 +137,15 @@ export function restore() {
       toast("Đã khôi phục, đang tải lại tiệm…"); setTimeout(() => location.reload(), 700);
     } catch { toast("Mã không đúng. Kiểm tra lại xem đã copy đủ chưa nhé"); }
   });
+}
+
+/* ===== Quà khai trương: vốn làm ăn, nhận một lần ===== */
+export function welcome() {
+  if (S.welcome || !claimWelcome()) return;
+  const food = (Object.entries(WELCOME.food) as [keyof typeof S.food, number][]).map(([id, n]) => ({ f: FOODS.find(x => x.id === id)!, n }));
+  modal(`<div class="tart">${critterSVG({ ...PETS.gold, mood: "love" }, 80)}<div class="gift"><span class="coin-i big"></span><b>+${WELCOME.coins}</b></div>${food.map(x => `<div class="gift">${foodSVG(x.f.id, 44)}<b>+${x.n}</b></div>`).join("")}</div>
+    <h2>Quà khai trương!</h2>
+    <p class="tdesc">Tặng chủ tiệm ${WELCOME.coins} xu và ${food.map(x => `${x.n} gói ${x.f.n}`).join(", ")} làm vốn. Đi chợ nhập nguyên liệu, và dành đồ ăn làm lương cho các bé nha.</p>
+    <div class="mbtns"><button class="b3" data-close>Nhận vốn</button></div>`, render);
+  floatHearts(innerWidth / 2, innerHeight / 2, 10); sfx("level");
 }

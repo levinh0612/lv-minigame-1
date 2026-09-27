@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RECIPES } from "../src/content/game";
 import {
-  buy, buySuggested, dutyWages, hire, outOfStock, packPrice, quickBuy, suggestion, toggleDuty, train
+  buy, buyFood, buySuggested, claimWelcome, crewPlan, hire, mealOf, outOfStock, packPrice, quickBuy, snack, suggestion, toggleDuty, train
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
-import { autoPrep, createShift, finishShift, serve, tick, type Customer } from "../src/engine/shift";
+import { autoPrep, beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
 import { S, loadState, resetState } from "../src/engine/state";
 
 const customer = (over: Partial<Customer> = {}): Customer => ({
@@ -65,36 +65,70 @@ describe("nguyên liệu", () => {
   });
 });
 
-describe("nhân viên", () => {
-  it("chưa đủ cấp thì không thuê được", () => {
+describe("quà khai trương", () => {
+  it("tặng 300 xu + 5 Hạt, chỉ một lần", () => {
+    const c = S.coins;
+    expect(claimWelcome()).toBe(true);
+    expect(S.coins).toBe(c + 300);
+    expect(S.food.kibble).toBe(5);
+    expect(claimWelcome()).toBe(false);
+    expect(S.coins).toBe(c + 300);
+  });
+});
+
+describe("thú cưng làm nhân viên", () => {
+  it("chưa đủ cấp thì không nhận vào làm được", () => {
     expect(hire("dog")).toBe(false);
     lvUp(2);
     expect(hire("dog")).toBe(true);
-    expect(dutyWages()).toBe(10);
+    expect(crewPlan()).toEqual([{ id: "dog", meal: null }]);
   });
 
-  it("cho nghỉ thì không trả lương; huấn luyện tăng lương", () => {
-    lvUp(4); S.coins = 1000;
-    hire("dog"); hire("white");
-    toggleDuty("white");
-    expect(dutyWages()).toBe(10);
-    train("dog");
-    expect(S.staff.dog.lv).toBe(2);
-    expect(dutyWages()).toBe(14);
+  it("lương theo bậc: bậc 1 Hạt, bậc 2 Pate, bậc 3 Ức gà", () => {
+    lvUp(2); S.coins = 1000; hire("dog");
+    expect(mealOf("dog")).toBe("kibble");
+    train("dog"); expect(mealOf("dog")).toBe("pate");
+    train("dog"); expect(mealOf("dog")).toBe("chicken");
+    expect(train("dog")).toBe(false);
   });
 
-  it("hết ca trả lương nhưng không làm xu âm", () => {
+  it("đầu ca các bé ăn lương; thiếu món thì ăn món ngon hơn", () => {
+    lvUp(4); S.coins = 1000; hire("dog"); hire("gold");
+    buyFood("kibble", 1); buyFood("chicken", 1);
+    S.staff.gold.lv = 2;                       // cần Pate nhưng không có -> ăn Ức gà
+    const { sh, pay } = beginShift();
+    expect(pay.fed).toEqual([{ id: "dog", meal: "kibble" }, { id: "gold", meal: "chicken" }]);
+    expect(sh.wages).toBe(6 + 15);
+    expect(S.food).toEqual({ kibble: 0, pate: 0, chicken: 0 });
+  });
+
+  it("hết đồ ăn thì bé đói và nghỉ ca đó", () => {
     lvUp(2); hire("dog");
-    const sh = createShift(); sh.served = 3; S.coins = 4;
-    const l = finishShift(sh);
-    expect(l.wages).toBe(4);
-    expect(S.coins).toBe(0);
+    const { pay } = beginShift();
+    expect(pay.hungry).toEqual(["dog"]);
+    expect(S.staff.dog.onDuty).toBe(false);
   });
 
-  it("ca không có khách nào thì không trả lương", () => {
-    lvUp(2); hire("dog"); S.coins = 50;
-    finishShift(createShift());
-    expect(S.coins).toBe(50);
+  it("cho nghỉ thì không ăn lương", () => {
+    lvUp(2); S.coins = 100; hire("dog"); buyFood("kibble", 2); toggleDuty("dog");
+    const { pay } = beginShift();
+    expect(pay.fed).toEqual([]);
+    expect(S.food.kibble).toBe(2);
+  });
+
+  it("thưởng đồ ăn mỗi ngày một lần, món ngon thân hơn", () => {
+    S.coins = 100; buyFood("chicken", 2);
+    expect(snack("white", "chicken")).toBe(true);
+    expect(S.pets.white.aff).toBe(8);
+    expect(snack("white", "chicken")).toBe(false);
+    expect(S.food.chicken).toBe(1);
+  });
+
+  it("mua đồ ăn trừ xu, thiếu xu thì không mua", () => {
+    S.coins = 20;
+    expect(buyFood("pate", 2)).toBe(true);
+    expect(S.coins).toBe(0);
+    expect(buyFood("kibble", 1)).toBe(false);
   });
 
   it("Milo chọn sẵn đế cho khách mới, không ghi đè khi đổi ý", () => {

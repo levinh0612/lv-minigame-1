@@ -3,12 +3,13 @@ import { registerSW } from "virtual:pwa-register";
 import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
 import { CATS, DECOR, type PartKey, type StockKey } from "./content/game";
-import { buy, buySuggested, hire, packPrice, toggleDuty, train } from "./engine/economy";
+import { buy, buyFood, buySuggested, foodDef, hire, packPrice, snack, toggleDuty, train } from "./engine/economy";
+import type { FoodId } from "./content/game";
 import { lvl } from "./engine/progress";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, floatHearts, hasModal, hearts, toast } from "./ui/dom";
-import { backup, claimGoals, openLetter, pauseMenu, restore, settings, tutorial } from "./ui/modals";
+import { backup, claimGoals, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
 import { navigate } from "./ui/router";
 import { SH, doServe, pickIngredient, selectSeat, startShift } from "./ui/screens/play";
 
@@ -54,12 +55,16 @@ document.addEventListener("click", e => {
     const h = document.querySelector(`[data-hearts="${id}"]`); if (h) h.textContent = hearts(st.aff);
     return;
   }
-  if (d.feed) {
-    const id = d.feed as keyof typeof S.pets, st = S.pets[id];
-    if (st.fedDay === S.daily.day || S.coins < 5) return;
-    S.coins -= 5; st.fedDay = S.daily.day; st.aff += 5; save();
-    const r = t.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 5); sfx("boop");
-    toast(petName(id) + " ăn ngon lành!"); render(); return;
+  if (d.foodBuy) {
+    const [id, n] = d.foodBuy.split(":"), f = foodDef(id as FoodId);
+    if (buyFood(f.id, +n)) { sfx("tap"); toast(`+${n} ${f.n} · ${f.cost * +n} xu`); } else toast("Không đủ xu");
+    return render();
+  }
+  if (d.snack) {
+    const [pet, food] = d.snack.split(":") as [PetId, FoodId];
+    if (!snack(pet, food)) return;
+    const r = t.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop");
+    toast(`${petName(pet)} ăn ${foodDef(food).n} ngon lành! +${foodDef(food).aff} ♥`); return render();
   }
   if (d.ing) { const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.seat) return selectSeat(+d.seat);
@@ -71,7 +76,8 @@ window.addEventListener("hashchange", render);
 
 render();
 Sound.play("home");
-if (!S.tut) setTimeout(() => { if (!hasModal()) tutorial(); }, 400);
+// lần đầu: hướng dẫn rồi quà khai trương; người chơi cũ chưa nhận quà thì tặng luôn
+setTimeout(() => { if (hasModal()) return; if (!S.tut) tutorial(); else welcome(); }, 400);
 if (S.refund) { const r = S.refund; delete S.refund; save(); setTimeout(() => toast(`Tiệm đổi giao diện mới! Hoàn lại ${r} xu cho đồ trang trí cũ`), 600); }
 
 // PWA: chơi offline, có bản mới thì tự cập nhật lần mở sau

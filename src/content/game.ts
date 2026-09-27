@@ -97,12 +97,23 @@ export const PACKS = [{ n: 5, disc: 0 }, { n: 10, disc: 0.1 }];
 export const QUICK_MULT = 1.5;    // nhập nhanh giữa ca: đắt hơn 50%
 export const STARTER_STOCK = 8;   // kho tặng lúc đầu
 
-export interface StaffDef { id: PetId; role: string; unlock: number; wage: [number, number, number]; train: [number, number]; effect: [string, string, string] }
+/* Đồ ăn thú cưng: vừa là lương (mỗi ca 1 phần theo bậc), vừa để thưởng tăng thân thiết */
+export type FoodId = "kibble" | "pate" | "chicken";
+export interface Food { id: FoodId; n: string; cost: number; aff: number; c: string }
+export const FOODS: Food[] = [
+  { id: "kibble", n: "Hạt", cost: 6, aff: 3, c: "#C98B5A" },
+  { id: "pate", n: "Pate", cost: 10, aff: 5, c: "#F2B266" },
+  { id: "chicken", n: "Ức gà", cost: 15, aff: 8, c: "#F7C9A8" }
+];
+export const WELCOME = { coins: 300, food: { kibble: 5 } as Partial<Record<FoodId, number>> };
+
+/* Thú cưng làm nhân viên. Lương mỗi ca = 1 phần ăn theo bậc: bậc 1 Hạt, bậc 2 Pate, bậc 3 Ức gà */
+export interface StaffDef { id: PetId; role: string; unlock: number; train: [number, number]; effect: [string, string, string] }
 export const STAFF: StaffDef[] = [
-  { id: "dog", role: "Phụ bếp", unlock: 2, wage: [10, 14, 18], train: [120, 300],
+  { id: "dog", role: "Phụ bếp", unlock: 2, train: [120, 300],
     effect: ["Chọn sẵn đế bánh", "Chọn sẵn đế và kem", "Chọn sẵn đế, kem và topping"] },
-  { id: "gold", role: "Thu ngân", unlock: 3, wage: [8, 12, 16], train: [150, 350],
+  { id: "gold", role: "Thu ngân", unlock: 3, train: [150, 350],
     effect: ["Khách tip thêm 10%", "Khách tip thêm 20%", "Khách tip thêm 30%"] },
-  { id: "white", role: "Chạy bàn", unlock: 4, wage: [8, 12, 16], train: [150, 350],
+  { id: "white", role: "Chạy bàn", unlock: 4, train: [150, 350],
     effect: ["Dỗ khách sắp giận: chờ thêm 20%", "Dỗ khách sắp giận: chờ thêm 35%", "Dỗ khách sắp giận: chờ thêm 50%"] }
 ];

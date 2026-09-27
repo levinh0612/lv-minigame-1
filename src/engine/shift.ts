@@ -4,7 +4,7 @@ import {
   ACCENT, CATS, CRITTERS, GUEST_LINES, HAIR, HIM, KEYS, LABELS, PETS, PET_LINES, RECIPES, SKIN, STOCK_KEYS,
   type Build, type Look, type Mood, type PartKey, type Recipe, type StockKey
 } from "../content/game";
-import { dutyWages, prepParts, quickPrice, rescueBonus, stockOf, tipBonus, unitCost } from "./economy";
+import { payCrew, prepParts, quickPrice, rescueBonus, stockOf, tipBonus, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, petName, save } from "./state";
@@ -157,11 +157,15 @@ export function autoPrep(sh: Shift): PartKey[] {
   return done;
 }
 
-/* Hết ca: trả lương (không bao giờ làm xu âm), tính lãi */
+/* Mở ca: các bé đi làm ăn lương (đồ ăn) trước, giá trị đồ ăn tính vào chi phí ca */
+export function beginShift() {
+  const pay = payCrew(), sh = createShift();
+  sh.wages = pay.cost;
+  return { sh, pay };
+}
+/* Hết ca: tính lãi */
 export function finishShift(sh: Shift) {
-  const worked = sh.served + sh.left > 0;
-  sh.wages = worked ? Math.min(dutyWages(), S.coins) : 0;
-  S.coins -= sh.wages; S.shifts++; save();
+  S.shifts++; save();
   return ledger(sh);
 }
 export const ledger = (sh: Shift) => {

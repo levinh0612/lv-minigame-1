@@ -5,15 +5,15 @@ import "../styles/main.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
 import {
-  CATS, CRITTERS, DECOR, HIM, PETS, RECIPES, STAFF,
+  CATS, CRITTERS, DECOR, FOODS, HIM, PETS, RECIPES, STAFF,
   type CritterLook, type GuestLook, type Mood
 } from "../content/game";
 import { rollDay } from "../engine/progress";
 import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
-import { cakeSVG, critterSVG, guestSVG } from "../ui/art";
+import { cakeSVG, critterSVG, foodSVG, guestSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
-import { backup, claimGoals, himNote, openLetter, pauseMenu, settings, tutorial } from "../ui/modals";
+import { backup, claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, welcome } from "../ui/modals";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
 import { _setResult, _setShift, playHTML, resultHTML, seatHTML } from "../ui/screens/play";
@@ -61,6 +61,7 @@ function busyShift(): Shift {
 }
 const lvState = (L: number, more: (s: State) => void = () => {}) => state(s => { s.xp = xpForLv(L); more(s); });
 const staffed = (s: State) => {
+  s.food = { kibble: 5, pate: 3, chicken: 1 };
   s.staff.dog = { hired: true, lv: 2, onDuty: true };
   s.staff.gold = { hired: true, lv: 1, onDuty: true };
   s.staff.white = { hired: true, lv: 1, onDuty: true };
@@ -93,8 +94,9 @@ const STORIES: Story[] = [
     html: () => { lvState(3); return homeHTML(); } },
   { id: "home-event", sec: "screens", title: "Bắt đầu · ngày đặc biệt", desc: "Sinh nhật bạn nữ (28/12): thẻ sự kiện, xu x2; thư đã đọc", kind: "screen",
     html: () => withDate(2026, 12, 28, () => { lvState(5, s => { s.letters = [{ day: "2026-12-28", txt: "…" }]; }); return homeHTML(); }) },
-  { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 3: kho thiếu Dâu tây, Milo đi làm, Siro đang nghỉ, Cacao chưa mở", kind: "screen", long: true,
-    html: () => { lvState(3, s => { s.stock.top[0] = 0; s.stock.cream[0] = 2; s.staff.dog = { hired: true, lv: 2, onDuty: true }; s.staff.gold = { hired: true, lv: 1, onDuty: false }; }); return prepHTML(); } },
+  { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 4: kho thiếu Dâu tây; Milo đi làm (có Pate), Siro đói (thiếu Hạt), Cacao nghỉ", kind: "screen", long: true,
+    html: () => { lvState(4, s => { s.stock.top[0] = 0; s.stock.cream[0] = 2; s.food = { kibble: 0, pate: 3, chicken: 1 };
+      s.staff.dog = { hired: true, lv: 2, onDuty: true }; s.staff.gold = { hired: true, lv: 1, onDuty: true }; s.staff.white = { hired: true, lv: 1, onDuty: false }; }); return prepHTML(); } },
   { id: "play-empty", sec: "screens", title: "Chơi · đầu ca", desc: "Chưa có khách, đĩa trống", kind: "screen",
     html: () => { lvState(1); const sh = createShift(); _setShift(sh); return playHTML(sh); } },
   { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "3 khách; Anh sắp giận (đang được làm); Độ ngọt chọn sai ✕; Hạt dẻ hết hàng; 3 bé đang làm", kind: "screen",
@@ -105,8 +107,8 @@ const STORIES: Story[] = [
     html: () => {
       lvState(5, s => { s.daily.served = 12; s.daily.feat = 3; s.daily.angry = 0; s.daily.day = ""; });
       S.daily.served = 12; S.daily.feat = 3;
-      const sh = createShift(); Object.assign(sh, { served: 12, left: 0, coins: 320, tips: 85, ingUsed: 96, quickCost: 5, wages: 30, lv0: 4 });
-      _setResult({ sh, lv: 5, led: { revenue: 405, ingUsed: 96, quick: 5, wages: 30, profit: 274 } }); return resultHTML();
+      const sh = createShift(); Object.assign(sh, { served: 12, left: 0, coins: 320, tips: 85, ingUsed: 96, quickCost: 5, wages: 16, lv0: 4 });
+      _setResult({ sh, lv: 5, led: { revenue: 405, ingUsed: 96, quick: 5, wages: 16, profit: 288 } }); return resultHTML();
     } },
   { id: "result-low", sec: "screens", title: "Kết quả · cố lên", desc: "1 sao, nhiều khách bỏ về, chưa xong mục tiêu", kind: "screen", resBg: true, long: true,
     html: () => {
@@ -119,8 +121,9 @@ const STORIES: Story[] = [
     html: () => { lvState(4, s => { s.reviews = REVIEWS as State["reviews"]; }); S.daily.served = 5; S.daily.feat = 1; return goalsHTML(); } },
   { id: "shop-decor", sec: "screens", title: "Cửa hàng · Trang trí", desc: "Đã có Rèm và Đèn mây; một số đồ còn khoá theo cấp", kind: "screen", long: true,
     html: () => { lvState(4, s => { s.decor = ["curtain", "lamp"]; }); return shopHTML("decor"); } },
-  { id: "shop-pets", sec: "screens", title: "Cửa hàng · Thú cưng", desc: "Vuốt ve, cho ăn, độ thân thiết", kind: "screen", long: true,
-    html: () => { lvState(3, s => { s.pets.dog.aff = 32; s.pets.gold.aff = 14; s.pets.white.fedDay = "x"; }); return shopHTML("pets"); } },
+  { id: "shop-pets", sec: "screens", title: "Thú cưng (kiêm nhân viên)", desc: "Tủ đồ ăn; Milo đi làm bậc 2, Siro chờ nhận vào làm, Cacao chưa đủ cấp; thưởng đồ ăn mỗi ngày", kind: "screen", long: true,
+    html: () => { lvState(3, s => { s.pets.dog.aff = 32; s.pets.gold.aff = 14; s.food = { kibble: 4, pate: 2, chicken: 0 }; s.staff.dog = { hired: true, lv: 2, onDuty: true }; });
+      S.pets.dog.fedDay = S.daily.day; return shopHTML("pets"); } },
   { id: "shop-gift", sec: "screens", title: "Cửa hàng · Quà tặng", desc: "Quà hôm nay và hộp thư", kind: "screen", long: true,
     html: () => { lvState(3, s => { s.letters = [{ day: "2026-09-25", txt: CFG.notes[0] }, { day: "2026-09-26", txt: CFG.notes[1], tag: "Thư bí mật", bonus: true }, { day: "2026-09-27", txt: CFG.notes[3] }]; }); return shopHTML("gift"); } },
   { id: "roadmap", sec: "screens", title: "Sắp ra mắt", desc: "Lộ trình nâng cấp và Có gì mới", kind: "screen", long: true,
@@ -131,6 +134,8 @@ const STORIES: Story[] = [
     html: () => { lvState(3); return modalOver(homeHTML(), openLetter); } },
   { id: "m-gift", sec: "modals", title: "Nhận quà mục tiêu", desc: "Xong 3 mục tiêu: +60 xu và thư bí mật", kind: "modal",
     html: () => { lvState(3); S.daily.served = 9; S.daily.feat = 3; return modalOver(homeHTML(), claimGoals); } },
+  { id: "m-welcome", sec: "modals", title: "Quà khai trương", desc: "Lần đầu chơi: 300 xu + 5 Hạt làm vốn", kind: "modal",
+    html: () => { lvState(1, s => { s.welcome = false; }); return modalOver(homeHTML(), welcome); } },
   { id: "m-tut-1", sec: "modals", title: "Hướng dẫn 1/4", desc: "Lần đầu mở game", kind: "modal",
     html: () => { lvState(1); return modalOver(homeHTML(), () => tutorial(0)); } },
   { id: "m-tut-3", sec: "modals", title: "Hướng dẫn 3/4", desc: "Đi chợ và nhân viên", kind: "modal",
@@ -171,6 +176,9 @@ const STORIES: Story[] = [
         ["Nam tóc ngắn", G("boy", "short", "#3B2A26", "#FFD166")], ["Nam đội mũ", G("boy", "cap", "#5C7A99", "#C9B8F0", "cheek")], ["Anh", HIM]];
       return `<div class="board">${rows.map(([n, l]) => `<div class="sbrow"><div class="sbcell" style="width:80px"><b>${n}</b></div>${moods.map(m => `<div class="sbcell" style="width:100px">${guestSVG({ ...l, mood: m }, 90)}${m}</div>`).join("")}</div>`).join("")}</div>`; } },
 
+  { id: "c-foods", sec: "chars", title: "Đồ ăn thú cưng", desc: "Hạt (lương bậc 1), Pate (bậc 2), Ức gà (bậc 3); cũng dùng để thưởng", kind: "comp",
+    html: () => `<div class="board"><div class="sbrow">${FOODS.map(f => `<div class="sbcell" style="width:120px">${foodSVG(f.id, 72)}<b>${f.n}</b>${f.cost} xu · +${f.aff} ♥</div>`).join("")}</div></div>` },
+
   /* ---------- Nút & thành phần ---------- */
   { id: "c-buttons", sec: "ui", title: "Nút", desc: "Nút 3D chính/phụ/khoá, nút nhỏ, mua, gói nhập, đi làm/nghỉ, tròn, huy hiệu", kind: "comp",
     html: () => `<div class="board w390" style="display:flex;flex-direction:column;gap:14px">
@@ -194,7 +202,7 @@ const STORIES: Story[] = [
       <button class="letter" style="margin:0;width:100%"><div class="env"></div><div class="tx"><b>Thư hôm nay đã đến</b><small>Chạm để mở thư</small></div><div class="dot"></div></button>
       <div class="evt" style="margin:0"><b>Hôm nay: Sinh nhật Em · xu x2</b><p>Chúc mừng sinh nhật Em!</p></div>
       <p class="warnbox">Đang hết Dâu tây. Khách gọi món có nguyên liệu này sẽ phải nhập nhanh, giá cao hơn 50%.</p>
-      <div class="ledger"><div class="lg"><span>Tiền bánh + tip</span><b>+405</b></div><div class="lg"><span>Nguyên liệu đã dùng</span><b>−96</b></div><div class="lg"><span>Lương nhân viên</span><b>−30</b></div><div class="lg tot"><span>Lãi ca này</span><b>+279 xu</b></div></div>
+      <div class="ledger"><div class="lg"><span>Tiền bánh + tip</span><b>+405</b></div><div class="lg"><span>Nguyên liệu đã dùng</span><b>−96</b></div><div class="lg"><span>Lương thú cưng (đồ ăn)</span><b>−16</b></div><div class="lg tot"><span>Lãi ca này</span><b>+293 xu</b></div></div>
       <button class="unlock"><div class="env"></div><div><b>Mở khoá thư tình mới</b><small>Chạm để nhận quà hôm nay</small></div></button>
       <div class="lvup">Lên Lv 5! Mở khoá: Mochi Matcha Đậu đỏ</div>
       <div class="toast" style="position:static;transform:none;align-self:center">Sai độ ngọt rồi: Bé Na gọi Ít ngọt, không phải Vừa</div></div>` },

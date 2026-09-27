@@ -115,3 +115,16 @@ export function guestSVG(p: GuestLook & { mood?: Mood }, S = 90){
   return `<svg width="${S}" height="${Math.round(S*94/120)}" viewBox="0 6 120 94" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
 }
 export const charSVG = (look: Look, mood: Mood, S?: number) => look.gender ? guestSVG({ ...look, mood }, S) : critterSVG({ ...look, mood }, S);
+
+/* Đồ ăn thú cưng: Hạt (bát), Pate (lon), Ức gà (đùi gà) */
+export function foodSVG(id: "kibble" | "pate" | "chicken", S = 40) {
+  let g = "";
+  if (id === "kibble") g = `<path d="M6 26 H42 C42 36 34 42 24 42 C14 42 6 36 6 26 Z" fill="#FFB3C7"/><path d="M12 32 C16 34 32 34 36 32" stroke="#fff" stroke-width="2" opacity=".7"/>`
+    + [[14, 22], [20, 19], [27, 20], [33, 22], [17, 25], [24, 24], [31, 25]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="#C98B5A"/>`).join("")
+    + `<path d="M4 26 H44" />`;
+  if (id === "pate") g = `<path d="M10 14 V36 C10 40 38 40 38 36 V14" fill="#F2B266"/><ellipse cx="24" cy="14" rx="14" ry="4.5" fill="#FFE3A0"/><ellipse cx="24" cy="14" rx="9" ry="2.6" fill="none" stroke-width="1.6" opacity=".6"/>`
+    + `<path d="M10 22 C18 25 30 25 38 22 V31 C30 34 18 34 10 31 Z" fill="#fff" stroke-width="2"/><path d="M27 27 C27 25 24.5 24.5 24 26.5 C23.5 24.5 21 25 21 27 C21 29 24 30.5 24 31.5 C24 30.5 27 29 27 27 Z" fill="#FF8FAB" stroke="none"/>`;
+  if (id === "chicken") g = `<path d="M30 20 C24 8 8 10 8 24 C8 34 18 38 26 32 Z" fill="#E8A26A"/><path d="M14 20 C16 16 20 15 23 16" stroke="#fff" stroke-width="2.2" opacity=".6"/>`
+    + `<path d="M26 32 L34 38" stroke-width="5.5"/><path d="M26 32 L34 38" stroke="#FFF8EC" stroke-width="2.6"/><circle cx="36" cy="37" r="3.6" fill="#FFF8EC"/><circle cx="34" cy="41" r="3.6" fill="#FFF8EC"/>`;
+  return `<svg width="${S}" height="${S}" viewBox="0 0 48 48" style="display:block;flex:none;overflow:visible" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${g}</svg>`;
+}

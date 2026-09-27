@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca: đi chợ mua nguyên liệu và sắp xếp nhân viên trước khi mở cửa */
 import { CATS, LABELS, PACKS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
 import {
-  canHire, dutyWages, expectedCustomers, onDuty, outOfStock, packPrice, stockOf, suggestion, trainCost, wageOf
+  canHire, crewPlan, expectedCustomers, foodDef, mealFor, mealOf, onDuty, outOfStock, packPrice, stockOf, suggestion
 } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { S, petName } from "../../engine/state";
@@ -23,26 +23,30 @@ function stockCard() {
   </div>`;
 }
 
-function staffCard() {
-  return `<div class="card"><h3>Nhân viên <small>lương trả khi hết ca</small></h3>
-    ${STAFF.map(d => {
-      const st = S.staff[d.id], can = canHire(d.id), on = onDuty(d.id), tc = trainCost(d.id);
-      const action = !can ? `<span class="tag lk">Mở ở Lv ${d.unlock}</span>`
-        : !st.hired ? `<button class="mini pk" data-hire="${d.id}">Thuê · ${d.wage[0]} xu/ca</button>`
-        : `<button class="duty ${on ? "on" : ""}" data-duty="${d.id}" aria-pressed="${on}">${on ? "Đi làm" : "Nghỉ"}</button>
-           ${tc ? `<button class="mini" data-train="${d.id}" ${S.coins < tc ? "disabled" : ""}>Huấn luyện · ${fmtN(tc)} xu</button>` : '<span class="tag use">Bậc tối đa</span>'}`;
-      return `<div class="staff ${can ? "" : "lock"} ${st.hired && !on ? "off" : ""}">
-        <div class="av">${critterSVG({ ...PETS[d.id], mood: on ? "happy" : "open" }, 64)}</div>
-        <div class="inf"><b>${esc(petName(d.id))} <em>${d.role}${st.hired ? ` · bậc ${st.lv}` : ""}</em></b>
-          <small>${d.effect[st.hired ? st.lv - 1 : 0]}</small>
-          ${st.hired ? `<small class="wg">Lương ${wageOf(d.id)} xu/ca</small>` : ""}
-          <div class="acts">${action}</div></div></div>`;
+/* Ca này ai đi làm, đã có đồ ăn (lương) chưa */
+function crewCard() {
+  const hired = STAFF.filter(d => S.staff[d.id].hired);
+  const link = `<button class="mini pk" data-go="/cua-hang/thu-cung">Chăm thú cưng →</button>`;
+  if (!hired.length) return `<div class="card"><h3>Thú cưng đi làm</h3><p class="cnote">${canHire("dog") ? `${esc(petName("dog"))} đang chờ được nhận vào làm phụ bếp.` : `Lên Lv 2 để ${esc(petName("dog"))} xin vào làm phụ bếp.`}</p>${link}</div>`;
+  return `<div class="card"><h3>Thú cưng đi làm <small>ăn lương đầu ca</small></h3>
+    ${hired.map(d => {
+      const on = onDuty(d.id), meal = mealFor(d.id), need = foodDef(mealOf(d.id));
+      const status = !on ? `<small>Nghỉ ca này</small>`
+        : meal ? `<small class="okc">Đi làm · ăn 1 ${foodDef(meal).n}</small>`
+        : `<small class="bad">Đói: cần 1 ${need.n}</small><button class="mini pk" data-food-buy="${need.id}:1" ${S.coins < need.cost ? "disabled" : ""}>Mua 1 ${need.n} · ${need.cost} xu</button>`;
+      return `<div class="crewrow ${on ? "" : "off"}">${critterSVG({ ...PETS[d.id], mood: on && meal ? "happy" : "open", ledge: false }, 44)}
+        <div class="inf"><b>${esc(petName(d.id))} <em>${d.role} · bậc ${S.staff[d.id].lv}</em></b>${status}</div>
+        <button class="duty ${on ? "on" : ""}" data-duty="${d.id}" aria-pressed="${on}">${on ? "Đi làm" : "Nghỉ"}</button></div>`;
     }).join("")}
+    ${link}
   </div>`;
 }
 
 export function prepHTML() {
-  const feat = featured(), out = outOfStock(), wages = dutyWages();
+  const feat = featured(), out = outOfStock(), plan = crewPlan();
+  const fed = plan.filter(x => x.meal), hungry = plan.filter(x => !x.meal);
+  const sub = !plan.length ? "Chưa có bé nào đi làm"
+    : [fed.length ? "Lương: " + fed.map(x => `1 ${foodDef(x.meal!).n}`).join(", ") : "", hungry.length ? hungry.map(x => petName(x.id)).join(", ") + " đói, sẽ nghỉ" : ""].filter(Boolean).join(" · ");
   return `<div class="scr prep">
     <div class="shead">${backBtn}<h2>Chuẩn bị ca</h2>${coinPill()}</div>
     <div class="list">
@@ -52,8 +56,8 @@ export function prepHTML() {
       </div>
       ${out.length ? `<p class="warnbox">Đang hết ${out.map(x => CATS[x.k][x.i][0]).join(", ")}. Khách gọi món có nguyên liệu này sẽ phải nhập nhanh, giá cao hơn 50%.</p>` : ""}
       ${stockCard()}
-      ${staffCard()}
+      ${crewCard()}
     </div>
-    <div class="startbar"><button class="b3" data-act="start">Mở cửa<small>${wages ? `Lương ca này: ${wages} xu` : "Chưa có nhân viên đi làm"}</small></button></div>
+    <div class="startbar"><button class="b3" data-act="start">Mở cửa<small>${esc(sub)}</small></button></div>
   </div>`;
 }

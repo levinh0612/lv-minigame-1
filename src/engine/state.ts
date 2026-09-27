@@ -1,6 +1,6 @@
 /* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
 import { CFG, type PetId } from "../content/couple";
-import { DECOR, STARTER_STOCK, type Look, type StockKey } from "../content/game";
+import { DECOR, STARTER_STOCK, type FoodId, type Look, type StockKey } from "../content/game";
 
 export const KEY = "tiem-banh-matcha-v1";
 
@@ -15,6 +15,7 @@ export interface State {
   pets: Record<PetId, PetState>;
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
+  food: Record<FoodId, number>; welcome: boolean;
 }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
@@ -26,7 +27,8 @@ export function fresh(): State {
     pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
-    staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false
+    staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
+    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false
   };
 }
 
@@ -60,6 +62,7 @@ export function loadState(raw: string | null): State {
   s.pets = Object.assign(fresh().pets, s.pets || {});
   s.staff = Object.assign(fresh().staff, s.staff || {});
   s.stock = Object.assign(fresh().stock, s.stock || {});
+  s.food = Object.assign(fresh().food, s.food || {});
   ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }
