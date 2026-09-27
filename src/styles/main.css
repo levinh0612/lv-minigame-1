@@ -91,7 +91,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .pill.pulse{animation:dcPop .35s ease-out}
 .lane{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 12px 0;flex:none}
 .seat{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;min-width:0}
-.ord{background:#fff;border-radius:16px;padding:6px 5px;height:84px;width:100%;box-shadow:0 3px 0 var(--sh);display:flex;flex-direction:column;justify-content:center;gap:1px;font:700 11px/1.25 var(--body);color:var(--ink);text-align:center;border:2px solid transparent;transition:border-color .2s,background .2s}
+.ord{background:#fff;border-radius:16px;padding:6px 5px;min-height:96px;width:100%;box-shadow:0 3px 0 var(--sh);display:flex;flex-direction:column;justify-content:center;gap:1px;font:700 11px/1.25 var(--body);color:var(--ink);text-align:center;border:2px solid transparent;transition:border-color .2s,background .2s}
 .ord .rn{font:900 12px/1.15 var(--body);color:var(--ink)}
 .ord .sw{color:var(--pink-d);font-weight:800}
 .seat.tgt .ord{border-color:var(--pink-m)}
@@ -300,10 +300,7 @@ body[data-scr="result"]{background:var(--pink-l)}
 .chip.out .cn,.chip.out i{opacity:.55}
 .chip.out .q{color:#fff;background:var(--pink);border-color:var(--pink)}
 .bench{gap:12px}
-.bench .for{flex:1;max-width:none}
-.crew{flex:none;width:48px;display:flex;flex-direction:column;justify-content:center;gap:1px;align-self:stretch;padding:4px 0}
-.cm{display:flex;flex-direction:column;align-items:center;line-height:1}
-.cm small{font:800 9px var(--body);color:var(--soft);margin-top:-2px}
+.bench .for{flex:1;max-width:none;min-width:0}
 .cm.squish>svg{animation:squish .45s cubic-bezier(.3,1.6,.5,1)}
 
 /* ===== Màn Chuẩn bị ca ===== */
@@ -400,3 +397,39 @@ body[data-scr="result"]{background:var(--pink-l)}
 .gift:nth-child(3){animation-delay:.15s}
 .gift b{font:800 18px var(--display);color:var(--pink-d)}
 .coin-i.big{width:44px;height:44px;box-shadow:inset 0 -5px 0 var(--gold-d)}
+
+/* ===== Thẻ gọi món: 3 chấm màu giống nút nguyên liệu ===== */
+.lane{align-items:stretch}
+.seat .who-art{margin-top:auto}
+.ord .ings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;margin:3px 0 2px}
+.ord .ings span{display:flex;flex-direction:column;align-items:center;gap:2px;font:800 9.5px/1.1 var(--body);color:var(--soft2)}
+.ord .ings i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 0 1.5px #F2D3DB}
+.ord .sw{display:flex;align-items:center;justify-content:center;gap:4px}
+.cube{width:11px;height:11px;border-radius:3px;display:inline-block;box-shadow:0 0 0 1.5px #EBC98C}
+/* đơn bé thợ bánh đang làm */
+.ord.by{background:#F7F2FF;box-shadow:0 3px 0 #D6CBF6}
+.bybar{display:grid;grid-template-columns:22px 1fr auto;gap:2px 4px;align-items:center;margin-top:4px;padding-top:4px;border-top:1.5px dashed #D6CBF6;text-align:left}
+.bybar b{font:800 10.5px var(--body);color:var(--lav-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bybar span{font:900 10.5px var(--body);color:var(--lav-d);font-variant-numeric:tabular-nums}
+.bybar .pb{grid-column:1/-1;height:6px;border-radius:6px;background:#E6DDFA;overflow:hidden}
+.bybar .pb i{display:block;height:100%;background:#9C84E0;border-radius:6px;transition:width .15s linear}
+.seat.taken .who-art{opacity:.85}
+/* hàng đợi dài hơn 3 bàn: trượt ngang */
+.fame{margin:6px 14px 0;font:800 12px var(--body);color:var(--lav-d);display:flex;gap:6px;align-items:baseline}
+.fame span{font-weight:600;color:var(--soft3)}
+.lane.wide{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;scrollbar-width:none;padding-right:24px}
+.lane.wide::-webkit-scrollbar{display:none}
+.lane.wide .seat{flex:0 0 31%;scroll-snap-align:start}
+/* cột thợ bánh ở quầy */
+.bench.crewed{gap:8px;padding:0 10px}
+.crew{flex:none;width:112px;display:flex;flex-direction:column;gap:6px;justify-content:center;align-self:stretch}
+.cm{display:grid;grid-template-columns:30px 1fr;gap:5px;align-items:center;background:#fff;border-radius:12px;padding:3px 6px 3px 3px;box-shadow:0 2px 0 var(--sh)}
+.cm .ct{min-width:0;line-height:1.1}
+.cm b{display:block;font:800 11px var(--body);color:var(--ink)}
+.cm small{display:block;font:700 10px var(--body);color:var(--soft3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm .pb{position:relative;height:10px;border-radius:6px;background:#E6DDFA;overflow:hidden;margin-top:2px}
+.cm .pb i{display:block;height:100%;background:#9C84E0;transition:width .15s linear}
+.cm .pb span{position:absolute;inset:0;font:900 8px/10px var(--body);color:#fff;text-align:center;text-shadow:0 0 2px rgba(0,0,0,.25)}
+.cm.busy{box-shadow:0 2px 0 #D6CBF6}
+.cm.squish svg{animation:squish .45s cubic-bezier(.3,1.6,.5,1)}
+.today .famec{display:block;color:var(--lav-d)}

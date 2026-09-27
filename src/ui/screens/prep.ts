@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca: đi chợ mua nguyên liệu và sắp xếp nhân viên trước khi mở cửa */
 import { CATS, LABELS, PACKS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
 import {
-  canHire, crewPlan, expectedCustomers, foodDef, mealFor, mealOf, onDuty, outOfStock, packPrice, stockOf, suggestion
+  canHire, crewPlan, expectedCustomers, fame, foodDef, mealFor, mealOf, onDuty, outOfStock, packPrice, stockOf, suggestion
 } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { S, petName } from "../../engine/state";
@@ -27,8 +27,8 @@ function stockCard() {
 function crewCard() {
   const hired = STAFF.filter(d => S.staff[d.id].hired);
   const link = `<button class="mini pk" data-go="/cua-hang/thu-cung">Chăm thú cưng →</button>`;
-  if (!hired.length) return `<div class="card"><h3>Thú cưng đi làm</h3><p class="cnote">${canHire("dog") ? `${esc(petName("dog"))} đang chờ được nhận vào làm phụ bếp.` : `Lên Lv 2 để ${esc(petName("dog"))} xin vào làm phụ bếp.`}</p>${link}</div>`;
-  return `<div class="card"><h3>Thú cưng đi làm <small>ăn lương đầu ca</small></h3>
+  if (!hired.length) return `<div class="card"><h3>Thợ bánh ca này</h3><p class="cnote">${canHire("dog") ? `${esc(petName("dog"))} đang chờ được nhận vào làm thợ bánh.` : `Lên Lv 2 để ${esc(petName("dog"))} xin vào làm thợ bánh, tự làm bánh cho khách.`}</p>${link}</div>`;
+  return `<div class="card"><h3>Thợ bánh ca này <small>ăn lương đầu ca</small></h3><p class="cnote">Các bé đi làm sẽ tự nhận đơn và làm bánh cho khách; đơn bé đã nhận thì chủ tiệm không cần làm.</p>
     ${hired.map(d => {
       const on = onDuty(d.id), meal = mealFor(d.id), need = foodDef(mealOf(d.id));
       const status = !on ? `<small>Nghỉ ca này</small>`
@@ -52,7 +52,7 @@ export function prepHTML() {
     <div class="list">
       <div class="card today">
         ${cakeSVG({ base: feat.base, cream: feat.cream, top: feat.top, sweet: 1 }, { size: 92, still: true })}
-        <div><small>Món nổi bật hôm nay</small><b>${esc(feat.n)}</b><span>Dự kiến ${expectedCustomers()} khách · Ca ${S.shifts + 1}</span></div>
+        <div><small>Món nổi bật hôm nay</small><b>${esc(feat.n)}</b><span>Dự kiến ${expectedCustomers()} khách · Ca ${S.shifts + 1}</span><span class="famec">✦ ${fame().n} · ${fame().seats} bàn</span></div>
       </div>
       ${out.length ? `<p class="warnbox">Đang hết ${out.map(x => CATS[x.k][x.i][0]).join(", ")}. Khách gọi món có nguyên liệu này sẽ phải nhập nhanh, giá cao hơn 50%.</p>` : ""}
       ${stockCard()}

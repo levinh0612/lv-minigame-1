@@ -51,11 +51,14 @@ const REVIEWS = [
 function busyShift(): Shift {
   const sh = createShift();
   sh.seats = [
-    cust("Mèo Bơ", CRITTERS[0], 1, 0, 30),
+    cust("Mèo Bơ", CRITTERS[0], 1, 0, 30, { by: "dog" }),
     cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6", "wave"), 3, 1, 20),
-    cust(CFG.hisName, HIM, 0, 0, 8, { him: true, mood: "impatient" })
+    cust(CFG.hisName, HIM, 0, 0, 8, { him: true, mood: "impatient" }),
+    cust("Anh Tùng", G("boy", "cap", "#3B2A26", "#9FD8F5"), 2, 2, 34, { by: "gold" })
   ];
-  sh.spawned = 5; sh.served = 2; sh.total = 11;
+  sh.working = ["dog", "gold"];
+  sh.bakers = [{ id: "dog", seat: 0, done: 4.5, need: 7.5 }, { id: "gold", seat: 3, done: 2, need: 10 }];
+  sh.spawned = 7; sh.served = 2; sh.total = 13; sh.sel = 2;
   sh.build = { base: 0, cream: 0, top: null, sweet: 1 };
   return sh;
 }
@@ -99,10 +102,10 @@ const STORIES: Story[] = [
       s.staff.dog = { hired: true, lv: 2, onDuty: true }; s.staff.gold = { hired: true, lv: 1, onDuty: true }; s.staff.white = { hired: true, lv: 1, onDuty: false }; }); return prepHTML(); } },
   { id: "play-empty", sec: "screens", title: "Chơi · đầu ca", desc: "Chưa có khách, đĩa trống", kind: "screen",
     html: () => { lvState(1); const sh = createShift(); _setShift(sh); return playHTML(sh); } },
-  { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "3 khách; Anh sắp giận (đang được làm); Độ ngọt chọn sai ✕; Hạt dẻ hết hàng; 3 bé đang làm", kind: "screen",
-    html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { seatStates: ["", "", "low"] }); } },
+  { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "Tiệm 'Được biết đến' có 4 bàn (vuốt ngang); Milo làm đơn Mèo Bơ 60%, Siro làm đơn Anh Tùng 20%; chủ tiệm làm cho Anh (sắp giận), Độ ngọt chọn sai ✕; Hạt dẻ hết hàng", kind: "screen",
+    html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { seatStates: ["", "", "low", ""] }); } },
   { id: "play-served", sec: "screens", title: "Chơi · vừa giao bánh", desc: "Thẻ gọi món thành xanh, khách thả tim, bánh nhắm mắt cười", kind: "screen",
-    html: () => { lvState(5, staffed); const sh = busyShift(); sh.build = { base: 2, cream: 1, top: 0, sweet: 0 }; sh.sel = 0; _setShift(sh); return playHTML(sh, { done: true, seatStates: ["ok", "", "low"] }); } },
+    html: () => { lvState(5, staffed); const sh = busyShift(); sh.build = { base: 0, cream: 0, top: 0, sweet: 0 }; _setShift(sh); return playHTML(sh, { done: true, seatStates: ["", "", "ok", ""] }); } },
   { id: "result-great", sec: "screens", title: "Kết quả · tuyệt vời", desc: "3 sao, lên cấp, bảng lãi, mở khoá thư", kind: "screen", resBg: true, long: true,
     html: () => {
       lvState(5, s => { s.daily.served = 12; s.daily.feat = 3; s.daily.angry = 0; s.daily.day = ""; });
@@ -193,9 +196,10 @@ const STORIES: Story[] = [
         `<div class="sbcell" style="width:112px"><button class="chip ${cls}${k === "sweet" ? " sq" : ""}" style="width:104px"><i style="background:${CATS[k][i][1]}"></i><span class="cn">${CATS[k][i][0]}</span><b class="q">${q}</b><em>${m}</em></button>${cls || "bình thường"}</div>`;
       return `<div class="board"><div class="sbrow" style="padding-top:8px">${chip("", "base", 0, "8")}${chip("on", "cream", 1, "5")}${chip("ok", "cream", 0, "7", "✓")}${chip("bad", "sweet", 2, "", "✕")}${chip("out", "top", 2, "+5 xu")}</div></div>`; } },
   { id: "c-orders", sec: "ui", title: "Thẻ gọi món & khách", desc: "Bình thường · đang làm cho · sắp giận · đã giao", kind: "comp",
-    html: () => { lvState(5); const c = [cust("Bé Kem", G("girl", "long", "#E7B872", "#FF8FAB"), 5, 0, 36), cust("Mèo Bơ", CRITTERS[0], 1, 1, 30), cust("Cún Bơ", CRITTERS[4], 2, 2, 6), cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6"), 0, 0, 30)];
-      const st: ("" | "tgt" | "low" | "ok")[] = ["", "tgt", "low", "ok"], lab = ["Bình thường", "Đang làm cho", "Sắp giận", "Đã giao"];
-      return `<div class="board"><div class="lane" style="grid-template-columns:repeat(4,120px);padding:0">${c.map((x, i) => `<div class="seat ${st[i] === "tgt" ? "tgt" : ""} ${st[i] === "low" ? "low" : ""}">${seatHTML(x, i, st[i])}</div>`).join("")}</div>
+    html: () => { lvState(5, staffed); const c = [cust("Bé Kem", G("girl", "long", "#E7B872", "#FF8FAB"), 5, 0, 36), cust("Mèo Bơ", CRITTERS[0], 1, 1, 30), cust("Cún Bơ", CRITTERS[4], 2, 2, 6), cust("Gấu Mật", CRITTERS[2], 4, 1, 28, { by: "dog" }), cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6"), 0, 0, 30)];
+      const sh = createShift(); sh.seats = c; sh.bakers = [{ id: "dog", seat: 3, done: 3, need: 7.5 }];
+      const st: ("" | "tgt" | "low" | "ok")[] = ["", "tgt", "low", "", "ok"], lab = ["Bình thường", "Đang làm cho", "Sắp giận", "Bé đang làm (40%)", "Đã giao"];
+      return `<div class="board"><div class="lane" style="grid-template-columns:repeat(5,120px);padding:0">${c.map((x, i) => `<div class="seat ${st[i] === "tgt" ? "tgt" : ""} ${st[i] === "low" ? "low" : ""} ${x.by ? "taken" : ""}">${seatHTML(x, i, st[i], sh)}</div>`).join("")}</div>
         <div class="sbrow" style="margin-top:8px">${lab.map(l => `<div class="sbcell" style="width:120px"><b>${l}</b></div>`).join("")}</div></div>`; } },
   { id: "c-cards", sec: "ui", title: "Thẻ & thông báo", desc: "Thẻ thư, sự kiện, cảnh báo hết hàng, bảng lãi, mở khoá thư, lên cấp, toast", kind: "comp",
     html: () => `<div class="board w390" style="display:flex;flex-direction:column;gap:14px;position:relative;transform:translateZ(0)">

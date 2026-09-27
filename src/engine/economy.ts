@@ -1,6 +1,6 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
-import { FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
+import { FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, save } from "./state";
 
@@ -8,7 +8,7 @@ export const unitCost = (k: StockKey, i: number) => UNIT_COST[k][i];
 export const packPrice = (k: StockKey, i: number, n: number) => Math.ceil(unitCost(k, i) * n * (1 - (PACKS.find(p => p.n === n)?.disc ?? 0)));
 export const quickPrice = (k: StockKey, i: number) => Math.ceil(unitCost(k, i) * QUICK_MULT);
 export const stockOf = (k: StockKey, i: number) => S.stock[k][i] ?? 0;
-export const expectedCustomers = () => Math.min(16, 6 + lvl() + fx("cust"));
+export const expectedCustomers = () => Math.min(20, 6 + lvl() + fx("cust") + fameLevel() * 2);
 
 export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n)): boolean {
   if (S.coins < price) return false;
@@ -96,7 +96,10 @@ export function payCrew(): { cost: number; fed: { id: PetId; meal: FoodId }[]; h
   save(); return out;
 }
 
-/* Hiệu quả nhân viên trong ca */
-export const prepParts = () => dutyLv("dog");                                   // Milo chọn sẵn 1/2/3 phần
-export const tipBonus = () => [0, 0.1, 0.2, 0.3][dutyLv("gold")];               // Siro
-export const rescueBonus = () => [0, 0.2, 0.35, 0.5][dutyLv("white")];          // Cacao
+/* Độ nổi tiếng: sao trung bình 20 đánh giá gần nhất (0..3) + đồ trang trí + cấp tiệm */
+export function fameScore() {
+  const r = S.reviews.slice(0, 20), avg = r.length ? r.reduce((a, x) => a + x.s, 0) / r.length : 2;
+  return avg + S.decor.length * 0.4 + (lvl() - 1) * 0.3;
+}
+export const fameLevel = () => { const x = fameScore(); return x < 3 ? 0 : x < 4.5 ? 1 : x < 6 ? 2 : 3; };
+export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });

@@ -1,13 +1,14 @@
 /* Màn Chơi và màn Kết quả: phần hiển thị. Luật chơi nằm ở engine/shift.ts.
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
 import { Sound, sfx } from "../../audio/sound";
-import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, partsText, recipeOf, type PartKey, type StockKey } from "../../content/game";
+import type { PetId } from "../../content/couple";
+import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, recipeOf, type PartKey, type StockKey } from "../../content/game";
 import { daysTogether } from "../../engine/dates";
-import { onDuty, quickBuy, quickPrice, stockOf } from "../../engine/economy";
+import { fame, quickBuy, quickPrice, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
-  autoPrep, beginShift, emptyBuild, finishShift, isComplete, isOver, ledger, needOf, remaining, serve, summary, targetIdx, tick,
-  type Customer, type Shift
+  beginShift, emptyBuild, finishShift, isComplete, isOver, ledger, needOf, remaining, serve, summary, targetIdx, tick,
+  type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
 import { fmtN, pick } from "../../engine/util";
@@ -24,7 +25,7 @@ let result: Result | null = null;
 
 // phần tử DOM của từng ghế, cache để vòng lặp không phải tìm lại mỗi khung hình
 interface SeatView { el: HTMLElement; bar: HTMLElement; art: HTMLElement; cls: string }
-const views: (SeatView | null)[] = [null, null, null];
+const views: (SeatView | null)[] = [];
 
 /* ---------- Giữ màn hình sáng trong ca (nếu trình duyệt cho phép) ---------- */
 let wake: { release(): Promise<void> } | null = null;
@@ -51,10 +52,12 @@ function loop(now: number) {
   const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
   if (!SH.paused) {
     const ev = tick(SH, dt);
-    if (ev.spawned >= 0) { renderSeat(ev.spawned, true); sfx("bell"); prep(); }
+    if (ev.spawned >= 0) { renderSeat(ev.spawned, true); sfx("bell"); }
     ev.left.forEach(onLeave);
-    ev.rescued.forEach(onRescue);
+    ev.claimed.forEach(b => { renderSeat(b.seat); renderCrew(); });
+    ev.baked.forEach(x => showServed(x.res, x.baker.id));
     SH.seats.forEach((c, i) => { if (c && !c.gone) updatePatience(c, i); });
+    updateBaking();
     const left = remaining(SH);
     if (leftShown !== left) { leftShown = left; const e = $("#shLeft"); if (e) e.textContent = `Ca ${S.shifts + 1} · còn ${left} khách`; }
     if (isOver(SH)) return endShift();
@@ -72,16 +75,34 @@ function updatePatience(c: Customer, i: number) {
   const mood = cls === "low" ? "impatient" : "happy";
   if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, 84); }
 }
+/* tiến độ các bé thợ bánh: trên thẻ đơn và ở cột nhân viên */
+function updateBaking() {
+  SH!.bakers.forEach(b => {
+    const pct = Math.min(100, Math.round(b.done / b.need * 100));
+    document.querySelectorAll<HTMLElement>(`[data-bake="${b.id}"]`).forEach(el => {
+      const i = el.querySelector("i"), t = el.querySelector("span");
+      if (i) i.style.width = pct + "%";
+      if (t) t.textContent = pct + "%";
+    });
+  });
+}
 
 /* ================= HTML thuần ================= */
-export function seatHTML(c: Customer | null, i: number, state: "" | "tgt" | "low" | "ok" = "") {
+const sweetIcon = (i: number) => `<i class="cube" style="background:${CATS.sweet[i][1]}"></i>`;
+/* thẻ gọi món: tên bánh + 3 chấm màu Đế/Kem/Topping giống hệt nút nguyên liệu + độ ngọt */
+export function orderHTML(c: Customer, sh?: Shift) {
+  const baker = c.by && sh ? sh.bakers.find(b => b.id === c.by) : null, pct = baker ? Math.round(baker.done / baker.need * 100) : 0;
+  return `<div class="ord ${c.by ? "by" : ""}"><div class="rn">${esc(c.r.n)}</div>
+    <div class="ings">${STOCK_KEYS.map(k => `<span title="${LABELS[k]}"><i style="background:${CATS[k][c.r[k]][1]}"></i>${CATS[k][c.r[k]][0]}</span>`).join("")}</div>
+    <div class="sw">${sweetIcon(c.sweet)}${CATS.sweet[c.sweet][0]}</div>
+    ${c.by ? `<div class="bybar" data-bake="${c.by}">${critterSVG({ ...PETS[c.by], ledge: false }, 22)}<b>${esc(petName(c.by))}</b><span>${pct}%</span><div class="pb"><i style="width:${pct}%"></i></div></div>` : ""}</div>`;
+}
+export function seatHTML(c: Customer | null, i: number, state: "" | "tgt" | "low" | "ok" = "", sh?: Shift) {
   if (!c) return "";
   const f = c.pat / c.max;
-  const ord = state === "ok"
-    ? `<div class="ord ok">+3 ★ · +${c.r.price} xu<small>Cảm ơn nha!</small></div>`
-    : `<div class="ord"><div class="rn">${esc(c.r.n)}</div><div>${esc(partsText(c.r))}</div><div class="sw">${CATS.sweet[c.sweet][0]}</div></div>`;
+  const ord = state === "ok" ? `<div class="ord ok">+3 ★ · +${c.r.price} xu<small>Cảm ơn nha!</small></div>` : orderHTML(c, sh);
   return `<div class="burst"></div>${ord}
-    <div class="who-art"><button data-seat="${i}" aria-label="Làm bánh cho ${esc(c.who)}">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", 84)}</button></div>
+    <div class="who-art"><button data-seat="${i}" aria-label="${c.by ? `${esc(petName(c.by))} đang làm cho ${esc(c.who)}` : `Làm bánh cho ${esc(c.who)}`}">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", 84)}</button></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div><div class="nm">${c.him ? "♥︎ " : ""}${esc(c.who)}</div>`;
 }
 
@@ -101,15 +122,21 @@ export function forBoxHTML(sh: Shift) {
   const ti = targetIdx(sh), b = sh.build, c = ti >= 0 ? sh.seats[ti] : null, made = recipeOf(b);
   return c
     ? `<small>Đang làm cho</small><b>${esc(c.who)}</b><div class="rc">${esc(c.r.n)}</div><div class="sw">${b.sweet != null ? CATS.sweet[b.sweet][0] : "Chọn độ ngọt"}</div>`
-    : `<small>Chờ khách vào tiệm…</small><b>${made ? esc(made.n) : "Đĩa trống"}</b>`;
+    : `<small>${sh.seats.some(x => x && !x.gone) ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small><b>${made ? esc(made.n) : "Đĩa trống"}</b>`;
 }
-export const crewHTML = () => {
-  const on = STAFF.filter(d => onDuty(d.id));
-  return on.length ? `<div class="crew">${on.map(d => `<div class="cm" data-crew="${d.id}" title="${esc(petName(d.id))} · ${d.role}">${critterSVG({ ...PETS[d.id], ledge: false }, 34)}<small>${d.role}</small></div>`).join("")}</div>` : "";
-};
+/* cột thợ bánh: mỗi bé đang làm cho ai, được bao nhiêu phần trăm */
+export function crewHTML(sh: Shift) {
+  const ids = STAFF.map(d => d.id).filter(id => sh.working.includes(id));
+  if (!ids.length) return "";
+  return `<div class="crew">${ids.map(id => {
+    const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
+    return `<div class="cm ${b ? "busy" : ""}" data-crew="${id}">${critterSVG({ ...PETS[id], mood: b ? "happy" : "open", ledge: false }, 30)}
+      <div class="ct"><b>${esc(petName(id))}</b>${b && c ? `<small>${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i><span>${pct}%</span></div>` : `<small>Đang rảnh</small>`}</div></div>`;
+  }).join("")}</div>`;
+}
 
 export function playHTML(sh: Shift, opts: { done?: boolean; seatStates?: ("" | "tgt" | "low" | "ok")[] } = {}) {
-  const L = lvl(), cur = S.xp - xpFor(L), need = xpFor(L + 1) - xpFor(L), ti = targetIdx(sh);
+  const L = lvl(), cur = S.xp - xpFor(L), need = xpFor(L + 1) - xpFor(L), ti = targetIdx(sh), f = fame(), n = sh.seats.length;
   return `<div class="scr play">
     <div class="ptop">
       <div class="lv">Lv${L}</div>
@@ -117,12 +144,13 @@ export function playHTML(sh: Shift, opts: { done?: boolean; seatStates?: ("" | "
       ${coinPill(true, "shCoins")}
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
-    <div class="lane">${[0, 1, 2].map(i => {
-      const st = opts.seatStates?.[i] ?? "", c = sh.seats[i];
-      return `<div class="seat ${i === ti ? "tgt" : ""} ${st === "low" ? "low" : ""}" id="seat${i}">${seatHTML(c, i, st)}</div>`;
+    ${n > 3 ? `<div class="fame">✦ ${f.n} · ${n} bàn <span>vuốt ngang để xem thêm</span></div>` : ""}
+    <div class="lane ${n > 3 ? "wide" : ""}">${sh.seats.map((c, i) => {
+      const st = opts.seatStates?.[i] ?? "";
+      return `<div class="seat ${i === ti ? "tgt" : ""} ${st === "low" ? "low" : ""}" id="seat${i}">${seatHTML(c, i, st, sh)}</div>`;
     }).join("")}</div>
     <div class="ctr"></div>
-    <div class="bench"><div id="cake">${cakeSVG(sh.build, { size: 136, done: opts.done })}</div><div class="for" id="forBox">${forBoxHTML(sh)}</div>${crewHTML()}</div>
+    <div class="bench ${sh.working.length ? "crewed" : ""}"><div id="cake">${cakeSVG(sh.build, { size: sh.working.length ? 118 : 136, done: opts.done })}</div><div class="for" id="forBox">${forBoxHTML(sh)}</div><div id="crewBox">${crewHTML(sh)}</div></div>
     <div class="sheet">
       ${KEYS.map(k => `<div class="crow"><span>${LABELS[k]}</span><div class="g3">${CATS[k].map((_, i) => chipHTML(sh, k, i)).join("")}</div></div>`).join("")}
       <div class="grow" style="min-height:4px"></div>
@@ -134,10 +162,9 @@ export function playHTML(sh: Shift, opts: { done?: boolean; seatStates?: ("" | "
 /* ================= Cập nhật DOM trong ca ================= */
 export function renderPlay() {
   if (!SH) return;
-  leftShown = -1;
+  leftShown = -1; views.length = 0;
   $("#app")!.innerHTML = playHTML(SH);
   SH.seats.forEach((_, i) => renderSeat(i));
-  prep();
   lastT = performance.now();
   cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
 }
@@ -146,15 +173,16 @@ function renderSeat(i: number, enter = false) {
   const el = $("#seat" + i); if (!el || !SH) return;
   const c = SH.seats[i];
   el.className = "seat" + (enter ? " enter" : "");
-  el.innerHTML = seatHTML(c, i);
+  el.innerHTML = seatHTML(c, i, "", SH);
   views[i] = c ? { el, bar: el.querySelector<HTMLElement>(".pat i")!, art: el.querySelector<HTMLElement>(".who-art button")!, cls: "" } : null;
   renderTarget();
 }
+const renderCrew = () => { const b = $("#crewBox"); if (b && SH) b.innerHTML = crewHTML(SH); };
 
 export function renderTarget() {
   if (!SH || !$("#forBox")) return;
   const ti = targetIdx(SH);
-  SH.seats.forEach((_, k) => $("#seat" + k)?.classList.toggle("tgt", k === ti));
+  SH.seats.forEach((c, k) => { const el = $("#seat" + k); el?.classList.toggle("tgt", k === ti); el?.classList.toggle("taken", !!c?.by); });
   $("#forBox")!.innerHTML = forBoxHTML(SH);
   document.querySelectorAll<HTMLElement>("[data-ing]").forEach(el => {
     const [k, i] = el.dataset.ing!.split(":") as [PartKey, string], s = chipState(SH!, k, +i);
@@ -164,20 +192,11 @@ export function renderTarget() {
 }
 function renderBuild(done = false) {
   if (!SH) return;
-  $("#cake")!.innerHTML = cakeSVG(SH.build, { size: 136, done, drop });
+  $("#cake")!.innerHTML = cakeSVG(SH.build, { size: SH.working.length ? 118 : 136, done, drop });
   drop = null;
   renderTarget();
 }
 const refreshCoins = () => { const cp = $("#shCoins"); if (cp) { cp.querySelector("span:last-child")!.textContent = fmtN(S.coins); bump(cp, "pulse"); } };
-
-/* Milo chọn sẵn nguyên liệu khi đổi sang khách mới */
-function prep() {
-  if (!SH) return;
-  const done = autoPrep(SH);
-  if (!done.length) return;
-  drop = done[0]; renderBuild();
-  bump($('[data-crew="dog"]'), "squish");
-}
 
 export function pickIngredient(k: PartKey, i: number) {
   if (!SH) return;
@@ -190,46 +209,51 @@ export function pickIngredient(k: PartKey, i: number) {
   SH.build[k] = add ? i : null; drop = add && k !== "sweet" ? k : null;
   renderBuild(); sfx(add ? "tap" : "untap"); haptic(8);
 }
-export function selectSeat(i: number) { if (!SH) return; SH.sel = SH.sel === i ? -1 : i; SH.prepFor = null; renderTarget(); prep(); sfx("click"); }
+export function selectSeat(i: number) {
+  if (!SH) return;
+  const c = SH.seats[i];
+  if (c?.by) { sfx("untap"); return toast(`${petName(c.by)} đang làm đơn này rồi`); }
+  SH.sel = SH.sel === i ? -1 : i; renderTarget(); sfx("click");
+}
 
 export function doServe() {
   if (!SH) return;
   const res = serve(SH);
   if (!res.ok) { sfx("wrong"); haptic([60, 40, 60]); return toast(res.msg); }
-  const { idx, c, stars, price, tip } = res, v = views[idx]!;
-  // thẻ gọi món thành xanh, khách thả tim, bánh nhắm mắt cười nhún nhảy, bắn tim
-  v.el.querySelector(".ord")!.outerHTML = `<div class="ord ok">+${stars} ★ · +${price} xu${tip ? ` · tip ${tip}` : ""}<small>${c.him ? "Thương em!" : "Cảm ơn nha!"}</small></div>`;
+  showServed(res);
+  renderBuild(true);
+  const sh = SH;
+  setTimeout(() => { if (SH !== sh) return; sh.build = emptyBuild(); renderBuild(); }, 900);
+}
+
+/* hiệu ứng giao bánh (chủ tiệm hoặc bé thợ bánh): thẻ đơn thành xanh, khách thả tim, bắn tim */
+function showServed(res: Extract<ServeResult, { ok: true }>, by?: PetId) {
+  const { idx, c, stars, price, tip } = res, v = views[idx];
+  if (!v || !SH) return;
+  v.el.querySelector(".ord")!.outerHTML = `<div class="ord ok">+${stars} ★ · +${price} xu${tip ? ` · tip ${tip}` : ""}<small>${by ? `${esc(petName(by))} làm đó!` : c.him ? "Thương em!" : "Cảm ơn nha!"}</small></div>`;
   v.art.innerHTML = charSVG(c.look, "love", 84);
-  v.el.classList.remove("low");
+  v.el.classList.remove("low", "taken");
   v.el.querySelector(".burst")!.innerHTML = Array.from({ length: 14 }, (_, i) => {
     const a = i / 14 * Math.PI * 2, d = 55 + (i % 3) * 20;
     return `<i style="font-size:${14 + (i % 3) * 7}px;color:${["#FF8FAB", "#FFC94D", "#8FD9B6"][i % 3]};--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px">${i % 2 ? "♥︎" : "✦"}</i>`;
   }).join("");
   const r = v.el.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + 60, "+" + (price + tip));
-  sfx("coin"); haptic(25); refreshCoins();
-  if (onDuty("gold") && tip) bump($('[data-crew="gold"]'), "squish");
+  sfx("coin"); haptic(by ? 10 : 25); refreshCoins();
+  if (by) { renderCrew(); bump($(`[data-crew="${by}"]`), "squish"); }
   const L = lvl(); $("#xpBar")!.style.width = Math.min(100, (S.xp - xpFor(L)) / (xpFor(L + 1) - xpFor(L)) * 100) + "%";
-  renderBuild(true);
   const sh = SH;
-  setTimeout(() => { if (SH !== sh) return; sh.build = emptyBuild(); sh.prepFor = null; renderBuild(); prep(); }, 900);
   setTimeout(() => {
     if (SH !== sh) return; v.el.classList.add("bye");
-    setTimeout(() => { if (SH !== sh) return; sh.seats[idx] = null; renderSeat(idx); prep(); }, 450);
+    setTimeout(() => { if (SH !== sh) return; sh.seats[idx] = null; renderSeat(idx); }, 450);
   }, 1300);
-  if (c.him) setTimeout(() => { if (SH === sh) { pause(); himNote(c); } }, 700);
+  if (c.him && !by) setTimeout(() => { if (SH === sh) { pause(); himNote(c); } }, 700);
 }
 
 function onLeave(i: number) {
   const c = SH!.seats[i]!, v = views[i];
   if (v) { v.art.innerHTML = charSVG(c.look, "impatient", 84); v.el.classList.add("bye"); }
-  sfx("leave"); haptic(30);
-  const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSeat(i); prep(); }, 500);
-}
-/* Cacao dỗ khách sắp giận */
-function onRescue(i: number) {
-  const v = views[i]; if (!v) return;
-  const r = v.el.getBoundingClientRect(); floatText(r.left + r.width / 2 - 30, r.top + 90, `${petName("white")} dỗ ♥︎`);
-  bump($('[data-crew="white"]'), "squish"); sfx("boop");
+  sfx("leave"); haptic(30); renderCrew();
+  const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSeat(i); }, 500);
 }
 
 export function endShift() {

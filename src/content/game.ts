@@ -17,7 +17,8 @@ export const RECIPES: Recipe[] = ([
   ["Bông lan Matcha Dâu", 0, 0, 0], ["Mochi Kem Dâu", 2, 1, 0], ["Tart Vani Hạt dẻ", 1, 2, 2],
   ["Bông lan Đậu đỏ", 0, 0, 1], ["Mochi Matcha Đậu đỏ", 2, 0, 1], ["Tart Dâu tây", 1, 1, 0],
   ["Bông lan Vani Hạt dẻ", 0, 2, 2], ["Mochi Vani Dâu", 2, 2, 0], ["Tart Matcha Hạt dẻ", 1, 0, 2]
-] as [string, number, number, number][]).map(([n, base, cream, top], i) => ({ id: "r" + (i + 1), n, base, cream, top, lv: i + 1, price: 16 + i * 2 }));
+] as [string, number, number, number][]).map(([n, base, cream, top], i) => ({ id: "r" + (i + 1), n, base, cream, top, lv: Math.max(1, i - 2), price: 16 + i * 2 }));
+// Lv 1 mở sẵn 4 công thức, sau đó mỗi cấp mở thêm 1 (tới Lv 6)
 export const recipeOf = (b: Build) => RECIPES.find(r => r.base === b.base && r.cream === b.cream && r.top === b.top);
 export const partsText = (r: Recipe) => `${CATS.base[r.base][0]} · ${CATS.cream[r.cream][0]} · ${CATS.top[r.top][0]}`;
 
@@ -107,13 +108,17 @@ export const FOODS: Food[] = [
 ];
 export const WELCOME = { coins: 300, food: { kibble: 5 } as Partial<Record<FoodId, number>> };
 
-/* Thú cưng làm nhân viên. Lương mỗi ca = 1 phần ăn theo bậc: bậc 1 Hạt, bậc 2 Pate, bậc 3 Ức gà */
+/* Thú cưng làm nhân viên: tự nhận đơn và làm bánh cho khách. Làm 1 bánh mất BAKE_TIME giây theo bậc.
+   Lương mỗi ca = 1 phần ăn theo bậc: bậc 1 Hạt, bậc 2 Pate, bậc 3 Ức gà */
+export const BAKE_TIME = [10, 7.5, 5];
+const BAKE_TEXT: [string, string, string] = ["Tự nhận đơn, 10 giây một bánh", "Tự nhận đơn, 7,5 giây một bánh", "Tự nhận đơn, 5 giây một bánh"];
+/* Độ nổi tiếng: càng nổi tiếng càng nhiều bàn, khách đến càng dày */
+export const FAME = [
+  { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Viral", seats: 6 }
+];
 export interface StaffDef { id: PetId; role: string; unlock: number; train: [number, number]; effect: [string, string, string] }
 export const STAFF: StaffDef[] = [
-  { id: "dog", role: "Phụ bếp", unlock: 2, train: [120, 300],
-    effect: ["Chọn sẵn đế bánh", "Chọn sẵn đế và kem", "Chọn sẵn đế, kem và topping"] },
-  { id: "gold", role: "Thu ngân", unlock: 3, train: [150, 350],
-    effect: ["Khách tip thêm 10%", "Khách tip thêm 20%", "Khách tip thêm 30%"] },
-  { id: "white", role: "Chạy bàn", unlock: 4, train: [150, 350],
-    effect: ["Dỗ khách sắp giận: chờ thêm 20%", "Dỗ khách sắp giận: chờ thêm 35%", "Dỗ khách sắp giận: chờ thêm 50%"] }
+  { id: "dog", role: "Thợ bánh", unlock: 2, train: [120, 300], effect: BAKE_TEXT },
+  { id: "gold", role: "Thợ bánh", unlock: 3, train: [150, 350], effect: BAKE_TEXT },
+  { id: "white", role: "Thợ bánh", unlock: 4, train: [150, 350], effect: BAKE_TEXT }
 ];
