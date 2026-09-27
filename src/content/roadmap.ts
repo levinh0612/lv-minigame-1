@@ -18,7 +18,10 @@ export const PHASES: Phase[] = [
     items: [
       { title: "Giao diện Kẹo dâu phồng", desc: "Bánh có mặt cười, khách là người và thú cưng, bắn tim khi giao bánh.", status: "done" },
       { title: "Chơi offline như app", desc: "Thêm vào màn hình chính, mất mạng vẫn mở được tiệm.", status: "done" },
-      { title: "Mỗi màn có đường dẫn riêng", desc: "Nút Back trên điện thoại hoạt động đúng, không lỡ tay thoát ca đang bán.", status: "done" }
+      { title: "Mỗi màn có đường dẫn riêng", desc: "Nút Back trên điện thoại hoạt động đúng, không lỡ tay thoát ca đang bán.", status: "done" },
+      { title: "Đi chợ & kho nguyên liệu", desc: "Nhập hàng trước ca, hết giữa ca thì nhập nhanh. Cuối ca xem lãi.", status: "done" },
+      { title: "Milo, Siro, Cacao đi làm", desc: "Thuê ba bé làm phụ bếp, thu ngân, chạy bàn; trả lương mỗi ca.", status: "done" },
+      { title: "Hướng dẫn & sao lưu", desc: "Hướng dẫn lần đầu; sao lưu tiến trình bằng một đoạn mã để đổi máy không mất.", status: "done" }
     ]
   },
   {
@@ -62,6 +65,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.2", date: "27/09/2026", notes: ["Màn Chuẩn bị ca: đi chợ, nhập theo gợi ý", "Thuê Milo, Siro, Cacao làm nhân viên", "Bảng lãi cuối ca, cấp tiệm ở màn chính", "Hướng dẫn lần đầu, sao lưu / khôi phục, rung nhẹ"] },
   { v: "2.1", date: "27/09/2026", notes: ["Chơi offline, tự cập nhật bản mới", "Trang Sắp ra mắt", "Nút Back hoạt động đúng trên điện thoại"] },
   { v: "2.0", date: "27/09/2026", notes: ["Giao diện mới Kẹo dâu phồng", "9 công thức, khách là người", "Icon app mới"] },
   { v: "1.2", date: "27/09/2026", notes: ["Ghi rõ tên bánh, báo đúng/sai từng nguyên liệu"] },

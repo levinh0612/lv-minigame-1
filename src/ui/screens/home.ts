@@ -1,15 +1,15 @@
 import { PETS } from "../../content/game";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
-import { giftReady, letterNew } from "../../engine/progress";
+import { giftReady, letterNew, lvl, xpFor } from "../../engine/progress";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import type { PetId } from "../../content/couple";
 import type { CritterLook } from "../../content/game";
 import { critterSVG } from "../art";
-import { coinPill, esc, twinkles } from "../dom";
+import { coinPill, esc, levelChip, twinkles } from "../dom";
 
 export function homeHTML() {
-  const te = todayEvents(), ln = letterNew(), gift = giftReady();
+  const te = todayEvents(), ln = letterNew(), gift = giftReady(), L = lvl();
   const petBtn = (id: PetId, look: CritterLook & { mood?: "love" | "open" }, cls = "") =>
     `<button class="pet ${cls}" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${critterSVG(look, id === "gold" ? 86 : 78)}<small>${esc(petName(id))}</small></button>`;
   return `<div class="scr">
@@ -23,7 +23,7 @@ export function homeHTML() {
       ${coinPill()}
     </div>
     <div class="title"><div class="t1">Tiệm Bánh</div><div class="t2">Matcha</div><div class="t3">của riêng ${esc(S.names.her.toLowerCase() === "em" ? "em" : S.names.her)}</div>
-      <button class="soon-link" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
+      <div class="trow">${levelChip(L, S.xp - xpFor(L), xpFor(L + 1) - xpFor(L))}<button class="soon-link" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div></div>
     ${te.map(e => `<div class="evt"><b>Hôm nay: ${esc(e.t)} · xu x2</b><p>${esc(eventNote(e))}</p></div>`).join("")}
     <div class="yard">
       <div class="win"></div><div class="sign">Mở cửa</div>
@@ -35,7 +35,7 @@ export function homeHTML() {
       ${ln ? '<div class="dot"></div>' : ""}
     </button>
     <div class="grow"></div>
-    <div class="openw"><button class="b3" data-act="open">Mở tiệm</button></div>
+    <div class="openw"><button class="b3" data-go="/chuan-bi">Mở tiệm</button></div>
     <nav class="nav">
       <button data-go="/cua-hang/thu-cung"><div class="ic" style="background:#DDF4E8;box-shadow:0 4px 0 #BFE8D3;color:#3F9C78">✿</div>Thú cưng</button>
       <button data-go="/muc-tieu"><div class="ic ${gift ? "new" : ""}" style="background:#FFF0C9;box-shadow:0 4px 0 #F6DB94;color:#C08A12">★</div>Mục tiêu</button>

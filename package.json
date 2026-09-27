@@ -1,14 +1,16 @@
 {
   "name": "tiem-banh-matcha",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "capture": "npm run build && node scripts/capture.mjs",
+    "storybook": "vite --open /storybook.html"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

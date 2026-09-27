@@ -3,6 +3,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import pkg from "./package.json" with { type: "json" };
 
 export default defineConfig({
+  build: { rollupOptions: { input: { main: "index.html", storybook: "storybook.html" } } },
   define: { __APP_VERSION__: JSON.stringify(pkg.version.split(".").slice(0, 2).join(".")) },
   plugins: [
     VitePWA({
@@ -19,6 +20,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
+        globIgnores: ["storybook.html", "assets/storybook-*"],
+        navigateFallbackDenylist: [/storybook/],
         navigateFallback: "/index.html",
         runtimeCaching: [
           { urlPattern: /^https:\/\/fonts\.googleapis\.com\//, handler: "StaleWhileRevalidate", options: { cacheName: "google-fonts-css" } },

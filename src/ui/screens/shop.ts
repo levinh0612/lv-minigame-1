@@ -1,18 +1,18 @@
 import { CFG } from "../../content/couple";
 import { DECOR, PETS } from "../../content/game";
-import { lvl } from "../../engine/progress";
+import { lvl, xpFor } from "../../engine/progress";
 import { S, petName } from "../../engine/state";
 import { fmtD, fmtN, parse } from "../../engine/util";
 import { critterSVG } from "../art";
-import { backBtn, coinPill, esc, hearts } from "../dom";
+import { backBtn, coinPill, esc, hearts, levelChip } from "../dom";
 import { SHOP_PATH, type ShopTab } from "../router";
 import { claimBtn, goalsList } from "./goals";
 
-const roomHTML = () => `<div class="room"><div class="floor"></div><div class="rwin"></div><div class="board">Menu<br>hôm nay</div>
+export const roomHTML = () => `<div class="room"><div class="floor"></div><div class="rwin"></div><div class="board">Menu<br>hôm nay</div>
   ${S.decor.map(id => DECOR.find(d => d.id === id)?.rm || "").join("")}
   <div class="pets">${critterSVG(PETS.dog, 62)}${critterSVG(PETS.gold, 68)}${critterSVG({ ...PETS.white, mood: "love" }, 62)}</div></div>`;
 
-function decorTab() {
+export function decorTab() {
   const L = lvl();
   return `<div class="grid2">${DECOR.map(d => {
     const own = S.decor.includes(d.id), lock = d.lv > L;
@@ -41,10 +41,11 @@ function giftTab() {
 
 export function shopHTML(tab: ShopTab) {
   const title = { decor: "Trang trí tiệm", pets: "Thú cưng", gift: "Quà tặng" }[tab];
-  const body = { decor: decorTab, pets: petsTab, gift: giftTab }[tab]();
+  const body = { decor: decorTab, pets: petsTab, gift: giftTab }[tab](), L = lvl();
   return `<div class="scr">
     <div class="shead">${backBtn}<h2>${title}</h2>${coinPill()}</div>
     ${roomHTML()}
+    <div class="shoplv">${levelChip(L, S.xp - xpFor(L), xpFor(L + 1) - xpFor(L))}<span>Lên cấp để mở thêm đồ trang trí, công thức và nhân viên</span></div>
     <div class="seg" role="tablist">${([["decor", "Trang trí"], ["pets", "Thú cưng"], ["gift", "Quà tặng"]] as [ShopTab, string][]).map(([id, n]) =>
       `<button class="${tab === id ? "on" : ""}" data-go="${SHOP_PATH[id]}" data-replace role="tab" aria-selected="${tab === id}">${n}</button>`).join("")}</div>
     ${body}

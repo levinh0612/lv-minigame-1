@@ -87,3 +87,22 @@ export const PET_LINES: Record<PetId, string[]> = {
   gold:["Meo~ Siro nằm lên quầy luôn không đi.","Siro chấm 3 sao rồi đi ngủ tiếp.","*dụi má vào tay chủ tiệm*"],
   white:["Meo! Cacao ưng rồi đó.","*ngồi nghiêm túc canh khay bánh*","Meo meo, mai Cacao ghé nữa."]
 };
+
+/* ===== Kinh tế: nguyên liệu & nhân viên ===== */
+export type StockKey = "base" | "cream" | "top";
+export const STOCK_KEYS: StockKey[] = ["base", "cream", "top"];
+// giá 1 phần nguyên liệu, theo chỉ số trong CATS (đường thì miễn phí)
+export const UNIT_COST: Record<StockKey, number[]> = { base: [2, 3, 3], cream: [3, 2, 2], top: [3, 2, 3] };
+export const PACKS = [{ n: 5, disc: 0 }, { n: 10, disc: 0.1 }];
+export const QUICK_MULT = 1.5;    // nhập nhanh giữa ca: đắt hơn 50%
+export const STARTER_STOCK = 8;   // kho tặng lúc đầu
+
+export interface StaffDef { id: PetId; role: string; unlock: number; wage: [number, number, number]; train: [number, number]; effect: [string, string, string] }
+export const STAFF: StaffDef[] = [
+  { id: "dog", role: "Phụ bếp", unlock: 2, wage: [10, 14, 18], train: [120, 300],
+    effect: ["Chọn sẵn đế bánh", "Chọn sẵn đế và kem", "Chọn sẵn đế, kem và topping"] },
+  { id: "gold", role: "Thu ngân", unlock: 3, wage: [8, 12, 16], train: [150, 350],
+    effect: ["Khách tip thêm 10%", "Khách tip thêm 20%", "Khách tip thêm 30%"] },
+  { id: "white", role: "Chạy bàn", unlock: 4, wage: [8, 12, 16], train: [150, 350],
+    effect: ["Dỗ khách sắp giận: chờ thêm 20%", "Dỗ khách sắp giận: chờ thêm 35%", "Dỗ khách sắp giận: chờ thêm 50%"] }
+];

@@ -5,6 +5,7 @@ import { pauseMenu } from "./modals";
 import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
 import { homeHTML } from "./screens/home";
+import { prepHTML } from "./screens/prep";
 import { SH, hasResult, renderPlay, resultHTML } from "./screens/play";
 import { roadmapHTML } from "./screens/roadmap";
 import { shopHTML } from "./screens/shop";
@@ -27,6 +28,7 @@ export function render() {
     case "result": $("#app")!.innerHTML = resultHTML(); break;
     case "home": $("#app")!.innerHTML = homeHTML(); break;
     case "goals": $("#app")!.innerHTML = goalsHTML(); break;
+    case "prep": $("#app")!.innerHTML = prepHTML(); break;
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
   }

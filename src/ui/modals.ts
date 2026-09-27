@@ -1,13 +1,13 @@
 /* Các hộp thoại: thư, quà, cài đặt, tạm dừng, Anh ghé tiệm */
 import { Sound, sfx } from "../audio/sound";
 import { CFG } from "../content/couple";
-import { HIM } from "../content/game";
+import { HIM, PETS, RECIPES } from "../content/game";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
 import { giftReady } from "../engine/progress";
 import { closeEarly, type Customer } from "../engine/shift";
-import { S, petName, resetState, save } from "../engine/state";
+import { KEY, S, loadState, petName, resetState, save } from "../engine/state";
 import { fmtN, nameList, pick } from "../engine/util";
-import { guestSVG } from "./art";
+import { cakeSVG, critterSVG, guestSVG } from "./art";
 import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
@@ -68,6 +68,8 @@ export function settings() {
       <label class="field">Tên khách nam (${nameList(S.names.boys).length})<textarea id="fBoys" rows="2">${esc(S.names.boys)}</textarea></label>
       <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
+      <label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh (Android)</label>
+      <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button><button type="button" class="mini" data-act="backup">Sao lưu</button><button type="button" class="mini" data-act="restore">Khôi phục</button></div>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
     </form>`, render);
   const v = (id: string) => $<HTMLInputElement>(id)!.value.trim();
@@ -76,12 +78,62 @@ export function settings() {
     S.names.her = v("#fHer") || CFG.herName; S.names.his = v("#fHis") || CFG.hisName;
     S.names.girls = v("#fGirls") || CFG.girlNames; S.names.boys = v("#fBoys") || CFG.boyNames;
     CFG.pets.forEach(p => { S.names.pets[p.id] = v("#fPet_" + p.id) || p.name; });
-    S.sound = $<HTMLInputElement>("#fSound")!.checked;
+    S.sound = $<HTMLInputElement>("#fSound")!.checked; S.vibe = $<HTMLInputElement>("#fVibe")!.checked;
     const m = $<HTMLInputElement>("#fMusic")!.checked; if (m !== S.music) Sound.setMusic(m);
     save(); closeModal(); toast("Đã lưu");
   });
   $("#resetBtn")!.addEventListener("click", e => {
     if (!resetArm) { resetArm = true; (e.target as HTMLElement).textContent = "Bấm lần nữa để xoá hết tiến trình"; return; }
     resetState(); closeModal(); toast("Đã chơi lại từ đầu");
+  });
+}
+
+/* ===== Hướng dẫn lần đầu ===== */
+const TUT = [
+  { art: () => `<div class="tart">${critterSVG(PETS.dog, 64)}${critterSVG({ ...PETS.gold, mood: "love" }, 72)}${critterSVG({ ...PETS.white, mood: "open", wave: true }, 64)}</div>`,
+    t: "Chào chủ tiệm!", d: "Mỗi ngày tiệm mở cửa, khách ghé mua bánh. Thẻ gọi món ghi rõ tên bánh, thành phần và độ ngọt khách muốn." },
+  { art: () => `<div class="tart">${cakeSVG({ base: 0, cream: 0, top: 0, sweet: 0 }, { size: 150 })}</div>`,
+    t: "Ghép bánh", d: "Chạm Đế → Kem → Topping → Độ ngọt. Dấu ✓ xanh là đúng, ✕ đỏ là sai. Đủ rồi thì bấm Giao bánh. Giao nhanh được nhiều sao và tip." },
+  { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}${critterSVG({ ...PETS.dog, mood: "wink" }, 70)}</div>`,
+    t: "Đi chợ & thuê nhân viên", d: "Mỗi bánh dùng 1 đế, 1 kem, 1 topping trong kho, nhớ nhập hàng trước ca. Lên cấp thì Milo, Siro, Cacao xin vào làm phụ, cuối ca trả lương cho các bé nha." },
+  { art: () => `<div class="tart"><div class="env big"></div></div>`,
+    t: "Mỗi ngày một lá thư", d: "Mở thư mỗi ngày, xong 3 mục tiêu để nhận thêm thư bí mật. Ngày đặc biệt được nhân đôi xu." }
+];
+export function tutorial(step = 0) {
+  const x = TUT[step], last = step === TUT.length - 1;
+  modal(`${x.art()}<h2>${x.t}</h2><p class="tdesc">${x.d}</p>
+    <div class="tdots">${TUT.map((_, i) => `<i class="${i === step ? "on" : ""}"></i>`).join("")}</div>
+    <div class="mbtns"><button class="b3" id="tNext">${last ? "Bắt đầu thôi" : "Tiếp"}</button>${last ? "" : '<button class="b3 w" data-close>Bỏ qua</button>'}</div>`,
+    () => { S.tut = true; save(); });
+  $("#tNext")!.addEventListener("click", () => { if (last) closeModal(); else tutorial(step + 1); });
+}
+
+/* ===== Sao lưu / khôi phục: một đoạn mã copy được, dán lại trên máy khác ===== */
+const encode = (s: string) => { const b = new TextEncoder().encode(s); let bin = ""; b.forEach(c => { bin += String.fromCharCode(c); }); return btoa(bin); };
+const decode = (s: string) => new TextDecoder().decode(Uint8Array.from(atob(s.trim()), c => c.charCodeAt(0)));
+
+export function backup() {
+  const code = encode(JSON.stringify(S));
+  modal(`<h2>Sao lưu tiến trình</h2><p class="sub">Copy đoạn mã này cất đi (gửi vào Zalo cho chính mình chẳng hạn). Đổi máy thì dán vào Khôi phục.</p>
+    <label class="field"><textarea id="bkCode" rows="5" readonly>${code}</textarea></label>
+    <div class="mbtns"><button class="b3" id="bkCopy">Copy mã</button><button class="b3 w" data-close>Xong</button></div>`, render);
+  $("#bkCopy")!.addEventListener("click", async () => {
+    const ta = $<HTMLTextAreaElement>("#bkCode")!;
+    try { await navigator.clipboard.writeText(code); toast("Đã copy mã sao lưu"); }
+    catch { ta.select(); toast("Mã đã được bôi đen, bấm Copy nhé"); }
+  });
+}
+export function restore() {
+  modal(`<h2>Khôi phục tiến trình</h2><p class="sub">Dán mã sao lưu vào đây. Tiến trình hiện tại trên máy này sẽ bị thay thế.</p>
+    <label class="field"><textarea id="rsCode" rows="5" placeholder="Dán mã vào đây"></textarea></label>
+    <div class="mbtns"><button class="b3" id="rsGo">Khôi phục</button><button class="b3 w" data-close>Huỷ</button></div>`, render);
+  $("#rsGo")!.addEventListener("click", () => {
+    try {
+      const json = decode($<HTMLTextAreaElement>("#rsCode")!.value);
+      const s = loadState(json);
+      if (typeof JSON.parse(json).coins !== "number") throw new Error("thiếu dữ liệu");
+      localStorage.setItem(KEY, JSON.stringify(s));
+      toast("Đã khôi phục, đang tải lại tiệm…"); setTimeout(() => location.reload(), 700);
+    } catch { toast("Mã không đúng. Kiểm tra lại xem đã copy đủ chưa nhé"); }
   });
 }

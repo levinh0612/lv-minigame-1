@@ -2,7 +2,7 @@
    Thêm màn mới: thêm một dòng vào ROUTES. */
 export type ShopTab = "decor" | "pets" | "gift";
 export type Route =
-  | { name: "home" } | { name: "goals" } | { name: "roadmap" }
+  | { name: "home" } | { name: "goals" } | { name: "roadmap" } | { name: "prep" }
   | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" };
 
 const ROUTES: [string, Route][] = [
@@ -12,6 +12,7 @@ const ROUTES: [string, Route][] = [
   ["/cua-hang/thu-cung", { name: "shop", tab: "pets" }],
   ["/cua-hang/qua-tang", { name: "shop", tab: "gift" }],
   ["/sap-ra-mat", { name: "roadmap" }],
+  ["/chuan-bi", { name: "prep" }],
   ["/choi", { name: "play" }],
   ["/ket-qua", { name: "result" }]
 ];

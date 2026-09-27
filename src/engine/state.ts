@@ -1,18 +1,20 @@
 /* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
 import { CFG, type PetId } from "../content/couple";
-import { DECOR, type Look } from "../content/game";
+import { DECOR, STARTER_STOCK, type Look, type StockKey } from "../content/game";
 
 export const KEY = "tiem-banh-matcha-v1";
 
 export interface Review { who: string; look: Look; s: number; txt: string; love: boolean }
 export interface Letter { day: string; txt: string; tag?: string; bonus?: boolean }
 export interface PetState { aff: number; petDay: string; pets: number; fedDay: string }
+export interface StaffState { hired: boolean; lv: number; onDuty: boolean }
 export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
 export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
   names: { her: string; his: string; girls: string; boys: string; pets: Record<PetId, string> };
   pets: Record<PetId, PetState>;
-  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; refund?: number;
+  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; vibe: boolean; refund?: number;
+  stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
 }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
@@ -22,7 +24,9 @@ export function fresh(): State {
     v: 3, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
     names: { her: CFG.herName, his: CFG.hisName, girls: CFG.girlNames, boys: CFG.boyNames, pets: petMap((_, i) => CFG.pets[i].name) },
     pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
-    daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true
+    daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
+    stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
+    staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false
   };
 }
 
@@ -54,12 +58,17 @@ export function loadState(raw: string | null): State {
   s.names = Object.assign(fresh().names, s.names || {});
   s.names.pets = Object.assign(fresh().names.pets, s.names.pets || {});
   s.pets = Object.assign(fresh().pets, s.pets || {});
+  s.staff = Object.assign(fresh().staff, s.staff || {});
+  s.stock = Object.assign(fresh().stock, s.stock || {});
   ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }
 
 function read(): string | null { try { return localStorage.getItem(KEY); } catch { return null; } }
 export let S: State = loadState(read());
-export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* chế độ riêng tư: bỏ qua */ } }
+let persist = true;
+/* Storybook tắt lưu để không đè lên tiến trình thật (cùng tên miền nên dùng chung localStorage) */
+export const setPersist = (on: boolean) => { persist = on; };
+export function save() { if (!persist) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* chế độ riêng tư: bỏ qua */ } }
 export function resetState() { S = fresh(); save(); }
 export const petName = (id: PetId) => S.names.pets[id] || CFG.pets.find(p => p.id === id)!.name;

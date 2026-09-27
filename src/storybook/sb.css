@@ -1,0 +1,34 @@
+/* Khung Storybook: không đổi giao diện game, chỉ bày ra để xem và chụp */
+body.sb{background:#F4ECEE;margin:0}
+.sbw{max-width:1500px;margin:0 auto;padding:32px 24px 80px}
+.sbh h1{margin:0;font:800 34px var(--display);color:var(--ink)}
+.sbh p{margin:6px 0 0;font:600 15px/1.5 var(--body);color:var(--soft2);max-width:760px}
+.sbnav{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:6px;padding:12px 0;background:#F4ECEE}
+.sbnav a{font:800 13px var(--body);color:var(--pink-d);background:#fff;border-radius:99px;padding:5px 12px;text-decoration:none;box-shadow:0 2px 0 var(--sh)}
+.sbsec{margin-top:36px}
+.sbsec>h2{margin:0 0 4px;font:800 26px var(--display);color:var(--ink)}
+.sbsec>p{margin:0 0 16px;font:600 14px var(--body);color:var(--soft3)}
+.sbgrid{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.story{display:flex;flex-direction:column;gap:8px}
+.story .cap{font:800 14px var(--body);color:var(--ink)}
+.story .cap small{display:block;font:600 12px var(--body);color:var(--soft3);max-width:390px}
+.story .cap a{color:var(--soft);font-size:11px;margin-left:6px}
+.frame{width:390px;height:844px;border-radius:40px;overflow:auto;position:relative;background:var(--bg);box-shadow:0 0 0 8px #fff,0 0 0 9px #F3D0DA,0 30px 60px -30px rgba(160,70,100,.45);transform:translateZ(0);scrollbar-width:none}
+.frame.long{height:auto;min-height:844px;overflow:visible}
+.frame.res-bg{background:var(--pink-l)}
+.frame .scr{min-height:100%}
+.frame .play{height:100%}
+.frame .res{min-height:844px}
+.frame .modal,.frame .conf,.frame .startbar,.frame .toast{position:absolute}
+.frame .toast{position:absolute}
+.board{background:#fff;border-radius:28px;padding:20px;box-shadow:0 4px 0 var(--sh)}
+.sbrow{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.sbcell{display:flex;flex-direction:column;align-items:center;gap:4px;font:700 11px var(--body);color:var(--soft3);text-align:center}
+.sbcell b{font:800 12px var(--body);color:var(--ink)}
+.sblabel{font:900 13px var(--body);color:var(--soft);margin:14px 0 8px}
+.sblabel:first-child{margin-top:0}
+.w390{width:390px}
+/* chế độ chụp 1 story */
+body.one{background:transparent}
+body.one .sbw{padding:24px;max-width:none;display:inline-block;margin:0}
+body.one .frame{box-shadow:none;border-radius:0}
