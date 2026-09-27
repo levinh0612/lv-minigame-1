@@ -14,7 +14,7 @@
       ]
     },
     {
-      "source": "/(sw\\.js|workbox-(.*)\\.js|index.html|manifest.webmanifest)",
+      "source": "/(sw\\.js|workbox-(.*)\\.js|index\\.html|manifest\\.webmanifest)",
       "headers": [
         {
           "key": "Cache-Control",
