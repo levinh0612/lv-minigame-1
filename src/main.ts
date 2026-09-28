@@ -3,15 +3,16 @@ import { registerSW } from "virtual:pwa-register";
 import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
 import { CATS, DECOR, type PartKey, type StockKey } from "./content/game";
-import { buy, buyFood, buySuggested, foodDef, hire, packPrice, snack, toggleDuty, train } from "./engine/economy";
+import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { lvl } from "./engine/progress";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
-import { $, bump, closeModal, dropModal, floatHearts, hasModal, hearts, toast } from "./ui/dom";
+import { $, bump, closeModal, dropModal, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
 import { backup, claimGoals, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
 import { navigate } from "./ui/router";
-import { SH, doPeek, doServe, pickIngredient, selectSeat, startShift, toggleAuto } from "./ui/screens/play";
+import { selectPet } from "./ui/screens/shop";
+import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
 
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
@@ -34,6 +35,10 @@ document.addEventListener("click", e => {
     case "serve": return doServe();
     case "peek": return doPeek();
     case "auto": return toggleAuto();
+    case "sheet": return toggleSheet();
+    case "stock": return openStock(!document.querySelector("#ssheet.on"));
+    case "tickall": return tickAll();
+    case "refill": return doRefill();
   }
   if (d.buy) {
     const x = DECOR.find(v => v.id === d.buy)!;
@@ -54,7 +59,7 @@ document.addEventListener("click", e => {
     if (st.petDay !== S.daily.day) { st.petDay = S.daily.day; st.pets = 0; }
     if (st.pets < 10) { st.pets++; st.aff++; save(); }
     floatHearts(r.left + r.width / 2, r.top + r.height / 3, 3); sfx("boop"); bump(t, "squish");
-    const h = document.querySelector(`[data-hearts="${id}"]`); if (h) h.textContent = hearts(st.aff);
+    document.querySelectorAll(`[data-hearts="${id}"]`).forEach(h => { h.innerHTML = heartRow(st.aff); });
     return;
   }
   if (d.foodBuy) {
@@ -62,14 +67,16 @@ document.addEventListener("click", e => {
     if (buyFood(f.id, +n)) { sfx("tap"); toast(`+${n} ${f.n} · ${f.cost * +n} xu`); } else toast("Không đủ xu");
     return render();
   }
-  if (d.snack) {
-    const [pet, food] = d.snack.split(":") as [PetId, FoodId];
-    if (!snack(pet, food)) return;
+  if (d.treat) {
+    const [pet, food] = d.treat.split(":") as [PetId, FoodId];
+    if (!treat(pet, food)) return toast("Không đủ xu để mua đồ ăn");
     const r = t.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop");
     toast(`${petName(pet)} ăn ${foodDef(food).n} ngon lành! +${foodDef(food).aff} ♥`); return render();
   }
+  if (d.selPet) { selectPet(d.selPet as PetId); sfx("tap"); return render(); }
   if (d.ing) { const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.seat) return selectSeat(+d.seat);
+  if (d.tick) return tickStock(d.tick);
 });
 
 // rời app giữa ca: tự tạm dừng

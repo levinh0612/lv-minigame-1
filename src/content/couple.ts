@@ -15,7 +15,7 @@ export const CFG = {
   hisBirthday: "2000-12-06",
   pets: [
     {id:"dog",   name:"Milo",  desc:"Cún trắng lông xù như cục bông, thích chạy vòng vòng quanh quầy"},
-    {id:"gold",  name:"Siro",  desc:"Mèo mướp vàng mặt tròn, mê ngủ trên tủ bánh"},
+    {id:"gold",  name:"Siro",  desc:"Mèo Anh lông ngắn golden, mặt tròn, mê ngủ trên tủ bánh"},
     {id:"white", name:"Cacao", desc:"Mèo trắng hay ngồi canh khay bánh"}
   ],
   // Tên khách (cách nhau bằng dấu phẩy), đổi được trong Cài đặt

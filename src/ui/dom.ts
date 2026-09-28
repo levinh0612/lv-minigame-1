@@ -49,5 +49,8 @@ export const backBtn = `<button class="rbtn back" data-go="/" aria-label="Về t
 export const levelChip = (L: number, cur: number, need: number) =>
   `<button class="lvchip" data-go="/muc-tieu" aria-label="Tiệm cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lvb">Lv ${L}</span><span class="lvt"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button>`;
 export const hearts = (n: number) => { const k = Math.min(5, Math.floor(n / 10)); return "♥".repeat(k) + "♡".repeat(5 - k); };
+/* 5 trái tim thân thiết (10 điểm = 1 tim) */
+export const heartRow = (n: number, S = 15) => { const k = Math.min(5, Math.floor(n / 10));
+  return Array.from({ length: 5 }, (_, i) => `<svg width="${S}" height="${Math.round(S * 14 / 15)}" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="${i < k ? "#FF7FA1" : "#FFF"}" stroke="#4A3438" stroke-width="1.4"/></svg>`).join(""); };
 export const twinkles = (cols: string[], n: number) => `<div class="twk" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
   `<i style="left:${6 + Math.random() * 88}%;top:${8 + Math.random() * 60}%;font-size:${10 + Math.random() * 14}px;color:${cols[i % cols.length]};animation-duration:${2 + Math.random() * 2}s;animation-delay:${-Math.random() * 3}s">✦</i>`).join("")}</div>`;

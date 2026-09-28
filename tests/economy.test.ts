@@ -206,3 +206,49 @@ describe("thú cưng làm nhân viên", () => {
     expect(fame().seats).toBe(6);                            // 3 + 3.2 = 6.2 → Viral
   });
 });
+
+describe("ca v4: mục tiêu, kho giữa ca, thưởng đồ ăn", () => {
+  it("hết ca: mục tiêu đạt được cộng xu và tính vào lãi", async () => {
+    const { finishShift, goalDone } = await import("../src/engine/shift");
+    const sh = createShift();
+    Object.assign(sh, { served: sh.goals[0].n, memo: 3, left: 0 });
+    expect(sh.goals.every(g => goalDone(sh, g))).toBe(true);
+    const coins = S.coins, led = finishShift(sh);
+    expect(sh.goalCoins).toBe(120);
+    expect(S.coins).toBe(coins + 120);
+    expect(led.revenue).toBe(120);
+  });
+
+  it("có khách giận thì trượt mục tiêu Không để khách nào giận", async () => {
+    const { goalDone } = await import("../src/engine/shift");
+    const sh = createShift(); Object.assign(sh, { served: 5, left: 1 });
+    expect(goalDone(sh, sh.goals.find(g => g.id === "calm")!)).toBe(false);
+  });
+
+  it("giao đúng không xem công thức thì đếm là tự nhớ", () => {
+    const sh = createShift(); S.coins = 0;
+    sh.seats[0] = customer(); sh.mine = 0;
+    const r = RECIPES[0]; sh.build = { base: r.base, cream: r.cream, top: r.top, sweet: 0 };
+    expect(serve(sh).ok).toBe(true);
+    expect(sh.memo).toBe(1);
+  });
+
+  it("nhập đầy kho giữa ca theo giá nhập nhanh", async () => {
+    const { refill, refillCost } = await import("../src/engine/economy");
+    S.stock.base[0] = 2; S.coins = 1000;
+    const cost = refillCost("base", 0);
+    expect(cost).toBe(Math.ceil(2 * 8 * 1.5));
+    expect(refill([{ k: "base", i: 0 }])).toBe(cost);
+    expect(S.stock.base[0]).toBe(10);
+    S.coins = 0; S.stock.base[1] = 0;
+    expect(refill([{ k: "base", i: 1 }])).toBe(0);
+  });
+
+  it("thưởng: tủ hết thì mua 1 phần, mỗi ngày một lần", async () => {
+    const { treat } = await import("../src/engine/economy");
+    S.food = { kibble: 0, pate: 0, chicken: 0 }; S.coins = 100;
+    expect(treat("dog", "kibble")).toBe(true);
+    expect(S.coins).toBe(94);
+    expect(treat("dog", "kibble")).toBe(false);
+  });
+});

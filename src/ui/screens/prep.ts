@@ -1,63 +1,55 @@
-/* Màn Chuẩn bị ca: đi chợ mua nguyên liệu và sắp xếp nhân viên trước khi mở cửa */
-import { CATS, LABELS, PACKS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
-import {
-  canHire, crewPlan, expectedCustomers, fame, foodDef, mealFor, mealOf, onDuty, outOfStock, packPrice, stockOf, suggestion
-} from "../../engine/economy";
+/* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
+import type { PetId } from "../../content/couple";
+import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
+import { canHire, crewPlan, expectedCustomers, fame, foodDef, mealFor, mealOf, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
+import { goalText, shiftGoals } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { cakeSVG, critterSVG } from "../art";
-import { backBtn, coinPill, esc } from "../dom";
+import { critterSVG, foodSVG, ingSVG } from "../art";
+import { coinPill, esc } from "../dom";
 
-function stockCard() {
-  const sug = suggestion(), sugCost = sug.reduce((a, x) => a + x.cost, 0);
-  const low = new Set(sug.map(x => x.k + ":" + x.i));
-  return `<div class="card"><h3>Kho nguyên liệu</h3><p class="cnote">Mỗi bánh dùng 1 đế, 1 kem, 1 topping. Số bên phải là số phần còn trong kho.</p>
-    <button class="b3 sugg" data-act="suggest" ${sug.length && S.coins >= Math.min(...sug.map(x => x.cost)) ? "" : "disabled"}>
-      ${sug.length ? `Nhập theo gợi ý · ${fmtN(sugCost)} xu` : "Kho đã đủ cho ca này"}</button>
-    ${STOCK_KEYS.map(k => `<div class="sgrp"><h4>${LABELS[k]}</h4>${CATS[k].map(([n, c], i) => {
-      const q = stockOf(k, i), warn = low.has(k + ":" + i);
-      return `<div class="srow"><i style="background:${c}"></i><b>${n}</b><span class="sq ${q <= 0 ? "zero" : warn ? "warn" : ""}">${q}</span>
-        ${PACKS.map(p => `<button class="pk" data-ing-buy="${k}:${i}:${p.n}" ${S.coins < packPrice(k, i, p.n) ? "disabled" : ""}>+${p.n}<small>${packPrice(k, i, p.n)} xu</small></button>`).join("")}</div>`;
-    }).join("")}</div>`).join("")}
-  </div>`;
-}
+const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+export const pageHead = (title: string, sub = "") =>
+  `<div class="phead">${BACK}<div class="pt">${sub ? `<small>${sub}</small>` : ""}<h2>${title}</h2></div>${coinPill()}</div>`;
 
-/* Ca này ai đi làm, đã có đồ ăn (lương) chưa */
-function crewCard() {
-  const hired = STAFF.filter(d => S.staff[d.id].hired);
-  const link = `<button class="mini pk" data-go="/cua-hang/thu-cung">Chăm thú cưng →</button>`;
-  if (!hired.length) return `<div class="card"><h3>Thợ bánh ca này</h3><p class="cnote">${canHire("dog") ? `${esc(petName("dog"))} đang chờ được nhận vào làm thợ bánh.` : `Lên Lv 2 để ${esc(petName("dog"))} xin vào làm thợ bánh, tự làm bánh cho khách.`}</p>${link}</div>`;
-  return `<div class="card"><h3>Thợ bánh ca này <small>ăn lương đầu ca</small></h3><p class="cnote">Các bé đi làm sẽ tự nhận đơn và làm bánh cho khách; đơn bé đã nhận thì chủ tiệm không cần làm.</p>
-    ${hired.map(d => {
-      const on = onDuty(d.id), meal = mealFor(d.id), need = foodDef(mealOf(d.id));
-      const status = !on ? `<small>Nghỉ ca này</small>`
-        : meal ? `<small class="okc">Đi làm · ăn 1 ${foodDef(meal).n}</small>`
-        : `<small class="bad">Đói: cần 1 ${need.n}</small><button class="mini pk" data-food-buy="${need.id}:1" ${S.coins < need.cost ? "disabled" : ""}>Mua 1 ${need.n} · ${need.cost} xu</button>`;
-      return `<div class="crewrow ${on ? "" : "off"}">${critterSVG({ ...PETS[d.id], mood: on && meal ? "happy" : "open", ledge: false }, 44)}
-        <div class="inf"><b>${esc(petName(d.id))} <em>${d.role} · bậc ${S.staff[d.id].lv}</em></b>${status}</div>
-        <button class="duty ${on ? "on" : ""}" data-duty="${d.id}" aria-pressed="${on}">${on ? "Đi làm" : "Nghỉ"}</button></div>`;
-    }).join("")}
-    ${link}
-  </div>`;
+/* thẻ một bé: đi làm / nghỉ / đói / chờ nhận / chưa mở */
+export function bakerTile(id: PetId) {
+  const d = staffDef(id), st = S.staff[id], on = onDuty(id);
+  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1];
+  const meal = st.hired ? mealFor(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
+  let btn: string, cls = "";
+  if (!canHire(id)) { btn = `<button class="tb3 lock" disabled>Mở ở Lv ${d.unlock}</button>`; cls = "off"; }
+  else if (!st.hired) { btn = `<button class="tb3 hire" data-hire="${id}">Nhận vào làm</button>`; cls = "off"; }
+  else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
+  else { btn = `<button class="tb3 ${on ? "on" : ""}" data-duty="${id}" aria-pressed="${on}">${on ? "Đi làm" : "Nghỉ"}</button>`; if (!on) cls = "off"; }
+  const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(food.id, 18)}Bậc ${tier} · ${food.n}`;
+  return `<div class="btile ${cls}"><div class="av">${critterSVG({ ...PETS[id], mood: on && !hungry ? "happy" : hungry ? "impatient" : "open" }, 72)}</div>
+    <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${btn}</div>`;
 }
 
 export function prepHTML() {
-  const feat = featured(), out = outOfStock(), plan = crewPlan();
-  const fed = plan.filter(x => x.meal), hungry = plan.filter(x => !x.meal);
-  const sub = !plan.length ? "Chưa có bé nào đi làm"
-    : [fed.length ? "Lương: " + fed.map(x => `1 ${foodDef(x.meal!).n}`).join(", ") : "", hungry.length ? hungry.map(x => petName(x.id)).join(", ") + " đói, sẽ nghỉ" : ""].filter(Boolean).join(" · ");
-  return `<div class="scr prep">
-    <div class="shead">${backBtn}<h2>Chuẩn bị ca</h2>${coinPill()}</div>
-    <div class="list">
-      <div class="card today">
-        ${cakeSVG({ base: feat.base, cream: feat.cream, top: feat.top, sweet: 1 }, { size: 92, still: true })}
-        <div><small>Món nổi bật hôm nay</small><b>${esc(feat.n)}</b><span>Dự kiến ${expectedCustomers()} khách · Ca ${S.shifts + 1}</span><span class="famec">✦ ${fame().n} · ${fame().seats} bàn</span></div>
-      </div>
-      ${out.length ? `<p class="warnbox">Đang hết ${out.map(x => CATS[x.k][x.i][0]).join(", ")}. Khách gọi món có nguyên liệu này sẽ phải nhập nhanh, giá cao hơn 50%.</p>` : ""}
-      ${stockCard()}
-      ${crewCard()}
-    </div>
-    <div class="startbar"><button class="b3" data-act="start">Mở cửa<small>${esc(sub)}</small></button></div>
+  const feat = featured(), plan = crewPlan(), f = fame();
+  const goals = shiftGoals(expectedCustomers());
+  const sug = suggestion(), sugCost = sug.reduce((a, x) => a + x.cost, 0);
+  const low = STOCK_KEYS.flatMap(k => CATS[k].map((_, i) => ({ k, i }))).filter(x => stockOf(x.k, x.i) <= 2);
+  const stock = STOCK_KEYS.map(k => CATS[k].map(([n], i) => {
+    const v = stockOf(k, i), p = packPrice(k, i, 5);
+    return `<button class="stile ${v === 0 ? "out" : v <= 2 ? "low" : ""}" data-ing-buy="${k}:${i}:5" ${S.coins < p ? "disabled" : ""} aria-label="Nhập 5 ${n}, ${p} xu">${ingSVG(k, i, 22)}<span>${n}</span><b>${v === 0 ? "Hết" : v}</b></button>`;
+  }).join("")).join("");
+  const ic = [["#FFE9EF", "#E0567A"], ["#E3F6EC", "#3F9C78"], ["#FFF0C9", "#A77A0E"]];
+  const hungry = plan.filter(x => !x.meal).map(x => petName(x.id));
+  return `<div class="scr prep2">
+    ${pageHead("Chuẩn bị mở tiệm", `Ca ${S.shifts + 1}`)}
+    <div class="feat">${ingSVG("cream", feat.cream, 18)}Món nổi bật: <b>${esc(feat.n)}</b><span>~${expectedCustomers()} khách · ✦ ${f.n}</span></div>
+    <div class="sh2"><b>Ai đi làm hôm nay?</b><span class="lav">${plan.filter(x => x.meal).length}/${STAFF.length} bé</span></div>
+    <div class="btiles">${STAFF.map(d => bakerTile(d.id)).join("")}</div>
+    <div class="sh2"><b>Mục tiêu ca này</b><span class="gold">thưởng lúc hết ca</span></div>
+    <div class="goals">${goals.map((g, i) => `<div class="goal"><i style="background:${ic[i][0]};color:${ic[i][1]}">${g.n}</i><span>${goalText(g)}</span><b>+${g.reward} xu</b></div>`).join("")}</div>
+    <div class="sh2"><b>Kho trước ca</b><span class="${low.length ? "red" : "lav"}">${low.length ? `${low.length} món sắp hết` : "Đủ hàng"}</span></div>
+    <div class="stiles">${stock}</div>
+    <p class="phint">Chạm một món để nhập thêm 5 phần. ${hungry.length ? `<b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>
+    <div class="pfoot"><button class="b3 w" data-act="suggest" ${sug.length && S.coins >= Math.min(...sug.map(x => x.cost)) ? "" : "disabled"}>${sug.length ? `Nhập · ${fmtN(sugCost)} xu` : "Kho đủ"}</button>
+      <button class="b3" data-act="start">Bắt đầu ca</button></div>
   </div>`;
 }

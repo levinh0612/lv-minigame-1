@@ -1,11 +1,12 @@
 import { CFG, type PetId } from "../../content/couple";
 import { DECOR, FOODS, PETS } from "../../content/game";
-import { canHire, foodDef, foodOf, mealFor, mealOf, onDuty, staffDef, trainCost } from "../../engine/economy";
+import { canHire, foodOf, mealFor, onDuty, staffDef, trainCost } from "../../engine/economy";
 import { lvl, xpFor } from "../../engine/progress";
 import { S, petName } from "../../engine/state";
 import { fmtD, fmtN, parse } from "../../engine/util";
 import { critterSVG, foodSVG } from "../art";
-import { backBtn, coinPill, esc, hearts, levelChip } from "../dom";
+import { backBtn, coinPill, esc, heartRow, levelChip } from "../dom";
+import { pageHead } from "./prep";
 import { SHOP_PATH, type ShopTab } from "../router";
 import { claimBtn, goalsList } from "./goals";
 
@@ -21,39 +22,46 @@ export function decorTab() {
       ${own ? '<div class="tag use">Đang dùng</div>' : lock ? `<div class="tag lk">Mở ở Lv ${d.lv}</div>` : `<button class="buy" data-buy="${d.id}" ${S.coins < d.cost ? "disabled" : ""}>${fmtN(d.cost)} xu</button>`}</div>`;
   }).join("")}</div>`;
 }
+/* ===== Nhân viên nhỏ (PetsScreen của Claude Design) ===== */
+const BREED: Record<PetId, string> = { dog: "Cún trắng xù · làm bánh nhanh", gold: "Mèo Anh golden · khéo trang trí", white: "Mèo trắng · làm được món khó" };
+let sel: PetId = "dog";
+export const selectPet = (id: PetId) => { sel = id; };
+
 /* Tủ đồ ăn: mua bằng xu, dùng làm lương và để thưởng */
 export function pantryHTML() {
-  return `<div class="card"><h3>Tủ đồ ăn</h3>
-    <p class="cnote">Lương mỗi ca của các bé: bậc 1 ăn Hạt, bậc 2 ăn Pate, bậc 3 ăn Ức gà. Mỗi ngày thưởng thêm một món để các bé thân hơn.</p>
-    ${FOODS.map(f => `<div class="frow">${foodSVG(f.id, 40)}<div class="fn"><b>${f.n}</b><small>+${f.aff} ♥ khi thưởng</small></div><span class="sq ${foodOf(f.id) ? "" : "zero"}">${foodOf(f.id)}</span>
-      <button class="pk" data-food-buy="${f.id}:1" ${S.coins < f.cost ? "disabled" : ""}>+1<small>${f.cost} xu</small></button>
-      <button class="pk" data-food-buy="${f.id}:5" ${S.coins < f.cost * 5 ? "disabled" : ""}>+5<small>${f.cost * 5} xu</small></button></div>`).join("")}
-  </div>`;
+  return `<div class="pantry">${FOODS.map(f => `<div class="ftile">${foodSVG(f.id, 36)}<b>${f.n}</b><small>còn ${foodOf(f.id)}</small>
+    <button class="pk" data-food-buy="${f.id}:5" ${S.coins < f.cost * 5 ? "disabled" : ""}>+5 · ${f.cost * 5} xu</button></div>`).join("")}</div>`;
 }
-
-/* Một bé: vuốt ve, thưởng đồ ăn, và làm nhân viên */
-export function petCardHTML(id: PetId) {
-  const p = CFG.pets.find(x => x.id === id)!, d = staffDef(id), st = S.staff[id], pet = S.pets[id], td = S.daily.day;
-  const on = onDuty(id), meal = st.hired ? mealFor(id) : null, need = st.hired ? foodDef(mealOf(id)) : null;
-  const work = !canHire(id)
-    ? `<div class="job lock"><span class="tag lk">Xin vào làm ${d.role.toLowerCase()} từ Lv ${d.unlock}</span><small>${d.effect[0]}</small></div>`
-    : !st.hired
-      ? `<div class="job"><small>Muốn làm <b>${d.role.toLowerCase()}</b>: ${d.effect[0].toLowerCase()}. Lương mỗi ca: 1 Hạt.</small><button class="mini pk" data-hire="${id}">Nhận vào làm</button></div>`
-      : `<div class="job ${on ? "" : "off"}"><small><b>${d.role} · bậc ${st.lv}:</b> ${d.effect[st.lv - 1]}</small>
-          <small class="wg ${on && !meal ? "bad" : ""}">Lương mỗi ca: 1 ${need!.n} · ${on && !meal ? "hết đồ ăn, bé sẽ nghỉ" : `còn ${foodOf(mealOf(id))}`}</small>
-          <div class="acts"><button class="duty ${on ? "on" : ""}" data-duty="${id}" aria-pressed="${on}">${on ? "Đi làm" : "Nghỉ"}</button>
-          ${trainCost(id) ? `<button class="mini" data-train="${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Huấn luyện · ${fmtN(trainCost(id))} xu</button>` : '<span class="tag use">Bậc tối đa</span>'}</div></div>`;
-  const fed = pet.fedDay === td;
-  return `<div class="card pcard2">
-    <div class="ph"><button class="pet" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${critterSVG({ ...PETS[id], mood: on ? "happy" : "open" }, 88)}</button>
-      <div><div class="nm">${esc(petName(id))}${st.hired ? ` <em>${d.role}</em>` : ""}</div><div class="ds">${esc(p.desc)}</div><div class="hearts" data-hearts="${id}">${hearts(pet.aff)}</div></div></div>
-    ${work}
-    <div class="snack"><span>${fed ? "Đã được thưởng hôm nay ♥" : "Thưởng hôm nay"}</span>
-      ${FOODS.map(f => `<button class="fbtn" data-snack="${id}:${f.id}" ${fed || !foodOf(f.id) ? "disabled" : ""} aria-label="Thưởng ${f.n}">${foodSVG(f.id, 28)}<b>${foodOf(f.id)}</b></button>`).join("")}</div>
-  </div>`;
+/* một hàng trong Ca làm việc: bậc, lương, độ thân, nút thưởng */
+export function petRowHTML(id: PetId) {
+  const d = staffDef(id), st = S.staff[id], on = onDuty(id), fed = S.pets[id].fedDay === S.daily.day;
+  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1], meal = st.hired ? mealFor(id) : null;
+  const act = !canHire(id) ? `<div class="rb lock"><b>Lv ${d.unlock}</b><small>mới mở</small></div>`
+    : !st.hired ? `<button class="rb hire" data-hire="${id}"><b>Nhận</b><small>vào làm</small></button>`
+    : `<button class="rb ${fed ? "done" : ""}" data-treat="${id}:${food.id}" ${fed || (!foodOf(food.id) && S.coins < food.cost) ? "disabled" : ""}>${foodSVG(food.id, 28)}<small>${fed ? "Đã thưởng" : "Thưởng"}</small></button>`;
+  const train = st.hired && trainCost(id) ? `<button class="up" data-train="${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${st.lv + 1} · ${fmtN(trainCost(id))} xu</button>` : "";
+  return `<div class="prow"><div class="pav ${on ? "on" : ""}">${critterSVG({ ...PETS[id], mood: on ? "happy" : "open", ledge: false }, 70)}</div>
+    <div class="pin"><div class="pn"><b>${esc(petName(id))}</b><span class="tg t">Bậc ${tier}</span>${on ? `<span class="tg w">Đi làm</span>` : st.hired ? `<span class="tg o">Nghỉ</span>` : ""}</div>
+      <div class="pw">${foodSVG(food.id, 20)}Lương: 1 ${food.n}/ca${st.hired && on && !meal ? ` <em>· hết đồ ăn</em>` : ""}</div>
+      <div class="ph2"><span data-hearts="${id}">${heartRow(S.pets[id].aff)}</span><small>thân thiết</small></div>${train}</div>${act}</div>`;
 }
-function petsTab() {
-  return `<div class="list">${pantryHTML()}${CFG.pets.map(p => petCardHTML(p.id)).join("")}<p class="hint">Chạm vào bé để vuốt ve. Bé càng thân thì càng hay ghé tiệm mua bánh.</p></div>`;
+export function petsHTML() {
+  const id = sel, fed = S.pets[id].fedDay === S.daily.day, k = FOODS[0];
+  return `<div class="scr pets2">
+    ${pageHead("Nhân viên nhỏ")}
+    <div class="hero">
+      <div class="hn"><b>${esc(petName(id))}</b><small>${BREED[id]}</small></div><span class="hint">Chạm để vuốt ve</span>
+      <button class="pet" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${critterSVG({ ...PETS[id], mood: fed ? "love" : "happy", wave: id === "white" && !fed, ledge: false }, 150)}</button>
+      <div class="hb"><button class="feed" data-treat="${id}:${k.id}" ${fed || (!foodOf(k.id) && S.coins < k.cost) ? "disabled" : ""}>${foodSVG(k.id, 26)}${fed ? "Hôm nay ăn rồi ♥" : foodOf(k.id) ? `Cho ăn · 1 ${k.n}` : `Cho ăn · ${k.cost} xu`}</button>
+        <div class="hh" data-hearts="${id}">${heartRow(S.pets[id].aff)}</div></div>
+    </div>
+    <div class="ptabs">${CFG.pets.map(p => `<button class="${p.id === id ? "on" : ""}" data-sel-pet="${p.id}">${critterSVG({ ...PETS[p.id], paws: false, ledge: false }, 52)}<span>${esc(petName(p.id))}</span></button>`).join("")}</div>
+    <div class="sh2"><b>Ca làm việc</b><span class="lav">đi làm / nghỉ ở màn Chuẩn bị</span></div>
+    <div class="prows">${CFG.pets.map(p => petRowHTML(p.id)).join("")}</div>
+    <div class="sh2"><b>Tủ đồ ăn</b><span class="lav">lương & quà thưởng</span></div>
+    ${pantryHTML()}
+    <p class="phint">Mỗi ngày thưởng một lần. Bé càng thân càng hay ghé tiệm mua bánh.</p>
+  </div>`;
 }
 function giftTab() {
   const L2 = S.letters.slice().reverse();
@@ -67,7 +75,8 @@ function giftTab() {
 
 export function shopHTML(tab: ShopTab) {
   const title = { decor: "Trang trí tiệm", pets: "Thú cưng", gift: "Quà tặng" }[tab];
-  const body = { decor: decorTab, pets: petsTab, gift: giftTab }[tab](), L = lvl();
+  if (tab === "pets") return petsHTML();
+  const body = { decor: decorTab, gift: giftTab }[tab](), L = lvl();
   return `<div class="scr">
     <div class="shead">${backBtn}<h2>${title}</h2>${coinPill()}</div>
     ${roomHTML()}

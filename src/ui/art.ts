@@ -43,40 +43,46 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
 }
 
 let CID = 0;
+const HEAD = { def: "M12 94 C10 58 18 36 60 36 C102 36 110 58 108 94 Z", brit: "M6 94 C2 62 16 38 60 38 C104 38 118 62 114 94 Z" };
 export function critterSVG(p: CritterLook & { mood?: Mood }, S = 90){
   const k = p.kind || "cat", fur = p.fur || "#FFFFFF", mood = p.mood || "happy", pattern = p.pattern || "none", mark = p.mark || "#E9A860", wave = !!p.wave;
-  const vbY = k==="bunny" ? -18 : 12, vbH = 98 - vbY, cid = "cr" + (++CID);
-  const open = mood==="open" || mood==="impatient", happy = mood==="happy" || mood==="love";
+  const vbY = k==="bunny" ? -18 : 12, vbH = 98 - vbY, cid = "cr" + (++CID), head = k==="brit" ? HEAD.brit : HEAD.def;
+  const open = mood==="open" || mood==="impatient", happy = mood==="happy" || mood==="love", catLike = k==="cat" || k==="brit";
   const headFill = pattern==="tux" ? mark : fur, earL = headFill, earR = (pattern==="tux"||pattern==="patch") ? mark : fur;
   const pawFill = pattern==="tux" ? "#FFFFFF" : fur, blush = mood==="impatient" ? .3 : .75;
-  let s = `<defs><clipPath id="${cid}"><path d="M12 94 C10 58 18 36 60 36 C102 36 110 58 108 94 Z"/></clipPath></defs>`;
+  let s = `<defs><clipPath id="${cid}"><path d="${head}"/></clipPath></defs>`;
   if (k==="cat") s += `<path d="M18 60 L22 18 L52 40 Z" fill="${earL}"/><path d="M27 46 L28 28 L43 40 Z" fill="#F7A8B8" stroke="none"/><path d="M102 60 L98 18 L68 40 Z" fill="${earR}"/><path d="M93 46 L92 28 L77 40 Z" fill="#F7A8B8" stroke="none"/>`;
+  if (k==="brit") s += `<path d="M14 58 C12 40 20 28 30 30 C38 32 44 38 46 42 Z" fill="${fur}"/><path d="M20 50 C20 40 25 35 30 36 C35 37 38 40 39 42 Z" fill="#F4B6BE" stroke="none"/><path d="M106 58 C108 40 100 28 90 30 C82 32 76 38 74 42 Z" fill="${fur}"/><path d="M100 50 C100 40 95 35 90 36 C85 37 82 40 81 42 Z" fill="#F4B6BE" stroke="none"/>`;
   if (k==="bunny") s += `<path d="M36 44 C28 18 30 -12 42 -14 C54 -14 54 20 50 40 Z" fill="${fur}"/><path d="M41 34 C37 18 38 -4 42 -6 C46 -6 47 16 46 32 Z" fill="#F7A8B8" stroke="none"/><path d="M84 44 C92 18 90 -12 78 -14 C66 -14 66 20 70 40 Z" fill="${fur}"/><path d="M79 34 C83 18 82 -4 78 -6 C74 -6 73 16 74 32 Z" fill="#F7A8B8" stroke="none"/>`;
   if (k==="bear") s += `<circle cx="28" cy="44" r="13" fill="${fur}"/><circle cx="28" cy="44" r="6" fill="#F7A8B8" stroke="none"/><circle cx="92" cy="44" r="13" fill="${fur}"/><circle cx="92" cy="44" r="6" fill="#F7A8B8" stroke="none"/>`;
-  if (p.fluffy) s += `<circle cx="32" cy="44" r="13" fill="${fur}"/><circle cx="47" cy="34" r="14" fill="${fur}"/><circle cx="64" cy="31" r="14" fill="${fur}"/><circle cx="81" cy="36" r="13" fill="${fur}"/><circle cx="91" cy="46" r="11" fill="${fur}"/>`;
-  s += `<path d="M12 94 C10 58 18 36 60 36 C102 36 110 58 108 94 Z" fill="${headFill}"/><g clip-path="url(#${cid})" stroke="none">`;
-  if (pattern==="tux") s += `<path d="M60 54 C46 54 38 70 30 96 L90 96 C82 70 74 54 60 54 Z" fill="${fur}"/><path d="M60 38 L60 54" stroke="${fur}" stroke-width="6"/>`;
+  if (p.fluffy) s += `<circle cx="14" cy="74" r="11" fill="${fur}"/><circle cx="106" cy="74" r="11" fill="${fur}"/><circle cx="30" cy="44" r="13" fill="${fur}"/><circle cx="45" cy="33" r="14" fill="${fur}"/><circle cx="62" cy="29" r="15" fill="${fur}"/><circle cx="79" cy="33" r="14" fill="${fur}"/><circle cx="92" cy="44" r="12" fill="${fur}"/>`;
+  s += `<path d="${head}" fill="${headFill}"/><g clip-path="url(#${cid})" stroke="none">`;
+  if (pattern==="tux") s += `<path d="M60 54 C46 54 38 70 30 96 L90 96 C82 70 74 54 60 54 Z" fill="${fur}"/>`;
   if (pattern==="patch") s += `<circle cx="94" cy="48" r="24" fill="${mark}"/><circle cx="18" cy="88" r="12" fill="${p.mark2||"#5A4A48"}"/>`;
   if (pattern==="tabby") s += `<path d="M51 41 L53 50 M60 39 V50 M69 41 L67 50 M11 62 L22 64 M11 70 L21 71 M109 62 L98 64 M109 70 L99 71" stroke="${mark}" stroke-width="3.6"/>`;
-  s += `</g><path d="M12 94 C10 58 18 36 60 36 C102 36 110 58 108 94" fill="none"/>`;
+  if (pattern==="shaded") s += `<ellipse cx="60" cy="30" rx="58" ry="22" fill="${mark}" opacity=".8"/><path d="M40 40 Q60 46 80 40 M30 46 Q60 54 90 46" stroke="#C9CCD6" stroke-width="2.2" opacity=".75" fill="none"/><ellipse cx="60" cy="82" rx="26" ry="15" fill="#FFF8EC"/>`;
+  if (k==="dog" && fur!=="#FFFFFF") s += `<ellipse cx="60" cy="82" rx="22" ry="13" fill="#FFFFFF" opacity=".9"/>`;
+  s += `</g><path d="${head}" fill="none"/>`;
   if (k==="dog") s += `<path d="M24 44 C8 42 2 66 8 78 C14 88 28 74 32 52 Z" fill="${p.ear||"#E8D8CC"}"/><path d="M96 44 C112 42 118 66 112 78 C106 88 92 74 88 52 Z" fill="${p.ear||"#E8D8CC"}"/>`;
-  if (k==="cat") s += `<path d="M14 70 L2 67 M14 76 L3 78 M106 70 L118 67 M106 76 L117 78" stroke-width="2"/>`;
-  s += `<ellipse cx="31" cy="77" rx="6.5" ry="3.8" fill="#FF9FB6" stroke="none" opacity="${blush}"/><ellipse cx="89" cy="77" rx="6.5" ry="3.8" fill="#FF9FB6" stroke="none" opacity="${blush}"/>`;
-  const eyeO = (x: number) => `<circle cx="${x}" cy="67" r="6.8" fill="${INK}" stroke="none"/><circle cx="${x+2.3}" cy="64.4" r="2.4" fill="#fff" stroke="none"/>`;
+  if (catLike) s += `<path d="M14 70 L2 67 M14 76 L3 78 M106 70 L118 67 M106 76 L117 78" stroke-width="2"/>`;
+  s += `<ellipse cx="30" cy="78" rx="7" ry="4" fill="#FF9FB6" stroke="none" opacity="${blush}"/><ellipse cx="90" cy="78" rx="7" ry="4" fill="#FF9FB6" stroke="none" opacity="${blush}"/>`;
+  const eyeO = (x: number) => `<circle cx="${x}" cy="67" r="7" fill="${p.eye||INK}" stroke="none"/><circle cx="${x}" cy="67.6" r="${p.eye ? 3.6 : 7}" fill="${INK}" stroke="none"/><circle cx="${x+2.5}" cy="64.4" r="2.4" fill="#fff" stroke="none"/>`;
   if (open || mood==="wink") s += eyeO(42);
   if (happy) s += `<path d="M35 68 Q42 60 49 68"/>`;
   if (open) s += eyeO(78);
   if (happy) s += `<path d="M71 68 Q78 60 85 68"/>`;
   if (mood==="wink") s += `<path d="M84 63 L73 67.5 L84 72"/>`;
   if (mood==="impatient") s += `<path d="M34 57 L46 54 M86 57 L74 54" stroke-width="2.4"/><path d="M104 42 C99 49 99 55 104 55 C109 55 109 49 104 42 Z" fill="#A8DDF5" stroke-width="2"/>`;
-  s += `<ellipse cx="60" cy="72" rx="3.2" ry="2.2" fill="${k==="dog"||k==="bear" ? INK : "#F48FA8"}" stroke="none"/>`;
-  if (mood==="love"||mood==="wink") s += `<path d="M55.5 76.5 Q60 86 64.5 76.5 Z" fill="#F07A95" stroke-width="2"/>`;
-  s += mood!=="impatient" ? `<path d="M53 75 Q56.5 80 60 75 Q63.5 80 67 75" stroke-width="2.4"/>` : `<path d="M54 80 Q60 75 66 80" stroke-width="2.4"/>`;
+  s += `<ellipse cx="60" cy="73" rx="3.4" ry="2.3" fill="${k==="dog"||k==="bear" ? INK : "#F48FA8"}" stroke="none"/>`;
+  if (mood==="love"||mood==="wink") s += `<path d="M55.5 77.5 Q60 87 64.5 77.5 Z" fill="#F07A95" stroke-width="2"/>`;
+  s += mood!=="impatient" ? `<path d="M53 76 Q56.5 81 60 76 Q63.5 81 67 76" stroke-width="2.4"/>` : `<path d="M54 81 Q60 76 66 81" stroke-width="2.4"/>`;
   if (p.bow) s += `<g transform="translate(30 38) rotate(-18)"><path d="M0 0 L-12 -8 L-12 8 Z M0 0 L12 -8 L12 8 Z" fill="${p.bow}" stroke-width="2.2"/><circle r="4" fill="${p.bow}" stroke-width="2.2"/></g>`;
   if (mood==="love") s += `<g style="animation:critHeart 1.6s ease-in-out infinite"><path d="M106 24 C106 19 100 18 99 23 C98 18 92 19 92 24 C92 29 99 32 99 35 C99 32 106 29 106 24 Z" fill="#FF6F91" stroke-width="2"/></g>`;
-  s += `<path d="M28 95 C27 85 45 85 44 95 Z" fill="${pawFill}"/><path d="M34 90 V94 M38.5 90 V94" stroke-width="2"/>`;
-  if (!wave) s += `<path d="M76 95 C75 85 93 85 92 95 Z" fill="${pawFill}"/><path d="M82 90 V94 M86.5 90 V94" stroke-width="2"/>`;
-  else s += `<g style="transform-origin:100px 94px;animation:critWave 1.4s ease-in-out infinite"><path d="M90 95 C90 78 92 62 94 55 C96 45 112 45 112 57 C112 68 108 82 108 95" fill="${pawFill}"/><ellipse cx="102.5" cy="60" rx="4.6" ry="3.8" fill="#F7A8B8" stroke="none"/><circle cx="97" cy="52.5" r="1.9" fill="#F7A8B8" stroke="none"/><circle cx="102.5" cy="50.5" r="1.9" fill="#F7A8B8" stroke="none"/><circle cx="108" cy="52.5" r="1.9" fill="#F7A8B8" stroke="none"/></g>`;
+  if (p.paws !== false) {
+    s += `<path d="M28 95 C27 85 45 85 44 95 Z" fill="${pawFill}"/><path d="M34 90 V94 M38.5 90 V94" stroke-width="2"/>`;
+    if (!wave) s += `<path d="M76 95 C75 85 93 85 92 95 Z" fill="${pawFill}"/><path d="M82 90 V94 M86.5 90 V94" stroke-width="2"/>`;
+  }
+  if (wave) s += `<g style="transform-origin:100px 94px;animation:critWave 1.4s ease-in-out infinite"><path d="M90 95 C90 78 92 62 94 55 C96 45 112 45 112 57 C112 68 108 82 108 95" fill="${pawFill}"/><ellipse cx="102.5" cy="60" rx="4.6" ry="3.8" fill="#F7A8B8" stroke="none"/><circle cx="97" cy="52.5" r="1.9" fill="#F7A8B8" stroke="none"/><circle cx="102.5" cy="50.5" r="1.9" fill="#F7A8B8" stroke="none"/><circle cx="108" cy="52.5" r="1.9" fill="#F7A8B8" stroke="none"/></g>`;
   if (p.ledge !== false) s += `<path d="M-6 95 H126"/>`;
   return `<svg width="${S}" height="${Math.round(S*vbH/120)}" viewBox="0 ${vbY} 120 ${vbH}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
 }
@@ -116,15 +122,36 @@ export function guestSVG(p: GuestLook & { mood?: Mood }, S = 90){
 }
 export const charSVG = (look: Look, mood: Mood, S?: number) => look.gender ? guestSVG({ ...look, mood }, S) : critterSVG({ ...look, mood }, S);
 
-/* Đồ ăn thú cưng: Hạt (bát), Pate (lon), Ức gà (đùi gà) */
-export function foodSVG(id: "kibble" | "pate" | "chicken", S = 40) {
-  let g = "";
-  if (id === "kibble") g = `<path d="M6 26 H42 C42 36 34 42 24 42 C14 42 6 36 6 26 Z" fill="#FFB3C7"/><path d="M12 32 C16 34 32 34 36 32" stroke="#fff" stroke-width="2" opacity=".7"/>`
-    + [[14, 22], [20, 19], [27, 20], [33, 22], [17, 25], [24, 24], [31, 25]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="#C98B5A"/>`).join("")
-    + `<path d="M4 26 H44" />`;
-  if (id === "pate") g = `<path d="M10 14 V36 C10 40 38 40 38 36 V14" fill="#F2B266"/><ellipse cx="24" cy="14" rx="14" ry="4.5" fill="#FFE3A0"/><ellipse cx="24" cy="14" rx="9" ry="2.6" fill="none" stroke-width="1.6" opacity=".6"/>`
-    + `<path d="M10 22 C18 25 30 25 38 22 V31 C30 34 18 34 10 31 Z" fill="#fff" stroke-width="2"/><path d="M27 27 C27 25 24.5 24.5 24 26.5 C23.5 24.5 21 25 21 27 C21 29 24 30.5 24 31.5 C24 30.5 27 29 27 27 Z" fill="#FF8FAB" stroke="none"/>`;
-  if (id === "chicken") g = `<path d="M30 20 C24 8 8 10 8 24 C8 34 18 38 26 32 Z" fill="#E8A26A"/><path d="M14 20 C16 16 20 15 23 16" stroke="#fff" stroke-width="2.2" opacity=".6"/>`
-    + `<path d="M26 32 L34 38" stroke-width="5.5"/><path d="M26 32 L34 38" stroke="#FFF8EC" stroke-width="2.6"/><circle cx="36" cy="37" r="3.6" fill="#FFF8EC"/><circle cx="34" cy="41" r="3.6" fill="#FFF8EC"/>`;
-  return `<svg width="${S}" height="${S}" viewBox="0 0 48 48" style="display:block;flex:none;overflow:visible" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${g}</svg>`;
-}
+/* Đồ ăn thú cưng (FoodIcon của Claude Design): Hạt (bát), Pate (lon), Ức gà (miếng thịt) */
+const FOOD_ART = {
+  kibble: `<ellipse cx="50" cy="86" rx="36" ry="6" fill="#F3D5DD" stroke="none"/><path d="M40 40 C36 30 44 26 48 32 C52 26 60 30 56 40 Z" fill="#D9A66B" stroke-width="2.6"/><circle cx="30" cy="50" r="8" fill="#C98E5A" stroke-width="2.6"/><circle cx="68" cy="48" r="8.5" fill="#D9A66B" stroke-width="2.6"/><path d="M44 52 C40 44 50 40 54 46 C60 42 66 50 58 54 Z" fill="#E6B870" stroke-width="2.6"/><circle cx="78" cy="56" r="6" fill="#C98E5A" stroke-width="2.6"/><path d="M12 56 H88 C86 76 72 86 50 86 C28 86 14 76 12 56 Z" fill="#FF8FAB"/><path d="M12 56 H88"/><path d="M20 62 H80" stroke="#FFC4D4"/><g fill="#FFFFFF" stroke="none"><ellipse cx="50" cy="74" rx="6" ry="4.6"/><circle cx="42" cy="67" r="2.6"/><circle cx="48" cy="64.5" r="2.6"/><circle cx="54" cy="64.5" r="2.6"/><circle cx="60" cy="67" r="2.6"/></g>`,
+  pate: `<ellipse cx="50" cy="88" rx="34" ry="6" fill="#F3D5DD" stroke="none"/><path d="M18 54 V76 C18 88 82 88 82 76 V54" fill="#8FD9B6"/><path d="M18 62 C18 72 82 72 82 62" stroke="#5FB892" stroke-width="2.4"/><path d="M40 74 C44 70 52 70 56 74 C52 78 44 78 40 74 Z M56 74 L62 70 V78 Z" fill="#FFFFFF" stroke-width="2"/><ellipse cx="50" cy="54" rx="32" ry="10" fill="#E8E4EE"/><ellipse cx="50" cy="54" rx="26" ry="7" fill="#FFA99A" stroke-width="2.2"/><path d="M36 52 C40 49 46 50 48 53 M54 51 C58 49 62 51 64 54" stroke="#E27F72" stroke-width="2"/><g transform="rotate(-24 70 26)"><ellipse cx="70" cy="26" rx="22" ry="7.5" fill="#E8E4EE"/><ellipse cx="70" cy="25" rx="15" ry="4" stroke="#C3BCCB" stroke-width="2"/></g><path d="M52 44 C50 38 54 34 58 36" stroke-width="2.6"/>`,
+  chicken: `<ellipse cx="50" cy="84" rx="42" ry="10" fill="#FFFFFF"/><path d="M20 66 C14 46 32 28 56 30 C78 32 90 48 85 62 C80 76 60 82 44 80 C32 79 23 74 20 66 Z" fill="#F7D9A8"/><path d="M28 70 C26 60 34 46 50 42" stroke="#FFF1D8" stroke-width="4"/><path d="M38 52 L50 44 M44 64 L64 50 M56 72 L74 58" stroke="#C98E5A" stroke-width="3.2"/><path d="M70 34 C74 26 82 24 86 26 C84 32 78 36 72 36 Z" fill="#8FCB7A" stroke-width="2.4"/><path d="M74 34 L82 28" stroke-width="1.8"/>`
+};
+export const foodSVG = (id: "kibble" | "pate" | "chicken", S = 40) =>
+  `<svg width="${S}" height="${S}" viewBox="0 0 100 100" style="display:block;flex:none;overflow:visible" fill="none" stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${FOOD_ART[id]}</svg>`;
+
+/* Icon nguyên liệu (IngIcon của Claude Design): đế / kem / topping / độ ngọt, mỗi loại 3 món */
+const ING: Record<PartKey, string[]> = {
+  base: [
+    `<path d="M5 17 C5 11 10 8 20 8 C30 8 35 11 35 17 V30 C35 32 33 33 31 33 H9 C7 33 5 32 5 30 Z" fill="#F6D59A"/><path d="M5 17 C5 21 35 21 35 17" fill="#E8B866"/><g fill="#E0B070" stroke="none"><circle cx="12" cy="26" r="1.6"/><circle cx="20" cy="28" r="1.3"/><circle cx="27" cy="25" r="1.6"/><circle cx="16" cy="23" r="1"/></g>`,
+    `<path d="M4 15 H36 L32 32 H8 Z" fill="#D9A66B"/><path d="M4 15 C4 12 36 12 36 15" fill="#FFF0C2"/><path d="M11 18 L12.5 29 M17 18 L17.6 29 M23 18 L22.4 29 M29 18 L27.5 29" stroke="#B98246" stroke-width="1.8"/>`,
+    `<path d="M5 30 C4 18 11 10 20 10 C29 10 36 18 35 30 C35 32 33 33 31 33 H9 C7 33 5 32 5 30 Z" fill="#FFF4EE"/><ellipse cx="13" cy="25" rx="2.4" ry="1.4" fill="#FFB3C7" stroke="none"/><ellipse cx="27" cy="25" rx="2.4" ry="1.4" fill="#FFB3C7" stroke="none"/><g fill="#E9D6CE" stroke="none"><circle cx="16" cy="15" r="1"/><circle cx="24" cy="16" r="1"/><circle cx="20" cy="13" r=".9"/></g>`
+  ],
+  cream: [["#9CCB86", "#6FAE5A", `<path d="M27 7 C29 4 33 4 34 5 C33 8 30 9 28 9 Z" fill="#7FB77E" stroke-width="1.6"/>`],
+          ["#FFB3C7", "#F08FAA", `<path d="M27 4 C24 4 23 8 26 10 C29 8 30 4 27 4 Z" fill="#F0506E" stroke-width="1.6"/>`],
+          ["#FFF0C2", "#E6CF86", `<path d="M26 11 L35 3" stroke="#5C3A26" stroke-width="2.6"/><path d="M33 3 C35 2 37 4 35 6" fill="#9FD18A" stroke-width="1.6"/>`]]
+    .map(([f, l, x]) => `<path d="M6 33 C4 27 8 24 11 24 C9 19 14 15 18 17 C17 11 24 7 27 12 C31 13 32 18 29 21 C34 22 36 28 33 33 Z" fill="${f}"/><path d="M14 27 C18 25 24 25 28 27 M18 20 C21 19 24 19 26 20" stroke="${l}" stroke-width="1.8"/>${x}`),
+  top: [
+    `<path d="M20 35 C9 33 6 21 10 15 C13 11 27 11 30 15 C34 21 31 33 20 35 Z" fill="#F0506E"/><path d="M11 14 L15 7 L20 12 L25 7 L29 14 C24 17 16 17 11 14 Z" fill="#7FB77E"/><path d="M20 12 V4"/><g fill="#FFE08A" stroke="none"><ellipse cx="15" cy="21" rx="1" ry="1.6"/><ellipse cx="25" cy="21" rx="1" ry="1.6"/><ellipse cx="20" cy="26" rx="1" ry="1.6"/><ellipse cx="15" cy="29" rx="1" ry="1.6"/><ellipse cx="25" cy="29" rx="1" ry="1.6"/></g>`,
+    `<g fill="#8E3B46"><ellipse cx="13" cy="25" rx="7.5" ry="5.8" transform="rotate(-18 13 25)"/><ellipse cx="27" cy="25" rx="7.5" ry="5.8" transform="rotate(18 27 25)"/><ellipse cx="20" cy="14" rx="7.5" ry="5.8"/></g><g stroke="#E8C3C8" stroke-width="1.6"><path d="M10 23 L13 24"/><path d="M25 23 L28 24"/><path d="M18 12 L21 12"/></g><g fill="#fff" stroke="none" opacity=".75"><circle cx="11" cy="22" r="1.3"/><circle cx="25" cy="22" r="1.3"/><circle cx="17" cy="11.5" r="1.3"/></g>`,
+    `<path d="M20 6 C12 13 6 20 6 27 C6 34 34 34 34 27 C34 20 28 13 20 6 Z" fill="#B07A4A"/><path d="M7.5 26 C9 33 31 33 32.5 26 C27 29 13 29 7.5 26 Z" fill="#EAD0A8" stroke-width="1.8"/><path d="M15 15 C13 18 12 21 12 23" stroke="#D4A472" stroke-width="2"/>`
+  ],
+  sweet: [
+    `<rect x="12" y="15" width="16" height="16" rx="3" fill="#FFFFFF"/><path d="M12 19 H28" stroke="#EDE1D2" stroke-width="1.6"/>`,
+    `<rect x="4" y="17" width="15" height="15" rx="3" fill="#FFF7E3"/><rect x="21" y="17" width="15" height="15" rx="3" fill="#FFE3A0"/><path d="M4 21 H19 M21 21 H36" stroke="#EAD4A5" stroke-width="1.6"/>`,
+    `<rect x="3" y="21" width="14" height="13" rx="3" fill="#FFE3A0"/><rect x="19" y="21" width="14" height="13" rx="3" fill="#FFC94D"/><rect x="11" y="7" width="14" height="13" rx="3" fill="#FFD66B"/><path d="M34 6 l1.4 -3.4 l1.4 3.4 l3.4 1.4 l-3.4 1.4 l-1.4 3.4 l-1.4 -3.4 l-3.4 -1.4 Z" fill="#FFD166" stroke-width="1.2"/>`
+  ]
+};
+export const ingSVG = (k: PartKey, i: number, S = 24, dim = false) =>
+  `<svg width="${S}" height="${S}" viewBox="0 0 40 40" style="display:block;overflow:visible;flex:none${dim ? ";opacity:.45" : ""}" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ING[k][i]}</svg>`;

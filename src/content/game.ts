@@ -24,7 +24,7 @@ export const partsText = (r: Recipe) => `${CATS.base[r.base][0]} · ${CATS.cream
 
 /* Nhân vật */
 export type Mood = "happy" | "open" | "wink" | "impatient" | "love";
-export interface CritterLook { kind: "cat" | "dog" | "bunny" | "bear"; fur: string; pattern?: "none" | "tabby" | "patch" | "tux"; mark?: string; mark2?: string; ear?: string; fluffy?: boolean; bow?: string; wave?: boolean; ledge?: boolean; gender?: undefined }
+export interface CritterLook { kind: "cat" | "brit" | "dog" | "bunny" | "bear"; fur: string; pattern?: "none" | "tabby" | "patch" | "tux" | "shaded"; mark?: string; mark2?: string; ear?: string; eye?: string; fluffy?: boolean; bow?: string; wave?: boolean; paws?: boolean; ledge?: boolean; gender?: undefined }
 export interface GuestLook { gender: "girl" | "boy"; hairStyle: "long" | "buns" | "short" | "cap"; hair: string; skin: string; accent: string; gesture: "rest" | "wave" | "cheek"; ledge?: boolean }
 export type Look = CritterLook | GuestLook;
 
@@ -39,9 +39,9 @@ export const CRITTERS: (CritterLook & { n: string })[] = [
   { n: "Gấu Sữa", kind: "bear",  fur: "#FFF4EE" }
 ];
 export const PETS: Record<PetId, CritterLook> = {
-  dog:   { kind: "dog", fur: "#FFFFFF", ear: "#F3E9E1", fluffy: true },
-  gold:  { kind: "cat", fur: "#F4C57E", pattern: "tabby", mark: "#D9964A" },
-  white: { kind: "cat", fur: "#FFFFFF" }
+  dog:   { kind: "dog", fur: "#FFFFFF", ear: "#F3ECE4", fluffy: true },
+  gold:  { kind: "brit", fur: "#F3DDAE", pattern: "shaded", mark: "#DDB978", eye: "#7DBA5E" },
+  white: { kind: "cat", fur: "#FFFFFF", eye: "#62AEE6" }
 };
 export const HIM: GuestLook = { gender: "boy", hairStyle: "short", hair: "#3B2A26", skin: "#FFE3D0", accent: "#8FD9B6", gesture: "cheek" };
 export const HAIR = ["#3B2A26", "#6B4A3A", "#C98B5A", "#E7B872", "#8C6BB5", "#F29AB2", "#5C7A99"];

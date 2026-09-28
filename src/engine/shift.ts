@@ -27,6 +27,9 @@ export interface Shift {
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
   bonus: number; lack: Partial<Record<PetId, string>>;
   ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[];
+  memo: number;        // số đơn giao đúng mà không xem công thức
+  helped: number;      // số đơn các bé làm hộ
+  goals: ShiftGoal[]; goalCoins: number;
 }
 
 export const emptyBuild = (): Build => ({ base: null, cream: null, top: null, sweet: null });
@@ -40,7 +43,7 @@ export function createShift(): Shift {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(fame().seats).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, petsDone: [], lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: []
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
   };
 }
 
@@ -194,6 +197,8 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
   S.coins += price + tip + bonus; S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
   sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.served++; sh.stars.push(stars);
+  if (bonus) sh.memo++;
+  if (byStaff) sh.helped++;
   if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
   if (c.pet) S.pets[c.pet].aff += 2;
@@ -230,11 +235,12 @@ export function beginShift() {
 }
 /* Hết ca: tính lãi */
 export function finishShift(sh: Shift) {
-  S.shifts++; save();
+  sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
+  S.coins += sh.goalCoins; S.shifts++; save();
   return ledger(sh);
 }
 export const ledger = (sh: Shift) => {
-  const revenue = sh.coins + sh.tips + sh.bonus;
+  const revenue = sh.coins + sh.tips + sh.bonus + sh.goalCoins;
   return { revenue, ingUsed: sh.ingUsed, quick: sh.quickCost, wages: sh.wages, profit: revenue - sh.ingUsed - sh.quickCost - sh.wages };
 };
 
@@ -242,3 +248,14 @@ export function summary(sh: Shift) {
   const total = sh.served + sh.left, happy = total ? sh.served / total : 0;
   return { total, stars: happy >= 0.9 ? 3 : happy >= 0.6 ? 2 : 1 };
 }
+
+/* ===== Mục tiêu của ca: xem ở màn Chuẩn bị, thưởng xu lúc hết ca ===== */
+export interface ShiftGoal { id: "serve" | "memo" | "calm"; n: number; reward: number }
+export const shiftGoals = (total = expectedCustomers()): ShiftGoal[] => [
+  { id: "serve", n: Math.max(3, Math.ceil(total * 0.8)), reward: 40 },
+  { id: "memo", n: 3, reward: 30 },
+  { id: "calm", n: 0, reward: 50 }
+];
+export const goalText = (g: ShiftGoal) => g.id === "serve" ? `Phục vụ ${g.n} khách` : g.id === "memo" ? `Tự nhớ ${g.n} công thức` : "Không để khách nào giận";
+export const goalProgress = (sh: Shift, g: ShiftGoal) => g.id === "serve" ? sh.served : g.id === "memo" ? sh.memo : sh.left;
+export const goalDone = (sh: Shift, g: ShiftGoal) => g.id === "calm" ? sh.left === 0 && sh.served > 0 : goalProgress(sh, g) >= g.n;

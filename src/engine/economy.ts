@@ -16,6 +16,15 @@ export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n
   return true;
 }
 export const quickBuy = (k: StockKey, i: number) => buy(k, i, 1, quickPrice(k, i));
+/* Kho giữa ca: nhập đầy lên REFILL món, giá nhập nhanh */
+export const REFILL = 10;
+export const refillCost = (k: StockKey, i: number) => Math.ceil(unitCost(k, i) * Math.max(0, REFILL - stockOf(k, i)) * QUICK_MULT);
+export function refill(items: { k: StockKey; i: number }[]): number {
+  const cost = items.reduce((a, x) => a + refillCost(x.k, x.i), 0);
+  if (!cost || cost > S.coins) return 0;
+  S.coins -= cost; items.forEach(x => { S.stock[x.k][x.i] = Math.max(REFILL, stockOf(x.k, x.i)); }); save();
+  return cost;
+}
 
 /* Gợi ý nhập hàng: đủ cho số khách dự kiến, theo tỉ lệ các công thức đã mở (món nổi bật được ưu tiên) */
 export function suggestion(): { k: StockKey; i: number; n: number; cost: number }[] {
@@ -57,6 +66,13 @@ export function snack(pet: PetId, id: FoodId): boolean {
   const st = S.pets[pet];
   if (st.fedDay === S.daily.day || foodOf(id) <= 0) return false;
   S.food[id]--; st.fedDay = S.daily.day; st.aff += foodDef(id).aff; save(); return true;
+}
+
+/* Thưởng nhanh: tủ hết món đó thì mua 1 phần rồi cho ăn luôn */
+export function treat(pet: PetId, id: FoodId): boolean {
+  if (S.pets[pet].fedDay === S.daily.day) return false;
+  if (foodOf(id) <= 0 && !buyFood(id, 1)) return false;
+  return snack(pet, id);
 }
 
 /* Quà khai trương: vốn làm ăn, nhận một lần */

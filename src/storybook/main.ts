@@ -5,13 +5,13 @@ import "../styles/main.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
 import {
-  CATS, CRITTERS, DECOR, FOODS, HIM, PETS, RECIPES, STAFF,
-  type CritterLook, type GuestLook, type Mood
+  CATS, CRITTERS, DECOR, FOODS, HIM, KEYS, PETS, RECIPES, STAFF,
+  type CritterLook, type GuestLook, type Mood, type PartKey
 } from "../content/game";
 import { rollDay } from "../engine/progress";
 import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
-import { cakeSVG, critterSVG, foodSVG, guestSVG } from "../ui/art";
+import { cakeSVG, critterSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
 import { backup, claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, welcome } from "../ui/modals";
 import { goalsHTML } from "../ui/screens/goals";
@@ -110,18 +110,22 @@ const STORIES: Story[] = [
     html: () => { lvState(5, s => { staffed(s); s.autoTake = false; }); const sh = busyShift(); sh.mine = -1; sh.build = { base: null, cream: null, top: null, sweet: null }; sh.working = ["dog", "gold", "white"]; sh.lack = { white: "Matcha" }; _setShift(sh); return playHTML(sh); } },
   { id: "play-served", sec: "screens", title: "Chơi · vừa giao bánh", desc: "Thẻ gọi món thành xanh, khách thả tim, bánh nhắm mắt cười", kind: "screen",
     html: () => { lvState(5, staffed); const sh = busyShift(); sh.build = { base: 0, cream: 0, top: 0, sweet: 0 }; sh.mine = -1; _setShift(sh); return playHTML(sh, { done: true, states: ["", "", "ok", ""] }); } },
+  { id: "play-collapsed", sec: "screens", title: "Chơi · thu gọn phiếu", desc: "Kéo phiếu xuống: thấy cả quầy, thanh nhỏ ở đáy để mở lại", kind: "screen",
+    html: () => { lvState(5, staffed); const sh = busyShift(); _setShift(sh); return playHTML(sh, { sheet: false }); } },
+  { id: "play-stock", sec: "screens", title: "Chơi · kho nguyên liệu", desc: "Nút hộp ở góc trên: chọn sẵn món sắp hết, nhập đầy 10", kind: "screen",
+    html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; s.stock.base[1] = 1; s.stock.cream[0] = 2; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { stock: true }); } },
   { id: "result-great", sec: "screens", title: "Kết quả · tuyệt vời", desc: "3 sao, lên cấp, bảng lãi, mở khoá thư", kind: "screen", resBg: true, long: true,
     html: () => {
       lvState(5, s => { s.daily.served = 12; s.daily.feat = 3; s.daily.angry = 0; s.daily.day = ""; });
       S.daily.served = 12; S.daily.feat = 3;
-      const sh = createShift(); Object.assign(sh, { served: 12, left: 0, coins: 320, tips: 85, ingUsed: 96, quickCost: 5, wages: 16, lv0: 4 });
-      _setResult({ sh, lv: 5, led: { revenue: 405, ingUsed: 96, quick: 5, wages: 16, profit: 288 } }); return resultHTML();
+      const sh = createShift(); Object.assign(sh, { served: 12, left: 0, coins: 320, tips: 85, bonus: 96, memo: 6, helped: 4, goalCoins: 120, ingUsed: 66, quickCost: 6, wages: 15, lv0: 4 });
+      _setResult({ sh, lv: 5, led: { revenue: 621, ingUsed: 66, quick: 6, wages: 15, profit: 534 } }); return resultHTML();
     } },
   { id: "result-low", sec: "screens", title: "Kết quả · cố lên", desc: "1 sao, nhiều khách bỏ về, chưa xong mục tiêu", kind: "screen", resBg: true, long: true,
     html: () => {
       lvState(2, s => { s.daily.served = 3; s.daily.angry = 4; });
       S.daily.served = 3; S.daily.angry = 4;
-      const sh = createShift(); Object.assign(sh, { served: 3, left: 5, coins: 60, tips: 6, ingUsed: 24, wages: 10, lv0: 2 });
+      const sh = createShift(); Object.assign(sh, { served: 3, left: 5, coins: 60, tips: 6, memo: 1, helped: 2, ingUsed: 24, wages: 10, lv0: 2 });
       _setResult({ sh, lv: 2, led: { revenue: 66, ingUsed: 24, quick: 0, wages: 10, profit: 32 } }); return resultHTML();
     } },
   { id: "goals", sec: "screens", title: "Mục tiêu", desc: "Mục tiêu ngày, ngày sắp tới, công thức, đánh giá", kind: "screen", long: true,
@@ -195,16 +199,17 @@ const STORIES: Story[] = [
       <div class="sbrow"><button class="rbtn">♫</button><button class="rbtn">⚙︎</button><button class="rbtn">❚❚</button><button class="rbtn">←</button>${coinPill()}<div class="pill love"><span>♥︎</span>1.145 ngày yêu</div></div>
       <div class="sbrow">${levelChip(3, 85, 200)}<button class="soon-link" style="margin:0">✦ Sắp ra mắt</button><span class="tag use" style="padding:6px 12px">Đang dùng</span><span class="tag lk" style="padding:6px 12px">Mở ở Lv 9</span></div>
       <div class="seg" style="margin:0"><button class="on">Trang trí</button><button>Thú cưng</button><button>Quà tặng</button></div></div>` },
-  { id: "c-chips", sec: "ui", title: "Chip nguyên liệu", desc: "Bình thường · đang chọn (chưa có khách) · đúng ✓ · sai ✕ · hết hàng (nhập nhanh)", kind: "comp",
-    html: () => { const chip = (cls: string, k: "base" | "cream" | "top" | "sweet", i: number, q: string, m = "") =>
-        `<div class="sbcell" style="width:112px"><button class="chip ${cls}${k === "sweet" ? " sq" : ""}" style="width:104px"><i style="background:${CATS[k][i][1]}"></i><span class="cn">${CATS[k][i][0]}</span><b class="q">${q}</b><em>${m}</em></button>${cls || "bình thường"}</div>`;
-      return `<div class="board"><div class="sbrow" style="padding-top:8px">${chip("", "base", 0, "8")}${chip("on", "cream", 1, "5")}${chip("ok", "cream", 0, "7", "✓")}${chip("bad", "sweet", 2, "", "✕")}${chip("out", "top", 2, "+5 xu")}</div></div>`; } },
+  { id: "c-chips", sec: "ui", title: "Nút nguyên liệu", desc: "Bình thường · đang chọn · đúng ✓ · sai · hết hàng (nhập nhanh) · sắp hết", kind: "comp",
+    html: () => { const b = (cls: string, k: PartKey, i: number, tail: string) =>
+        `<div class="sbcell" style="width:118px"><button class="ing ${cls}" style="width:112px">${ingSVG(k, i, 24, cls === "out")}<span class="cn">${CATS[k][i][0]}</span>${tail}</button>${cls || "bình thường"}</div>`;
+      return `<div class="board"><div class="sbrow" style="padding-top:10px">${b("", "base", 0, `<b class="q">8</b>`)}${b("on", "cream", 1, `<b class="q">5</b>`)}${b("ok", "cream", 0, `<b class="q">7</b><em class="ck"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.5 L5 9 L10 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></em>`)}${b("bad", "sweet", 2, "")}${b("out", "top", 2, `<em class="tag">+5 xu</em>`)}${b("", "base", 1, `<b class="q low">1</b>`)}</div>
+        <div class="sbrow">${KEYS.map(k => CATS[k].map((_, i) => ingSVG(k, i, 40)).join("")).join("")}</div></div>`; } },
   { id: "c-orders", sec: "ui", title: "Khách trong hàng đợi", desc: "Bình thường · đơn của bạn · sắp giận · bé đang làm (40%) · đã giao", kind: "comp",
     html: () => { lvState(5, staffed); const sh = createShift();
       sh.seats = [cust("Bé Kem", G("girl", "long", "#E7B872", "#FF8FAB"), 5, 0, 36), cust("Mèo Bơ", CRITTERS[0], 1, 1, 30), cust("Cún Bơ", CRITTERS[4], 2, 2, 6), cust("Gấu Mật", CRITTERS[2], 4, 1, 28, { by: "dog" }), cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6"), 0, 0, 30)];
       sh.bakers = [{ id: "dog", seat: 3, done: 3, need: 7.5 }]; sh.mine = 1;
       const st: ("" | "low" | "ok")[] = ["", "", "low", "", "ok"], lab = ["Bình thường", "Đơn của bạn", "Sắp giận", "Bé đang làm", "Đã giao"];
-      return `<div class="board"><div class="queue" style="--n:5;width:560px;padding:0">${sh.seats.map((x, i) => `<div class="slot ${i === 1 ? "mine" : ""} ${x!.by ? "taken" : ""} ${st[i] === "low" ? "low" : ""}">${slotHTML(sh, i, st[i])}</div>`).join("")}</div>
+      return `<div class="board"><div class="queue" style="--n:5;width:560px;padding:0">${sh.seats.map((x, i) => `<div class="slot ${i === 1 ? "mine" : ""} ${x!.by ? "taken" : ""} ${st[i] === "low" ? "low" : ""}" style="height:152px">${slotHTML(sh, i, st[i])}</div>`).join("")}</div>
         <div class="queue" style="--n:5;width:560px;padding:6px 0 0">${lab.map(l => `<div class="sbcell"><b>${l}</b></div>`).join("")}</div></div>`; } },
   { id: "c-cards", sec: "ui", title: "Thẻ & thông báo", desc: "Thẻ thư, sự kiện, cảnh báo hết hàng, bảng lãi, mở khoá thư, lên cấp, toast", kind: "comp",
     html: () => `<div class="board w390" style="display:flex;flex-direction:column;gap:14px;position:relative;transform:translateZ(0)">
