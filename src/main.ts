@@ -13,6 +13,7 @@ import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wa
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, photoSheet } from "./ui/sheets";
+import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
@@ -35,6 +36,7 @@ document.addEventListener("click", e => {
     case "settings": return settings();
     case "account": return accountPanel();
     case "menu": return menuSheet();
+    case "rank": return rankSheet();
     case "cakes": return cakesSheet();
     case "days": return daysSheet();
     case "photo": return photoSheet();

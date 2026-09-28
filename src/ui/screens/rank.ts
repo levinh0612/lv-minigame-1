@@ -3,8 +3,7 @@
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { account, follow, leaderboard, type Board, type Rank } from "../../net/cloud";
-import { $, esc, toast } from "../dom";
-import { pageHead } from "./prep";
+import { $, esc, modal, toast } from "../dom";
 
 let period: "week" | "all" = "week";
 const MEDAL = ["#FFC53D", "#C9CCD6", "#E3A06B"];
@@ -24,14 +23,20 @@ function coupleHTML(d: Board) {
     <div class="cr">${side(a.username, a.earned, a.lv, "", true)}<span class="hv">${HEART}</span>${side(b.username, b.earned, b.lv, ` · ${ago(b.savedAt)}`, false)}</div><div class="cl">${lead}</div></div>`;
 }
 
-export function rankHTML() {
-  setTimeout(() => { document.querySelectorAll<HTMLButtonElement>("[data-period]").forEach(b => b.addEventListener("click", () => { period = b.dataset.period as "week" | "all"; $("#app")!.innerHTML = rankHTML(); })); void load(); }, 0);
-  return `<div class="scr rank4">${pageHead("Bảng xếp hạng", "Tiền bán hàng: bánh + tip + thưởng")}
+/* Bảng xếp hạng dạng hộp thoại trượt từ dưới lên (mở từ nút 🏆, không sang màn khác) */
+export function rankSheet() {
+  modal(`<h2>Bảng xếp hạng</h2><p class="sub">Tiền bán hàng: bánh + tip + thưởng trong ca</p>
     <div class="seg rseg"><button class="${period === "week" ? "on" : ""}" data-period="week">Tuần này</button><button class="${period === "all" ? "on" : ""}" data-period="all">Tất cả</button></div>
     <div class="rkme" id="rkMe"><span>${esc(account())}</span><b>${period === "all" ? fmtN(S.earned) + " xu" : "…"}</b></div>
     <div id="rkCouple"></div>
     <div class="rkl" id="rkList"><p class="phint">Đang tải bảng xếp hạng…</p></div>
-    <p class="phint">${period === "week" ? "Bảng tuần tính lại từ thứ Hai. " : ""}Chỉ tính tiền bán hàng, không tính quà tặng.</p></div>`;
+    <p class="phint">${period === "week" ? "Bảng tuần tính lại từ thứ Hai. " : ""}Chỉ tính tiền bán hàng, không tính quà tặng.</p>
+    <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
+  document.querySelectorAll<HTMLButtonElement>("#modal [data-period]").forEach(b => b.addEventListener("click", () => {
+    if (period === b.dataset.period) return;
+    period = b.dataset.period as "week" | "all"; rankSheet();
+  }));
+  void load();
 }
 async function load() {
   const box = $("#rkList"); if (!box) return;

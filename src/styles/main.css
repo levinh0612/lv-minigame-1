@@ -1041,3 +1041,7 @@ button.cm{position:relative}
 /* ===== Ảnh treo tường ===== */
 .pframe{margin:12px auto 0;max-width:280px;padding:10px;border-radius:18px;background:#FFE9B8;border:3px solid #4A3438;box-shadow:0 6px 0 var(--sh)}
 .pframe img{display:block;width:100%;border-radius:8px}
+/* bảng xếp hạng trong hộp thoại: bỏ lề ngoài */
+.mscroll .rseg,.mscroll .rkme,.mscroll .rkl,.mscroll .couple{margin-left:0;margin-right:0;width:auto}
+.mscroll .rseg{margin-top:4px}
+.mscroll .phint{margin-left:0;margin-right:0}

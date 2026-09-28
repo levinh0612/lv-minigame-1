@@ -11,7 +11,7 @@ import { homeHTML } from "./screens/home";
 import { prepHTML } from "./screens/prep";
 import { SH, hasResult, renderPlay, resultHTML } from "./screens/play";
 import { roadmapHTML } from "./screens/roadmap";
-import { rankHTML } from "./screens/rank";
+import { rankSheet } from "./screens/rank";
 import { shopHTML } from "./screens/shop";
 
 let shown = "";
@@ -40,7 +40,7 @@ export function render() {
     case "prep": $("#app")!.innerHTML = prepHTML(); break;
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
-    case "rank": $("#app")!.innerHTML = rankHTML(); break;
+    case "rank": $("#app")!.innerHTML = homeHTML(); setTimeout(rankSheet, 0); break;   // link cũ: màn chính + hộp thoại
   }
   fitRooms();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu
