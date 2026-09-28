@@ -10,6 +10,7 @@ import { dutyLv, expectedCustomers, fame, payCrew, quickPrice, stockOf, unitCost
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, petName, save } from "./state";
+import { earn, note, spend } from "./wallet";
 import { nameList, pick, rnd } from "./util";
 
 export interface Customer {
@@ -122,7 +123,7 @@ function bake(sh: Shift, dt: number, out: TickOut) {
       const cost = miss.reduce((a, k) => a + quickPrice(k, r[k]), 0);
       if (miss.length && cost > S.coins) { lack ||= miss.map(k => CATS[k][r[k]][0]).join(", "); continue; }
       if (miss.length) {
-        S.coins -= cost; sh.quickCost += cost;
+        spend("quick", cost); sh.quickCost += cost;
         miss.forEach(k => { S.stock[k][r[k]] = stockOf(k, r[k]) + 1; });
         out.restock.push({ id, what: miss.map(k => CATS[k][r[k]][0]).join(", ") });
       }
@@ -181,7 +182,7 @@ export function serve(sh: Shift): ServeResult {
   const missing = STOCK_KEYS.filter(k => stockOf(k, b[k]!) <= 0);
   const quick = missing.reduce((a, k) => a + quickPrice(k, b[k]!), 0);
   if (quick > S.coins) return { ok: false, msg: `Hết nguyên liệu và không đủ ${quick} xu để nhập nhanh` };
-  S.coins -= quick; sh.quickCost += quick;
+  spend("quick", quick); sh.quickCost += quick;
   STOCK_KEYS.forEach(k => { if (missing.includes(k)) return; S.stock[k][b[k]!]--; sh.ingUsed += unitCost(k, b[k]!); });
   return { ...deliver(sh, idx, false), quick };
 }
@@ -195,7 +196,7 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip"))) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
-  S.coins += price + tip + bonus; S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
+  earn("sales", price); earn("tip", tip); earn("memo", bonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
   sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.served++; sh.stars.push(stars);
   if (bonus) sh.memo++;
   if (byStaff) sh.helped++;
@@ -236,8 +237,10 @@ export function beginShift() {
 /* Hết ca: tính lãi */
 export function finishShift(sh: Shift) {
   sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
-  S.coins += sh.goalCoins; S.shifts++;
-  const led = ledger(sh); S.earned += led.revenue; save();
+  earn("goal", sh.goalCoins); S.shifts++;
+  const led = ledger(sh); S.earned += led.revenue;
+  note(`Ca ${S.shifts} · tiền bán bánh`, led.revenue); note(`Ca ${S.shifts} · nhập nhanh giữa ca`, -led.quick);
+  save();
   return led;
 }
 export const ledger = (sh: Shift) => {

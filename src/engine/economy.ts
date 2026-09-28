@@ -1,9 +1,10 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
-import { FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
+import { CATS, FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
-import { S, save } from "./state";
+import { S, petName, save } from "./state";
+import { earn, note, spend } from "./wallet";
 
 export const unitCost = (k: StockKey, i: number) => UNIT_COST[k][i];
 export const packPrice = (k: StockKey, i: number, n: number) => Math.ceil(unitCost(k, i) * n * (1 - (PACKS.find(p => p.n === n)?.disc ?? 0)));
@@ -11,19 +12,19 @@ export const quickPrice = (k: StockKey, i: number) => Math.ceil(unitCost(k, i) *
 export const stockOf = (k: StockKey, i: number) => S.stock[k][i] ?? 0;
 export const expectedCustomers = () => Math.min(20, 6 + lvl() + fx("cust") + fameLevel() * 2);
 
-export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n)): boolean {
+export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n), cat: "stock" | "quick" = "stock", log = true): boolean {
   if (S.coins < price) return false;
-  S.coins -= price; S.stock[k][i] = stockOf(k, i) + n; save();
+  spend(cat, price, log ? `Nhập ${n} ${CATS[k][i][0]}` : undefined); S.stock[k][i] = stockOf(k, i) + n; save();
   return true;
 }
-export const quickBuy = (k: StockKey, i: number) => buy(k, i, 1, quickPrice(k, i));
+export const quickBuy = (k: StockKey, i: number) => buy(k, i, 1, quickPrice(k, i), "quick", false);
 /* Kho giữa ca: nhập đầy lên REFILL món, giá nhập nhanh */
 export const REFILL = 10;
 export const refillCost = (k: StockKey, i: number) => Math.ceil(unitCost(k, i) * Math.max(0, REFILL - stockOf(k, i)) * QUICK_MULT);
 export function refill(items: { k: StockKey; i: number }[]): number {
   const cost = items.reduce((a, x) => a + refillCost(x.k, x.i), 0);
   if (!cost || cost > S.coins) return 0;
-  S.coins -= cost; items.forEach(x => { S.stock[x.k][x.i] = Math.max(REFILL, stockOf(x.k, x.i)); }); save();
+  spend("quick", cost); items.forEach(x => { S.stock[x.k][x.i] = Math.max(REFILL, stockOf(x.k, x.i)); }); save();
   return cost;
 }
 
@@ -44,7 +45,8 @@ export function suggestion(): { k: StockKey; i: number; n: number; cost: number 
 /* Mua theo gợi ý, hết xu thì dừng. Trả về số xu đã tiêu */
 export function buySuggested(): number {
   let spent = 0;
-  for (const x of suggestion()) if (buy(x.k, x.i, x.n, x.cost)) spent += x.cost;
+  for (const x of suggestion()) if (buy(x.k, x.i, x.n, x.cost, "stock", false)) spent += x.cost;
+  note("Nhập hàng theo gợi ý", -spent);
   return spent;
 }
 /* Nguyên liệu mà công thức đã mở cần nhưng đang hết */
@@ -60,7 +62,7 @@ export const foodOf = (id: FoodId) => S.food[id] ?? 0;
 export function buyFood(id: FoodId, n: number): boolean {
   const price = foodDef(id).cost * n;
   if (S.coins < price) return false;
-  S.coins -= price; S.food[id] = foodOf(id) + n; save(); return true;
+  spend("food", price, `Mua ${n} ${foodDef(id).n}`); S.food[id] = foodOf(id) + n; save(); return true;
 }
 /* Thưởng mỗi ngày một lần: món càng ngon càng thân */
 export function snack(pet: PetId, id: FoodId): boolean {
@@ -79,7 +81,7 @@ export function treat(pet: PetId, id: FoodId): boolean {
 /* Quà khai trương: vốn làm ăn, nhận một lần */
 export function claimWelcome(): boolean {
   if (S.welcome) return false;
-  S.welcome = true; S.coins += WELCOME.coins;
+  S.welcome = true; earn("welcome", WELCOME.coins, "Quà khai trương");
   (Object.entries(WELCOME.food) as [FoodId, number][]).forEach(([id, n]) => { S.food[id] = foodOf(id) + n; });
   save(); return true;
 }
@@ -100,7 +102,7 @@ export function toggleDuty(id: PetId) { if (!S.staff[id].hired) return; S.staff[
 export function train(id: PetId) {
   const c = trainCost(id);
   if (!S.staff[id].hired || !c || S.coins < c) return false;
-  S.coins -= c; S.staff[id].lv++; save(); return true;
+  spend("train", c, `Huấn luyện ${petName(id)} lên bậc ${S.staff[id].lv + 1}`); S.staff[id].lv++; save(); return true;
 }
 /* Đầu ca: các bé đi làm ăn lương trước. Bé nào không còn đồ ăn thì nghỉ ca này.
    Trả về giá trị đồ ăn đã dùng (để tính lãi) và các bé phải nghỉ vì đói */

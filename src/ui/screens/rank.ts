@@ -1,49 +1,53 @@
-/* Bảng xếp hạng: mọi tiệm, theo tài sản (xu + đồ đang có). Tải từ /api/leaderboard sau khi vẽ khung. */
-import { netWorth } from "../../engine/economy";
+/* Bảng xếp hạng: username + tiền bán hàng (tiền bánh + tip + thưởng trong ca). Tuần này / Tất cả.
+   Theo dõi username người ấy để hai tiệm hiện cạnh nhau. */
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { leaderboard, savedAgo, type Board, type Rank } from "../../net/cloud";
-import { $, esc } from "../dom";
-import { nameShop } from "../modals";
+import { account, follow, leaderboard, type Board, type Rank } from "../../net/cloud";
+import { $, esc, toast } from "../dom";
 import { pageHead } from "./prep";
 
+let period: "week" | "all" = "week";
 const MEDAL = ["#FFC53D", "#C9CCD6", "#E3A06B"];
 const HEART = `<svg width="22" height="20" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="#FF6F91" stroke="#4A3438" stroke-width="1.4"/></svg>`;
 const row = (r: Rank) => `<div class="rk ${r.me ? "me" : ""}"><span class="no" ${r.rank <= 3 ? `style="background:${MEDAL[r.rank - 1]};color:#4A3438"` : ""}>${r.rank}</span>
-  <span class="nm"><span class="n1">${esc(r.name)}${r.me ? " <em>bạn</em>" : ""}</span><small>Lv ${r.lv} · kiếm ${fmtN(r.earned)} xu</small></span><b>${fmtN(r.assets)}</b></div>`;
+  <span class="nm"><span class="n1">${esc(r.username)}${r.me ? " <em>bạn</em>" : ""}</span><small>Lv ${r.lv}</small></span><b>${fmtN(r.earned)} xu</b></div>`;
 const ago = (iso?: string) => { if (!iso) return ""; const m = Math.round((Date.now() - +new Date(iso)) / 60000); return m < 1 ? "vừa chơi" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`; };
 
 function coupleHTML(d: Board) {
   if (!d.me) return "";
-  if (!d.partner) return `<button class="couple empty" data-act="cloud"><span>${HEART}</span><div><b>Ghép đôi với người ấy</b><small>Hai tiệm hiện cạnh nhau · mã của bạn: <b>${esc(d.me.pairCode || "")}</b></small></div></button>`;
-  const a = d.me, b = d.partner, lead = a.assets === b.assets ? "Hoà nhau" : a.assets > b.assets ? `${esc(a.name)} dẫn trước ${fmtN(a.assets - b.assets)}` : `${esc(b.name)} dẫn trước ${fmtN(b.assets - a.assets)}`;
-  const side = (x: Omit<Rank, "rank">, me: boolean) => `<div class="cs ${me ? "me" : ""}"><small>${me ? "Bạn" : "Người ấy"}</small><b>${esc(x.name)}</b><span>${fmtN(x.assets)}</span><em>Lv ${x.lv}${me ? "" : ` · ${ago(x.savedAt)}`}</em></div>`;
-  return `<div class="couple"><div class="ch">Hai đứa mình</div><div class="cr">${side(a, true)}<span class="hv">${HEART}</span>${side(b, false)}</div><div class="cl">${lead}</div></div>`;
+  if (!d.follow) return `<div class="couple empty"><span>${HEART}</span><div class="cf"><b>Theo dõi người ấy</b><small>Nhập tên tiệm của người ấy để hai tiệm hiện cạnh nhau</small>
+    <div class="crow2"><input id="fwIn" placeholder="tên tiệm" autocapitalize="none" autocorrect="off" maxlength="20"><button class="mini" id="fwGo">Theo dõi</button></div></div></div>`;
+  const a = d.me, b = d.follow, diff = a.earned - b.earned;
+  const lead = !diff ? "Hoà nhau" : `${esc(diff > 0 ? a.username : b.username)} dẫn trước ${fmtN(Math.abs(diff))} xu`;
+  const side = (n: string, e: number, lv: number, sub: string, me: boolean) => `<div class="cs ${me ? "me" : ""}"><small>${me ? "Bạn" : "Người ấy"}</small><b>${esc(n)}</b><span>${fmtN(e)}</span><em>Lv ${lv}${sub}</em></div>`;
+  return `<div class="couple"><div class="ch">Hai đứa mình · ${period === "week" ? "tuần này" : "tất cả"}<button class="alink" id="fwOff">bỏ theo dõi</button></div>
+    <div class="cr">${side(a.username, a.earned, a.lv, "", true)}<span class="hv">${HEART}</span>${side(b.username, b.earned, b.lv, ` · ${ago(b.savedAt)}`, false)}</div><div class="cl">${lead}</div></div>`;
 }
 
 export function rankHTML() {
-  setTimeout(load, 0);
-  if (!S.cloud.named) setTimeout(() => nameShop(), 300);
-  const w = netWorth(), a = savedAgo();
-  return `<div class="scr rank4">${pageHead("Bảng xếp hạng", "Tài sản = xu + đồ đang có")}
-    <div class="rkme" id="rkMe"><span>Tiệm của bạn</span><b>${fmtN(w.total)}</b></div>
-    <p class="rksub">💰 ${fmtN(w.coins)} xu · 🎀 ${fmtN(w.goods)} đồ${a ? ` · ☁︎ đã lưu ${a}` : ""}</p>
+  setTimeout(() => { document.querySelectorAll<HTMLButtonElement>("[data-period]").forEach(b => b.addEventListener("click", () => { period = b.dataset.period as "week" | "all"; $("#app")!.innerHTML = rankHTML(); })); void load(); }, 0);
+  return `<div class="scr rank4">${pageHead("Bảng xếp hạng", "Tiền bán hàng: bánh + tip + thưởng")}
+    <div class="seg rseg"><button class="${period === "week" ? "on" : ""}" data-period="week">Tuần này</button><button class="${period === "all" ? "on" : ""}" data-period="all">Tất cả</button></div>
+    <div class="rkme" id="rkMe"><span>${esc(account())}</span><b>${period === "all" ? fmtN(S.earned) + " xu" : "…"}</b></div>
     <div id="rkCouple"></div>
     <div class="rkl" id="rkList"><p class="phint">Đang tải bảng xếp hạng…</p></div>
-    <p class="phint">Đổi tên, ẩn tiệm hoặc ghép đôi trong ⚙️ Cài đặt → Lưu trên mây.</p></div>`;
+    <p class="phint">${period === "week" ? "Bảng tuần tính lại từ thứ Hai. " : ""}Chỉ tính tiền bán hàng, không tính quà tặng.</p></div>`;
 }
 async function load() {
   const box = $("#rkList"); if (!box) return;
   try {
-    const d = await leaderboard();
-    if (!$("#rkList")) return;
+    const d = await leaderboard(period);
+    if (!$("#rkList") || d.period !== period) return;
     const mine = d.me, inTop = d.top.some(r => r.me);
-    box.innerHTML = (d.top.length ? d.top.map(row).join("") : `<p class="phint">Chưa có tiệm nào trên bảng.</p>`)
-      + (mine && mine.rank && !inTop ? `<div class="rkgap">…</div>${row({ ...mine, rank: mine.rank, me: true })}` : "");
+    box.innerHTML = (d.top.length ? d.top.map(row).join("") : `<p class="phint">${period === "week" ? "Tuần này chưa ai bán bánh. Mở tiệm để lên top nha!" : "Chưa có tiệm nào."}</p>`)
+      + (mine?.rank && !inTop ? `<div class="rkgap">…</div>${row({ ...mine, rank: mine.rank, me: true })}` : "");
     $("#rkCouple")!.innerHTML = coupleHTML(d);
-    const me = $("#rkMe");
-    if (me && mine) me.innerHTML = `<span>${mine.rank ? `Hạng <b>${mine.rank}</b>` : "Tiệm đang ẩn khỏi bảng"}</span><b>${fmtN(netWorth().total)}</b>`;
-  } catch {
-    box.innerHTML = `<p class="phint">Không tải được bảng xếp hạng. Kiểm tra mạng rồi mở lại nha.</p>`;
+    if (mine) $("#rkMe")!.innerHTML = `<span>${mine.rank ? `Hạng <b>${mine.rank}</b> · ` : ""}${esc(mine.username)}</span><b>${fmtN(mine.earned)} xu</b>`;
+    $("#fwGo")?.addEventListener("click", async () => {
+      try { const r = await follow($<HTMLInputElement>("#fwIn")!.value.trim().toLowerCase()); toast(`Đang theo dõi ${r.username} ♥`); void load(); } catch (e) { toast((e as Error).message); }
+    });
+    $("#fwOff")?.addEventListener("click", async () => { await follow("").catch(() => {}); void load(); });
+  } catch (e) {
+    box.innerHTML = `<p class="phint">${esc((e as Error).message)}</p>`;
   }
 }

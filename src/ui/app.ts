@@ -1,7 +1,9 @@
 /* Vẽ màn hình theo đường dẫn hiện tại */
 import { rollDay } from "../engine/progress";
 import { $, dropModal, hasModal } from "./dom";
-import { pauseMenu, transferPrompt } from "./modals";
+import { pauseMenu } from "./modals";
+import { account, isLocked, loggedIn } from "../net/cloud";
+import { authHTML } from "./screens/auth";
 import { fitRooms } from "./room";
 import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
@@ -16,6 +18,11 @@ let shown = "";
 export function render() {
   rollDay();
   const path = currentPath(), r = resolve(path);
+  // chưa đăng nhập: màn chào / đăng nhập; đã đăng nhập nhưng vừa mở app: hỏi PIN
+  if (!SH && (!loggedIn() || isLocked())) {
+    dropModal(); document.body.dataset.scr = "auth"; shown = "";
+    $("#app")!.innerHTML = authHTML(loggedIn() ? "lock" : account() ? "login" : "welcome"); window.scrollTo(0, 0); return;
+  }
   // đang bán mà người chơi bấm Back: quay lại ca, hiện bảng tạm dừng
   if (SH && r.name !== "play") { history.pushState(null, "", "#/choi"); if (!hasModal()) pauseMenu(); return; }
   if (r.name === "play" && !SH) return void location.replace("#/");
@@ -34,7 +41,6 @@ export function render() {
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
     case "rank": $("#app")!.innerHTML = rankHTML(); break;
-    case "transfer": $("#app")!.innerHTML = homeHTML(); setTimeout(() => transferPrompt(r.token), 50); break;
   }
   fitRooms();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu

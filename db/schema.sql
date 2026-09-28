@@ -1,41 +1,47 @@
--- Tiệm Bánh Matcha: lưu tiệm lên mây, bảng xếp hạng, thông báo đẩy. Chạy lại nhiều lần vẫn an toàn.
-CREATE TABLE IF NOT EXISTS shops (
-  id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  code_hash   text        NOT NULL UNIQUE,            -- sha256 của mã tiệm; mã gốc chỉ nằm trên máy người chơi
-  name        text        NOT NULL DEFAULT '',        -- tên hiện trên bảng xếp hạng ('' = ẩn)
-  earned      bigint      NOT NULL DEFAULT 0,         -- tổng xu kiếm được (tiêu chí xếp hạng)
-  lv          integer     NOT NULL DEFAULT 1,
-  state       jsonb       NOT NULL,                   -- toàn bộ tiến trình (bản sao lưu)
-  app_ver     text        NOT NULL DEFAULT '',
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
+-- Tiệm Bánh Matcha: tài khoản (username + PIN), lưu tiến trình, bảng xếp hạng, thông báo đẩy.
+-- Chạy lại nhiều lần vẫn an toàn: npm run db:init
+CREATE TABLE IF NOT EXISTS users (
+  id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  username     text        NOT NULL UNIQUE,            -- chữ thường a-z 0-9 . _ ; cũng là tên tiệm
+  pin_hash     text        NOT NULL,                   -- scrypt(PIN 4 số)
+  question     text        NOT NULL,                   -- câu hỏi bí mật (quên PIN)
+  answer_hash  text        NOT NULL,
+  fails        integer     NOT NULL DEFAULT 0,         -- nhập sai liên tiếp
+  locked_until timestamptz,                            -- sai 5 lần: khoá 15 phút
+  state        jsonb,                                  -- toàn bộ tiến trình
+  earned       bigint      NOT NULL DEFAULT 0,         -- tổng tiền bán hàng (bảng xếp hạng)
+  lv           integer     NOT NULL DEFAULT 1,
+  rev          integer     NOT NULL DEFAULT 0,
+  follow_id    bigint      REFERENCES users(id) ON DELETE SET NULL,   -- người ấy (hiện cạnh nhau)
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now()
 );
--- bảng xếp hạng: chỉ tiệm có tên, sắp theo xu
-CREATE INDEX IF NOT EXISTS shops_rank_idx ON shops (earned DESC, id) WHERE name <> '';
+CREATE INDEX IF NOT EXISTS users_earned_idx ON users (earned DESC, id);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash  text        PRIMARY KEY,                 -- sha256 của token trên máy
+  user_id     bigint      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  seen_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions (user_id);
+
+-- tiền bán hàng theo tuần (thứ Hai, giờ Việt Nam)
+CREATE TABLE IF NOT EXISTS week_earn (
+  week     date   NOT NULL,
+  user_id  bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  earned   bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (week, user_id)
+);
+CREATE INDEX IF NOT EXISTS week_earn_rank_idx ON week_earn (week, earned DESC);
 
 CREATE TABLE IF NOT EXISTS push_subs (
   endpoint    text        PRIMARY KEY,
-  shop_id     bigint      NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
-  sub         jsonb       NOT NULL,                   -- PushSubscription (endpoint + keys)
-  her         text        NOT NULL DEFAULT '',        -- tên để chào trong thông báo
-  morning     boolean     NOT NULL DEFAULT true,      -- 7:00
-  night       boolean     NOT NULL DEFAULT true,      -- 23:00
+  user_id     bigint      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sub         jsonb       NOT NULL,
+  her         text        NOT NULL DEFAULT '',
+  morning     boolean     NOT NULL DEFAULT true,
+  night       boolean     NOT NULL DEFAULT true,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS push_subs_shop_idx ON push_subs (shop_id);
-
--- v2: xếp theo tài sản, chống ghi đè giữa 2 máy, ghép đôi, chuyển máy
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS assets     bigint  NOT NULL DEFAULT 0;   -- xu + giá trị đồ đang có
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS rev        integer NOT NULL DEFAULT 0;   -- tăng mỗi lần lưu
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS device     text    NOT NULL DEFAULT '';  -- máy lưu gần nhất
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS pair_code  text UNIQUE;                  -- mã công khai để người kia ghép đôi
-ALTER TABLE shops ADD COLUMN IF NOT EXISTS partner_id bigint REFERENCES shops(id) ON DELETE SET NULL;
-CREATE INDEX IF NOT EXISTS shops_assets_idx ON shops (assets DESC, id) WHERE name <> '';
-
-CREATE TABLE IF NOT EXISTS transfers (
-  token       text        PRIMARY KEY,                -- 6 ký tự, dùng một lần
-  shop_id     bigint      NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
-  expires_at  timestamptz NOT NULL
-);
-CREATE INDEX IF NOT EXISTS transfers_exp_idx ON transfers (expires_at);
-ALTER TABLE transfers ADD COLUMN IF NOT EXISTS code text NOT NULL DEFAULT '';        -- mã tiệm gửi kèm, xoá khi nhận / hết hạn
+CREATE INDEX IF NOT EXISTS push_subs_user_idx ON push_subs (user_id);

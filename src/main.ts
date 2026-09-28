@@ -9,8 +9,8 @@ import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { backup, claimGoals, cloudPanel, conflictModal, nameShop, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
-import { checkRemote, flushSave, onConflict, startAutoSave } from "./net/cloud";
+import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "./ui/modals";
+import { flushSave, isLocked, loggedIn, pull, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
@@ -27,12 +27,11 @@ document.addEventListener("click", e => {
     case "start": dropModal(); return startShift();
     case "suggest": { const sp = buySuggested(); if (sp) { sfx("coin"); toast(`Đã nhập hàng · ${sp} xu`); } else toast("Không đủ xu để nhập theo gợi ý"); return render(); }
     case "tutorial": return tutorial();
-    case "backup": return backup();
-    case "restore": return restore();
     case "letter": return openLetter();
     case "claim": return claimGoals();
     case "settings": return settings();
-    case "cloud": return cloudPanel();
+    case "account": return accountPanel();
+    case "wallet": if (!SH) wallet(); return;
     case "update": return applyUpdate();
     case "pause": return pauseMenu();
     case "serve": return doServe();
@@ -84,18 +83,22 @@ document.addEventListener("click", e => {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && SH && !SH.paused && !hasModal()) pauseMenu();
   if (document.hidden && import.meta.env.PROD) flushSave();   // rời app: lưu lên mây ngay
-  if (!document.hidden) checkUpdate();
+  trackHidden(document.hidden);
+  if (!document.hidden) { checkUpdate(); if (!SH && isLocked()) render(); else if (loggedIn() && !SH) void pull().then(ch => { if (ch) render(); }); }
 });
 window.addEventListener("hashchange", render);
 
 render();
 Sound.play("home");
-// lần đầu: hướng dẫn rồi quà khai trương; người chơi cũ chưa nhận quà thì tặng luôn
-// người chơi cũ chưa đặt tên tiệm thì hỏi một lần (hiện trên bảng xếp hạng)
-setTimeout(() => { if (hasModal()) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); else if (!S.cloud.named) nameShop(); }, 400);
-// lưu trên mây: tự lưu khi có thay đổi; mở app thì so với bản trên mây (máy khác chơi mới hơn thì hỏi)
-onConflict(r => { if (!SH) conflictModal(r); });
-if (import.meta.env.PROD) { startAutoSave(); setTimeout(() => void checkRemote(), 2500); }
+/* vào tiệm (mở khoá / đăng nhập xong): tải bản mới nhất, rồi hướng dẫn và quà khai trương nếu là lần đầu */
+async function enter() {
+  if (await pull()) render();
+  setTimeout(() => { if (hasModal() || SH) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); }, 300);
+}
+addEventListener("auth:in", () => void enter());
+addEventListener("cloud:logout", () => { if (!SH) { toast("Phiên đăng nhập đã hết, đăng nhập lại nha"); render(); } });
+startAutoSave();
+if (loggedIn() && !isLocked()) void enter();
 if (S.refund) { const r = S.refund; delete S.refund; save(); setTimeout(() => toast(`Tiệm đổi giao diện mới! Hoàn lại ${r} xu cho đồ trang trí cũ`), 600); }
 
 // PWA: chơi offline; có bản mới thì hiện nút cập nhật (không tự tải lại giữa ca)

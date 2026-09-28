@@ -263,3 +263,20 @@ describe("tài sản (bảng xếp hạng)", () => {
     expect(netWorth().total).toBe(380 + 120 + 2 * 6 + 3 * 2);
   });
 });
+
+describe("ví: sổ thu chi", () => {
+  it("mua hàng, bán bánh, quà đều ghi vào sổ; tổng thu − tổng chi khớp với số dư", async () => {
+    const { totalIn, totalOut, freshBook } = await import("../src/engine/wallet");
+    S.coins = 0; S.book = freshBook();
+    claimWelcome();                                   // +300
+    expect(buy("cream", 0, 5)).toBe(true);            // −15
+    const sh = createShift(); sh.seats[0] = customer(); sh.mine = 0;
+    const r = RECIPES[0]; sh.build = { base: r.base, cream: r.cream, top: r.top, sweet: 0 };
+    expect(serve(sh).ok).toBe(true);
+    expect(S.coins).toBe(totalIn() - totalOut());
+    expect(S.book.out.stock).toBe(15);
+    expect(S.book.in.welcome).toBe(300);
+    expect(S.book.in.sales).toBeGreaterThan(0);
+    expect(S.book.log[S.book.log.length - 1].n).toBe("Quà khai trương");
+  });
+});

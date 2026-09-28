@@ -31,7 +31,7 @@ export const PHASES: Phase[] = [
     color: "#FF8FAB",
     items: [
       { title: "Tạo tiệm tặng người yêu", desc: "Nhập tên, ngày quen, sinh nhật, chọn thú cưng, viết sẵn thư, rồi gửi một đường link.", status: "doing" },
-      { title: "Lưu trên mây", desc: "Tự lưu sau mỗi ca; đổi điện thoại hay cài lại app thì nhập mã tiệm là lấy lại hết.", status: "done" },
+      { title: "Tài khoản & lưu theo tên tiệm", desc: "Tên tiệm + PIN 4 số; đổi điện thoại chỉ cần đăng nhập là có lại tiệm.", status: "done" },
       { title: "Thêm ảnh vào thư", desc: "Mỗi lá thư có thể kèm một tấm ảnh kỷ niệm.", status: "soon" }
     ]
   },
@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.9", date: "28/09/2026", notes: ["Tài khoản: tên tiệm + PIN 4 số, lần sau mở app chỉ hỏi PIN", "Tiệm tự lưu theo tên, đổi máy chỉ cần đăng nhập", "Bấm vào số xu để xem ví: tổng thu, tổng chi, lịch sử", "Bảng xếp hạng theo tiền bán hàng: Tuần này / Tất cả, theo dõi người ấy bằng tên tiệm"] },
   { v: "2.8", date: "28/09/2026", notes: ["Bảng xếp hạng theo tài sản (xu + đồ đang có)", "Ghép đôi: hai tiệm hiện cạnh nhau, xem ai dẫn trước", "Tự lưu mỗi khi có thay đổi, màn chính hiện ☁︎ đã lưu", "Chuyển máy bằng mã 6 ký tự; hai máy lệch nhau thì hỏi giữ bản nào", "Có bản mới thì hiện nút cập nhật"] },
   { v: "2.7", date: "28/09/2026", notes: ["Lưu trên mây: tự lưu sau mỗi ca, đổi máy nhập mã tiệm là lấy lại", "Bảng xếp hạng theo tổng xu kiếm được", "Thông báo 7:00 chào buổi sáng và 23:00 nhắc đi ngủ (bật trong Cài đặt)"] },
   { v: "2.6", date: "28/09/2026", notes: ["Màn chính có cảnh tiệm: Milo, Siro, Cacao sau quầy, tủ bánh, bàn khách", "Trang trí mới: 8 nhóm (tường, sàn, quầy, rèm, đèn, treo tường, cây, thảm), chạm để thử trước khi mua", "Đồ trang trí cũ tự chuyển sang kiểu mới, không mất gì"] },

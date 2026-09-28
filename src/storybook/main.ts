@@ -13,7 +13,9 @@ import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, critterSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
-import { backup, claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, welcome } from "../ui/modals";
+import { claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
+import { authHTML } from "../ui/screens/auth";
+import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
 import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/screens/play";
@@ -161,8 +163,14 @@ const STORIES: Story[] = [
     html: () => { lvState(5, staffed); const sh = busyShift(); _setShift(sh); return modalOver(playHTML(sh), pauseMenu); } },
   { id: "m-settings", sec: "modals", title: "Cài đặt", desc: "Tên, tên khách, âm thanh, rung, sao lưu", kind: "modal",
     html: () => { lvState(3); return modalOver(homeHTML(), settings); } },
-  { id: "m-backup", sec: "modals", title: "Sao lưu", desc: "Mã sao lưu để chuyển sang máy khác", kind: "modal",
-    html: () => { lvState(3); return modalOver(homeHTML(), backup); } },
+  { id: "m-wallet", sec: "modals", title: "Ví của tiệm", desc: "Bấm vào số xu: số dư, tổng thu, tổng chi, lịch sử", kind: "modal",
+    html: () => { lvState(4, s => { s.coins = 0; }); S.daily.day = S.book.day = "2026-09-28";
+      earn("welcome", 300, "Quà khai trương"); spend("stock", 72, "Nhập hàng theo gợi ý"); earn("sales", 286); earn("tip", 64); earn("memo", 48); earn("goal", 70);
+      note("Ca 12 · tiền bán bánh", 468); spend("quick", 9); note("Ca 12 · nhập nhanh giữa ca", -9); spend("decor", 90, "Mua Ren hồng"); spend("food", 30, "Mua 5 Hạt"); earn("gift", 60, "Quà mục tiêu ngày");
+      return modalOver(homeHTML(), wallet); } },
+  { id: "auth-welcome", sec: "screens", title: "Tài khoản · chào", desc: "Lần đầu mở app: tạo tiệm mới hoặc đăng nhập", kind: "screen", html: () => authHTML("welcome") },
+  { id: "auth-register", sec: "screens", title: "Tài khoản · tạo tiệm", desc: "Tên tiệm (= username), PIN 4 số, câu hỏi bí mật", kind: "screen", long: true, html: () => { lvState(3); return authHTML("register"); } },
+  { id: "auth-lock", sec: "screens", title: "Tài khoản · nhập PIN", desc: "Các lần mở app sau chỉ hỏi PIN", kind: "screen", html: () => authHTML("lock") },
 
   /* ---------- Bánh ---------- */
   { id: "c-cakes", sec: "cakes", title: "27 tổ hợp bánh", desc: "Đế × Kem × Topping (độ ngọt Vừa)", kind: "comp",

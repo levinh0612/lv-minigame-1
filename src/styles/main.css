@@ -809,3 +809,56 @@ body[data-scr="result"]{background:var(--pink-l)}
 .htitle .tname{min-width:0;flex:1}
 .htitle .tname b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.05;padding-bottom:4px}
 .htitle .hr{flex:none}
+
+/* ===== Tài khoản: chào / tạo tiệm / đăng nhập / quên PIN / nhập PIN ===== */
+.auth4{align-items:center;text-align:center;gap:10px;padding:calc(28px + env(safe-area-inset-top,0px)) 24px calc(28px + env(safe-area-inset-bottom,0px));min-height:100vh;min-height:100dvh}
+.auth4 h1{margin:4px 0 0;font:800 38px/1 var(--display);color:var(--pink-d);text-shadow:0 3px 0 #fff,0 5px 0 #F7BFCD}
+.auth4 h2{margin:4px 0 2px;font:800 26px/1.1 var(--display);color:var(--ink2)}
+.auth4 .field{width:100%;text-align:left}
+.auth4 .b3{width:100%;height:56px;font-size:20px;border-radius:22px;margin-top:4px}
+.ahero{display:flex;align-items:flex-end;justify-content:center;gap:2px;margin-top:6px}
+.asub{margin:0 0 6px;font:700 14px/1.45 var(--body);color:var(--soft2);max-width:320px}
+.asub.small{font-size:12.5px;color:var(--soft3)}
+.ahint{display:block;margin-top:4px;font:700 11.5px var(--body);color:var(--soft3)}
+.ahint.ok{color:var(--mint-d)}.ahint.bad{color:#D14E73}
+.arow{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.pinin{letter-spacing:8px;text-align:center;font-weight:900}
+.alink{font:800 13.5px var(--body);color:var(--soft);padding:8px 10px;min-height:40px}
+.auth4 select{width:100%;height:46px;border-radius:14px;border:2px solid var(--pink-b);background:#fff;padding:0 10px;font:700 16px var(--body);color:var(--ink2);margin-top:4px}
+.dots{display:flex;gap:16px;margin:14px 0 18px}
+.dots i{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--pink);background:#fff;transition:background .15s}
+.dots i.on{background:var(--pink)}
+.dots.shake{animation:shake .45s ease}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px 22px;justify-content:center}
+.pad button{width:72px;height:72px;border-radius:50%;background:#fff;box-shadow:0 4px 0 var(--sh);font:800 28px var(--display);color:var(--ink2);transition:transform .12s}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--sh)}
+.pad .alink{background:none;box-shadow:none;font:800 14px var(--body);color:var(--soft)}
+.acc{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:18px;padding:10px 12px;text-align:left}
+.acc b{display:block;font:800 18px var(--display);color:var(--ink2)}
+.acc small{font:700 12px var(--body);color:var(--soft)}
+button.pill{border:0;cursor:pointer}
+button.pill:active{transform:translateY(2px)}
+
+/* ===== Ví của tiệm ===== */
+.wbal{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 10px}
+.wbal b{font:800 38px/1.1 var(--display);color:var(--gold-t);font-variant-numeric:tabular-nums}
+.wbal small{font:700 12px var(--body);color:var(--soft)}
+.wsum{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wsum div{border-radius:16px;padding:10px;text-align:center}
+.wsum .p{background:var(--mint-bg)}.wsum .m{background:#FFE9EF}
+.wsum small{display:block;font:800 11.5px var(--body);color:var(--soft)}
+.wsum b{font:800 22px var(--display);font-variant-numeric:tabular-nums}
+.wsum .p b,.pt{color:var(--mint-d)}.wsum .m b,.mt{color:#D14E73}
+.wcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left;margin:8px 0}
+.wcols h4{margin:0 0 4px;font:900 12px var(--body);color:var(--soft)}
+.wcols .lg,.wlog .lg{font:700 12.5px var(--body);color:var(--ink2);padding:3px 0}
+.lg b.p{color:var(--mint-d)}.lg b.m{color:#D14E73}
+.wseg{margin:8px 0 6px}
+.wlog{max-height:220px;overflow-y:auto;text-align:left;border-top:2px dashed var(--pink-b);padding-top:6px}
+.wlog .lg span{display:flex;flex-direction:column}
+.wlog .lg small{font:700 10.5px var(--body);color:var(--soft3)}
+.rseg{margin:12px 16px 0}
+.couple.empty .cf{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.couple .ch{display:flex;justify-content:space-between;align-items:center}
+.couple .ch .alink{min-height:0;padding:0;font-size:11.5px}
+.wseg{grid-template-columns:1fr 1fr}

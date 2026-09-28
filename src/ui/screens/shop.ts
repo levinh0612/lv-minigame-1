@@ -4,6 +4,7 @@ import { ROOM_CATS, fxText, isDefault, roomCat, roomItem, type RoomKey } from ".
 import { canHire, foodOf, mealFor, onDuty, staffDef, trainCost } from "../../engine/economy";
 import { decorCount, unlocked } from "../../engine/progress";
 import { S, petName, save } from "../../engine/state";
+import { spend } from "../../engine/wallet";
 import { fmtD, fmtN, parse } from "../../engine/util";
 import { critterSVG, foodSVG } from "../art";
 import { esc, heartRow } from "../dom";
@@ -21,7 +22,7 @@ export const cancelDecor = () => { trial = null; };
 export function applyDecor(): string {
   if (!trial) return "";
   const { k, v } = trial, it = roomItem(k, v), id = k + ":" + v, own = isDefault(k, v) || S.owned.includes(id);
-  if (!own) { if (S.coins < it.cost) return ""; S.coins -= it.cost; S.owned.push(id); }
+  if (!own) { if (S.coins < it.cost) return ""; spend("decor", it.cost, `Mua ${it.n}`); S.owned.push(id); }
   S.room[k] = v; trial = null; save();
   return own ? `Đã đổi sang ${it.n}` : `Đã mua ${it.n}`;
 }

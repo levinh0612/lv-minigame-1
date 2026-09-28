@@ -43,7 +43,7 @@ export function bump(el: Element | null, cls: string) {
   if (!el) return; el.classList.remove(cls); void (el as HTMLElement).offsetWidth; el.classList.add(cls);
 }
 
-export const coinPill = (sm = false, id = "") => `<div class="pill coin ${sm ? "sm" : ""}" ${id ? `id="${id}"` : ""}><span class="coin-i"></span><span>${fmtN(S.coins)}</span></div>`;
+export const coinPill = (sm = false, id = "") => `<button class="pill coin ${sm ? "sm" : ""}" ${id ? `id="${id}"` : ""} data-act="wallet" aria-label="Ví: ${fmtN(S.coins)} xu"><span class="coin-i"></span><span>${fmtN(S.coins)}</span></button>`;
 export const backBtn = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">←</button>`;
 /* huy hiệu cấp tiệm + thanh kinh nghiệm */
 export const levelChip = (L: number, cur: number, need: number) =>
