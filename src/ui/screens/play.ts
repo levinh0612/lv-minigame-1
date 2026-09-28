@@ -7,7 +7,7 @@ import { daysTogether } from "../../engine/dates";
 import { REFILL, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
-  beginShift, emptyBuild, finishShift, goalDone, isComplete, isOver, ledger, mineIdx, needOf, peek, remaining, serve, summary, take, tick,
+  beginShift, emptyBuild, finishShift, goalDone, isComplete, isOver, ledger, matches, mineIdx, needOf, peek, release, remaining, serve, summary, take, tick,
   type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
@@ -166,6 +166,14 @@ function miniHTML(sh: Shift) {
   return `<span class="mc">${cakeSVG(sh.build, { size: 46, still: true })}</span><span class="mt"><b>Đang làm cho ${esc(c.who)}</b><small>${picked(sh)}/4 món · chạm để mở</small></span>${CHEV(true)}`;
 }
 
+/* thu gọn phiếu: quầy hiện bánh đang ghép cạnh đơn khách gọi (không để trống) */
+function stageHTML(sh: Shift) {
+  const m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null; if (!c) return "";
+  return `<div class="plate">${cakeSVG(sh.build, { size: 140 })}<small>Bánh đang làm · ${picked(sh)}/4 món</small></div>
+    <div class="want"><small>${esc(c.who)} gọi</small>${cakeOf(c, 78)}<span class="swl">${ingSVG("sweet", c.sweet, 18)}${CATS.sweet[c.sweet][0]}</span></div>
+    <button class="b3 w" data-act="sheet">Chọn nguyên liệu</button>`;
+}
+
 /* kho giữa ca: chọn món để nhập đầy, món sắp hết được chọn sẵn */
 let ticks = new Set<string>();
 const autoTicks = () => new Set(STOCK_KEYS.flatMap(k => CATS[k].map((_, i) => k + ":" + i).filter((_, i) => stockOf(k, i) <= 2)));
@@ -197,7 +205,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     </div>
     <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
     <div class="queue" style="--n:${sh.seats.length}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
-    <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div></div>
+    <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
       <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeSVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
       <div class="rows" id="rows">${rowsHTML(sh)}</div>
@@ -237,6 +245,7 @@ export function renderTicket() {
   $("#oinfo")!.innerHTML = oinfoHTML(SH);
   $("#idle")!.innerHTML = idleHTML(SH);
   $("#mini")!.innerHTML = miniHTML(SH);
+  $("#stage")!.innerHTML = stageHTML(SH);
   $("#rows")!.innerHTML = rowsHTML(SH);
   const g = $("#give")!; g.textContent = giveLabel(SH); g.classList.toggle("off", !isComplete(SH.build));
   SH.seats.forEach((c, i) => {
@@ -305,6 +314,9 @@ export function pickIngredient(k: PartKey, i: number) {
   }
   SH.build[k] = add ? i : null; drop = add && k !== "sweet" ? k : null;
   renderBuild(); sfx(add ? "tap" : "untap"); haptic(8);
+  // chọn đúng đủ 4 món thì tự giao, khỏi bấm nút
+  const m = mineIdx(SH);
+  if (m >= 0 && matches(SH.seats[m], SH.build)) { const sh = SH; setTimeout(() => { if (SH === sh && mineIdx(sh) === m && matches(sh.seats[m], sh.build)) doServe(); }, 350); }
 }
 /* chạm vào khách: nhận đơn đó (đơn các bé đã nhận thì không được) */
 export function selectSeat(i: number) {
@@ -317,6 +329,8 @@ export function selectSeat(i: number) {
 export function doPeek() { if (!SH || mineIdx(SH) < 0) return; peek(SH); renderTicket(); sfx("tap"); }
 export function toggleAuto() {
   S.autoTake = !S.autoTake; save();
+  // tắt tự nhận đơn: trả đơn đang giữ để các bé làm luôn
+  if (SH && !S.autoTake && mineIdx(SH) >= 0) { release(SH); SH.build = emptyBuild(); renderBuild(); }
   if (SH) renderTicket();
   toast(S.autoTake ? "Tự nhận đơn: bật. Làm xong sẽ được gán đơn mới" : "Rảnh tay: các bé nhận hết, chạm vào khách để tự làm");
 }

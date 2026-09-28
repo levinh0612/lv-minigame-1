@@ -69,7 +69,7 @@ export function petRowHTML(id: PetId) {
     : `<button class="rb ${fed ? "done" : ""}" data-treat="${id}:${food.id}" ${fed || (!foodOf(food.id) && S.coins < food.cost) ? "disabled" : ""}>${foodSVG(food.id, 28)}<small>${fed ? "Đã thưởng" : "Thưởng"}</small></button>`;
   const train = st.hired && trainCost(id) ? `<button class="up" data-train="${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${st.lv + 1} · ${fmtN(trainCost(id))} xu</button>` : "";
   return `<div class="prow"><div class="pav ${on ? "on" : ""}">${critterSVG({ ...PETS[id], mood: on ? "happy" : "open", ledge: false }, 70)}</div>
-    <div class="pin"><div class="pn"><b>${esc(petName(id))}</b><span class="tg t">Bậc ${tier}</span>${on ? `<span class="tg w">Đi làm</span>` : st.hired ? `<span class="tg o">Nghỉ</span>` : ""}</div>
+    <div class="pin"><div class="pn"><b>${esc(petName(id))}</b><span class="ptg t">Bậc ${tier}</span>${on ? `<span class="ptg w">Đi làm</span>` : st.hired ? `<span class="ptg o">Nghỉ</span>` : ""}</div>
       <div class="pw">${foodSVG(food.id, 20)}Lương: 1 ${food.n}/ca${st.hired && on && !meal ? ` <em>· hết đồ ăn</em>` : ""}</div>
       <div class="ph2"><span data-hearts="${id}">${heartRow(S.pets[id].aff)}</span><small>thân thiết</small></div>${train}</div>${act}</div>`;
 }

@@ -55,7 +55,7 @@ export function pauseMenu() {
   if (!SH || SH.paused) return;
   pause();
   modal(`<h2>Tạm nghỉ xíu</h2><p class="sub">Khách vẫn ngồi chờ, không ai bỏ về đâu.</p>
-    <label class="tg" style="justify-content:center"><input type="checkbox" id="pMusic" ${S.music ? "checked" : ""}>Nhạc nền</label>
+    <label class="tg"><input type="checkbox" id="pMusic" ${S.music ? "checked" : ""}>Nhạc nền</label>
     <div class="mbtns"><button class="b3" data-close>Bán tiếp</button><button class="b3 w" id="quitBtn">Đóng cửa sớm</button></div>`, resume);
   $<HTMLInputElement>("#pMusic")!.addEventListener("change", e => Sound.setMusic((e.target as HTMLInputElement).checked));
   $("#quitBtn")!.addEventListener("click", () => { dropModal(); if (SH) { closeEarly(SH); endShift(); } });

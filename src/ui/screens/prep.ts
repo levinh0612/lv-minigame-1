@@ -22,7 +22,7 @@ export function bakerTile(id: PetId) {
   if (!canHire(id)) { btn = `<button class="tb3 lock" disabled>Mở ở Lv ${d.unlock}</button>`; cls = "off"; }
   else if (!st.hired) { btn = `<button class="tb3 hire" data-hire="${id}">Nhận vào làm</button>`; cls = "off"; }
   else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
-  else { btn = `<button class="tb3 ${on ? "on" : ""}" data-duty="${id}" aria-pressed="${on}">${on ? "Đi làm" : "Nghỉ"}</button>`; if (!on) cls = "off"; }
+  else { btn = `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`; if (!on) cls = "off"; }
   const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(food.id, 18)}Bậc ${tier} · ${food.n}`;
   return `<div class="btile ${cls}"><div class="av">${critterSVG({ ...PETS[id], mood: on && !hungry ? "happy" : hungry ? "impatient" : "open" }, 72)}</div>
     <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${btn}</div>`;
