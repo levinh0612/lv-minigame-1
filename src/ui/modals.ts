@@ -75,7 +75,7 @@ export function settings() {
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
       <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
-      <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)}</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button><button type="button" class="mini" data-act="hardreload">Tải lại bản mới nhất</button></div>
+      <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)} · build ${__BUILD__.slice(6, 8)}/${__BUILD__.slice(4, 6)} ${__BUILD__.slice(8, 10)}:${__BUILD__.slice(10, 12)} UTC</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button><button type="button" class="mini" data-act="hardreload">Tải lại bản mới nhất</button></div>
       <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button></div>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
     </form>`, render);
