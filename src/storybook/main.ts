@@ -218,7 +218,7 @@ const STORIES: Story[] = [
         <div class="sbrow">${KEYS.map(k => CATS[k].map((_, i) => ingSVG(k, i, 40)).join("")).join("")}</div></div>`; } },
   { id: "c-orders", sec: "ui", title: "Khách trong hàng đợi", desc: "Bình thường · đơn của bạn · sắp giận · bé đang làm (40%) · đã giao", kind: "comp",
     html: () => { lvState(5, staffed); const sh = createShift();
-      sh.seats = [cust("Bé Kem", G("girl", "long", "#E7B872", "#FF8FAB"), 5, 0, 36), cust("Mèo Bơ", CRITTERS[0], 1, 1, 30), cust("Cún Bơ", CRITTERS[4], 2, 2, 6), cust("Gấu Mật", CRITTERS[2], 4, 1, 28, { by: "dog" }), cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6"), 0, 0, 30)];
+      sh.seats = [cust("Bé Kem", G("girl", "long", "#E7B872", "#FF8FAB"), 5, 0, 36), cust("Mèo Bơ", CRITTERS[0], 1, 1, 30), cust("Thỏ Mây", CRITTERS[1], 2, 2, 6), cust("Gấu Mật", CRITTERS[2], 4, 1, 28, { by: "dog" }), cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6"), 0, 0, 30)];
       sh.bakers = [{ id: "dog", seat: 3, done: 3, need: 7.5 }]; sh.mine = 1;
       const st: ("" | "low" | "ok")[] = ["", "", "low", "", "ok"], lab = ["Bình thường", "Đơn của bạn", "Sắp giận", "Bé đang làm", "Đã giao"];
       return `<div class="board"><div class="queue" style="--n:5;width:560px;padding:0">${sh.seats.map((x, i) => `<div class="slot ${i === 1 ? "mine" : ""} ${x!.by ? "taken" : ""} ${st[i] === "low" ? "low" : ""}" style="height:152px">${slotHTML(sh, i, st[i])}</div>`).join("")}</div>

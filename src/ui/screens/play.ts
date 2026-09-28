@@ -104,7 +104,7 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const c = sh.seats[i]; if (!c) return "";
   const f = c.pat / c.max, S2 = faceSize(sh), mine = mineIdx(sh) === i;
   const b = c.by ? sh.bakers.find(x => x.id === c.by) : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
-  const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}</div>`;
+  const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
   const who = c.by ? `<div class="who by" data-bake="${c.by}">${critterSVG({ ...PETS[c.by], ledge: false, paws: false }, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
   return `${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
@@ -156,6 +156,7 @@ function oinfoHTML(sh: Shift) {
   const chips = KEYS.map(k => `<span class="${b[k] === n[k] ? "ok" : ""}">${ingSVG(k, n[k], 18)}${CATS[k][n[k]][0]}</span>`).join("");
   return `<div class="or1"><small>Đơn của ${esc(c.who)}</small>${toggleHTML()}<button class="x" data-act="sheet" aria-label="Thu phiếu xuống">${CHEV(false)}</button></div>
     <b class="rn">${esc(c.r.n)}</b>
+    <span class="swl">${ingSVG("sweet", c.sweet, 18)}${CATS.sweet[c.sweet][0]}</span>
     ${sh.peek ? `<div class="chips">${chips}</div>` : `<div class="peekrow"><button class="peek" data-act="peek">Xem công thức</button><span class="bonus">Tự nhớ<br>+50% thưởng</span></div>`}`;
 }
 const picked = (sh: Shift) => KEYS.filter(k => sh.build[k] != null).length;
