@@ -97,6 +97,8 @@ const STORIES: Story[] = [
   /* ---------- Màn hình ---------- */
   { id: "home", sec: "screens", title: "Bắt đầu", desc: "Người chơi Lv 3, có thư mới chưa đọc", kind: "screen",
     html: () => { lvState(3); return homeHTML(); } },
+  { id: "home-named", sec: "screens", title: "Bắt đầu · đã đặt tên tiệm", desc: "Tiêu đề theo tên người chơi đặt: Tiệm của Vinh", kind: "screen",
+    html: () => { lvState(2, s => { s.cloud.named = true; s.cloud.name = "Tiệm của Vinh"; s.cloud.at = new Date().toISOString(); }); return homeHTML(); } },
   { id: "home-event", sec: "screens", title: "Bắt đầu · ngày đặc biệt", desc: "Sinh nhật bạn nữ (28/12): thẻ sự kiện, xu x2; thư đã đọc", kind: "screen",
     html: () => withDate(2026, 12, 28, () => { lvState(5, s => { s.letters = [{ day: "2026-12-28", txt: "…" }]; }); return homeHTML(); }) },
   { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 4: kho thiếu Dâu tây; Milo đi làm (có Pate), Siro đói (thiếu Hạt), Cacao nghỉ", kind: "screen", long: true,

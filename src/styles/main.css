@@ -806,3 +806,6 @@ body[data-scr="result"]{background:var(--pink-l)}
 .cmp b{font:800 20px var(--display);color:var(--ink2)}
 .cmp span{font:800 12px var(--body);color:var(--mint-d)}
 .rk .nm .n1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htitle .tname{min-width:0;flex:1}
+.htitle .tname b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.05;padding-bottom:4px}
+.htitle .hr{flex:none}

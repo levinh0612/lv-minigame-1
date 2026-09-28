@@ -8,6 +8,15 @@ import { coinPill, esc } from "../dom";
 import { roomHTML } from "../room";
 import { savedAgo } from "../../net/cloud";
 
+/* tiêu đề theo tên tiệm người chơi đặt: "Tiệm của Vinh" -> nhỏ "Tiệm Bánh của", to "Vinh" */
+export function shopTitle() {
+  const n = S.cloud.named ? S.cloud.name.trim() : "";
+  if (!n) return `<div><small>Tiệm Bánh</small><b>Matcha</b></div>`;
+  const m = n.match(/^tiệm\s+(?:bánh\s+)?(của\s+)?(.+)$/i);
+  const small = m ? (m[1] ? "Tiệm Bánh của" : "Tiệm Bánh") : "Tiệm Bánh Matcha", big = m ? m[2] : n;
+  const len = [...big].length, fs = len <= 8 ? 44 : len <= 12 ? 36 : len <= 16 ? 29 : 24;
+  return `<div class="tname"><small>${esc(small)}</small><b style="font-size:${fs}px">${esc(big)}</b></div>`;
+}
 export const cloudLine = () => { const a = savedAgo(); return a ? `☁︎ đã lưu ${a}` : "☁︎ chưa lưu"; };
 addEventListener("cloud:saved", () => { const e = document.getElementById("cloudAt"); if (e) e.textContent = cloudLine(); });
 
@@ -47,7 +56,7 @@ export function homeHTML() {
       <button class="rbtn" data-act="settings" aria-label="Cài đặt">${GEAR}</button>
       ${coinPill()}
     </div>
-    <div class="htitle"><div><small>Tiệm Bánh</small><b>Matcha</b></div>
+    <div class="htitle">${shopTitle()}
       <div class="hr"><button class="lvp" data-go="/muc-tieu" aria-label="Cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lb">Lv ${L}</span><span class="tr"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button>
         <span class="own">${decorCount()} đồ trang trí · ${hired} nhân viên</span><span class="hmeta"><button class="saved" data-act="cloud" id="cloudAt">${cloudLine()}</button> · <button class="soon4" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></span></div></div>
     <div class="hroom">${roomHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) })}
