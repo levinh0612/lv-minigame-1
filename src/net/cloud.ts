@@ -99,13 +99,16 @@ export async function cloudSave(): Promise<boolean> {
   if (!A?.token || busy || !navigator.onLine) return false;
   busy = true;
   try {
-    const r = await post<{ rev: number; savedAt: string }>("sync", { state: S, earned: S.earned, lv: lvl() });
+    const r = await post<{ rev: number; savedAt: string }>("sync", { state: S, earned: S.earned, lv: lvl(), base: S.cloud.rev });
     muted = true; S.cloud.rev = r.rev; S.cloud.at = r.savedAt; save(); muted = false;
     A.dirty = false; store();
     dispatchEvent(new Event("cloud:saved"));
     return true;
   } catch (e) {
-    if ((e as ApiError).status === 401) { A.token = ""; store(); dispatchEvent(new Event("cloud:logout")); }
+    const st = (e as ApiError).status;
+    if (st === 401) { A.token = ""; store(); dispatchEvent(new Event("cloud:logout")); }
+    // máy khác vừa lưu bản mới hơn: tải bản đó về (không đè lên)
+    if (st === 409 && !inShift()) { busy = false; A.dirty = false; store(); await pull(true); }
     return false;
   } finally { busy = false; muted = false; }
 }
@@ -117,16 +120,29 @@ function scheduleSave() {
   clearTimeout(timer);
   timer = window.setTimeout(() => { last = Date.now(); void cloudSave(); }, Math.max(8000, 60000 - (Date.now() - last)));
 }
-export function flushSave() { if (A?.dirty) { clearTimeout(timer); last = Date.now(); void cloudSave(); } }
+/* lưu ngay (rời app, đổi ảnh…) */
+export function flushSave(force = false) { if (A?.dirty || force) { clearTimeout(timer); last = Date.now(); if (A) { A.dirty = true; store(); } void cloudSave(); } }
 export function startAutoSave() { whenSaved(scheduleSave); }
-/* mở app / mở khoá: máy khác chơi mới hơn thì tải về; máy này có thay đổi chưa lưu thì đẩy lên */
-export async function pull(): Promise<boolean> {
-  if (!A?.token || !navigator.onLine) return false;
-  if (A.dirty) { await cloudSave(); return false; }
+/* mở app / quay lại app / mỗi 20 giây: máy khác lưu mới hơn thì tải về (bản mới thắng);
+   không có gì mới mà máy này có thay đổi chưa gửi thì gửi lên */
+let pulling = false;
+/* đang trong ca thì không thay tiến trình (main.ts cho biết) */
+let inShift = () => false;
+export const setInShift = (f: () => boolean) => { inShift = f; };
+export async function pull(adoptAnyway = false): Promise<boolean> {
+  if (!A?.token || !navigator.onLine || pulling || inShift()) return false;
+  pulling = true;
   try {
-    const r = await api<{ state: unknown; rev: number; savedAt: string }>("sync");
-    if (r.state && r.rev > S.cloud.rev) { muted = true; adopt(r.state, r.rev); S.cloud.at = r.savedAt; save(); muted = false; return true; }
+    const r = await api<{ state?: unknown; rev: number; savedAt?: string; same?: boolean }>(`sync${adoptAnyway ? "" : `?since=${S.cloud.rev}`}`);
+    if (!r.same && r.state && (adoptAnyway || r.rev > S.cloud.rev)) {
+      clearTimeout(timer); A.dirty = false; store();
+      muted = true; adopt(r.state, r.rev); S.cloud.at = r.savedAt ?? new Date().toISOString(); save(); muted = false;
+      dispatchEvent(new Event("cloud:pulled"));
+      return true;
+    }
+    if (A.dirty) void cloudSave();
   } catch (e) { if ((e as ApiError).status === 401) { A.token = ""; store(); dispatchEvent(new Event("cloud:logout")); } }
+  finally { pulling = false; muted = false; }
   return false;
 }
 export function savedAgo() {

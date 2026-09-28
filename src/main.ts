@@ -10,7 +10,7 @@ import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
 import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
-import { flushSave, isLocked, loggedIn, pull, startAutoSave, trackHidden } from "./net/cloud";
+import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, photoSheet } from "./ui/sheets";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
@@ -94,15 +94,19 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden && SH && !SH.paused && !hasModal()) pauseMenu();
   if (document.hidden && import.meta.env.PROD) flushSave();   // rời app: lưu lên mây ngay
   trackHidden(document.hidden);
-  if (!document.hidden) { if (!SH) void autoUpdate(); if (!SH && isLocked()) render(); else if (loggedIn() && !SH) void pull().then(ch => { if (ch) render(); }); }
+  if (!document.hidden) { if (!SH) void autoUpdate(); if (!SH && isLocked()) render(); else if (loggedIn() && !SH) void pull(); }
 });
+/* đồng bộ giữa các máy: app đang mở (không trong ca) thì 20 giây hỏi server một lần xem có bản mới hơn không */
+setInShift(() => !!SH);
+setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
+addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", render);
 
 render();
 Sound.play("home");
 /* vào tiệm (mở khoá / đăng nhập xong): tải bản mới nhất, rồi hướng dẫn và quà khai trương nếu là lần đầu */
 async function enter() {
-  if (await pull()) render();
+  await pull();
   setTimeout(() => { if (hasModal() || SH) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); }, 300);
 }
 addEventListener("auth:in", () => void enter());

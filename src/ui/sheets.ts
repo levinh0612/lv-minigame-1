@@ -4,6 +4,7 @@ import { CATS, RECIPES, STOCK_KEYS } from "../content/game";
 import { daysTogether, events } from "../engine/dates";
 import { featured, lvl, unlocked } from "../engine/progress";
 import { S, save } from "../engine/state";
+import { flushSave } from "../net/cloud";
 import { fmtD, fmtN, parse } from "../engine/util";
 import { render } from "./app";
 import { cakeSVG, ingSVG } from "./art";
@@ -66,7 +67,7 @@ function pickPhoto() {
   inp.type = "file"; inp.accept = "image/*";
   inp.addEventListener("change", async () => {
     const f = inp.files?.[0]; if (!f) return;
-    try { S.photo = await shrink(f, 360); save(); closeModal(); render(); toast("Đã treo ảnh lên tường tiệm 🖼️"); }
+    try { S.photo = await shrink(f, 360); save(); flushSave(true); closeModal(); render(); toast("Đã treo ảnh lên tường tiệm 🖼️"); }
     catch { toast("Không đọc được ảnh này, thử ảnh khác nha"); }
   });
   inp.click();
@@ -86,5 +87,5 @@ export function photoSheet() {
   modal(`<h2>Ảnh trên tường</h2><div class="pframe"><img src="${S.photo}" alt="Ảnh treo tường"></div>
     <div class="mbtns"><button class="b3" id="phNew">Đổi ảnh khác</button><button class="b3 w" id="phDel">Gỡ ảnh xuống</button></div>`);
   $("#phNew")!.addEventListener("click", pickPhoto);
-  $("#phDel")!.addEventListener("click", () => { S.photo = ""; save(); closeModal(); render(); toast("Đã gỡ ảnh"); });
+  $("#phDel")!.addEventListener("click", () => { S.photo = ""; save(); flushSave(true); closeModal(); render(); toast("Đã gỡ ảnh"); });
 }
