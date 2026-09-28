@@ -2,7 +2,7 @@
 import type { PetId } from "../content/couple";
 import { PETS } from "../content/game";
 import type { Room } from "../content/room";
-import { petName } from "../engine/state";
+import { S, petName } from "../engine/state";
 import { cakeSVG, critterSVG, guestSVG } from "./art";
 import { esc } from "./dom";
 
@@ -49,18 +49,19 @@ export function roomHTML(r: Room, o: RoomOpts = {}) {
     : r.curtain === "2" ? `<i style="left:2px;top:4px;width:108px;height:8px;border-radius:4px;background:#C9905A;${B}"></i><i style="left:4px;top:10px;width:28px;height:90px;border-radius:0 0 14px 4px;background:repeating-conic-gradient(#8FD9B6 0 25%,#fff 0 50%) 0 0/12px 12px;${B}"></i><i style="left:80px;top:10px;width:28px;height:90px;border-radius:0 0 4px 14px;background:repeating-conic-gradient(#8FD9B6 0 25%,#fff 0 50%) 0 0/12px 12px;${B}"></i>` : ""}</div>`;
   // đồ treo tường
   h += `<div class="rm-slot${glow("wall")}" style="left:124px;top:26px;width:50px;height:58px;border-radius:10px">${
-    r.wallItem === "1" ? `<div class="sway" style="width:100%;height:100%;border-radius:8px;background:#FFE9B8;${B};padding:5px"><div style="width:100%;height:100%;border-radius:4px;background:#FFD1DC;display:grid;place-items:center">${HEART}</div></div>`
+    r.wallItem === "1" ? `<button class="sway rm-frame" data-act="photo" aria-label="Ảnh trong khung" style="width:100%;height:100%;border-radius:8px;background:#FFE9B8;${B};padding:5px"><div style="width:100%;height:100%;border-radius:4px;background:#FFD1DC;display:grid;place-items:center;overflow:hidden">${S.photo ? `<img src="${S.photo}" alt="">` : HEART}</div></button>`
     : r.wallItem === "2" ? `<svg width="50" height="58" viewBox="0 0 50 58" fill="none" stroke="#4A3438" stroke-width="2.4" stroke-linejoin="round"><path d="M8 14 L10 2 L19 9 M42 14 L40 2 L31 9" fill="#fff"/><circle cx="25" cy="28" r="20" fill="#fff"/><circle cx="25" cy="28" r="15" fill="#FFF3F6" stroke-width="1.8"/><path d="M25 28 V18 M25 28 L32 32" stroke-width="2.6" stroke-linecap="round"/><path d="M25 48 V56 M21 56 H29" stroke-width="2"/></svg>`
-    : `<div class="rm-empty">+</div>`}</div>`;
+    : S.photo ? `<button class="rm-photo sway" data-act="photo" aria-label="Ảnh treo tường"><img src="${S.photo}" alt=""></button>`
+    : `<button class="rm-empty" data-act="photo" aria-label="Treo ảnh lên tường">+</button>`}</div>`;
   // bảng menu
-  h += `<div class="rm-menu"><b>Menu</b><i style="width:40px"></i><i style="width:30px"></i><small>${o.recipes ?? 4} món</small></div>`;
+  h += `<button class="rm-menu" data-act="menu" aria-label="Xem menu"><b>Menu</b><i style="width:40px"></i><i style="width:30px"></i><small>${o.recipes ?? 4} món</small></button>`;
   // đèn
   if (!ev) h += `<div class="rm-slot${glow("lamp")}" style="left:266px;top:0;width:92px;height:48px;border-radius:0 0 14px 14px">${
     r.lamp === "1" ? `<i style="left:34px;top:0;width:2.5px;height:16px;background:#4A3438"></i><div class="sway" style="position:absolute;left:10px;top:12px;width:52px;height:30px"><i style="left:0;top:10px;width:22px;height:20px;border-radius:50%;background:#FFF7DC;${B}"></i><i style="left:12px;top:2px;width:28px;height:26px;border-radius:50%;background:#FFF7DC;${B}"></i><i style="left:30px;top:10px;width:22px;height:20px;border-radius:50%;background:#FFF7DC;${B}"></i><i style="left:4px;top:13px;width:44px;height:14px;background:#FFF7DC;border-radius:6px"></i></div>`
     : r.lamp === "2" ? `<svg width="92" height="40" viewBox="0 0 92 40" fill="none" stroke="#4A3438" stroke-width="2" style="position:absolute;left:0;top:0"><path d="M0 8 Q23 26 46 14 Q69 2 92 20"/></svg>${[[4, 10], [22, 17], [40, 14], [58, 7], [76, 12]].map(([x, y], i) => `<i class="bulb" style="left:${x}px;top:${y}px;background:${["#FFF1A8", "#FFB3C7", "#B8EBD3", "#FFF1A8", "#C9B8F0"][i]};animation-duration:${1.2 + i * 0.3}s"></i>`).join("")}` : ""}</div>`;
   else h += `<div class="rm-flags">${Array.from({ length: 13 }, (_, i) => `<i style="border-top-color:${["#FF8FAB", "#FFD66B", "#8FD9B6", "#C9B8F0"][i % 4]}"></i>`).join("")}</div>`;
   // tủ bánh
-  h += `<button class="rm-case${glow("case")}" data-go="/muc-tieu" aria-label="Tủ bánh: xem công thức" style="background:${r.counter === "mint" ? "#B6E6CF" : "#E9B98A"}"><div class="gl">
+  h += `<button class="rm-case${glow("case")}" data-act="cakes" aria-label="Tủ bánh: xem bánh đang bán" style="background:${r.counter === "mint" ? "#B6E6CF" : "#E9B98A"}"><div class="gl">
       <i style="left:0;right:0;top:56px;height:3px;background:#C9905A"></i><i style="left:8px;top:6px;width:10px;height:100px;background:rgba(255,255,255,.7);transform:skewX(-12deg)"></i>
       <div class="sh" style="top:20px">${cakeSVG({ base: 0, cream: 0, top: 0, sweet: 1 }, { size: 32, still: true })}${cakeSVG({ base: 2, cream: 1, top: 0, sweet: 0 }, { size: 32, still: true })}</div>
       <div class="sh" style="top:82px">${cakeSVG({ base: 1, cream: 2, top: 2, sweet: 2 }, { size: 32, still: true })}${more ? cakeSVG({ base: 0, cream: 1, top: 1, sweet: 1 }, { size: 32, still: true }) : `<i style="position:static;width:30px;height:24px;border-radius:6px;border:2px dashed #C7D9E6"></i>`}</div>

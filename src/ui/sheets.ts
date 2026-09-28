@@ -1,0 +1,90 @@
+/* Các bảng trượt lên từ cảnh tiệm ở màn chính: Menu, Tủ bánh (carousel), Ngày kỷ niệm, Ảnh treo tường */
+import { CFG } from "../content/couple";
+import { CATS, RECIPES, STOCK_KEYS } from "../content/game";
+import { daysTogether, events } from "../engine/dates";
+import { featured, lvl, unlocked } from "../engine/progress";
+import { S, save } from "../engine/state";
+import { fmtD, fmtN, parse } from "../engine/util";
+import { render } from "./app";
+import { cakeSVG, ingSVG } from "./art";
+import { $, closeModal, esc, modal, toast } from "./dom";
+
+const ingChips = (r: (typeof RECIPES)[number]) => STOCK_KEYS.map(k => `<span>${ingSVG(k, r[k], 18)}${CATS[k][r[k]][0]}</span>`).join("");
+
+/* Bảng Menu: các món đã mở (món nổi bật hôm nay lên đầu) và các món sắp mở */
+export function menuSheet() {
+  const L = lvl(), f = featured();
+  const list = [...RECIPES].sort((a, b) => (a.id === f.id ? -1 : b.id === f.id ? 1 : a.lv - b.lv));
+  modal(`<h2>Menu hôm nay</h2><p class="sub">${unlocked().length}/${RECIPES.length} món đã mở · khách chọn độ ngọt riêng</p>
+    <div class="mlist">${list.map(r => {
+      const lock = r.lv > L, star = r.id === f.id;
+      return `<div class="mrow ${lock ? "lock" : ""} ${star ? "star" : ""}">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 62, still: true })}
+        <div class="mi"><b>${esc(r.n)}${star ? ` <em>★ nổi bật</em>` : ""}</b><div class="ichips">${ingChips(r)}</div></div>
+        <span class="mp">${lock ? `Lv ${r.lv}` : `${r.price} xu`}</span></div>`;
+    }).join("")}</div>
+    <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
+}
+
+/* Tủ bánh: carousel các bánh đang bán, vuốt ngang */
+export function cakesSheet() {
+  const f = featured(), list = unlocked();
+  modal(`<h2>Tủ bánh</h2><p class="sub">Vuốt để xem ${list.length} món đang bán</p>
+    <div class="caro" id="caro">${list.map(r => `<div class="cc ${r.id === f.id ? "star" : ""}">
+      ${r.id === f.id ? `<span class="tagf">★ Món nổi bật hôm nay</span>` : ""}
+      <div class="ck">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 170 })}</div>
+      <b>${esc(r.n)}</b><div class="ichips">${ingChips(r)}</div><span class="cp">${r.price} xu / bánh</span></div>`).join("")}</div>
+    <div class="cdots" id="cdots">${list.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>
+    <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
+  const c = $("#caro")!;
+  c.addEventListener("scroll", () => {
+    const i = Math.round(c.scrollLeft / c.clientWidth);
+    $("#cdots")!.querySelectorAll("i").forEach((d, j) => d.classList.toggle("on", j === i));
+  }, { passive: true });
+}
+
+/* Ngày kỷ niệm & ngày quan trọng */
+export function daysSheet() {
+  const met = parse(CFG.metDate), d = daysTogether(), ev = events();
+  const icon: Record<string, string> = { anniversary: "💞", monthly: "🌙", herBirthday: "🎂", hisBirthday: "🎁", milestone: "💯", valentine: "💝", women83: "🌷", women2010: "🌸" };
+  const past: { t: string; date: Date }[] = [];
+  for (let y = 1; new Date(met.getFullYear() + y, met.getMonth(), met.getDate()) <= new Date(); y++) past.push({ t: `Kỷ niệm ${y} năm`, date: new Date(met.getFullYear() + y, met.getMonth(), met.getDate()) });
+  for (let h = 100; h <= d; h += 100) past.push({ t: `Ngày thứ ${h}`, date: new Date(met.getFullYear(), met.getMonth(), met.getDate() + h - 1) });
+  past.sort((a, b) => +b.date - +a.date);
+  const full = (x: Date) => `${fmtD(x)}/${x.getFullYear()}`;
+  modal(`<div class="dhero"><small>Bên nhau</small><b>${fmtN(d)}</b><span>ngày · từ ${full(met)}</span></div>
+    <h3 class="csec">Sắp tới</h3>
+    <div class="dlist">${ev.map(e => `<div class="drow ${e.in === 0 ? "today" : ""}"><span class="di">${icon[e.key] || "✨"}</span><div><b>${esc(e.t)}</b><small>${full(e.date)}</small></div><em>${e.in === 0 ? "Hôm nay 🎉" : `còn ${e.in} ngày`}</em></div>`).join("")}</div>
+    <h3 class="csec">Đã cùng nhau đi qua</h3>
+    <div class="dlist">${past.slice(0, 8).map(p => `<div class="drow past"><span class="di">💗</span><div><b>${esc(p.t)}</b><small>${full(p.date)}</small></div></div>`).join("") || `<p class="sub small">Mốc đầu tiên sắp tới rồi đó!</p>`}</div>
+    <p class="sub small">Sinh nhật ${esc(S.names.her)}: ${fmtD(parse(CFG.herBirthday))} · Sinh nhật ${esc(S.names.his)}: ${fmtD(parse(CFG.hisBirthday))}</p>
+    <div class="mbtns"><button class="b3" data-close>Thương ghê</button></div>`);
+}
+
+/* ===== Ảnh treo tường: chọn ảnh, thu nhỏ trên máy rồi lưu cùng tiến trình ===== */
+function pickPhoto() {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.addEventListener("change", async () => {
+    const f = inp.files?.[0]; if (!f) return;
+    try { S.photo = await shrink(f, 360); save(); closeModal(); render(); toast("Đã treo ảnh lên tường tiệm 🖼️"); }
+    catch { toast("Không đọc được ảnh này, thử ảnh khác nha"); }
+  });
+  inp.click();
+}
+async function shrink(file: File, max: number) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+    const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas");
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.82);
+  } finally { URL.revokeObjectURL(url); }
+}
+export function photoSheet() {
+  if (!S.photo) return pickPhoto();
+  modal(`<h2>Ảnh trên tường</h2><div class="pframe"><img src="${S.photo}" alt="Ảnh treo tường"></div>
+    <div class="mbtns"><button class="b3" id="phNew">Đổi ảnh khác</button><button class="b3 w" id="phDel">Gỡ ảnh xuống</button></div>`);
+  $("#phNew")!.addEventListener("click", pickPhoto);
+  $("#phDel")!.addEventListener("click", () => { S.photo = ""; save(); closeModal(); render(); toast("Đã gỡ ảnh"); });
+}

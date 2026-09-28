@@ -15,6 +15,7 @@ import { cakeSVG, critterSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
 import { claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { authHTML } from "../ui/screens/auth";
+import { cakesSheet, daysSheet, menuSheet } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
@@ -168,6 +169,9 @@ const STORIES: Story[] = [
       earn("welcome", 300, "Quà khai trương"); spend("stock", 72, "Nhập hàng theo gợi ý"); earn("sales", 286); earn("tip", 64); earn("memo", 48); earn("goal", 70);
       note("Ca 12 · tiền bán bánh", 468); spend("quick", 9); note("Ca 12 · nhập nhanh giữa ca", -9); spend("decor", 90, "Mua Ren hồng"); spend("food", 30, "Mua 5 Hạt"); earn("gift", 60, "Quà mục tiêu ngày");
       return modalOver(homeHTML(), wallet); } },
+  { id: "m-menu", sec: "modals", title: "Menu", desc: "Chạm bảng Menu ở cảnh tiệm", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), menuSheet); } },
+  { id: "m-cakes", sec: "modals", title: "Tủ bánh", desc: "Carousel các bánh đang bán", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), cakesSheet); } },
+  { id: "m-days", sec: "modals", title: "Ngày kỷ niệm", desc: "Chạm số ngày yêu", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), daysSheet); } },
   { id: "auth-welcome", sec: "screens", title: "Tài khoản · chào", desc: "Lần đầu mở app: tạo tiệm mới hoặc đăng nhập", kind: "screen", html: () => authHTML("welcome") },
   { id: "auth-register", sec: "screens", title: "Tài khoản · tạo tiệm", desc: "Tên tiệm (= username), PIN 4 số, câu hỏi bí mật", kind: "screen", long: true, html: () => { lvState(3); return authHTML("register"); } },
   { id: "auth-lock", sec: "screens", title: "Tài khoản · nhập PIN", desc: "Các lần mở app sau chỉ hỏi PIN", kind: "screen", html: () => authHTML("lock") },

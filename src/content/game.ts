@@ -14,9 +14,10 @@ export const CATS: Record<PartKey, [string, string][]> = {
 
 export interface Recipe { id: string; n: string; base: number; cream: number; top: number; lv: number; price: number }
 export const RECIPES: Recipe[] = ([
-  ["Bông lan Matcha Dâu", 0, 0, 0], ["Mochi Kem Dâu", 2, 1, 0], ["Tart Vani Hạt dẻ", 1, 2, 2],
-  ["Bông lan Đậu đỏ", 0, 0, 1], ["Mochi Matcha Đậu đỏ", 2, 0, 1], ["Tart Dâu tây", 1, 1, 0],
-  ["Bông lan Vani Hạt dẻ", 0, 2, 2], ["Mochi Vani Dâu", 2, 2, 0], ["Tart Matcha Hạt dẻ", 1, 0, 2]
+  // tên = Đế + Kem + Topping, đọc tên là biết bánh gồm gì
+  ["Bông lan Matcha Dâu tây", 0, 0, 0], ["Mochi Kem dâu Dâu tây", 2, 1, 0], ["Tart Vani Hạt dẻ", 1, 2, 2],
+  ["Bông lan Matcha Đậu đỏ", 0, 0, 1], ["Mochi Matcha Đậu đỏ", 2, 0, 1], ["Tart Kem dâu Dâu tây", 1, 1, 0],
+  ["Bông lan Vani Hạt dẻ", 0, 2, 2], ["Mochi Vani Dâu tây", 2, 2, 0], ["Tart Matcha Hạt dẻ", 1, 0, 2]
 ] as [string, number, number, number][]).map(([n, base, cream, top], i) => ({ id: "r" + (i + 1), n, base, cream, top, lv: Math.max(1, i - 2), price: 16 + i * 2 }));
 // Lv 1 mở sẵn 4 công thức, sau đó mỗi cấp mở thêm 1 (tới Lv 6)
 export const recipeOf = (b: Build) => RECIPES.find(r => r.base === b.base && r.cream === b.cream && r.top === b.top);

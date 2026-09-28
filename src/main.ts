@@ -12,6 +12,7 @@ import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, t
 import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
+import { cakesSheet, daysSheet, menuSheet, photoSheet } from "./ui/sheets";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
@@ -33,6 +34,10 @@ document.addEventListener("click", e => {
     case "claim": return claimGoals();
     case "settings": return settings();
     case "account": return accountPanel();
+    case "menu": return menuSheet();
+    case "cakes": return cakesSheet();
+    case "days": return daysSheet();
+    case "photo": return photoSheet();
     case "wallet": if (!SH) wallet(); return;
     case "update": return void applyUpdate();
     case "checkver": return void checkVersion(true).then(r => { if (r) void applyUpdate(); else toast(`Đang là bản mới nhất (${__APP_VERSION__}) ✓`); });

@@ -6,13 +6,35 @@ export const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.qu
 export const esc = (s: unknown) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 let onClose: (() => void) | null = null;
+/* Hộp thoại kiểu iOS: trượt từ dưới lên, kéo thanh trên cùng xuống để đóng */
 export function modal(html: string, cb?: () => void) {
   onClose = cb || null;
-  $("#layer")!.innerHTML = `<div class="modal" id="modal"><div class="mbox" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#layer")!.innerHTML = `<div class="modal" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="grabber" aria-hidden="true"></div>${html}</div></div>`;
+  dragToClose($<HTMLElement>("#modal .mbox")!);
 }
-export function closeModal() { $("#layer")!.innerHTML = ""; const cb = onClose; onClose = null; cb?.(); }
+function dragToClose(box: HTMLElement) {
+  let y0: number | null = null, dy = 0;
+  box.addEventListener("pointerdown", e => {
+    const top = box.getBoundingClientRect().top;
+    if (e.clientY - top > 44 || box.scrollTop > 0 || (e.target as HTMLElement).closest("button, input, textarea, select, label")) return;
+    y0 = e.clientY; dy = 0; box.style.transition = "none";
+  });
+  box.addEventListener("pointermove", e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); box.style.transform = `translateY(${dy}px)`; });
+  const end = () => {
+    if (y0 == null) return; y0 = null; box.style.transition = ""; box.style.transform = "";
+    if (dy > 90 && box.closest("#modal")) closeModal();
+  };
+  box.addEventListener("pointerup", end); box.addEventListener("pointercancel", end);
+}
+/* trượt xuống rồi mới gỡ (hộp thoại mới mở ngay sau đó không bị ảnh hưởng) */
+function dismiss() {
+  const m = $("#modal"); if (!m) return;
+  m.removeAttribute("id"); m.classList.add("out");
+  setTimeout(() => m.remove(), 220);
+}
+export function closeModal() { dismiss(); const cb = onClose; onClose = null; cb?.(); }
 /* đóng mà không chạy callback (khi chuyển thẳng sang màn khác) */
-export function dropModal() { onClose = null; $("#layer")!.innerHTML = ""; }
+export function dropModal() { onClose = null; dismiss(); }
 export const hasModal = () => !!$("#modal");
 
 let toastT = 0;

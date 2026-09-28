@@ -21,6 +21,7 @@ export interface State {
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
   earned: number;                 // tổng xu kiếm được từ bán bánh (bảng xếp hạng)
   book: Book;                     // sổ thu chi (bảng Ví)
+  photo: string;                  // ảnh treo tường tiệm (data URL đã thu nhỏ)
   cloud: Cloud;
 }
 /* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
@@ -37,7 +38,7 @@ export function fresh(): State {
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
-    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(),
+    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
 }

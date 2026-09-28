@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.12", date: "28/09/2026", notes: ["Treo ảnh của hai đứa lên tường tiệm (chạm ô + trên tường)", "Chạm bảng Menu, Tủ bánh để xem các món", "Chạm số ngày yêu để xem mọi ngày kỷ niệm", "Hộp thoại trượt từ dưới lên như iPhone, kéo xuống để đóng", "Tên bánh ghi đủ Đế + Kem + Topping"] },
   { v: "2.11", date: "28/09/2026", notes: ["Chọn đúng đủ 4 món là tự giao bánh", "Hàng đợi có viên đường cho biết độ ngọt khách gọi", "Thu gọn phiếu: thấy bánh đang làm cạnh đơn khách", "Tắt Tự nhận đơn thì các bé làm đơn đó luôn", "Công tắc Đi làm, Nhạc nền… dễ nhìn hơn"] },
   { v: "2.10", date: "28/09/2026", notes: ["Tự cập nhật khi mở app, không cần tắt app mở lại nữa", "Cập nhật xong hiện Có gì mới", "Cài đặt: xem phiên bản, kiểm tra bản mới, tải lại bản mới nhất"] },
   { v: "2.9", date: "28/09/2026", notes: ["Tài khoản: tên tiệm + PIN 4 số, lần sau mở app chỉ hỏi PIN", "Tiệm tự lưu theo tên, đổi máy chỉ cần đăng nhập", "Bấm vào số xu để xem ví: tổng thu, tổng chi, lịch sử", "Bảng xếp hạng theo tiền bán hàng: Tuần này / Tất cả, theo dõi người ấy bằng tên tiệm"] },
