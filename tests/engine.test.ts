@@ -50,7 +50,7 @@ describe("ngày đặc biệt", () => {
 describe("dữ liệu lưu", () => {
   it("bản v1: hoàn xu đồ trang trí cũ và đổi tên thú cưng mặc định", () => {
     const s = loadState(JSON.stringify({ coins: 100, decor: ["plant", "bell"], names: { pets: { dog: "Bông", gold: "Mơ", white: "Tuyết" } } }));
-    expect(s.v).toBe(3);
+    expect(s.v).toBe(4);
     expect(s.refund).toBe(410);
     expect(s.coins).toBe(100 + 60 + 350);
     expect(s.decor).toEqual([]);
@@ -62,13 +62,22 @@ describe("dữ liệu lưu", () => {
       { who: "Mèo mướp", look: { kind: "goldcat", fur: "#fff" }, s: 5, txt: "", love: false },
       { who: "Bé Na", look: { gender: "girl" }, s: 3, txt: "", love: false }] }));
     expect(s.coins).toBe(10 + 120 + 900);
-    expect(s.decor).toEqual(["plant"]);
+    expect(s.owned).toEqual(["plant:1"]);
+    expect(s.room.plant).toBe("1");
     expect(s.reviews.map(r => r.who)).toEqual(["Bé Na"]);
+  });
+
+  it("bản 2.x -> v4: đồ trang trí cũ thành kiểu trong 8 nhóm và được dùng luôn", () => {
+    const s = loadState(JSON.stringify({ v: 3, coins: 10, decor: ["curtain", "lamp", "bell", "teapot"] }));
+    expect(s.owned).toEqual(["curtain:1", "lamp:1", "lamp:2", "counter:mint"]);
+    expect(s.room).toMatchObject({ curtain: "1", lamp: "1", counter: "mint", wall: "pink" });
+    expect(s.decor).toEqual([]);
+    expect(s.refund).toBeUndefined();
   });
 
   it("người chơi mới không bị hoàn xu", () => {
     const s = loadState(null);
-    expect(s.v).toBe(3);
+    expect(s.v).toBe(4);
     expect(s.refund).toBeUndefined();
   });
 

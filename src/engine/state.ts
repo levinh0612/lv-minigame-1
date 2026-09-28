@@ -1,6 +1,7 @@
 /* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
 import { CFG, type PetId } from "../content/couple";
-import { DECOR, STARTER_STOCK, type FoodId, type Look, type StockKey } from "../content/game";
+import { STARTER_STOCK, type FoodId, type Look, type StockKey } from "../content/game";
+import { DEFAULT_ROOM, OLD_TO_ROOM, type Room } from "../content/room";
 
 export const KEY = "tiem-banh-matcha-v1";
 
@@ -16,19 +17,21 @@ export interface State {
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
   food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
+  room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
 }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
 
 export function fresh(): State {
   return {
-    v: 3, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
+    v: 4, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
     names: { her: CFG.herName, his: CFG.hisName, girls: CFG.girlNames, boys: CFG.boyNames, pets: petMap((_, i) => CFG.pets[i].name) },
     pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
-    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true
+    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
+    room: { ...DEFAULT_ROOM }, owned: []
   };
 }
 
@@ -51,18 +54,26 @@ export function loadState(raw: string | null): State {
   }
   // v2 -> v3: bản 2.0 từng bỏ sót bước trên; dọn đồ không còn tồn tại (hoàn xu) và đánh giá hình cũ
   if (ver < 3) {
-    const known = new Set(DECOR.map(d => d.id));
+    const known = new Set(Object.keys(OLD_TO_ROOM));
     refund += s.decor.filter(id => !known.has(id)).reduce((a, id) => a + (OLD_DECOR[id] || 0), 0);
     s.decor = s.decor.filter(id => known.has(id));
     s.reviews = (s.reviews || []).filter(r => validLook(r.look));
   }
-  s.v = 3; s.coins += refund; if (refund) s.refund = refund;
+  // v3 -> v4: đồ trang trí thành 8 nhóm (Tường, Sàn, Quầy...); món cũ chuyển sang kiểu tương ứng và được dùng luôn
+  if (ver < 4) {
+    s.room = { ...DEFAULT_ROOM }; s.owned = [];
+    (s.decor || []).forEach(id => { const m = OLD_TO_ROOM[id]; if (!m) return; s.owned.push(m.join(":")); if (s.room[m[0]] === DEFAULT_ROOM[m[0]]) s.room[m[0]] = m[1]; });
+    s.decor = [];
+  }
+  s.v = 4; s.coins += refund; if (refund) s.refund = refund;
   s.names = Object.assign(fresh().names, s.names || {});
   s.names.pets = Object.assign(fresh().names.pets, s.names.pets || {});
   s.pets = Object.assign(fresh().pets, s.pets || {});
   s.staff = Object.assign(fresh().staff, s.staff || {});
   s.stock = Object.assign(fresh().stock, s.stock || {});
   s.food = Object.assign(fresh().food, s.food || {});
+  s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});
+  s.owned = s.owned || [];
   ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }

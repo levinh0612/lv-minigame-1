@@ -2,16 +2,16 @@ import "./styles/main.css";
 import { registerSW } from "virtual:pwa-register";
 import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
-import { CATS, DECOR, type PartKey, type StockKey } from "./content/game";
+import { CATS, type PartKey, type StockKey } from "./content/game";
+import type { RoomKey } from "./content/room";
 import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
-import { lvl } from "./engine/progress";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
 import { backup, claimGoals, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
 import { navigate } from "./ui/router";
-import { selectPet } from "./ui/screens/shop";
+import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
 
 /* Một bộ xử lý chạm cho cả app (event delegation) */
@@ -39,13 +39,11 @@ document.addEventListener("click", e => {
     case "stock": return openStock(!document.querySelector("#ssheet.on"));
     case "tickall": return tickAll();
     case "refill": return doRefill();
+    case "dcancel": cancelDecor(); return render();
+    case "dbuy": { const m = applyDecor(); if (m) { sfx("level"); toast(m); } return render(); }
   }
-  if (d.buy) {
-    const x = DECOR.find(v => v.id === d.buy)!;
-    if (S.coins < x.cost || S.decor.includes(x.id) || x.lv > lvl()) return;
-    S.coins -= x.cost; S.decor.push(x.id); save(); render(); sfx("level"); toast("Đã mua " + x.n);
-    return;
-  }
+  if (d.dcat) { setDecorCat(+d.dcat); sfx("tap"); return render(); }
+  if (d.dtry) { const [k, v] = d.dtry.split(":"); tryDecor(k as RoomKey, v); sfx("tap"); return render(); }
   if (d.ingBuy) {
     const [k, i, n] = d.ingBuy.split(":"), key = k as StockKey;
     if (buy(key, +i, +n)) { sfx("tap"); toast(`+${n} ${CATS[key][+i][0]} · ${packPrice(key, +i, +n)} xu`); } else toast("Không đủ xu");

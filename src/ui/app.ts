@@ -2,6 +2,7 @@
 import { rollDay } from "../engine/progress";
 import { $, dropModal, hasModal } from "./dom";
 import { pauseMenu } from "./modals";
+import { fitRooms } from "./room";
 import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
 import { homeHTML } from "./screens/home";
@@ -32,6 +33,7 @@ export function render() {
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
   }
+  fitRooms();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu
   window.scrollTo(0, scroll ? y : 0);
 }

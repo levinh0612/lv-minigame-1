@@ -1,27 +1,54 @@
 import { CFG, type PetId } from "../../content/couple";
-import { DECOR, FOODS, PETS } from "../../content/game";
+import { FOODS, PETS } from "../../content/game";
+import { ROOM_CATS, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
 import { canHire, foodOf, mealFor, onDuty, staffDef, trainCost } from "../../engine/economy";
-import { lvl, xpFor } from "../../engine/progress";
-import { S, petName } from "../../engine/state";
+import { decorCount, unlocked } from "../../engine/progress";
+import { S, petName, save } from "../../engine/state";
 import { fmtD, fmtN, parse } from "../../engine/util";
 import { critterSVG, foodSVG } from "../art";
-import { backBtn, coinPill, esc, heartRow, levelChip } from "../dom";
+import { esc, heartRow } from "../dom";
+import { roomHTML } from "../room";
 import { pageHead } from "./prep";
-import { SHOP_PATH, type ShopTab } from "../router";
+import type { ShopTab } from "../router";
 import { claimBtn, goalsList } from "./goals";
 
-export const roomHTML = () => `<div class="room"><div class="floor"></div><div class="rwin"></div><div class="board">Menu<br>hôm nay</div>
-  ${S.decor.map(id => DECOR.find(d => d.id === id)?.rm || "").join("")}
-  <div class="pets">${critterSVG(PETS.dog, 62)}${critterSVG(PETS.gold, 68)}${critterSVG({ ...PETS.white, mood: "love" }, 62)}</div></div>`;
-
-export function decorTab() {
-  const L = lvl();
-  return `<div class="grid2">${DECOR.map(d => {
-    const own = S.decor.includes(d.id), lock = d.lv > L;
-    return `<div class="item ${lock ? "lock" : ""}"><div class="pv" style="background:${d.bg}">${d.pv}</div><b>${esc(d.n)}</b><small>${esc(d.d)}</small>
-      ${own ? '<div class="tag use">Đang dùng</div>' : lock ? `<div class="tag lk">Mở ở Lv ${d.lv}</div>` : `<button class="buy" data-buy="${d.id}" ${S.coins < d.cost ? "disabled" : ""}>${fmtN(d.cost)} xu</button>`}</div>`;
-  }).join("")}</div>`;
+/* ===== Trang trí tiệm (DecorScreen của Claude Design): chạm để thử, rồi mua hoặc dùng ===== */
+let dcat = 0, trial: { k: RoomKey; v: string } | null = null;
+export const setDecorCat = (i: number) => { dcat = i; trial = null; };
+export function tryDecor(k: RoomKey, v: string) { trial = S.room[k] === v ? null : { k, v }; }
+export const cancelDecor = () => { trial = null; };
+/* mua (nếu chưa có) và dùng món đang thử; trả về thông báo hoặc "" nếu không làm gì */
+export function applyDecor(): string {
+  if (!trial) return "";
+  const { k, v } = trial, it = roomItem(k, v), id = k + ":" + v, own = isDefault(k, v) || S.owned.includes(id);
+  if (!own) { if (S.coins < it.cost) return ""; S.coins -= it.cost; S.owned.push(id); }
+  S.room[k] = v; trial = null; save();
+  return own ? `Đã đổi sang ${it.n}` : `Đã mua ${it.n}`;
 }
+export function decorHTML() {
+  const C = ROOM_CATS[dcat], room = { ...S.room }, tr = trial;
+  if (tr) room[tr.k] = tr.v;
+  const trIt = tr ? roomItem(tr.k, tr.v) : null, trOwn = tr ? isDefault(tr.k, tr.v) || S.owned.includes(tr.k + ":" + tr.v) : false;
+  const items = C.items.map(it => {
+    const own = isDefault(C.k, it.v) || S.owned.includes(C.k + ":" + it.v), eq = S.room[C.k] === it.v, sel = tr?.k === C.k && tr.v === it.v;
+    return `<button class="ditem ${sel ? "sel" : eq ? "eq" : ""}" data-dtry="${C.k}:${it.v}"><span class="sw" style="background:${it.sw};background-size:${it.sws || "auto"}">${it.glyph || ""}</span>
+      <span class="dn">${esc(it.n)}</span><span class="tg ${eq ? "use" : own ? "own" : "buy"}">${eq ? "Đang dùng" : own ? "Đã có" : `${it.cost} xu`}</span></button>`;
+  }).join("");
+  const act = !tr ? `<button class="b3 off" disabled>Chạm món để thử</button>`
+    : trOwn ? `<button class="b3 use" data-act="dbuy">Dùng món này</button>`
+    : S.coins >= trIt!.cost ? `<button class="b3" data-act="dbuy">Mua · ${trIt!.cost} xu</button>` : `<button class="b3 off" disabled>Chưa đủ xu · ${trIt!.cost} xu</button>`;
+  const fx = trIt ? fxText(trIt) : "";
+  return `<div class="scr decor4">
+    ${pageHead("Trang trí tiệm", "")}
+    <p class="dsub">Đã có ${decorCount()} món · hiện ở màn chính</p>
+    <div class="droom">${roomHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, recipes: unlocked().length })}
+      ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
+    <div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
+    <div class="ditems">${items}</div>
+    <div class="dfoot"><button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>${act}</div>
+  </div>`;
+}
+
 /* ===== Nhân viên nhỏ (PetsScreen của Claude Design) ===== */
 const BREED: Record<PetId, string> = { dog: "Cún trắng xù · làm bánh nhanh", gold: "Mèo Anh golden · khéo trang trí", white: "Mèo trắng · làm được món khó" };
 let sel: PetId = "dog";
@@ -74,15 +101,7 @@ function giftTab() {
 }
 
 export function shopHTML(tab: ShopTab) {
-  const title = { decor: "Trang trí tiệm", pets: "Thú cưng", gift: "Quà tặng" }[tab];
   if (tab === "pets") return petsHTML();
-  const body = { decor: decorTab, gift: giftTab }[tab](), L = lvl();
-  return `<div class="scr">
-    <div class="shead">${backBtn}<h2>${title}</h2>${coinPill()}</div>
-    ${roomHTML()}
-    <div class="shoplv">${levelChip(L, S.xp - xpFor(L), xpFor(L + 1) - xpFor(L))}<span>Lên cấp để mở thêm đồ trang trí, công thức và nhân viên</span></div>
-    <div class="seg" role="tablist">${([["decor", "Trang trí"], ["pets", "Thú cưng"], ["gift", "Quà tặng"]] as [ShopTab, string][]).map(([id, n]) =>
-      `<button class="${tab === id ? "on" : ""}" data-go="${SHOP_PATH[id]}" data-replace role="tab" aria-selected="${tab === id}">${n}</button>`).join("")}</div>
-    ${body}
-  </div>`;
+  if (tab === "decor") return decorHTML();
+  return `<div class="scr gift4">${pageHead("Quà tặng")}${giftTab()}</div>`;
 }

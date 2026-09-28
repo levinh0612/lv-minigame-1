@@ -67,6 +67,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.6", date: "28/09/2026", notes: ["Màn chính có cảnh tiệm: Milo, Siro, Cacao sau quầy, tủ bánh, bàn khách", "Trang trí mới: 8 nhóm (tường, sàn, quầy, rèm, đèn, treo tường, cây, thảm), chạm để thử trước khi mua", "Đồ trang trí cũ tự chuyển sang kiểu mới, không mất gì"] },
   { v: "2.5", date: "28/09/2026", notes: ["Màn Chơi mới: phiếu order kéo lên/thu gọn, icon cho từng nguyên liệu", "Kho nguyên liệu mở ngay giữa ca", "Mục tiêu mỗi ca có thưởng xu", "Màn Kết quả là tấm bảng giơ lên", "Màn Chuẩn bị và Nhân viên nhỏ mới; Siro thành mèo Anh golden"] },
   { v: "2.4", date: "28/09/2026", notes: ["Hàng đợi chung trên một hàng, không cần vuốt ngang", "Công tắc Tự nhận đơn / rảnh tay", "Chỉ hiện hình bánh; tự nhớ công thức được thưởng +50%", "Các bé tự nhập nhanh nguyên liệu, báo rõ khi thiếu"] },
   { v: "2.3", date: "27/09/2026", notes: ["Quà khai trương 300 xu + 5 Hạt", "Thú cưng làm thợ bánh, tự nhận đơn; lương bằng Hạt / Pate / Ức gà", "Độ nổi tiếng: tới 6 bàn", "Lv 1 có sẵn 4 công thức", "Thẻ gọi món mới dễ nhìn hơn"] },

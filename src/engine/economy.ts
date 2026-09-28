@@ -1,7 +1,7 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
 import { FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
-import { featured, fx, lvl, unlocked } from "./progress";
+import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { S, save } from "./state";
 
 export const unitCost = (k: StockKey, i: number) => UNIT_COST[k][i];
@@ -115,7 +115,7 @@ export function payCrew(): { cost: number; fed: { id: PetId; meal: FoodId }[]; h
 /* Độ nổi tiếng: sao trung bình 20 đánh giá gần nhất (0..3) + đồ trang trí + cấp tiệm */
 export function fameScore() {
   const r = S.reviews.slice(0, 20), avg = r.length ? r.reduce((a, x) => a + x.s, 0) / r.length : 2;
-  return avg + S.decor.length * 0.4 + (lvl() - 1) * 0.3;
+  return avg + decorCount() * 0.4 + (lvl() - 1) * 0.3;
 }
 export const fameLevel = () => { const x = fameScore(); return x < 3 ? 0 : x < 4.5 ? 1 : x < 6 ? 2 : 3; };
 export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });

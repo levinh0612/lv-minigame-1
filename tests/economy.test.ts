@@ -200,9 +200,9 @@ describe("thú cưng làm nhân viên", () => {
   it("độ nổi tiếng tăng số bàn", () => {
     expect(fame().seats).toBe(3);
     S.reviews = Array(10).fill({ who: "x", look: { kind: "cat", fur: "#fff" }, s: 3, txt: "", love: false });
-    S.decor = ["curtain", "lamp", "chair"];
+    Object.assign(S.room, { curtain: "1", lamp: "1", rug: "1" });
     expect(fame().seats).toBe(4);                            // 3 sao + 3 đồ × 0.4 = 4.2 → Được biết đến
-    S.decor = ["curtain", "lamp", "chair", "plant", "flags", "teapot", "bell", "frame"];
+    Object.assign(S.room, { wall: "mint", floor: "wood", counter: "mint", wallItem: "1", plant: "2" });
     expect(fame().seats).toBe(6);                            // 3 + 3.2 = 6.2 → Viral
   });
 });

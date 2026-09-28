@@ -1,5 +1,6 @@
 /* Cấp, mục tiêu ngày, hiệu ứng đồ trang trí */
-import { DECOR, RECIPES, type FxKey } from "../content/game";
+import { RECIPES, type FxKey } from "../content/game";
+import { ROOM_CATS, isDefault, roomItem } from "../content/room";
 import { daysTogether } from "./dates";
 import { S, save } from "./state";
 import { DAY, today, ymd } from "./util";
@@ -7,7 +8,9 @@ import { DAY, today, ymd } from "./util";
 export const xpFor = (L: number) => 40 * (L - 1) * (L - 1);
 export const lvl = () => Math.min(99, Math.floor(Math.sqrt(S.xp / 40)) + 1);
 export const unlocked = () => RECIPES.filter(r => r.lv <= lvl());
-export const fx = (k: FxKey) => S.decor.reduce((a, id) => a + (DECOR.find(x => x.id === id)?.fx[k] || 0), 0);
+export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0);
+/* số món trang trí đang dùng (không tính kiểu mặc định) */
+export const decorCount = () => ROOM_CATS.filter(c => !isDefault(c.k, S.room[c.k])).length;
 
 /* Sang ngày mới: reset mục tiêu, tính chuỗi ngày chơi */
 export function rollDay() {

@@ -5,7 +5,7 @@ import "../styles/main.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
 import {
-  CATS, CRITTERS, DECOR, FOODS, HIM, KEYS, PETS, RECIPES, STAFF,
+  CATS, CRITTERS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF,
   type CritterLook, type GuestLook, type Mood, type PartKey
 } from "../content/game";
 import { rollDay } from "../engine/progress";
@@ -19,7 +19,9 @@ import { homeHTML } from "../ui/screens/home";
 import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/screens/play";
 import { prepHTML } from "../ui/screens/prep";
 import { roadmapHTML } from "../ui/screens/roadmap";
-import { roomHTML, shopHTML } from "../ui/screens/shop";
+import { shopHTML, tryDecor } from "../ui/screens/shop";
+import { fitRooms, roomHTML } from "../ui/room";
+import { ROOM_CATS } from "../content/room";
 
 setPersist(false);   // không bao giờ ghi vào tiến trình thật
 
@@ -130,8 +132,8 @@ const STORIES: Story[] = [
     } },
   { id: "goals", sec: "screens", title: "Mục tiêu", desc: "Mục tiêu ngày, ngày sắp tới, công thức, đánh giá", kind: "screen", long: true,
     html: () => { lvState(4, s => { s.reviews = REVIEWS as State["reviews"]; }); S.daily.served = 5; S.daily.feat = 1; return goalsHTML(); } },
-  { id: "shop-decor", sec: "screens", title: "Cửa hàng · Trang trí", desc: "Đã có Rèm và Đèn mây; một số đồ còn khoá theo cấp", kind: "screen", long: true,
-    html: () => { lvState(4, s => { s.decor = ["curtain", "lamp"]; }); return shopHTML("decor"); } },
+  { id: "shop-decor", sec: "screens", title: "Trang trí tiệm", desc: "Đang dùng Rèm ren và Đèn mây; đang thử tường Sọc bạc hà", kind: "screen",
+    html: () => { lvState(4, s => { s.room.curtain = "1"; s.room.lamp = "1"; s.room.plant = "1"; s.owned = ["curtain:1", "lamp:1", "plant:1"]; }); tryDecor("wall", "mint"); const h = shopHTML("decor"); tryDecor("wall", "pink"); return h; } },
   { id: "shop-pets", sec: "screens", title: "Thú cưng (kiêm nhân viên)", desc: "Tủ đồ ăn; Milo đi làm bậc 2, Siro chờ nhận vào làm, Cacao chưa đủ cấp; thưởng đồ ăn mỗi ngày", kind: "screen", long: true,
     html: () => { lvState(3, s => { s.pets.dog.aff = 32; s.pets.gold.aff = 14; s.food = { kibble: 4, pate: 2, chicken: 0 }; s.staff.dog = { hired: true, lv: 2, onDuty: true }; });
       S.pets.dog.fedDay = S.daily.day; return shopHTML("pets"); } },
@@ -222,10 +224,10 @@ const STORIES: Story[] = [
       <div class="toast" style="position:static;transform:none;align-self:center">Sai độ ngọt rồi: Bé Na gọi Ít ngọt, không phải Vừa</div></div>` },
 
   /* ---------- Trang trí ---------- */
-  { id: "c-room", sec: "decor", title: "Phòng với đủ đồ trang trí", desc: "Tất cả đồ trang trí đặt trong phòng", kind: "comp",
-    html: () => { lvState(9, s => { s.decor = DECOR.map(d => d.id); }); return `<div class="board w390" style="padding:20px 0">${roomHTML()}</div>`; } },
-  { id: "c-decor", sec: "decor", title: "Thẻ đồ trang trí", desc: "Hình xem trước của từng món", kind: "comp",
-    html: () => `<div class="board"><div class="sbrow">${DECOR.map(d => `<div class="item" style="width:170px"><div class="pv" style="background:${d.bg}">${d.pv}</div><b>${esc(d.n)}</b><small>${esc(d.d)}</small><button class="buy">${d.cost} xu</button></div>`).join("")}</div></div>` }
+  { id: "c-room", sec: "decor", title: "Cảnh tiệm với đủ đồ", desc: "Tường kem, sàn gỗ, quầy matcha, rèm caro, dây đèn sao, đồng hồ mèo, monstera, thảm dâu", kind: "comp",
+    html: () => { lvState(9); return `<div class="board w390" style="padding:20px 16px">${roomHTML({ wall: "cream", floor: "wood", counter: "mint", curtain: "2", lamp: "2", wallItem: "2", plant: "2", rug: "2" }, { recipes: 9, giftDot: true })}</div>`; } },
+  { id: "c-decor", sec: "decor", title: "Ô đồ trang trí", desc: "Mẫu màu của từng kiểu trong 8 nhóm", kind: "comp",
+    html: () => `<div class="board">${ROOM_CATS.map(c => `<div class="sbrow"><b style="width:80px">${c.n}</b>${c.items.map(it => `<div class="sbcell" style="width:90px"><span class="sw" style="display:block;width:80px;height:46px;border-radius:12px;border:2px solid #4A3438;background:${it.sw};background-size:${it.sws || "auto"}"></span>${esc(it.n)}</div>`).join("")}</div>`).join("")}</div>` }
 ];
 
 /* ================= Hiển thị ================= */
@@ -239,6 +241,7 @@ if (q.has("list")) {
   document.body.classList.add("one");
   const s = STORIES.find(x => x.id === one);
   root.innerHTML = `<div class="sbw" id="shot">${s ? wrap(s) : "Không có story này"}</div>`;
+  fitRooms();
   // báo kích thước thật cho script chụp ảnh
   void document.fonts.ready.then(() => setTimeout(() => {
     const r = document.getElementById("shot")!.getBoundingClientRect();
@@ -252,5 +255,6 @@ if (q.has("list")) {
       ${STORIES.filter(s => s.sec === id).map(s => `<div class="story"><div class="cap">${esc(s.title)} <a href="?story=${s.id}">mở riêng</a><small>${esc(s.desc)}</small></div>${wrap(s)}</div>`).join("")}
     </div></section>`).join("")}
   </div>`;
+  fitRooms();
 }
 _setShift(null);
