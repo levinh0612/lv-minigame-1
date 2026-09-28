@@ -11,6 +11,7 @@ import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, critterSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
+import { cloudRestore, cloudSave, disablePush, enablePush, ensureCode, fmtCode, isStandalone, normCode, pushSupported } from "../net/cloud";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
 
 const paper = (txt: string) => `<div class="paper">${esc(txt)}<span class="sig">${esc(S.names.his)}</span></div>`;
@@ -70,6 +71,7 @@ export function settings() {
       <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
+      <button type="button" class="b3 w cloudbtn" data-act="cloud">☁︎ Lưu trên mây · bảng xếp hạng · nhắc giờ</button>
       <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button><button type="button" class="mini" data-act="backup">Sao lưu</button><button type="button" class="mini" data-act="restore">Khôi phục</button></div>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
     </form>`, render);
@@ -87,6 +89,47 @@ export function settings() {
     if (!resetArm) { resetArm = true; (e.target as HTMLElement).textContent = "Bấm lần nữa để xoá hết tiến trình"; return; }
     resetState(); closeModal(); toast("Đã chơi lại từ đầu");
   });
+}
+
+/* ===== Lưu trên mây: mã tiệm, tên trên bảng xếp hạng, nhắc 7g dậy / 11g ngủ ===== */
+export function cloudPanel() {
+  const code = ensureCode(), at = S.cloud.at ? new Date(S.cloud.at) : null;
+  const pushNote = !pushSupported() && !isStandalone() ? `<p class="sub small">Trên iPhone: bấm Chia sẻ → <b>Thêm vào MH chính</b>, mở game từ biểu tượng đó rồi mới bật được thông báo.</p>` : "";
+  modal(`<h2>Lưu trên mây</h2>
+    <p class="sub">Tiệm tự lưu sau mỗi ca. Đổi máy, cài lại app hay lên bản mới đều lấy lại được bằng <b>mã tiệm</b>. Giữ kín mã này nha.</p>
+    <div class="ccode"><b id="cCode">${fmtCode(code)}</b><button type="button" class="mini pk" id="cCopy">Copy</button></div>
+    <p class="sub small">${at ? `Lưu lần cuối: ${at.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}` : "Chưa lưu lần nào"} · <button type="button" class="lnk" id="cSave">Lưu ngay</button></p>
+    <label class="field">Lấy lại tiệm từ máy khác<input id="cIn" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" maxlength="19"></label>
+    <button type="button" class="mini" id="cLoad">Lấy lại tiệm</button>
+    <h3 class="csec">Bảng xếp hạng</h3>
+    <label class="field">Tên tiệm trên bảng<input id="cName" value="${esc(S.cloud.name)}" maxlength="24"></label>
+    <label class="tg"><input id="cShow" type="checkbox" ${S.cloud.show ? "checked" : ""}>Hiện tiệm trên bảng xếp hạng</label>
+    <h3 class="csec">Nhắc giờ</h3>
+    <label class="tg"><input id="cMorning" type="checkbox" ${S.cloud.morning ? "checked" : ""}>7:00 · chào buổi sáng, thư mới</label>
+    <label class="tg"><input id="cNight" type="checkbox" ${S.cloud.night ? "checked" : ""}>23:00 · nhắc đi ngủ</label>
+    ${pushNote}
+    <div class="mbtns"><button class="b3" type="button" id="cPush">${S.cloud.push ? "Cập nhật giờ nhắc" : "Bật thông báo"}</button>
+      ${S.cloud.push ? `<button class="b3 w" type="button" id="cOff">Tắt thông báo</button>` : `<button class="b3 w" data-close>Xong</button>`}</div>`, render);
+  const keep = () => { S.cloud.name = $<HTMLInputElement>("#cName")!.value.trim().slice(0, 24) || `Tiệm của ${S.names.her}`; S.cloud.show = $<HTMLInputElement>("#cShow")!.checked;
+    S.cloud.morning = $<HTMLInputElement>("#cMorning")!.checked; S.cloud.night = $<HTMLInputElement>("#cNight")!.checked; save(); };
+  ["#cName", "#cShow"].forEach(id => $(id)!.addEventListener("change", () => { keep(); void cloudSave(); }));
+  ["#cMorning", "#cNight"].forEach(id => $(id)!.addEventListener("change", keep));
+  $("#cCopy")!.addEventListener("click", async () => { try { await navigator.clipboard.writeText(fmtCode(code)); toast("Đã copy mã tiệm"); } catch { toast(fmtCode(code)); } });
+  $("#cSave")!.addEventListener("click", async () => { keep(); toast((await cloudSave()) ? "Đã lưu lên mây ☁︎" : "Chưa lưu được, kiểm tra mạng nha"); });
+  $("#cLoad")!.addEventListener("click", async () => {
+    const v = $<HTMLInputElement>("#cIn")!.value;
+    if (normCode(v).length !== 16) return toast("Mã tiệm gồm 16 ký tự nha");
+    try { await cloudRestore(v); toast("Đã lấy lại tiệm, đang tải lại…"); setTimeout(() => location.reload(), 700); }
+    catch (e) { toast((e as Error).message); }
+  });
+  $("#cPush")!.addEventListener("click", async () => {
+    keep();
+    if (!S.cloud.morning && !S.cloud.night) { await disablePush(); closeModal(); return toast("Đã tắt nhắc giờ"); }
+    const err = await enablePush().catch((e: Error) => e.message);
+    if (err) return toast(err);
+    closeModal(); toast(`Đã bật nhắc ${[S.cloud.morning ? "7:00" : "", S.cloud.night ? "23:00" : ""].filter(Boolean).join(" và ")} ✓`);
+  });
+  $("#cOff")?.addEventListener("click", async () => { await disablePush(); closeModal(); toast("Đã tắt thông báo"); });
 }
 
 /* ===== Hướng dẫn lần đầu ===== */

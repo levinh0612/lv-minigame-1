@@ -18,20 +18,25 @@ export interface State {
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
   food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
+  earned: number;                 // tổng xu kiếm được từ bán bánh (bảng xếp hạng)
+  cloud: Cloud;
 }
+/* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
+export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
 
 export function fresh(): State {
   return {
-    v: 4, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
+    v: 5, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
     names: { her: CFG.herName, his: CFG.hisName, girls: CFG.girlNames, boys: CFG.boyNames, pets: petMap((_, i) => CFG.pets[i].name) },
     pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
-    room: { ...DEFAULT_ROOM }, owned: []
+    room: { ...DEFAULT_ROOM }, owned: [], earned: 0,
+    cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false }
   };
 }
 
@@ -65,7 +70,9 @@ export function loadState(raw: string | null): State {
     (s.decor || []).forEach(id => { const m = OLD_TO_ROOM[id]; if (!m) return; s.owned.push(m.join(":")); if (s.room[m[0]] === DEFAULT_ROOM[m[0]]) s.room[m[0]] = m[1]; });
     s.decor = [];
   }
-  s.v = 4; s.coins += refund; if (refund) s.refund = refund;
+  // v4 -> v5: bắt đầu đếm tổng xu kiếm được; người chơi cũ ước theo số khách đã phục vụ
+  if (ver < 5 && raw) s.earned = Math.round((s.served || 0) * 20);
+  s.v = 5; s.coins += refund; if (refund) s.refund = refund;
   s.names = Object.assign(fresh().names, s.names || {});
   s.names.pets = Object.assign(fresh().names.pets, s.names.pets || {});
   s.pets = Object.assign(fresh().pets, s.pets || {});
@@ -74,6 +81,7 @@ export function loadState(raw: string | null): State {
   s.food = Object.assign(fresh().food, s.food || {});
   s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});
   s.owned = s.owned || [];
+  s.cloud = Object.assign(fresh().cloud, s.cloud || {});
   ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }

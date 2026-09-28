@@ -21,7 +21,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
         globIgnores: ["storybook.html", "assets/storybook-*", "splash/**"],
-        navigateFallbackDenylist: [/storybook/],
+        navigateFallbackDenylist: [/storybook/, /^\/api\//],
+        importScripts: ["push-sw.js"],
         navigateFallback: "/index.html",
         runtimeCaching: [
           { urlPattern: /^https:\/\/fonts\.googleapis\.com\//, handler: "StaleWhileRevalidate", options: { cacheName: "google-fonts-css" } },

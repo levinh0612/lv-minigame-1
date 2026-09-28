@@ -5,3 +5,8 @@ node_modules/
 .env*
 .vercel
 design-kit/
+
+# skill agent do vercel integration cài
+.agents/
+.claude/
+skills-lock.json

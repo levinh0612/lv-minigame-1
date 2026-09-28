@@ -15,6 +15,7 @@ import { fmtN } from "../../engine/util";
 import { cakeSVG, charSVG, critterSVG, ingSVG } from "../art";
 import { $, bump, coinPill, esc, floatText, haptic, toast } from "../dom";
 import { himNote } from "../modals";
+import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
 
 export let SH: Shift | null = null;
@@ -369,6 +370,7 @@ export function endShift() {
   result = { sh, lv: lvl(), led }; SH = null;
   navigate("/ket-qua", true);
   sfx(result.lv > sh.lv0 ? "level" : "end");
+  void cloudSave();
   Sound.play("home");
 }
 

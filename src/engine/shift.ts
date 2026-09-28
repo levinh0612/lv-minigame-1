@@ -236,8 +236,9 @@ export function beginShift() {
 /* Hết ca: tính lãi */
 export function finishShift(sh: Shift) {
   sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
-  S.coins += sh.goalCoins; S.shifts++; save();
-  return ledger(sh);
+  S.coins += sh.goalCoins; S.shifts++;
+  const led = ledger(sh); S.earned += led.revenue; save();
+  return led;
 }
 export const ledger = (sh: Shift) => {
   const revenue = sh.coins + sh.tips + sh.bonus + sh.goalCoins;

@@ -50,7 +50,7 @@ describe("ngày đặc biệt", () => {
 describe("dữ liệu lưu", () => {
   it("bản v1: hoàn xu đồ trang trí cũ và đổi tên thú cưng mặc định", () => {
     const s = loadState(JSON.stringify({ coins: 100, decor: ["plant", "bell"], names: { pets: { dog: "Bông", gold: "Mơ", white: "Tuyết" } } }));
-    expect(s.v).toBe(4);
+    expect(s.v).toBe(5);
     expect(s.refund).toBe(410);
     expect(s.coins).toBe(100 + 60 + 350);
     expect(s.decor).toEqual([]);
@@ -77,7 +77,7 @@ describe("dữ liệu lưu", () => {
 
   it("người chơi mới không bị hoàn xu", () => {
     const s = loadState(null);
-    expect(s.v).toBe(4);
+    expect(s.v).toBe(5);
     expect(s.refund).toBeUndefined();
   });
 

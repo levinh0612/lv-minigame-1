@@ -9,7 +9,8 @@ import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { backup, claimGoals, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
+import { backup, claimGoals, cloudPanel, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
+import { autoSave } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
@@ -31,6 +32,7 @@ document.addEventListener("click", e => {
     case "letter": return openLetter();
     case "claim": return claimGoals();
     case "settings": return settings();
+    case "cloud": return cloudPanel();
     case "pause": return pauseMenu();
     case "serve": return doServe();
     case "peek": return doPeek();
@@ -78,13 +80,18 @@ document.addEventListener("click", e => {
 });
 
 // rời app giữa ca: tự tạm dừng
-document.addEventListener("visibilitychange", () => { if (document.hidden && SH && !SH.paused && !hasModal()) pauseMenu(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && SH && !SH.paused && !hasModal()) pauseMenu();
+  if (document.hidden && !SH && S.shifts > 0) autoSave();     // rời app: lưu lên mây
+});
 window.addEventListener("hashchange", render);
 
 render();
 Sound.play("home");
 // lần đầu: hướng dẫn rồi quà khai trương; người chơi cũ chưa nhận quà thì tặng luôn
 setTimeout(() => { if (hasModal()) return; if (!S.tut) tutorial(); else welcome(); }, 400);
+// mở app: tiệm đã có tiến trình thì lưu lên mây (tạo mã tiệm nếu chưa có)
+if (import.meta.env.PROD && S.shifts > 0) setTimeout(autoSave, 3000);
 if (S.refund) { const r = S.refund; delete S.refund; save(); setTimeout(() => toast(`Tiệm đổi giao diện mới! Hoàn lại ${r} xu cho đồ trang trí cũ`), 600); }
 
 // PWA: chơi offline, có bản mới thì tự cập nhật lần mở sau

@@ -31,14 +31,15 @@ export const PHASES: Phase[] = [
     color: "#FF8FAB",
     items: [
       { title: "Tạo tiệm tặng người yêu", desc: "Nhập tên, ngày quen, sinh nhật, chọn thú cưng, viết sẵn thư, rồi gửi một đường link.", status: "doing" },
-      { title: "Tài khoản & đồng bộ", desc: "Đổi điện thoại vẫn giữ nguyên xu, cấp và hộp thư.", status: "soon" },
+      { title: "Lưu trên mây", desc: "Tự lưu sau mỗi ca; đổi điện thoại hay cài lại app thì nhập mã tiệm là lấy lại hết.", status: "done" },
       { title: "Thêm ảnh vào thư", desc: "Mỗi lá thư có thể kèm một tấm ảnh kỷ niệm.", status: "soon" }
     ]
   },
   {
     id: "p2", name: "Ngày nào cũng muốn ghé", goal: "Luôn có điều mới chờ ở tiệm", when: "Sau giai đoạn 1", color: "#FFD66B",
     items: [
-      { title: "Thông báo thư mới", desc: "Điện thoại nhắc nhẹ khi có thư hoặc có ngày đặc biệt.", status: "soon" },
+      { title: "Nhắc 7g dậy, 11g ngủ", desc: "Thông báo chào buổi sáng, nhắc đi ngủ; ngày đặc biệt có lời chúc riêng.", status: "done" },
+      { title: "Bảng xếp hạng", desc: "Các tiệm thi nhau xem ai kiếm được nhiều xu nhất.", status: "done" },
       { title: "Sự kiện theo mùa", desc: "Tết, Trung thu, Noel với bánh và đồ trang trí riêng.", status: "later" },
       { title: "Album sticker", desc: "Sưu tầm sticker từ khách và thú cưng, dán thành trang kỷ niệm.", status: "later" },
       { title: "Thay đồ cho Milo, Siro, Cacao", desc: "Mũ, nơ, áo len cho ba bé.", status: "later" }
@@ -67,6 +68,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.7", date: "28/09/2026", notes: ["Lưu trên mây: tự lưu sau mỗi ca, đổi máy nhập mã tiệm là lấy lại", "Bảng xếp hạng theo tổng xu kiếm được", "Thông báo 7:00 chào buổi sáng và 23:00 nhắc đi ngủ (bật trong Cài đặt)"] },
   { v: "2.6", date: "28/09/2026", notes: ["Màn chính có cảnh tiệm: Milo, Siro, Cacao sau quầy, tủ bánh, bàn khách", "Trang trí mới: 8 nhóm (tường, sàn, quầy, rèm, đèn, treo tường, cây, thảm), chạm để thử trước khi mua", "Đồ trang trí cũ tự chuyển sang kiểu mới, không mất gì"] },
   { v: "2.5", date: "28/09/2026", notes: ["Màn Chơi mới: phiếu order kéo lên/thu gọn, icon cho từng nguyên liệu", "Kho nguyên liệu mở ngay giữa ca", "Mục tiêu mỗi ca có thưởng xu", "Màn Kết quả là tấm bảng giơ lên", "Màn Chuẩn bị và Nhân viên nhỏ mới; Siro thành mèo Anh golden"] },
   { v: "2.4", date: "28/09/2026", notes: ["Hàng đợi chung trên một hàng, không cần vuốt ngang", "Công tắc Tự nhận đơn / rảnh tay", "Chỉ hiện hình bánh; tự nhớ công thức được thưởng +50%", "Các bé tự nhập nhanh nguyên liệu, báo rõ khi thiếu"] },

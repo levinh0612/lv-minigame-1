@@ -745,3 +745,33 @@ body[data-scr="result"]{background:var(--pink-l)}
 .dfoot .b3.use{background:#7FD1AE;box-shadow:0 6px 0 #4FB08A}
 .dfoot .b3.off{background:#F4C3CF;box-shadow:0 6px 0 #E8AFBE;opacity:1}
 .gift4 .list{padding-top:14px}
+
+/* ===== Bảng xếp hạng ===== */
+.rank4{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+.rkme{display:flex;align-items:center;justify-content:space-between;margin:14px 16px 0;padding:14px 16px;border-radius:22px;background:linear-gradient(135deg,#FFF0C9,#FFE3EA);box-shadow:0 4px 0 #F6DB94;font:800 14px var(--body);color:var(--ink2)}
+.rkme b{font:800 20px var(--display);color:var(--pink-d);font-variant-numeric:tabular-nums}
+.rkme span b{font-size:22px;color:var(--ink2)}
+.rkl{margin:12px 16px 0;background:#fff;border-radius:22px;box-shadow:0 4px 0 var(--sh);padding:4px 12px}
+.rk{display:flex;align-items:center;gap:10px;min-height:48px}
+.rk+.rk{border-top:2px dashed #F6E6EA}
+.rk .no{width:28px;height:28px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font:900 13px var(--body);color:var(--soft);flex:none}
+.rk .nm{flex:1;min-width:0;font:800 14px var(--body);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk .nm em{font-style:normal;font-size:10.5px;color:#fff;background:var(--pink);border-radius:7px;padding:1px 6px;margin-left:4px}
+.rk .lv{font:800 11px var(--body);color:var(--lav-d)}
+.rk b{font:900 13px var(--body);color:var(--mint-d);font-variant-numeric:tabular-nums;min-width:74px;text-align:right}
+.rk.me{background:#FFF3F6;margin:0 -12px;padding:0 12px}
+.rkgap{text-align:center;color:var(--soft);font-weight:900}
+.rkl .phint{margin:12px 4px}
+
+/* ===== Lưu trên mây ===== */
+.cloudbtn{width:100%;height:auto;min-height:48px;padding:10px 12px;font:800 14px var(--body);margin:6px 0 2px;border-radius:18px}
+.ccode{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--bg);border:2px dashed #FFB3C7;border-radius:16px;padding:10px 12px;margin:6px 0}
+.ccode b{font:800 18px/1.2 ui-monospace,Menlo,monospace;letter-spacing:1px;color:var(--ink2);-webkit-user-select:all;user-select:all}
+.sub.small{font-size:12px;margin:4px 0 8px}
+.lnk{font:800 12px var(--body);color:var(--pink-d);text-decoration:underline}
+.csec{margin:14px 0 4px;font:900 13px var(--body);color:var(--soft)}
+.hrow4{gap:6px}
+.hrow4 .rbtn{flex:none;width:34px;height:34px}
+.hrow4 .pill{flex:none}
+.love4 em{font-style:normal}
+@media (max-width:400px){.love4 em{display:none}}
