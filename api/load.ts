@@ -1,5 +1,5 @@
 /* POST /api/load {code}: lấy tiến trình đã lưu (đổi máy, cài lại app) */
-import { bad, body, db, hashCode, json, normCode, validCode } from "./_lib";
+import { bad, body, db, hashCode, json, normCode, validCode } from "./_lib.js";
 
 export async function POST(req: Request) {
   const b = await body<{ code: string }>(req, 1024);

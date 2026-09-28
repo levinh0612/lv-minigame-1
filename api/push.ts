@@ -2,7 +2,7 @@
    GET  /api/push                          -> khoá công khai VAPID
    POST /api/push {code, sub, her, morning, night} -> đăng ký / cập nhật giờ nhắc
    DELETE /api/push {endpoint}             -> huỷ */
-import { bad, body, cleanName, db, hashCode, json, normCode, validCode } from "./_lib";
+import { bad, body, cleanName, db, hashCode, json, normCode, validCode } from "./_lib.js";
 
 export function GET() { return json({ key: process.env.VAPID_PUBLIC_KEY ?? "" }); }
 

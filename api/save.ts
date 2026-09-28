@@ -1,5 +1,5 @@
 /* POST /api/save {code, name, earned, lv, ver, state}: lưu tiến trình lên mây (tạo mới nếu chưa có) */
-import { bad, body, cleanName, db, hashCode, json, normCode, validCode } from "./_lib";
+import { bad, body, cleanName, db, hashCode, json, normCode, validCode } from "./_lib.js";
 
 interface SaveReq { code: string; name?: string; earned?: number; lv?: number; ver?: string; state?: unknown }
 

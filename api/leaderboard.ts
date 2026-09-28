@@ -1,5 +1,5 @@
 /* GET /api/leaderboard?code=...: top 50 tiệm theo tổng xu kiếm được, kèm hạng của mình */
-import { db, hashCode, json, normCode, validCode } from "./_lib";
+import { db, hashCode, json, normCode, validCode } from "./_lib.js";
 
 export async function GET(req: Request) {
   const sql = db(), code = normCode(new URL(req.url).searchParams.get("code"));
