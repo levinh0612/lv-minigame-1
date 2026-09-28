@@ -2,10 +2,21 @@ import { defineConfig } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
 import pkg from "./package.json" with { type: "json" };
 
+/* Mỗi lần build có một mã riêng; ghi ra version.json để game biết đã có bản mới (không cache) */
+const VERSION = pkg.version.split(".").slice(0, 2).join(".");
+const BUILD = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+const versionFile = () => ({
+  name: "version-json",
+  generateBundle(this: { emitFile(f: { type: "asset"; fileName: string; source: string }): void }) {
+    this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ v: VERSION, build: BUILD }) });
+  }
+});
+
 export default defineConfig({
   build: { rollupOptions: { input: { main: "index.html", storybook: "storybook.html" } } },
-  define: { __APP_VERSION__: JSON.stringify(pkg.version.split(".").slice(0, 2).join(".")) },
+  define: { __APP_VERSION__: JSON.stringify(VERSION), __BUILD__: JSON.stringify(BUILD) },
   plugins: [
+    versionFile(),
     VitePWA({
       registerType: "prompt",
       includeAssets: ["apple-touch-icon.png", "icon-192.png"],

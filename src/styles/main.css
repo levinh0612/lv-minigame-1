@@ -862,3 +862,19 @@ button.pill:active{transform:translateY(2px)}
 .couple .ch{display:flex;justify-content:space-between;align-items:center}
 .couple .ch .alink{min-height:0;padding:0;font-size:11.5px}
 .wseg{grid-template-columns:1fr 1fr}
+
+/* ===== Cập nhật bản mới ===== */
+.toast{z-index:120}
+.upd{display:flex;flex-direction:column;align-items:center;gap:1px;height:auto;min-height:40px;padding:7px 18px;max-width:calc(100vw - 32px);border-radius:20px}
+.upd b{font:800 13.5px var(--body)}
+.upd small{font:700 11px var(--body);opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.updov{position:fixed;inset:0;z-index:200;background:rgba(255,243,246,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px}
+.updov b{font:800 20px var(--display);color:var(--ink2)}
+.updov small{font:700 13px var(--body);color:var(--soft)}
+.spin{width:54px;height:54px;border-radius:50%;border:6px solid var(--pink-l);border-top-color:var(--pink);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.verrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 2px;font:800 12.5px var(--body);color:var(--soft)}
+.verrow span{flex:1 0 100%}
+.wn{text-align:left;background:var(--bg);border-radius:16px;padding:10px 12px;margin:6px 0}
+.wn b{font:800 14px var(--body);color:var(--pink-d)}
+.wn ul{margin:4px 0 0;padding-left:18px;font:700 13px/1.45 var(--body);color:var(--ink2)}

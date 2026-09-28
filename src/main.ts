@@ -8,10 +8,12 @@ import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
-import { $, bump, closeModal, dropModal, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "./ui/modals";
+import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
+import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
+import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
+import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
 
@@ -32,7 +34,9 @@ document.addEventListener("click", e => {
     case "settings": return settings();
     case "account": return accountPanel();
     case "wallet": if (!SH) wallet(); return;
-    case "update": return applyUpdate();
+    case "update": return void applyUpdate();
+    case "checkver": return void checkVersion(true).then(r => { if (r) void applyUpdate(); else toast(`Đang là bản mới nhất (${__APP_VERSION__}) ✓`); });
+    case "hardreload": return void hardReload();
     case "pause": return pauseMenu();
     case "serve": return doServe();
     case "peek": return doPeek();
@@ -84,7 +88,7 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden && SH && !SH.paused && !hasModal()) pauseMenu();
   if (document.hidden && import.meta.env.PROD) flushSave();   // rời app: lưu lên mây ngay
   trackHidden(document.hidden);
-  if (!document.hidden) { checkUpdate(); if (!SH && isLocked()) render(); else if (loggedIn() && !SH) void pull().then(ch => { if (ch) render(); }); }
+  if (!document.hidden) { if (!SH) void autoUpdate(); if (!SH && isLocked()) render(); else if (loggedIn() && !SH) void pull().then(ch => { if (ch) render(); }); }
 });
 window.addEventListener("hashchange", render);
 
@@ -101,17 +105,28 @@ startAutoSave();
 if (loggedIn() && !isLocked()) void enter();
 if (S.refund) { const r = S.refund; delete S.refund; save(); setTimeout(() => toast(`Tiệm đổi giao diện mới! Hoàn lại ${r} xu cho đồ trang trí cũ`), 600); }
 
-// PWA: chơi offline; có bản mới thì hiện nút cập nhật (không tự tải lại giữa ca)
-let updateSW: ((reload?: boolean) => Promise<void>) | null = null, swReg: ServiceWorkerRegistration | undefined;
-function applyUpdate() {
-  if (SH) return toast("Hết ca rồi cập nhật nha, kẻo mất khách đang chờ");
-  toast("Đang cập nhật…"); void updateSW?.(true);
+// PWA: chơi offline. Có bản mới: mở app / quay lại app mà không đang trong ca thì tự cập nhật;
+// đang trong ca thì hiện banner, hết ca mới cập nhật (xem net/update.ts)
+function showUpdateBanner() {
+  const r = newVersion(); if (!r || SH || document.querySelector(".upd")) return;
+  const note = CHANGELOG.find(c => c.v === r.v)?.notes[0];
+  document.body.insertAdjacentHTML("beforeend", `<button class="upd" data-act="update"><b>✨ Có bản ${esc(r.v)} · Cập nhật</b>${note ? `<small>${esc(note)}</small>` : ""}</button>`);
 }
-let lastCheck = 0;
-function checkUpdate() { if (swReg && Date.now() - lastCheck > 600000) { lastCheck = Date.now(); void swReg.update(); } }
-if (import.meta.env.PROD) updateSW = registerSW({
+async function autoUpdate() {
+  const r = await checkVersion(true);
+  if (!r) return;
+  if (!SH && !triedRecently()) void applyUpdate(); else showUpdateBanner();
+}
+if (import.meta.env.PROD) registerSW({
   immediate: true,
-  onNeedRefresh() { document.body.insertAdjacentHTML("beforeend", `<button class="upd" data-act="update">✨ Có bản mới · chạm để cập nhật</button>`); },
+  onNeedRefresh() { void autoUpdate(); },
   onOfflineReady() { $("#app") && toast("Tiệm đã sẵn sàng chơi offline"); },
-  onRegisteredSW(_url, reg) { swReg = reg; setInterval(checkUpdate, 1800000); }
+  onRegisteredSW(_url, reg) { setRegistration(reg); setInterval(() => void checkVersion().then(showUpdateBanner), 900000); }
 });
+if (import.meta.env.PROD) setTimeout(() => void autoUpdate(), 800);
+addEventListener("hashchange", () => { if (!SH) showUpdateBanner(); });
+// tải lại để cập nhật (?v=...) xong thì dọn địa chỉ cho gọn
+if (location.search) history.replaceState(null, "", location.pathname + location.hash);
+// vừa cập nhật xong: cho xem có gì mới (một lần)
+const prevVer = justUpdated();
+if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) whatsNew(prevVer); }, 1200);

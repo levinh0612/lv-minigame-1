@@ -11,6 +11,7 @@ import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, critterSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
+import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
 import { account, changePin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
@@ -74,6 +75,7 @@ export function settings() {
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
       <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
+      <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)}</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button><button type="button" class="mini" data-act="hardreload">Tải lại bản mới nhất</button></div>
       <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button></div>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
     </form>`, render);
@@ -148,6 +150,15 @@ export function wallet() {
     <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`, render);
   $("#wToday")!.addEventListener("click", () => { walletTab = "today"; wallet(); });
   $("#wAll")!.addEventListener("click", () => { walletTab = "all"; wallet(); });
+}
+
+/* ===== Vừa cập nhật: có gì mới (các bản sau bản cũ) ===== */
+export function whatsNew(prev: string) {
+  const newer = CHANGELOG.filter(c => c.v.localeCompare(prev, undefined, { numeric: true }) > 0).slice(0, 3);
+  if (!newer.length) return;
+  modal(`<div class="tart">${critterSVG({ ...PETS.white, mood: "love", wave: true }, 80)}</div><h2>Tiệm vừa lên bản ${esc(__APP_VERSION__)}!</h2>
+    ${newer.map(c => `<div class="wn"><b>Bản ${esc(c.v)}</b><ul>${c.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>`).join("")}
+    <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`);
 }
 
 /* ===== Hướng dẫn lần đầu ===== */

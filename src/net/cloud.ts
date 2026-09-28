@@ -8,7 +8,9 @@ import { KEY, S, loadState, replaceState, save, whenSaved, type State } from "..
 const AUTH = "tiem-auth";
 interface Auth { user: string; token: string; pin: string; fails: number; dirty: boolean }
 let A: Auth | null = (() => { try { return JSON.parse(localStorage.getItem(AUTH) || "null"); } catch { return null; } })();
-let unlocked = false;
+/* vừa mở khoá rồi tự cập nhật (tải lại trang) thì không hỏi PIN lại trong 2 phút */
+let unlocked = (() => { try { return Number(sessionStorage.getItem("tiem-unlock") || 0) > Date.now(); } catch { return false; } })();
+export function keepUnlock() { try { if (unlocked) sessionStorage.setItem("tiem-unlock", String(Date.now() + 120000)); } catch { /* bỏ qua */ } }
 const store = () => { try { if (A) localStorage.setItem(AUTH, JSON.stringify(A)); else localStorage.removeItem(AUTH); } catch { /* riêng tư */ } };
 
 export const account = () => A?.user ?? "";
