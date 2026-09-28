@@ -16,7 +16,7 @@ import { cakesSheet, daysSheet, menuSheet, photoSheet } from "./ui/sheets";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
-import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
+import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
 
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
@@ -86,6 +86,7 @@ document.addEventListener("click", e => {
   if (d.ing) { const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.seat) return selectSeat(+d.seat);
   if (d.tick) return tickStock(d.tick);
+  if (d.watch) return watchBaker(d.watch as PetId);
 });
 
 // rời app giữa ca: tự tạm dừng

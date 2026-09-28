@@ -7,13 +7,13 @@ import { daysTogether } from "../../engine/dates";
 import { REFILL, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
-  beginShift, emptyBuild, finishShift, goalDone, isComplete, isOver, ledger, matches, mineIdx, needOf, peek, release, remaining, serve, summary, take, tick,
+  beginShift, emptyBuild, finishShift, goalDone, goalProgress, goalText, isComplete, isOver, ledger, matches, mineIdx, needOf, peek, release, remaining, serve, summary, take, tick,
   type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { cakeSVG, charSVG, critterSVG, ingSVG } from "../art";
-import { $, bump, coinPill, esc, floatText, haptic, toast } from "../dom";
+import { $, bump, coinPill, esc, floatText, haptic, modal, toast } from "../dom";
 import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
@@ -79,15 +79,19 @@ function updatePatience(c: Customer, i: number) {
   if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, faceSize(SH!)); }
 }
 /* tiến độ các bé thợ bánh: dưới mặt khách và ở quầy */
+const bakeStep: Partial<Record<PetId, number>> = {};
 function updateBaking() {
+  let redraw = false;
   SH!.bakers.forEach(b => {
-    const pct = Math.min(100, Math.round(b.done / b.need * 100));
+    const pct = Math.min(100, Math.round(b.done / b.need * 100)), st = Math.floor(pct / 25);
+    if (bakeStep[b.id] !== st) { bakeStep[b.id] = st; redraw = true; }
     document.querySelectorAll<HTMLElement>(`[data-bake="${b.id}"]`).forEach(el => {
       const i = el.querySelector("i"), t = el.querySelector("span");
       if (i) i.style.width = pct + "%";
       if (t) t.textContent = pct + "%";
     });
   });
+  if (redraw) renderCrew();
 }
 
 /* ================= HTML thuần ================= */
@@ -124,15 +128,47 @@ export function crewHTML(sh: Shift) {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
-    return `<div class="cm" data-crew="${id}">${critterSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div></div>`;
+    const cake = b && c ? `<span class="cmk">${cakeSVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
+    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${critterSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}</div>`;
+}
+/* bánh bé đang làm tới đâu: đế → kem → topping → độ ngọt theo phần trăm */
+const bakerBuild = (c: Customer, pct: number) => {
+  const n = needOf(c), step = Math.min(4, Math.floor(pct / 25) + (pct >= 100 ? 0 : 1));
+  return { base: step >= 1 ? n.base : null, cream: step >= 2 ? n.cream : null, top: step >= 3 ? n.top : null, sweet: step >= 4 ? n.sweet : null };
+};
+/* chạm vào thẻ thợ bánh: xem quá trình bé làm bánh (cập nhật trực tiếp) */
+let watchT = 0;
+export function watchBaker(id: PetId) {
+  if (!SH) return;
+  const draw = () => {
+    const sh = SH, box = $("#watch"); if (!sh || !box) { clearInterval(watchT); return; }
+    const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null;
+    if (!b || !c) { box.innerHTML = `<div class="wch">${critterSVG({ ...PETS[id], mood: sh.lack[id] ? "impatient" : "open" }, 90)}</div><p class="sub">${sh.lack[id] ? `${esc(petName(id))} đang chờ vì thiếu ${esc(sh.lack[id]!)}. Nhập thêm ở nút hộp trên cùng nha.` : `${esc(petName(id))} đang nghỉ, có khách là bé nhận đơn ngay.`}</p>`; return; }
+    const pct = Math.min(100, Math.round(b.done / b.need * 100)), n = needOf(c), step = Math.min(4, Math.floor(pct / 25));
+    box.innerHTML = `<div class="wch">${critterSVG({ ...PETS[id], mood: "happy", ledge: false }, 70)}<div class="wcake">${cakeSVG(bakerBuild(c, pct), { size: 130 })}</div></div>
+      <p class="sub">Đang làm <b>${esc(c.r.n)}</b> · ${CATS.sweet[c.sweet][0]} cho <b>${esc(c.who)}</b></p>
+      <div class="wbar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
+      <div class="wsteps">${KEYS.map((k, i) => `<div class="${i < step ? "ok" : i === step ? "now" : ""}">${ingSVG(k, n[k], 26)}<small>${LABELS[k]}</small><b>${CATS[k][n[k]][0]}</b><em>${i < step ? "✓" : i === step ? "…" : ""}</em></div>`).join("")}</div>`;
+  };
+  modal(`<h2>${esc(petName(id))} làm bánh</h2><div id="watch"></div><div class="mbtns"><button class="b3" data-close>Xong</button></div>`, () => clearInterval(watchT));
+  draw(); clearInterval(watchT); watchT = window.setInterval(draw, 250);
 }
 
 const toggleHTML = () => `<button class="toggle ${S.autoTake ? "on" : ""}" data-act="auto" role="switch" aria-checked="${S.autoTake}"><span>Tự nhận đơn</span><i></i></button>`;
 function idleHTML(sh: Shift) {
   const busy = sh.seats.some(x => x && !x.gone && !x.by), any = sh.seats.some(x => x && !x.gone);
-  return `<div class="plate0"></div><b>Đang rảnh tay</b>
-    <small class="${busy ? "hint" : ""}">${busy ? "↑ Chạm vào khách ở hàng đợi để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small>${toggleHTML()}`;
+  const earned = sh.coins + sh.tips + sh.bonus;
+  const goals = sh.goals.map(g => {
+    const done = goalDone(sh, g), calm = g.id === "calm", cur = goalProgress(sh, g);
+    const pct = calm ? (sh.left ? 0 : 100) : Math.min(100, Math.round(cur / g.n * 100));
+    const right = calm ? (sh.left ? `${sh.left} khách giận` : "✓ chưa ai giận") : `${Math.min(cur, g.n)}/${g.n}`;
+    return `<div class="ig ${done ? "done" : calm && sh.left ? "fail" : ""}"><div class="it"><span>${done ? "✓ " : ""}${goalText(g)}</span><em>${right}</em><b>+${g.reward}</b></div><i><u style="width:${pct}%"></u></i></div>`;
+  }).join("");
+  return `<div class="ihead"><div><b>Đang rảnh tay</b><small class="${busy ? "hint" : ""}">${busy ? "↑ Chạm vào khách để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small></div>${toggleHTML()}</div>
+    <div class="istats"><div><b>${sh.served}</b><small>khách vui</small></div><div><b>+${fmtN(earned)}</b><small>xu ca này</small></div><div><b>${sh.left}</b><small>khách giận</small></div></div>
+    <div class="igoals"><h4>Mục tiêu ca này</h4>${goals}</div>
+    <p class="itip">💡 Không bấm "Xem công thức" mà giao đúng được thưởng +50%</p>`;
 }
 
 /* nút nguyên liệu: icon + tên + số trong kho; đúng/sai chỉ hiện khi đã xem công thức */

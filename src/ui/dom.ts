@@ -9,28 +9,45 @@ let onClose: (() => void) | null = null;
 /* Hộp thoại kiểu iOS: trượt từ dưới lên, kéo thanh trên cùng xuống để đóng */
 export function modal(html: string, cb?: () => void) {
   onClose = cb || null;
-  $("#layer")!.innerHTML = `<div class="modal" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="grabber" aria-hidden="true"></div>${html}</div></div>`;
-  dragToClose($<HTMLElement>("#modal .mbox")!);
+  $("#layer")!.innerHTML = `<div class="modal" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="mhead"><div class="grabber" aria-hidden="true"></div><button class="mx" data-close aria-label="Đóng">✕</button></div><div class="mscroll">${html}</div></div></div>`;
+  document.documentElement.classList.add("mlock");        // khoá cuộn trang phía sau (iPhone kéo cả app)
+  const box = $<HTMLElement>("#modal .mbox")!, head = box.querySelector(".mhead")!, body = box.querySelector(".mscroll")!;
+  // tiêu đề (+ dòng mô tả ngay sau) lên phần đầu cố định; hàng nút cuối xuống phần chân cố định
+  const h2 = body.firstElementChild?.tagName === "H2" ? body.firstElementChild : null;
+  if (h2) { const sub = h2.nextElementSibling; head.appendChild(h2); if (sub?.classList.contains("sub")) head.appendChild(sub); }
+  // hàng nút nằm trong form: đưa ra chân, nút submit vẫn gắn với form qua thuộc tính form=""
+  const last = body.lastElementChild, form = last?.tagName === "FORM" ? last as HTMLFormElement : null;
+  const foot = form ? (form.lastElementChild?.classList.contains("mbtns") ? form.lastElementChild : null) : last;
+  if (foot?.classList.contains("mbtns")) {
+    if (form) { form.id ||= "mform"; foot.querySelectorAll<HTMLButtonElement>("button").forEach(b => { if (b.type === "submit") b.setAttribute("form", form.id); }); }
+    const f = document.createElement("div"); f.className = "mfoot"; f.appendChild(foot); box.appendChild(f);
+  }
+  dragToClose(box, head as HTMLElement);
+  // vuốt trên nền tối / phần đầu / chân: không để iPhone kéo cả trang phía sau; phần giữa vẫn cuộn được
+  $("#modal")!.addEventListener("touchmove", e => {
+    const sc = (e.target as HTMLElement).closest<HTMLElement>(".mscroll");
+    if (!sc || sc.scrollHeight <= sc.clientHeight) e.preventDefault();
+  }, { passive: false });
 }
-function dragToClose(box: HTMLElement) {
+/* chỉ kéo ở phần đầu (thanh kéo + tiêu đề) mới đóng; phần giữa để cuộn nội dung */
+function dragToClose(box: HTMLElement, head: HTMLElement) {
   let y0: number | null = null, dy = 0;
-  box.addEventListener("pointerdown", e => {
-    const top = box.getBoundingClientRect().top;
-    if (e.clientY - top > 44 || box.scrollTop > 0 || (e.target as HTMLElement).closest("button, input, textarea, select, label")) return;
-    y0 = e.clientY; dy = 0; box.style.transition = "none";
+  head.addEventListener("pointerdown", e => {
+    if ((e.target as HTMLElement).closest("button, input, textarea, select, label")) return;
+    y0 = e.clientY; dy = 0; box.style.transition = "none"; head.setPointerCapture(e.pointerId);
   });
-  box.addEventListener("pointermove", e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); box.style.transform = `translateY(${dy}px)`; });
+  head.addEventListener("pointermove", e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); box.style.transform = `translateY(${dy}px)`; });
   const end = () => {
     if (y0 == null) return; y0 = null; box.style.transition = ""; box.style.transform = "";
-    if (dy > 90 && box.closest("#modal")) closeModal();
+    if (dy > 70 && box.closest("#modal")) closeModal();
   };
-  box.addEventListener("pointerup", end); box.addEventListener("pointercancel", end);
+  head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
 }
 /* trượt xuống rồi mới gỡ (hộp thoại mới mở ngay sau đó không bị ảnh hưởng) */
 function dismiss() {
   const m = $("#modal"); if (!m) return;
   m.removeAttribute("id"); m.classList.add("out");
-  setTimeout(() => m.remove(), 220);
+  setTimeout(() => { m.remove(); if (!$("#modal")) document.documentElement.classList.remove("mlock"); }, 220);
 }
 export function closeModal() { dismiss(); const cb = onClose; onClose = null; cb?.(); }
 /* đóng mà không chạy callback (khi chuyển thẳng sang màn khác) */
