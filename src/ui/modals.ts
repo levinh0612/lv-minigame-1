@@ -1,5 +1,5 @@
 /* Các hộp thoại: thư, quà, cài đặt, tạm dừng, Anh ghé tiệm */
-import { Sound, sfx } from "../audio/sound";
+import { Sound, sfx, songName } from "../audio/sound";
 import { CFG } from "../content/couple";
 import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
 import { claimWelcome } from "../engine/economy";
@@ -72,6 +72,7 @@ export function settings() {
       <label class="field">Tên khách nữ (${nameList(S.names.girls).length}) · cách nhau bằng dấu phẩy<textarea id="fGirls" rows="2">${esc(S.names.girls)}</textarea></label>
       <label class="field">Tên khách nam (${nameList(S.names.boys).length})<textarea id="fBoys" rows="2">${esc(S.names.boys)}</textarea></label>
       <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
+      <button type="button" class="b3 w cloudbtn" data-act="music">🎵 Chọn bài · ${esc(songName())}</button>
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
       <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>

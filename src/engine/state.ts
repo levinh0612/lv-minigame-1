@@ -15,7 +15,7 @@ export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
   names: { her: string; his: string; girls: string; boys: string; pets: Record<PetId, string> };
   pets: Record<PetId, PetState>;
-  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; vibe: boolean; refund?: number;
+  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
   food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")

@@ -12,7 +12,7 @@ import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, t
 import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
-import { cakesSheet, daysSheet, menuSheet, photoSheet } from "./ui/sheets";
+import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
@@ -37,6 +37,7 @@ document.addEventListener("click", e => {
     case "account": return accountPanel();
     case "menu": return menuSheet();
     case "rank": return rankSheet();
+    case "music": return musicSheet();
     case "cakes": return cakesSheet();
     case "days": return daysSheet();
     case "photo": return photoSheet();

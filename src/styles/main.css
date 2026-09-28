@@ -1045,3 +1045,14 @@ button.cm{position:relative}
 .mscroll .rseg,.mscroll .rkme,.mscroll .rkl,.mscroll .couple{margin-left:0;margin-right:0;width:auto}
 .mscroll .rseg{margin-top:4px}
 .mscroll .phint{margin-left:0;margin-right:0}
+.rkl{overflow:hidden}
+/* bảng chọn nhạc */
+.songs{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.song{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px 10px 10px;border:0;border-radius:18px;background:var(--bg);text-align:left;cursor:pointer;color:var(--ink2)}
+.song .si{width:38px;height:38px;border-radius:12px;background:#fff;display:grid;place-items:center;color:var(--lav-d);flex:none}
+.song .sn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.song .sn b{font:800 15px var(--body)}
+.song .sn small{font:700 12px var(--body);color:var(--soft3)}
+.song .sc{font:800 11.5px var(--body);color:var(--pink-d);white-space:nowrap}
+.song.on{background:#FFF0F4;box-shadow:inset 0 0 0 2px var(--pink)}
+.song.on .si{background:var(--pink);color:#fff}

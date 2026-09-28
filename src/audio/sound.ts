@@ -2,7 +2,8 @@
 import { S, save } from "../engine/state";
 
 type Track = "home" | "shift";
-interface TrackDef { bpm: number; vol: number; chords: number[][]; mel: (number | null)[]; lead: "box" | "pluck"; bass: number[]; pad: number[]; hat: number[] }
+type Lead = "box" | "pluck" | "chip" | "mallet" | "keys";
+interface TrackDef { name: string; desc: string; bpm: number; vol: number; chords: number[][]; mel: (number | null)[]; lead: Lead; bass: number[]; pad: number[]; hat: number[]; kick?: number[]; snare?: number[]; hatVol?: number; bassLen?: number }
 
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 const note = (s: string): number | null => {
@@ -11,24 +12,63 @@ const note = (s: string): number | null => {
 };
 const mel = (str: string) => str.trim().split(/\s+/).map(x => (x === "." ? null : note(x)));
 
-// Hai bài: "Sáng ở tiệm" (hộp nhạc, chậm) và "Giờ cao điểm" (vui, nhanh)
-const TRACKS: Record<Track, TrackDef> = {
+// Danh sách bài: "auto" = ở tiệm nghe "Sáng ở tiệm", vào ca nghe "Giờ cao điểm"; chọn bài khác thì nghe bài đó mọi lúc
+export const SONGS: Record<string, TrackDef> = {
   home: {
+    name: "Sáng ở tiệm", desc: "Hộp nhạc, nhẹ nhàng",
     bpm: 84, vol: 0.55, lead: "box", bass: [0, 4], pad: [2, 6], hat: [],
     chords: [[53, 57, 60], [50, 53, 57], [46, 50, 53], [48, 52, 55], [53, 57, 60], [45, 48, 52], [46, 50, 53], [48, 52, 55]],
     mel: mel(`A5 . C6 . A5 G5 F5 .  D5 . F5 . A5 . G5 .  F5 . D5 . F5 G5 A5 .  G5 . . E5 C5 . . .
               A5 . C6 . D6 C6 A5 .  C6 . A5 . E5 . G5 .  F5 G5 A5 . D5 . F5 .  E5 . G5 . F5 . . .`)
   },
   shift: {
+    name: "Giờ cao điểm", desc: "Vui, nhanh tay",
     bpm: 112, vol: 0.5, lead: "pluck", bass: [0, 3, 4, 6], pad: [2, 6], hat: [1, 3, 5, 7],
     chords: [[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50], [48, 52, 55], [40, 43, 47], [41, 45, 48], [43, 47, 50]],
     mel: mel(`E5 G5 . C6 . G5 E5 .  A5 . C6 . A5 G5 E5 .  F5 A5 . C6 . A5 F5 .  G5 . B5 . D6 . B5 .
               C6 . G5 . E5 G5 C6 .  B5 . G5 . E5 . G5 .  A5 G5 F5 . A5 . C6 .  D6 . B5 . G5 . . .`)
+  },
+  lofi: {
+    name: "Mưa ngoài hiên", desc: "Lofi chill, trống nhẹ",
+    bpm: 76, vol: 0.55, lead: "keys", bass: [0, 3], pad: [0, 4], hat: [0, 2, 4, 6], kick: [0, 5], snare: [4], hatVol: 0.02, bassLen: 0.8,
+    chords: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59], [53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]],
+    mel: mel(`A5 . . G5 E5 . . .  G5 . . . . . D5 .  F5 . E5 . D5 . C5 .  E5 . . . . . . .
+              A5 . C6 . B5 . G5 .  G5 . E5 . . D5 E5 .  F5 . A5 . G5 . E5 .  C5 . . . . . . .`)
+  },
+  chip: {
+    name: "Xe đạp 8-bit", desc: "Nhạc game điện tử, sôi động",
+    bpm: 138, vol: 0.5, lead: "chip", bass: [0, 2, 4, 6], pad: [], hat: [1, 3, 5, 7], kick: [0], snare: [4], bassLen: 0.18,
+    chords: [[48, 52, 55], [43, 47, 50], [45, 48, 52], [41, 45, 48], [48, 52, 55], [43, 47, 50], [45, 48, 52], [41, 45, 48]],
+    mel: mel(`C5 E5 G5 C6 . G5 E5 G5  B4 D5 G5 B5 . G5 D5 .  A4 C5 E5 A5 . E5 C5 E5  F5 . E5 . D5 . C5 .
+              E5 . G5 . C6 . B5 A5  G5 . D5 . G5 . B5 .  C6 B5 A5 . E5 . A5 .  F5 A5 G5 F5 E5 D5 C5 .`)
+  },
+  bossa: {
+    name: "Bossa matcha", desc: "Mộc cầm, lắc lư quán cà phê",
+    bpm: 104, vol: 0.55, lead: "mallet", bass: [0, 3, 4, 7], pad: [2, 5], hat: [0, 1, 2, 3, 4, 5, 6, 7], hatVol: 0.015, bassLen: 0.4,
+    chords: [[50, 53, 57, 60], [43, 47, 50, 53], [48, 52, 55, 59], [45, 49, 52, 55], [50, 53, 57, 60], [43, 47, 50, 53], [52, 55, 59, 62], [45, 49, 52, 55]],
+    mel: mel(`F5 . A5 . . G5 F5 .  F5 . . D5 . B4 . .  E5 . G5 . B5 . A5 G5  E5 . C#5 . . . . .
+              A5 . . F5 . D5 . .  B5 . A5 G5 . F5 . .  G5 . E5 . B4 . D5 E5  C#5 . . E5 . A5 . .`)
+  },
+  date: {
+    name: "Hẹn hò", desc: "Pop dễ thương, chuông leng keng",
+    bpm: 120, vol: 0.5, lead: "box", bass: [0, 3, 4], pad: [2, 6], hat: [1, 3, 5, 7], kick: [0, 3, 4], snare: [2, 6], bassLen: 0.3,
+    chords: [[43, 47, 50], [38, 42, 45], [40, 43, 47], [36, 40, 43], [43, 47, 50], [38, 42, 45], [36, 40, 43], [38, 42, 45]],
+    mel: mel(`B5 . A5 G5 . D5 . .  A5 . G5 F#5 . D5 . .  G5 . F#5 E5 . B4 . E5  G5 . . A5 . . . .
+              B5 . D6 . B5 . A5 G5  A5 . F#5 . D5 . . .  E5 G5 C6 . B5 A5 G5 .  F#5 . A5 . D6 . . .`)
+  },
+  lullaby: {
+    name: "Ru ngủ", desc: "Chậm, êm, hợp buổi tối",
+    bpm: 66, vol: 0.55, lead: "box", bass: [0], pad: [0, 4], hat: [], bassLen: 1.6,
+    chords: [[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50], [48, 52, 55], [40, 43, 47], [41, 45, 48], [48, 52, 55]],
+    mel: mel(`E5 . . . G5 . . .  E5 . . . C5 . . .  F5 . . . A5 . G5 .  F5 . E5 . D5 . . .
+              E5 . . . G5 . C6 .  B5 . . . G5 . . .  A5 . G5 . F5 . D5 .  C5 . . . . . . .`)
   }
 };
+export const songName = () => (S.song && SONGS[S.song] ? SONGS[S.song].name : "Tự đổi theo lúc");
+export const songOf = (ctx: Track) => (S.song && S.song !== "auto" && SONGS[S.song] ? S.song : ctx);
 
 let ctx: AudioContext | null = null, master: GainNode, musicBus: GainNode, sfxBus: GainNode, noiseBuf: AudioBuffer;
-let timer = 0, track: Track | null = null, want: Track | null = null, step = 0, nextT = 0;
+let timer = 0, track: string | null = null, want: Track | null = null, step = 0, nextT = 0;
 
 function init(): boolean {
   if (ctx) return true;
@@ -65,17 +105,24 @@ function noise(bus: AudioNode, t: number, dur: number, vol: number, filter: Biqu
 }
 const musicBox = (m: number, t: number, v: number) => { const f = hz(m); tone(musicBus, "sine", f, t, 1.3, 0.16 * v); tone(musicBus, "sine", f * 2, t, 0.5, 0.05 * v); tone(musicBus, "triangle", f * 3, t, 0.15, 0.015 * v); };
 const pluck = (m: number, t: number, v: number) => { const f = hz(m); tone(musicBus, "triangle", f, t, 0.35, 0.14 * v); tone(musicBus, "sine", f * 2, t, 0.18, 0.04 * v); };
+const chip = (m: number, t: number, v: number) => { const f = hz(m); tone(musicBus, "square", f, t, 0.2, 0.05 * v, 0.003); tone(musicBus, "triangle", f, t, 0.2, 0.06 * v, 0.003); };
+const mallet = (m: number, t: number, v: number) => { const f = hz(m); tone(musicBus, "sine", f, t, 0.5, 0.18 * v, 0.002); tone(musicBus, "sine", f * 4, t, 0.08, 0.04 * v, 0.002); };
+const keys = (m: number, t: number, v: number) => { const f = hz(m); tone(musicBus, "sine", f, t, 1.0, 0.13 * v, 0.01); tone(musicBus, "sine", f * 2.003, t, 0.4, 0.03 * v); tone(musicBus, "triangle", f, t, 0.25, 0.03 * v); };
+const LEAD: Record<Lead, typeof pluck> = { box: musicBox, pluck, chip, mallet, keys };
 
 function schedule() {
   if (!ctx || !track) return;
-  const T = TRACKS[track], dt = 60 / T.bpm / 2;
+  const T = SONGS[track], dt = 60 / T.bpm / 2;
   while (nextT < ctx.currentTime + 0.15) {
     const bar = Math.floor(step / 8) % 8, pos = step % 8, ch = T.chords[bar], v = T.vol;
     const m = T.mel[(bar * 8 + pos) % T.mel.length];
-    if (m) (T.lead === "box" ? musicBox : pluck)(m, nextT, v);
-    if (T.bass.includes(pos)) tone(musicBus, "sine", hz(ch[0] - 12), nextT, T.lead === "box" ? 0.9 : 0.3, 0.2 * v, 0.01);
+    if (m) LEAD[T.lead](m, nextT, v);
+    let b = ch[0] - 12; while (b < 36) b += 12;
+    if (T.bass.includes(pos)) tone(musicBus, T.lead === "chip" ? "triangle" : "sine", hz(b), nextT, T.bassLen ?? (T.lead === "box" ? 0.9 : 0.3), 0.2 * v, 0.01);
     if (T.pad.includes(pos)) ch.forEach((n, i) => tone(musicBus, "triangle", hz(n + 12), nextT + i * 0.02, 0.7, 0.035 * v, 0.03));
-    if (T.hat.includes(pos)) noise(musicBus, nextT, 0.04, 0.035 * v, "highpass", 7000);
+    if (T.hat.includes(pos)) noise(musicBus, nextT, 0.04, (T.hatVol ?? 0.035) * v, "highpass", 7000);
+    if (T.kick?.includes(pos)) tone(musicBus, "sine", 150, nextT, 0.25, 0.45 * v, 0.003, 45);
+    if (T.snare?.includes(pos)) noise(musicBus, nextT, 0.12, 0.1 * v, "bandpass", 1800);
     step++; nextT += dt;
   }
 }
@@ -83,14 +130,15 @@ function startTimer() { clearInterval(timer); timer = window.setInterval(schedul
 
 function play(name: Track) {
   want = name;
-  if (!S.music || !ctx || document.hidden || track === name) return;
+  const id = songOf(name);
+  if (!S.music || !ctx || document.hidden || track === id) return;
   const now = ctx.currentTime;
   musicBus.gain.cancelScheduledValues(now);
   musicBus.gain.setValueAtTime(musicBus.gain.value, now);
   musicBus.gain.linearRampToValueAtTime(0, now + 0.35);
   setTimeout(() => {
-    if (!S.music || want !== name || !ctx) return;
-    track = name; step = 0; nextT = ctx.currentTime + 0.05;
+    if (!S.music || want !== name || songOf(name) !== id || !ctx) return;
+    track = id; step = 0; nextT = ctx.currentTime + 0.05;
     const t = ctx.currentTime; musicBus.gain.setValueAtTime(0, t); musicBus.gain.linearRampToValueAtTime(1, t + 1.2);
     startTimer();
   }, track ? 380 : 0);
@@ -139,5 +187,7 @@ document.addEventListener("visibilitychange", () => {
 export const Sound = {
   play,
   stop,
-  setMusic(on: boolean) { S.music = on; save(); if (on) { unlock(); play(want || "home"); } else stop(); }
+  setMusic(on: boolean) { S.music = on; save(); if (on) { unlock(); play(want || "home"); } else stop(); },
+  /* chọn bài: bật nhạc nếu đang tắt, đổi bài ngay */
+  setSong(id: string) { S.song = id; S.music = true; save(); unlock(); play(want || "home"); }
 };

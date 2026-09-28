@@ -50,7 +50,7 @@ export function homeHTML() {
       <button class="pill love4" data-act="days" aria-label="Ngày kỷ niệm"><span>${HEART}</span>${fmtN(daysTogether())} ngày<em> yêu</em></button>
       <div class="sp"></div>
       <button class="rbtn" data-act="rank" aria-label="Bảng xếp hạng">${CUP}</button>
-      <button class="rbtn" data-music aria-label="Bật/tắt nhạc" style="${S.music ? "" : "opacity:.45"}">${MUSIC}</button>
+      <button class="rbtn" data-act="music" aria-label="Nhạc nền" style="${S.music ? "" : "opacity:.45"}">${MUSIC}</button>
       <button class="rbtn" data-act="settings" aria-label="Cài đặt">${GEAR}</button>
       ${coinPill()}
     </div>

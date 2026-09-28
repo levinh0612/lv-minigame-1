@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.16", date: "28/09/2026", notes: ["Thêm 5 bài nhạc nền: Mưa ngoài hiên, Xe đạp 8-bit, Bossa matcha, Hẹn hò, Ru ngủ", "Chạm nút nhạc ở màn chính để chọn bài, nghe thử ngay", "Sửa góc bảng xếp hạng bị lem màu"] },
   { v: "2.15", date: "28/09/2026", notes: ["Bảng xếp hạng mở ngay trên màn chính (hộp thoại)"] },
   { v: "2.14", date: "28/09/2026", notes: ["Đổi ảnh, đổi đồ ở máy này là máy kia thấy trong khoảng 20 giây", "Không còn chuyện máy cũ đè mất thay đổi của máy mới"] },
   { v: "2.13", date: "28/09/2026", notes: ["Hộp thoại: tiêu đề và nút dưới luôn cố định, chỉ phần giữa cuộn", "Lúc rảnh tay: xem số khách, tiền ca này và 3 mục tiêu ca", "Thẻ thợ bánh có hình bánh, chạm vào xem bé làm từng bước", "Hộp thoại có nút ✕, kéo xuống không còn kéo theo cả app"] },

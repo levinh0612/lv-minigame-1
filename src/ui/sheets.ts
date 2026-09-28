@@ -6,6 +6,7 @@ import { featured, lvl, unlocked } from "../engine/progress";
 import { S, save } from "../engine/state";
 import { flushSave } from "../net/cloud";
 import { fmtD, fmtN, parse } from "../engine/util";
+import { SONGS, Sound } from "../audio/sound";
 import { render } from "./app";
 import { cakeSVG, ingSVG } from "./art";
 import { $, closeModal, esc, modal, toast } from "./dom";
@@ -88,4 +89,21 @@ export function photoSheet() {
     <div class="mbtns"><button class="b3" id="phNew">Đổi ảnh khác</button><button class="b3 w" id="phDel">Gỡ ảnh xuống</button></div>`);
   $("#phNew")!.addEventListener("click", pickPhoto);
   $("#phDel")!.addEventListener("click", () => { S.photo = ""; save(); flushSave(true); closeModal(); render(); toast("Đã gỡ ảnh"); });
+}
+
+/* Nhạc nền: bật/tắt và chọn bài; chạm bài nào là nghe thử ngay */
+const NOTE = `<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 12.5V3.5l7-1.5v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4.3" cy="12.5" r="2" fill="currentColor"/><circle cx="11.3" cy="11" r="2" fill="currentColor"/></svg>`;
+export function musicSheet() {
+  const cur = S.song && SONGS[S.song] ? S.song : "auto";
+  const item = (id: string, n: string, d: string) => `<button class="song ${cur === id ? "on" : ""}" data-song="${id}"><span class="si">${NOTE}</span><span class="sn"><b>${esc(n)}</b><small>${esc(d)}</small></span><span class="sc">${cur === id ? (S.music ? "Đang phát" : "Đã chọn") : ""}</span></button>`;
+  modal(`<h2>Nhạc nền</h2><p class="sub">Chạm một bài để nghe thử ngay</p>
+    <label class="tg"><input type="checkbox" id="muOn" ${S.music ? "checked" : ""}>Bật nhạc nền</label>
+    <div class="songs">${item("auto", "Tự đổi theo lúc", "Ở tiệm: Sáng ở tiệm · Trong ca: Giờ cao điểm")}
+      ${Object.entries(SONGS).map(([id, t]) => item(id, t.name, t.desc)).join("")}</div>
+    <div class="mbtns"><button class="b3" data-close>Xong</button></div>`, render);
+  // cập nhật tại chỗ (không mở lại hộp thoại, giữ vị trí cuộn)
+  const btns = [...document.querySelectorAll<HTMLButtonElement>("#modal [data-song]")], on = $<HTMLInputElement>("#muOn")!;
+  const mark = () => { const c = S.song && SONGS[S.song] ? S.song : "auto"; on.checked = S.music; btns.forEach(b => { const me = b.dataset.song === c; b.classList.toggle("on", me); b.querySelector(".sc")!.textContent = me ? (S.music ? "Đang phát" : "Đã chọn") : ""; }); };
+  on.addEventListener("change", () => { Sound.setMusic(on.checked); mark(); });
+  btns.forEach(b => b.addEventListener("click", () => { Sound.setSong(b.dataset.song!); mark(); }));
 }
