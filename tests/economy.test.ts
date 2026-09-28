@@ -252,3 +252,14 @@ describe("ca v4: mục tiêu, kho giữa ca, thưởng đồ ăn", () => {
     expect(treat("dog", "kibble")).toBe(false);
   });
 });
+
+describe("tài sản (bảng xếp hạng)", () => {
+  it("xu + đồ trang trí đã mua + nguyên liệu + đồ ăn; mua đồ không làm tụt tài sản", async () => {
+    const { netWorth } = await import("../src/engine/economy");
+    S.coins = 500; S.owned = []; S.food = { kibble: 0, pate: 0, chicken: 0 };
+    S.stock = { base: [0, 0, 0], cream: [0, 0, 0], top: [0, 0, 0] };
+    expect(netWorth()).toEqual({ coins: 500, goods: 0, total: 500 });
+    S.coins -= 120; S.owned.push("wall:mint"); S.food.kibble = 2; S.stock.base[0] = 3;
+    expect(netWorth().total).toBe(380 + 120 + 2 * 6 + 3 * 2);
+  });
+});

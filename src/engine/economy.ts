@@ -2,6 +2,7 @@
 import type { PetId } from "../content/couple";
 import { FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
+import { roomItem, type RoomKey } from "../content/room";
 import { S, save } from "./state";
 
 export const unitCost = (k: StockKey, i: number) => UNIT_COST[k][i];
@@ -119,3 +120,11 @@ export function fameScore() {
 }
 export const fameLevel = () => { const x = fameScore(); return x < 3 ? 0 : x < 4.5 ? 1 : x < 6 ? 2 : 3; };
 export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });
+
+/* ===== Tài sản (bảng xếp hạng): xu + đồ trang trí đã mua + nguyên liệu trong kho + đồ ăn trong tủ ===== */
+export function netWorth() {
+  const decor = S.owned.reduce((a, id) => { const [k, v] = id.split(":"); return a + (roomItem(k as RoomKey, v).cost || 0); }, 0);
+  const stock = STOCK_KEYS.reduce((a, k) => a + S.stock[k].reduce((b, n, i) => b + n * unitCost(k, i), 0), 0);
+  const food = FOODS.reduce((a, f) => a + foodOf(f.id) * f.cost, 0);
+  return { coins: S.coins, goods: decor + stock + food, total: S.coins + decor + stock + food };
+}

@@ -11,7 +11,9 @@ import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, critterSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
-import { cloudRestore, cloudSave, disablePush, enablePush, ensureCode, fmtCode, isStandalone, normCode, pushSupported } from "../net/cloud";
+import { claimTransfer, cloudSave, createTransfer, defaultName, disablePush, enablePush, ensureCode, fmtCode, isStandalone, keepLocal, normCode, pairWith, pushSupported, savedAgo, takeOver, useRemote, type Remote } from "../net/cloud";
+import { netWorth } from "../engine/economy";
+import { lvl } from "../engine/progress";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
 
 const paper = (txt: string) => `<div class="paper">${esc(txt)}<span class="sig">${esc(S.names.his)}</span></div>`;
@@ -91,16 +93,23 @@ export function settings() {
   });
 }
 
-/* ===== Lưu trên mây: mã tiệm, tên trên bảng xếp hạng, nhắc 7g dậy / 11g ngủ ===== */
+/* ===== Lưu trên mây: mã tiệm, chuyển máy, ghép đôi, tên trên bảng xếp hạng, nhắc 7g dậy / 11g ngủ ===== */
+const reloadSoon = (m: string) => { toast(m); setTimeout(() => { location.hash = "#/"; location.reload(); }, 700); };
+const copy = async (txt: string, ok: string) => { try { await navigator.clipboard.writeText(txt); toast(ok); } catch { toast(txt); } };
 export function cloudPanel() {
-  const code = ensureCode(), at = S.cloud.at ? new Date(S.cloud.at) : null;
+  const code = ensureCode(), ago = savedAgo();
   const pushNote = !pushSupported() && !isStandalone() ? `<p class="sub small">Trên iPhone: bấm Chia sẻ → <b>Thêm vào MH chính</b>, mở game từ biểu tượng đó rồi mới bật được thông báo.</p>` : "";
   modal(`<h2>Lưu trên mây</h2>
-    <p class="sub">Tiệm tự lưu sau mỗi ca. Đổi máy, cài lại app hay lên bản mới đều lấy lại được bằng <b>mã tiệm</b>. Giữ kín mã này nha.</p>
-    <div class="ccode"><b id="cCode">${fmtCode(code)}</b><button type="button" class="mini pk" id="cCopy">Copy</button></div>
-    <p class="sub small">${at ? `Lưu lần cuối: ${at.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}` : "Chưa lưu lần nào"} · <button type="button" class="lnk" id="cSave">Lưu ngay</button></p>
-    <label class="field">Lấy lại tiệm từ máy khác<input id="cIn" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" maxlength="19"></label>
-    <button type="button" class="mini" id="cLoad">Lấy lại tiệm</button>
+    <p class="sub">Tiệm tự lưu mỗi khi có thay đổi. ${ago ? `☁︎ Đã lưu ${ago}.` : "Chưa lưu lần nào."} <button type="button" class="lnk" id="cSave">Lưu ngay</button></p>
+    <h3 class="csec">Chuyển sang máy khác</h3>
+    <div id="cXfer"><button type="button" class="mini pk" id="cMake">Tạo mã chuyển máy (10 phút)</button></div>
+    <label class="field">Nhận tiệm từ máy khác<input id="cIn" placeholder="Mã 6 ký tự hoặc mã tiệm 16 ký tự" autocapitalize="characters" autocomplete="off" maxlength="19"></label>
+    <button type="button" class="mini" id="cLoad">Nhận tiệm</button>
+    <p class="sub small">Mã tiệm cố định (giữ kín, dùng khi mất máy): <b class="mono" id="cCode">${fmtCode(code)}</b> <button type="button" class="lnk" id="cCopy">copy</button></p>
+    <h3 class="csec">Ghép đôi</h3>
+    <p class="sub small">Gửi mã này cho người ấy, hoặc nhập mã của người ấy, để hai tiệm hiện cạnh nhau trên bảng xếp hạng.</p>
+    <div class="ccode"><b>${S.cloud.pair || "······"}</b>${S.cloud.pair ? `<button type="button" class="mini pk" id="cPairCopy">Copy</button>` : ""}</div>
+    <div class="crow2"><input id="cPairIn" placeholder="Mã của người ấy" autocapitalize="characters" autocomplete="off" maxlength="6"><button type="button" class="mini" id="cPair">Ghép</button></div>
     <h3 class="csec">Bảng xếp hạng</h3>
     <label class="field">Tên tiệm trên bảng<input id="cName" value="${esc(S.cloud.name)}" maxlength="24"></label>
     <label class="tg"><input id="cShow" type="checkbox" ${S.cloud.show ? "checked" : ""}>Hiện tiệm trên bảng xếp hạng</label>
@@ -110,16 +119,30 @@ export function cloudPanel() {
     ${pushNote}
     <div class="mbtns"><button class="b3" type="button" id="cPush">${S.cloud.push ? "Cập nhật giờ nhắc" : "Bật thông báo"}</button>
       ${S.cloud.push ? `<button class="b3 w" type="button" id="cOff">Tắt thông báo</button>` : `<button class="b3 w" data-close>Xong</button>`}</div>`, render);
-  const keep = () => { S.cloud.name = $<HTMLInputElement>("#cName")!.value.trim().slice(0, 24) || `Tiệm của ${S.names.her}`; S.cloud.show = $<HTMLInputElement>("#cShow")!.checked;
+  const keep = () => { S.cloud.name = $<HTMLInputElement>("#cName")!.value.trim().slice(0, 24) || defaultName(); S.cloud.named = true; S.cloud.show = $<HTMLInputElement>("#cShow")!.checked;
     S.cloud.morning = $<HTMLInputElement>("#cMorning")!.checked; S.cloud.night = $<HTMLInputElement>("#cNight")!.checked; save(); };
   ["#cName", "#cShow"].forEach(id => $(id)!.addEventListener("change", () => { keep(); void cloudSave(); }));
   ["#cMorning", "#cNight"].forEach(id => $(id)!.addEventListener("change", keep));
-  $("#cCopy")!.addEventListener("click", async () => { try { await navigator.clipboard.writeText(fmtCode(code)); toast("Đã copy mã tiệm"); } catch { toast(fmtCode(code)); } });
-  $("#cSave")!.addEventListener("click", async () => { keep(); toast((await cloudSave()) ? "Đã lưu lên mây ☁︎" : "Chưa lưu được, kiểm tra mạng nha"); });
+  $("#cCopy")!.addEventListener("click", () => copy(fmtCode(code), "Đã copy mã tiệm"));
+  $("#cPairCopy")?.addEventListener("click", () => copy(S.cloud.pair, "Đã copy mã ghép đôi"));
+  $("#cSave")!.addEventListener("click", async () => { keep(); const r = await cloudSave(); toast(r === "ok" ? "Đã lưu lên mây ☁︎" : r === "conflict" ? "Trên mây có bản mới hơn từ máy khác" : "Chưa lưu được, kiểm tra mạng nha"); });
+  $("#cMake")!.addEventListener("click", async () => {
+    try {
+      const t = await createTransfer(), link = `${location.origin}/#/chuyen/${t.token}`;
+      $("#cXfer")!.innerHTML = `<div class="ccode xfer"><b>${t.token}</b><button type="button" class="mini pk" id="cShare">Gửi link</button></div>
+        <p class="sub small">Trên máy mới: mở game → ⚙️ → Lưu trên mây → nhập mã <b>${t.token}</b>. Hết hạn lúc ${new Date(t.expiresAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}.</p>`;
+      $("#cShare")!.addEventListener("click", async () => {
+        try { if (navigator.share) { await navigator.share({ title: "Chuyển Tiệm Bánh sang máy này", url: link }); return; } } catch { /* huỷ chia sẻ */ }
+        void copy(link, "Đã copy link chuyển máy");
+      });
+    } catch (e) { toast((e as Error).message); }
+  });
   $("#cLoad")!.addEventListener("click", async () => {
-    const v = $<HTMLInputElement>("#cIn")!.value;
-    if (normCode(v).length !== 16) return toast("Mã tiệm gồm 16 ký tự nha");
-    try { await cloudRestore(v); toast("Đã lấy lại tiệm, đang tải lại…"); setTimeout(() => location.reload(), 700); }
+    try { await takeOver($<HTMLInputElement>("#cIn")!.value); reloadSoon("Đã nhận tiệm, đang tải lại…"); }
+    catch (e) { toast((e as Error).message); }
+  });
+  $("#cPair")!.addEventListener("click", async () => {
+    try { const r = await pairWith($<HTMLInputElement>("#cPairIn")!.value); closeModal(); toast(`Đã ghép đôi với ${r.partner || "người ấy"} ♥`); }
     catch (e) { toast((e as Error).message); }
   });
   $("#cPush")!.addEventListener("click", async () => {
@@ -130,6 +153,40 @@ export function cloudPanel() {
     closeModal(); toast(`Đã bật nhắc ${[S.cloud.morning ? "7:00" : "", S.cloud.night ? "23:00" : ""].filter(Boolean).join(" và ")} ✓`);
   });
   $("#cOff")?.addEventListener("click", async () => { await disablePush(); closeModal(); toast("Đã tắt thông báo"); });
+}
+
+/* lần đầu: đặt tên tiệm để hiện trên bảng xếp hạng */
+export function nameShop(after?: () => void) {
+  modal(`<div class="tart">${critterSVG({ ...PETS.gold, mood: "love" }, 80)}</div><h2>Đặt tên tiệm</h2>
+    <p class="tdesc">Tên này hiện trên bảng xếp hạng để người ấy (và mọi người) nhận ra tiệm của mình.</p>
+    <label class="field"><input id="nsName" value="${esc(S.cloud.name || defaultName())}" maxlength="24"></label>
+    <label class="tg"><input id="nsShow" type="checkbox" ${S.cloud.show ? "checked" : ""}>Hiện trên bảng xếp hạng</label>
+    <div class="mbtns"><button class="b3" id="nsGo">Lưu tên</button></div>`, () => { after?.(); render(); });
+  $("#nsGo")!.addEventListener("click", () => {
+    S.cloud.name = $<HTMLInputElement>("#nsName")!.value.trim().slice(0, 24) || defaultName();
+    S.cloud.show = $<HTMLInputElement>("#nsShow")!.checked; S.cloud.named = true; save(); void cloudSave();
+    closeModal(); toast("Đã đặt tên tiệm ✓");
+  });
+}
+
+/* hai máy lệch nhau: hỏi giữ bản nào */
+export function conflictModal(r: Remote) {
+  const w = netWorth(), when = new Date(r.savedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
+  modal(`<h2>Có bản mới hơn trên mây</h2><p class="sub">Tiệm này vừa được chơi trên một máy khác. Giữ bản nào đây?</p>
+    <div class="cmp"><div><small>Trên mây · ${when}</small><b>Lv ${r.lv}</b><span>${fmtN(r.assets)} tài sản</span></div>
+      <div><small>Trên máy này</small><b>Lv ${lvl()}</b><span>${fmtN(w.total)} tài sản</span></div></div>
+    <div class="mbtns"><button class="b3" id="cfRemote">Dùng bản trên mây</button><button class="b3 w" id="cfLocal">Giữ bản máy này</button></div>`);
+  $("#cfRemote")!.addEventListener("click", async () => { try { await useRemote(); reloadSoon("Đang tải bản trên mây…"); } catch (e) { toast((e as Error).message); } });
+  $("#cfLocal")!.addEventListener("click", async () => { const x = await keepLocal(); closeModal(); toast(x === "ok" ? "Đã giữ bản trên máy này ☁︎" : "Chưa lưu được, thử lại sau nha"); });
+}
+
+/* mở link chuyển máy #/chuyen/MÃ */
+export function transferPrompt(token: string) {
+  modal(`<div class="tart">${critterSVG({ ...PETS.dog, mood: "love" }, 80)}</div><h2>Chuyển tiệm sang máy này?</h2>
+    <p class="tdesc">Tiến trình đang có trên máy này sẽ được thay bằng tiệm từ máy kia (mã <b>${esc(normCode(token))}</b>).</p>
+    ${isStandalone() ? "" : `<p class="sub small">Trên iPhone, nếu bạn chơi bằng biểu tượng ở màn hình chính thì hãy mở game từ đó và nhập mã này trong ⚙️ → Lưu trên mây.</p>`}
+    <div class="mbtns"><button class="b3" id="tpGo">Nhận tiệm</button><button class="b3 w" data-close>Để sau</button></div>`, () => { location.hash = "#/"; });
+  $("#tpGo")!.addEventListener("click", async () => { try { await claimTransfer(token); reloadSoon("Đã nhận tiệm, đang tải lại…"); } catch (e) { toast((e as Error).message); } });
 }
 
 /* ===== Hướng dẫn lần đầu ===== */

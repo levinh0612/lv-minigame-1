@@ -23,3 +23,19 @@ CREATE TABLE IF NOT EXISTS push_subs (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS push_subs_shop_idx ON push_subs (shop_id);
+
+-- v2: xếp theo tài sản, chống ghi đè giữa 2 máy, ghép đôi, chuyển máy
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS assets     bigint  NOT NULL DEFAULT 0;   -- xu + giá trị đồ đang có
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS rev        integer NOT NULL DEFAULT 0;   -- tăng mỗi lần lưu
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS device     text    NOT NULL DEFAULT '';  -- máy lưu gần nhất
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS pair_code  text UNIQUE;                  -- mã công khai để người kia ghép đôi
+ALTER TABLE shops ADD COLUMN IF NOT EXISTS partner_id bigint REFERENCES shops(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS shops_assets_idx ON shops (assets DESC, id) WHERE name <> '';
+
+CREATE TABLE IF NOT EXISTS transfers (
+  token       text        PRIMARY KEY,                -- 6 ký tự, dùng một lần
+  shop_id     bigint      NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+  expires_at  timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS transfers_exp_idx ON transfers (expires_at);
+ALTER TABLE transfers ADD COLUMN IF NOT EXISTS code text NOT NULL DEFAULT '';        -- mã tiệm gửi kèm, xoá khi nhận / hết hạn

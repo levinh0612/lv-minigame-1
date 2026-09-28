@@ -1,5 +1,5 @@
 /* Dùng chung cho các API: kết nối Neon (khởi tạo lười), băm mã tiệm, trả JSON */
-import { createHash } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
 let _sql: NeonQueryFunction<false, false> | null = null;
@@ -22,3 +22,6 @@ export async function body<T>(req: Request, max = 256 * 1024): Promise<T | null>
 }
 /* tên hiện trên bảng xếp hạng: gọn, không ký tự điều khiển */
 export const cleanName = (s: unknown) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 24);
+/* mã ngắn 6 ký tự (ghép đôi, chuyển máy): không có I, O, 0, 1 cho khỏi nhầm */
+const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+export const newToken = () => Array.from({ length: 6 }, () => ALPHA[randomInt(ALPHA.length)]).join("");

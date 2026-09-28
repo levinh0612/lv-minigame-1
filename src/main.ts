@@ -9,8 +9,8 @@ import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
 import { $, bump, closeModal, dropModal, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { backup, claimGoals, cloudPanel, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
-import { autoSave } from "./net/cloud";
+import { backup, claimGoals, cloudPanel, conflictModal, nameShop, openLetter, pauseMenu, restore, settings, tutorial, welcome } from "./ui/modals";
+import { checkRemote, flushSave, onConflict, startAutoSave } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet } from "./ui/screens/play";
@@ -33,6 +33,7 @@ document.addEventListener("click", e => {
     case "claim": return claimGoals();
     case "settings": return settings();
     case "cloud": return cloudPanel();
+    case "update": return applyUpdate();
     case "pause": return pauseMenu();
     case "serve": return doServe();
     case "peek": return doPeek();
@@ -82,17 +83,32 @@ document.addEventListener("click", e => {
 // rời app giữa ca: tự tạm dừng
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && SH && !SH.paused && !hasModal()) pauseMenu();
-  if (document.hidden && !SH && S.shifts > 0) autoSave();     // rời app: lưu lên mây
+  if (document.hidden && import.meta.env.PROD) flushSave();   // rời app: lưu lên mây ngay
+  if (!document.hidden) checkUpdate();
 });
 window.addEventListener("hashchange", render);
 
 render();
 Sound.play("home");
 // lần đầu: hướng dẫn rồi quà khai trương; người chơi cũ chưa nhận quà thì tặng luôn
-setTimeout(() => { if (hasModal()) return; if (!S.tut) tutorial(); else welcome(); }, 400);
-// mở app: tiệm đã có tiến trình thì lưu lên mây (tạo mã tiệm nếu chưa có)
-if (import.meta.env.PROD && S.shifts > 0) setTimeout(autoSave, 3000);
+// người chơi cũ chưa đặt tên tiệm thì hỏi một lần (hiện trên bảng xếp hạng)
+setTimeout(() => { if (hasModal()) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); else if (!S.cloud.named) nameShop(); }, 400);
+// lưu trên mây: tự lưu khi có thay đổi; mở app thì so với bản trên mây (máy khác chơi mới hơn thì hỏi)
+onConflict(r => { if (!SH) conflictModal(r); });
+if (import.meta.env.PROD) { startAutoSave(); setTimeout(() => void checkRemote(), 2500); }
 if (S.refund) { const r = S.refund; delete S.refund; save(); setTimeout(() => toast(`Tiệm đổi giao diện mới! Hoàn lại ${r} xu cho đồ trang trí cũ`), 600); }
 
-// PWA: chơi offline, có bản mới thì tự cập nhật lần mở sau
-if (import.meta.env.PROD) registerSW({ immediate: true, onOfflineReady() { $("#app") && toast("Tiệm đã sẵn sàng chơi offline"); } });
+// PWA: chơi offline; có bản mới thì hiện nút cập nhật (không tự tải lại giữa ca)
+let updateSW: ((reload?: boolean) => Promise<void>) | null = null, swReg: ServiceWorkerRegistration | undefined;
+function applyUpdate() {
+  if (SH) return toast("Hết ca rồi cập nhật nha, kẻo mất khách đang chờ");
+  toast("Đang cập nhật…"); void updateSW?.(true);
+}
+let lastCheck = 0;
+function checkUpdate() { if (swReg && Date.now() - lastCheck > 600000) { lastCheck = Date.now(); void swReg.update(); } }
+if (import.meta.env.PROD) updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() { document.body.insertAdjacentHTML("beforeend", `<button class="upd" data-act="update">✨ Có bản mới · chạm để cập nhật</button>`); },
+  onOfflineReady() { $("#app") && toast("Tiệm đã sẵn sàng chơi offline"); },
+  onRegisteredSW(_url, reg) { swReg = reg; setInterval(checkUpdate, 1800000); }
+});

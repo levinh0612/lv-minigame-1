@@ -1,7 +1,7 @@
 /* Vẽ màn hình theo đường dẫn hiện tại */
 import { rollDay } from "../engine/progress";
 import { $, dropModal, hasModal } from "./dom";
-import { pauseMenu } from "./modals";
+import { pauseMenu, transferPrompt } from "./modals";
 import { fitRooms } from "./room";
 import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
@@ -34,6 +34,7 @@ export function render() {
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
     case "rank": $("#app")!.innerHTML = rankHTML(); break;
+    case "transfer": $("#app")!.innerHTML = homeHTML(); setTimeout(() => transferPrompt(r.token), 50); break;
   }
   fitRooms();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu

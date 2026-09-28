@@ -51,7 +51,8 @@ export const PHASES: Phase[] = [
       { title: "Gửi thư ngay lúc đó", desc: "Anh viết thư từ điện thoại của mình, Em mở trong tiệm.", status: "later" },
       { title: "Hẹn thư cho ngày đặc biệt", desc: "Viết trước thư sinh nhật, kỷ niệm; đúng ngày mới mở được.", status: "later" },
       { title: "Anh ghé tiệm thật", desc: "Khách đặc biệt chỉ xuất hiện khi người kia thật sự gửi lời nhắn.", status: "later" },
-      { title: "Thả tim qua lại", desc: "Chạm vào nhau trong tiệm, bên kia thấy ngay.", status: "later" }
+      { title: "Thả tim qua lại", desc: "Chạm vào nhau trong tiệm, bên kia thấy ngay.", status: "later" },
+      { title: "Ghép đôi trên bảng xếp hạng", desc: "Hai tiệm hiện cạnh nhau, xem ai đang dẫn trước.", status: "done" }
     ]
   },
   {
@@ -68,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.8", date: "28/09/2026", notes: ["Bảng xếp hạng theo tài sản (xu + đồ đang có)", "Ghép đôi: hai tiệm hiện cạnh nhau, xem ai dẫn trước", "Tự lưu mỗi khi có thay đổi, màn chính hiện ☁︎ đã lưu", "Chuyển máy bằng mã 6 ký tự; hai máy lệch nhau thì hỏi giữ bản nào", "Có bản mới thì hiện nút cập nhật"] },
   { v: "2.7", date: "28/09/2026", notes: ["Lưu trên mây: tự lưu sau mỗi ca, đổi máy nhập mã tiệm là lấy lại", "Bảng xếp hạng theo tổng xu kiếm được", "Thông báo 7:00 chào buổi sáng và 23:00 nhắc đi ngủ (bật trong Cài đặt)"] },
   { v: "2.6", date: "28/09/2026", notes: ["Màn chính có cảnh tiệm: Milo, Siro, Cacao sau quầy, tủ bánh, bàn khách", "Trang trí mới: 8 nhóm (tường, sàn, quầy, rèm, đèn, treo tường, cây, thảm), chạm để thử trước khi mua", "Đồ trang trí cũ tự chuyển sang kiểu mới, không mất gì"] },
   { v: "2.5", date: "28/09/2026", notes: ["Màn Chơi mới: phiếu order kéo lên/thu gọn, icon cho từng nguyên liệu", "Kho nguyên liệu mở ngay giữa ca", "Mục tiêu mỗi ca có thưởng xu", "Màn Kết quả là tấm bảng giơ lên", "Màn Chuẩn bị và Nhân viên nhỏ mới; Siro thành mèo Anh golden"] },

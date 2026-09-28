@@ -22,7 +22,7 @@ export interface State {
   cloud: Cloud;
 }
 /* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
-export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean }
+export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean; rev: number; named: boolean; pair: string }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
 
@@ -36,7 +36,7 @@ export function fresh(): State {
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
     room: { ...DEFAULT_ROOM }, owned: [], earned: 0,
-    cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false }
+    cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
 }
 
@@ -91,6 +91,9 @@ export let S: State = loadState(read());
 let persist = true;
 /* Storybook tắt lưu để không đè lên tiến trình thật (cùng tên miền nên dùng chung localStorage) */
 export const setPersist = (on: boolean) => { persist = on; };
-export function save() { if (!persist) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* chế độ riêng tư: bỏ qua */ } }
+/* sau mỗi lần lưu trên máy, báo cho phần lưu trên mây (net/cloud.ts) để gộp rồi gửi */
+let onSaved: (() => void) | null = null;
+export const whenSaved = (f: () => void) => { onSaved = f; };
+export function save() { if (!persist) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* chế độ riêng tư: bỏ qua */ } onSaved?.(); }
 export function resetState() { S = fresh(); save(); }
 export const petName = (id: PetId) => S.names.pets[id] || CFG.pets.find(p => p.id === id)!.name;

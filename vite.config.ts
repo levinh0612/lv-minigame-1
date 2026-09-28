@@ -7,7 +7,7 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(pkg.version.split(".").slice(0, 2).join(".")) },
   plugins: [
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["apple-touch-icon.png", "icon-192.png"],
       manifest: {
         name: "Tiệm Bánh Matcha", short_name: "Tiệm Bánh", lang: "vi", start_url: "/", scope: "/",
