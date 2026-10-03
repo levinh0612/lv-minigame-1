@@ -36,8 +36,8 @@ export const ROOM_CATS: RoomCat[] = [
     { v: "2", n: "Đồng hồ mèo", cost: 170, sw: "radial-gradient(circle,#FFF3F6 12px,#fff 13px,#fff 20px,#FFE3EA 21px)", fx: { pat: .10 } }] },
   { k: "plant", n: "Cây", hl: "plant", items: [
     { v: "0", n: "Không cây", cost: 0, sw: NONE, glyph: "+" },
-    { v: "1", n: "Sen đá", cost: 90, sw: "radial-gradient(ellipse at 50% 40%,#9FD18A 12px,transparent 13px),linear-gradient(transparent 60%,#E9A27C 60%) #EEF9F3", fx: { pet: .10 } },
-    { v: "2", n: "Monstera", cost: 160, sw: "radial-gradient(ellipse at 50% 38%,#6FB27A 16px,transparent 17px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { pet: .10, cust: 1 } }] },
+    { v: "1", n: "Sen đá", cost: 90, sw: "radial-gradient(ellipse at 50% 40%,#9FD18A 12px,transparent 13px),linear-gradient(transparent 60%,#E9A27C 60%) #EEF9F3", fx: { tip: .04 } },
+    { v: "2", n: "Monstera", cost: 160, sw: "radial-gradient(ellipse at 50% 38%,#6FB27A 16px,transparent 17px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { tip: .04, cust: 1 } }] },
   { k: "rug", n: "Thảm", hl: "rug", items: [
     { v: "0", n: "Không thảm", cost: 0, sw: NONE, glyph: "–" },
     { v: "1", n: "Thảm tròn", cost: 120, sw: "radial-gradient(ellipse,#FFD1DC 50%,#fff 52%,#fff 56%,#FFD1DC 58%,#FFD1DC 66%,transparent 68%) #DDF4E8", fx: { cust: 1 } },
@@ -51,7 +51,7 @@ export const isDefault = (k: RoomKey, v: string) => roomCat(k).items[0].v === v;
 
 const FX_TXT: Record<FxKey, (n: number) => string> = {
   pat: n => `khách chờ lâu hơn ${Math.round(n * 100)}%`, tip: n => `tip +${Math.round(n * 100)}%`, price: n => `giá bánh +${Math.round(n * 100)}%`,
-  cust: n => `+${n} khách mỗi ca`, pet: n => `thú cưng ghé thường hơn ${Math.round(n * 100)}%`
+  cust: n => `+${n} khách mỗi ca`
 };
 export const fxText = (it: RoomItem) => Object.entries(it.fx || {}).map(([k, n]) => FX_TXT[k as FxKey](n!)).join(", ");
 

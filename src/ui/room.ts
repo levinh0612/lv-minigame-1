@@ -3,7 +3,7 @@ import type { PetId } from "../content/couple";
 import { PETS } from "../content/game";
 import type { Room } from "../content/room";
 import { S, petName } from "../engine/state";
-import { cakeSVG, critterSVG, guestSVG } from "./art";
+import { cakeSVG, petSVG, guestSVG } from "./art";
 import { esc } from "./dom";
 
 const WALLS: Record<string, [string, string]> = {
@@ -68,14 +68,14 @@ export function roomHTML(r: Room, o: RoomOpts = {}) {
     </div><div class="lb">Tủ bánh</div></button>`;
   // thú cưng sau quầy + quầy
   const pets = (["dog", "gold", "white"] as PetId[]);
-  h += `<div class="rm-pets">${pets.map(id => `<button class="rpet" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${critterSVG({ ...PETS[id], mood: o.love === id ? "love" : PET_MOOD[id], wave: id === "white" && o.love !== id, ledge: false }, 64)}</button>`).join("")}</div>
+  h += `<div class="rm-pets">${pets.map(id => `<button class="rpet" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${petSVG({ ...PETS[id], mood: o.love === id ? "love" : PET_MOOD[id], wave: id === "white" && o.love !== id, ledge: false }, 64)}</button>`).join("")}</div>
     <div class="rm-top"></div>
     <div class="rm-counter${glow("counter")}" style="background:${COUNTERS[r.counter] || COUNTERS.pink}">${pets.map(id => `<span>${esc(petName(id))}</span>`).join("")}</div>`;
   // hộp quà
   h += `<button class="rm-gift" data-go="/cua-hang/qua-tang" aria-label="Quà tặng"><i style="left:2px;top:12px;width:28px;height:20px;background:#8FD9B6;${B};border-radius:3px"></i><i style="left:0;top:6px;width:32px;height:9px;background:#8FD9B6;${B};border-radius:3px"></i><i style="left:13px;top:6px;width:6px;height:26px;background:#FF7FA1"></i><i style="left:6px;top:-2px;width:10px;height:9px;${B};border-radius:50% 50% 0 50%;background:#FF7FA1"></i><i style="left:16px;top:-2px;width:10px;height:9px;${B};border-radius:50% 50% 50% 0;background:#FF7FA1"></i>${o.giftDot ? `<i class="dot"></i>` : ""}</button>`;
   // bàn khách
-  const tables = [{ x: 14, who: g > 0 ? guestSVG({ gender: "girl", hairStyle: "long", hair: "#6B4A3A", skin: "#FFE3D0", accent: "#FF8FAB", gesture: "cheek", mood: "love", ledge: false }, 66) : "", c: [0, 1, 0] },
-                  { x: 124, who: g > 1 ? critterSVG({ kind: "bunny", fur: "#FFFFFF", bow: "#FF8FAB", mood: "happy", ledge: false }, 58) : "", c: [2, 0, 1] }];
+  const tables = [{ x: 14, who: g > 0 ? guestSVG({ gender: "girl", sprite: "g2", hair: "#C98B5A", eye: "#7A5A3E", coat: "#8A3D55", shirt: "#F2E6D0", mood: "love", ledge: false }, 66) : "", c: [0, 1, 0] },
+                  { x: 124, who: g > 1 ? guestSVG({ gender: "boy", sprite: "b3", hair: "#6B4A3A", eye: "#4F9A6B", coat: "#2E4A7A", shirt: "#C9962E", mood: "happy", ledge: false }, 62) : "", c: [2, 0, 1] }];
   h += tables.map(t => `<div class="rm-table" style="left:${t.x}px"><div class="tw">${t.who}</div>
     <i style="left:46px;top:62px;width:12px;height:40px;background:${tableC};${B}"></i><i style="left:28px;bottom:6px;width:48px;height:10px;border-radius:50%;background:${tableC};${B}"></i>
     <i style="left:4px;top:52px;width:96px;height:22px;border-radius:50%;background:${tableTop};${B}"></i>

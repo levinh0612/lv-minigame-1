@@ -8,7 +8,7 @@ import { giftReady } from "../engine/progress";
 import { closeEarly, type Customer } from "../engine/shift";
 import { S, petName, resetState, save } from "../engine/state";
 import { fmtN, nameList, pick } from "../engine/util";
-import { cakeSVG, critterSVG, foodSVG, guestSVG } from "./art";
+import { cakeSVG, petSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
 import { CHANGELOG } from "../content/roadmap";
@@ -72,6 +72,7 @@ export function settings() {
       <label class="field">Tên khách nữ (${nameList(S.names.girls).length}) · cách nhau bằng dấu phẩy<textarea id="fGirls" rows="2">${esc(S.names.girls)}</textarea></label>
       <label class="field">Tên khách nam (${nameList(S.names.boys).length})<textarea id="fBoys" rows="2">${esc(S.names.boys)}</textarea></label>
       <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
+      <button type="button" class="b3 w cloudbtn" data-act="profile">🎨 Hồ sơ · nhân vật · tên tiệm · màu giao diện</button>
       <button type="button" class="b3 w cloudbtn" data-act="music">🎵 Chọn bài · ${esc(songName())}</button>
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
@@ -101,7 +102,7 @@ export function accountPanel() {
   const ago = savedAgo();
   const pushNote = !pushSupported() && !isStandalone() ? `<p class="sub small">Trên iPhone: bấm Chia sẻ → <b>Thêm vào MH chính</b>, mở game từ biểu tượng đó rồi mới bật được thông báo.</p>` : "";
   modal(`<h2>Tài khoản</h2>
-    <div class="acc"><span>${critterSVG({ ...PETS.gold, mood: "love", ledge: false }, 44)}</span><div><b>${esc(account())}</b><small>☁︎ ${ago ? `đã lưu ${ago}` : "chưa lưu"} · tự lưu khi có thay đổi</small></div></div>
+    <div class="acc"><span>${petSVG({ ...PETS.gold, mood: "love", ledge: false }, 44)}</span><div><b>${esc(account())}</b><small>☁︎ ${ago ? `đã lưu ${ago}` : "chưa lưu"} · tự lưu khi có thay đổi</small></div></div>
     <h3 class="csec">Đổi PIN</h3>
     <div class="crow2"><input id="acPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN mới"><input id="acPin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Nhập lại"><button type="button" class="mini" id="acPinGo">Đổi</button></div>
     <h3 class="csec">Nhắc giờ</h3>
@@ -157,18 +158,18 @@ export function wallet() {
 export function whatsNew(prev: string) {
   const newer = CHANGELOG.filter(c => c.v.localeCompare(prev, undefined, { numeric: true }) > 0).slice(0, 3);
   if (!newer.length) return;
-  modal(`<div class="tart">${critterSVG({ ...PETS.white, mood: "love", wave: true }, 80)}</div><h2>Tiệm vừa lên bản ${esc(__APP_VERSION__)}!</h2>
+  modal(`<div class="tart">${petSVG({ ...PETS.white, mood: "love", wave: true }, 80)}</div><h2>Tiệm vừa lên bản ${esc(__APP_VERSION__)}!</h2>
     ${newer.map(c => `<div class="wn"><b>Bản ${esc(c.v)}</b><ul>${c.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>`).join("")}
     <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`);
 }
 
 /* ===== Hướng dẫn lần đầu ===== */
 const TUT = [
-  { art: () => `<div class="tart">${critterSVG(PETS.dog, 64)}${critterSVG({ ...PETS.gold, mood: "love" }, 72)}${critterSVG({ ...PETS.white, mood: "open", wave: true }, 64)}</div>`,
+  { art: () => `<div class="tart">${petSVG(PETS.dog, 64)}${petSVG({ ...PETS.gold, mood: "love" }, 72)}${petSVG({ ...PETS.white, mood: "open", wave: true }, 64)}</div>`,
     t: "Chào chủ tiệm!", d: "Mỗi ngày tiệm mở cửa, khách ghé mua bánh. Thẻ gọi món ghi rõ tên bánh, thành phần và độ ngọt khách muốn." },
   { art: () => `<div class="tart">${cakeSVG({ base: 0, cream: 0, top: 0, sweet: 0 }, { size: 150 })}</div>`,
     t: "Ghép bánh", d: "Chạm Đế → Kem → Topping → Độ ngọt. Dấu ✓ xanh là đúng, ✕ đỏ là sai. Đủ rồi thì bấm Giao bánh. Giao nhanh được nhiều sao và tip." },
-  { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}${critterSVG({ ...PETS.dog, mood: "wink" }, 70)}</div>`,
+  { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}${petSVG({ ...PETS.dog, mood: "wink" }, 70)}</div>`,
     t: "Đi chợ & thú cưng đi làm", d: "Mỗi bánh dùng 1 đế, 1 kem, 1 topping trong kho, nhớ nhập hàng trước ca. Lên cấp thì Milo, Siro, Cacao xin vào làm thợ bánh, tự nhận đơn làm bánh cho khách. Lương của các bé là Hạt, Pate, Ức gà, mua ở mục Thú cưng." },
   { art: () => `<div class="tart"><div class="env big"></div></div>`,
     t: "Mỗi ngày một lá thư", d: "Mở thư mỗi ngày, xong 3 mục tiêu để nhận thêm thư bí mật. Ngày đặc biệt được nhân đôi xu." }
@@ -186,7 +187,7 @@ export function tutorial(step = 0) {
 export function welcome() {
   if (S.welcome || !claimWelcome()) return;
   const food = (Object.entries(WELCOME.food) as [keyof typeof S.food, number][]).map(([id, n]) => ({ f: FOODS.find(x => x.id === id)!, n }));
-  modal(`<div class="tart">${critterSVG({ ...PETS.gold, mood: "love" }, 80)}<div class="gift"><span class="coin-i big"></span><b>+${WELCOME.coins}</b></div>${food.map(x => `<div class="gift">${foodSVG(x.f.id, 44)}<b>+${x.n}</b></div>`).join("")}</div>
+  modal(`<div class="tart">${petSVG({ ...PETS.gold, mood: "love" }, 80)}<div class="gift"><span class="coin-i big"></span><b>+${WELCOME.coins}</b></div>${food.map(x => `<div class="gift">${foodSVG(x.f.id, 44)}<b>+${x.n}</b></div>`).join("")}</div>
     <h2>Quà khai trương!</h2>
     <p class="tdesc">Tặng chủ tiệm ${WELCOME.coins} xu và ${food.map(x => `${x.n} gói ${x.f.n}`).join(", ")} làm vốn. Đi chợ nhập nguyên liệu, và dành đồ ăn làm lương cho các bé nha.</p>
     <div class="mbtns"><button class="b3" data-close>Nhận vốn</button></div>`, render);

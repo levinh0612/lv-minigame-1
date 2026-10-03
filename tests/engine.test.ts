@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RECIPES } from "../src/content/game";
+import { RECIPES, SPRITES } from "../src/content/game";
 import { coinMult, daysTogether, events, todayEvents } from "../src/engine/dates";
 import { goals, rollDay } from "../src/engine/progress";
-import { closeEarly, createShift, mineIdx, peek, serve, take, tick, type Customer } from "../src/engine/shift";
+import { closeEarly, createShift, makeCustomer, mineIdx, peek, serve, take, tick, type Customer } from "../src/engine/shift";
 import { S, fresh, loadState, resetState } from "../src/engine/state";
 
 const at = (y: number, m: number, d: number) => vi.setSystemTime(new Date(y, m - 1, d, 10, 0, 0));
 const customer = (over: Partial<Customer> = {}): Customer => ({
-  who: "Bé Na", look: { kind: "cat", fur: "#FFFFFF" }, r: RECIPES[0], sweet: 0, max: 40, pat: 40, ...over
+  who: "Bé Na", look: { gender: "girl", sprite: "g1" }, r: RECIPES[0], sweet: 0, max: 40, pat: 40, ...over
 });
 
 beforeEach(() => { vi.useFakeTimers(); at(2026, 9, 27); resetState(); rollDay(); });
@@ -65,6 +65,37 @@ describe("dữ liệu lưu", () => {
     expect(s.owned).toEqual(["plant:1"]);
     expect(s.room.plant).toBe("1");
     expect(s.reviews.map(r => r.who)).toEqual(["Bé Na"]);
+  });
+
+  it("hồ sơ cá nhân: người chơi cũ có nhân vật, tên tiệm, theme mặc định; dữ liệu lưu giữ nguyên", () => {
+    const old = loadState(JSON.stringify({ v: 6, coins: 5 }));
+    expect(old.me.sprite in SPRITES).toBe(true);
+    expect(old.shop).toBe(""); expect(old.theme).toBe("pink");
+    const mine = loadState(JSON.stringify({ v: 6, me: { sprite: "b3", hair: "#6B4A3A" }, shop: "Vinh", theme: "blue" }));
+    expect(mine.me).toMatchObject({ sprite: "b3", hair: "#6B4A3A" }); expect(mine.me.coat).toBeTruthy();
+    expect(mine.shop).toBe("Vinh"); expect(mine.theme).toBe("blue");
+    expect(loadState(JSON.stringify({ v: 6, me: { sprite: "không-có" } })).me.sprite in SPRITES).toBe(true);
+  });
+
+  it("hình khách trong đánh giá đã lưu được chuyển sang ảnh mới, hình con vật và thú cưng bỏ đi", () => {
+    const s = loadState(JSON.stringify({ v: 6, reviews: [
+      { who: "Bé Na", look: { gender: "girl", hairStyle: "buns", hair: "#6B4A3A", skin: "#FFE3D0" }, s: 3, txt: "", love: false },
+      { who: "Mèo Bơ", look: { kind: "cat", fur: "#FFFFFF", pattern: "patch" }, s: 2, txt: "", love: false },
+      { who: "Siro", look: { kind: "brit", fur: "#F3DDAE" }, s: 3, txt: "", love: false },
+      { who: "Anh", look: { gender: "boy", sprite: "boy" }, s: 3, txt: "", love: true }] }));
+    expect(s.reviews.map(r => r.who)).toEqual(["Bé Na", "Anh"]);
+    expect(s.reviews.every(r => r.look.sprite in SPRITES)).toBe(true);
+  });
+
+  it("khách thường chỉ là nam hoặc nữ, mỗi người có ảnh và bộ màu riêng", () => {
+    resetState(); const sh = createShift();
+    for (let i = 0; i < 80; i++) {
+      const c = makeCustomer(sh);
+      if (c.him) continue;
+      expect(c.look.sprite in SPRITES).toBe(true);
+      expect(c.look.sprite[0]).toBe(c.look.gender === "girl" ? "g" : "b");
+      expect(c.look.coat).toBeTruthy();
+    }
   });
 
   it("bản 2.x -> v4: đồ trang trí cũ thành kiểu trong 8 nhóm và được dùng luôn", () => {

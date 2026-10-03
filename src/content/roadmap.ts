@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.18", date: "03/10/2026", notes: ["Vẽ lại toàn bộ khách theo phong cách mới: 6 kiểu nữ, 6 kiểu nam, mỗi người một màu tóc, mắt, áo, da riêng; thỉnh thoảng chớp mắt", "Khách chỉ còn nam và nữ: bỏ khách con vật, Milo, Siro, Cacao không còn ghé tiệm làm khách (các bé chỉ làm nhân viên)", "Milo, Siro, Cacao có hình mới, đổi biểu cảm theo tâm trạng", "Hồ sơ của bạn: chọn nhân vật (12 kiểu, đổi màu tóc/mắt/áo/da), sửa tên tiệm, chọn màu giao diện (hồng, xanh dương, xanh lá, tím, cam, xám); tự đồng bộ giữa các máy"] },
   { v: "2.17", date: "03/10/2026", notes: ["Storybook cuộn được lại, có nút xuất file để gửi Claude Design"] },
   { v: "2.16", date: "28/09/2026", notes: ["Thêm 5 bài nhạc nền: Mưa ngoài hiên, Xe đạp 8-bit, Bossa matcha, Hẹn hò, Ru ngủ", "Chạm nút nhạc ở màn chính để chọn bài, nghe thử ngay", "Sửa góc bảng xếp hạng bị lem màu"] },
   { v: "2.15", date: "28/09/2026", notes: ["Bảng xếp hạng mở ngay trên màn chính (hộp thoại)"] },

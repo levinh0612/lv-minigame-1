@@ -1,6 +1,6 @@
 /* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
 import { CFG, type PetId } from "../content/couple";
-import { STARTER_STOCK, type FoodId, type Look, type StockKey } from "../content/game";
+import { BOY_SPRITES, GIRL_SPRITES, SPRITES, STARTER_STOCK, type FoodId, type GuestLook, type Look, type StockKey } from "../content/game";
 import { DEFAULT_ROOM, OLD_TO_ROOM, type Room } from "../content/room";
 import { freshBook, type Book } from "./wallet";
 
@@ -21,10 +21,17 @@ export interface State {
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
   earned: number;                 // tổng xu kiếm được từ bán bánh (bảng xếp hạng)
   book: Book;                     // sổ thu chi (bảng Ví)
+  me: Avatar;                     // nhân vật của người chơi (chọn kiểu + màu), đồng bộ theo tài khoản
+  shop: string;                   // tên tiệm hiện ở màn chính (để trống thì dùng tên tài khoản)
+  theme: string;                  // theme màu giao diện (content/theme.ts)
   photo: string;                  // ảnh treo tường tiệm (data URL đã thu nhỏ)
   cloud: Cloud;
 }
 /* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
+/** nhân vật người chơi: id ảnh (content/game.ts SPRITES) và màu tô */
+export interface Avatar { sprite: string; hair: string; eye: string; coat: string; shirt: string; skin: string }
+export const meLook = (): GuestLook => ({ gender: S.me.sprite[0] === "g" ? "girl" : "boy", ...S.me });
+export const DEFAULT_ME: Avatar = { sprite: "g1", hair: "#3B2A26", eye: "#6C8FC0", coat: "#2F6F86", shirt: "#8A3D55", skin: "#FFE3D0" };
 export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean; rev: number; named: boolean; pair: string }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
@@ -38,14 +45,24 @@ export function fresh(): State {
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
-    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), photo: "",
+    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
 }
 
 // giá đồ trang trí của bản 1 (để hoàn xu)
 const OLD_DECOR: Record<string, number> = { plant: 60, lights: 120, vase: 180, frame: 260, bell: 350, bear: 480, tea: 650, ribbon: 900 };
-const validLook = (l: unknown) => { const x = l as { gender?: string; kind?: string } | null; return !!x && (!!x.gender || ["cat", "dog", "bunny", "bear"].includes(x.kind || "")); };
+/* Hình khách trong "đánh giá" đã lưu: chuyển từ kiểu vẽ cũ sang ảnh mới, hình thú cưng và con vật bỏ đi (nay khách chỉ có nam và nữ) */
+function upgradeLook(l: unknown): Look | null {
+  const x = l as Record<string, unknown> | null;
+  if (!x) return null;
+  if (typeof x.sprite === "string" && x.sprite in SPRITES) return x as unknown as Look;
+  if (x.gender === "girl" || x.gender === "boy") {
+    const girl = x.gender === "girl", n = String(x.hair || "").length % 6;
+    return { gender: x.gender, sprite: (girl ? GIRL_SPRITES : BOY_SPRITES)[n], hair: typeof x.hair === "string" ? x.hair : undefined, skin: typeof x.skin === "string" ? x.skin : undefined };
+  }
+  return null;
+}
 
 /* Đọc dữ liệu đã lưu và chuyển từ các bản cũ.
    Phiên bản đọc từ dữ liệu gốc: bản 1 không có trường `v`. */
@@ -65,7 +82,6 @@ export function loadState(raw: string | null): State {
     const known = new Set(Object.keys(OLD_TO_ROOM));
     refund += s.decor.filter(id => !known.has(id)).reduce((a, id) => a + (OLD_DECOR[id] || 0), 0);
     s.decor = s.decor.filter(id => known.has(id));
-    s.reviews = (s.reviews || []).filter(r => validLook(r.look));
   }
   // v3 -> v4: đồ trang trí thành 8 nhóm (Tường, Sàn, Quầy...); món cũ chuyển sang kiểu tương ứng và được dùng luôn
   if (ver < 4) {
@@ -77,6 +93,7 @@ export function loadState(raw: string | null): State {
   if (ver < 5 && raw) s.earned = Math.round((s.served || 0) * 20);
   // v5 -> v6: sổ thu chi; người chơi cũ ghi số xu hiện có là "trước khi có sổ"
   if (ver < 6 && raw) s.book = freshBook(s.coins);
+  s.reviews = (s.reviews || []).flatMap(r => { const look = upgradeLook(r.look); return look ? [{ ...r, look }] : []; });
   s.v = 6; s.coins += refund; if (refund) s.refund = refund;
   s.names = Object.assign(fresh().names, s.names || {});
   s.names.pets = Object.assign(fresh().names.pets, s.names.pets || {});
@@ -88,6 +105,8 @@ export function loadState(raw: string | null): State {
   s.owned = s.owned || [];
   s.cloud = Object.assign(fresh().cloud, s.cloud || {});
   s.book = Object.assign(freshBook(), s.book || {});
+  s.me = Object.assign({ ...DEFAULT_ME }, s.me || {}); if (!(s.me.sprite in SPRITES)) s.me = { ...DEFAULT_ME };
+  s.shop = typeof s.shop === "string" ? s.shop : ""; s.theme = typeof s.theme === "string" ? s.theme : "pink";
   ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }

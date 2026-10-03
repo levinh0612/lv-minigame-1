@@ -2,20 +2,20 @@
 import { CFG, type PetId } from "../content/couple";
 const STAFF_IDS: PetId[] = ["dog", "gold", "white"];
 import {
-  ACCENT, CATS, CRITTERS, GUEST_LINES, HAIR, HIM, KEYS, LABELS, PETS, PET_LINES, RECIPES, SKIN, STOCK_KEYS,
+  BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
 import { BAKE_TIME } from "../content/game";
 import { dutyLv, expectedCustomers, fame, payCrew, quickPrice, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
-import { S, petName, save } from "./state";
+import { S, save } from "./state";
 import { earn, note, spend } from "./wallet";
 import { nameList, pick, rnd } from "./util";
 
 export interface Customer {
   who: string; look: Look; r: Recipe; sweet: number; max: number; pat: number;
-  him?: boolean; pet?: PetId; gone?: boolean; mood?: Mood; note?: string;
+  him?: boolean; gone?: boolean; mood?: Mood; note?: string;
   by?: PetId;          // thú cưng đang làm đơn này (người chơi không chọn được)
 }
 /* một bé thợ bánh trong ca: đang làm cho ghế nào, được bao nhiêu */
@@ -23,7 +23,7 @@ export interface Baker { id: PetId; seat: number; done: number; need: number }
 export interface Shift {
   total: number; spawned: number; served: number; left: number; coins: number; tips: number; stars: number[];
   seats: (Customer | null)[]; build: Build; t: number; next: number; paused: boolean;
-  boyDone: boolean; petsDone: PetId[]; lv0: number;
+  boyDone: boolean; lv0: number;
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
   bonus: number; lack: Partial<Record<PetId, string>>;
@@ -43,7 +43,7 @@ export function createShift(): Shift {
   return {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(fame().seats).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
-    boyDone: !!S.daily.boy, petsDone: [], lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
+    boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
   };
 }
@@ -52,24 +52,18 @@ function makeGuest(): { who: string; look: Look } {
   const girl = Math.random() < 0.5;
   return {
     who: pick(nameList(girl ? S.names.girls : S.names.boys)),
-    look: { gender: girl ? "girl" : "boy", hairStyle: girl ? pick(["long", "buns"] as const) : pick(["short", "cap"] as const), hair: pick(HAIR), skin: pick(SKIN), accent: pick(ACCENT), gesture: pick(["rest", "wave", "cheek"] as const) }
+    look: { gender: girl ? "girl" : "boy", sprite: pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
   };
 }
 
-/* Chọn khách mới: Anh (mỗi ngày một lần), thú cưng nhà mình, hoặc khách thường */
+/* Chọn khách mới: Anh (mỗi ngày một lần) hoặc khách thường (nam/nữ) */
 export function makeCustomer(sh: Shift): Customer {
   const L = lvl(), rs = unlocked();
-  const petChance = 0.1 + fx("pet") + CFG.pets.reduce((a, p) => a + S.pets[p.id].aff, 0) / 1500;
-  const petsLeft = CFG.pets.filter(p => !sh.petsDone.includes(p.id));
   if (!sh.boyDone && ((sh.spawned >= 2 && Math.random() < 0.35) || sh.spawned === sh.total - 1)) {
     sh.boyDone = true; S.daily.boy = true; save();
     return { who: S.names.his, look: { ...HIM }, him: true, r: RECIPES[0], sweet: 0, max: 70, pat: 70 };
   }
-  if (petsLeft.length && Math.random() < petChance) {
-    const p = pick(petsLeft); sh.petsDone.push(p.id);
-    return { who: petName(p.id), look: { ...PETS[p.id] }, pet: p.id, r: pick(rs), sweet: 0, max: 55, pat: 55 };
-  }
-  const g = Math.random() < 0.6 ? makeGuest() : (k => ({ who: k.n, look: { ...k } as Look }))(pick(CRITTERS));
+  const g = makeGuest();
   const r0 = Math.random() < 0.25 ? featured() : Math.random() < 0.3 ? rs[rs.length - 1] : pick(rs);
   const x = Math.random(), max = Math.max(26, 44 - L * 1.5) * (1 + fx("pat"));
   return { ...g, r: r0.lv <= L ? r0 : pick(rs), sweet: x < 0.5 ? 0 : x < 0.8 ? 1 : 2, max, pat: max };
@@ -202,7 +196,6 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   if (byStaff) sh.helped++;
   if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
-  if (c.pet) S.pets[c.pet].aff += 2;
   addReview(c, stars); save();
   return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus };
 }
@@ -222,9 +215,8 @@ export function closeEarly(sh: Shift) {
 export function addReview(c: Customer, s: number) {
   let txt: string;
   if (c.him) { txt = s > 0 ? pick(CFG.notes) : "Anh chờ Em hoài nè, nhưng không sao, Anh vẫn thương."; c.note = txt; }
-  else if (c.pet) txt = pick(PET_LINES[c.pet]);
   else txt = pick(GUEST_LINES[s]);
-  S.reviews.unshift({ who: c.who, look: c.look, s: c.pet || c.him ? Math.max(s, 3) : s, txt, love: !!c.him });
+  S.reviews.unshift({ who: c.who, look: c.look, s: c.him ? Math.max(s, 3) : s, txt, love: !!c.him });
   S.reviews = S.reviews.slice(0, 30);
 }
 

@@ -25,42 +25,51 @@ export const partsText = (r: Recipe) => `${CATS.base[r.base][0]} · ${CATS.cream
 
 /* Nhân vật */
 export type Mood = "happy" | "open" | "wink" | "impatient" | "love";
-export interface CritterLook { kind: "cat" | "brit" | "dog" | "bunny" | "bear"; fur: string; pattern?: "none" | "tabby" | "patch" | "tux" | "shaded"; mark?: string; mark2?: string; ear?: string; eye?: string; fluffy?: boolean; bow?: string; wave?: boolean; paws?: boolean; ledge?: boolean; gender?: undefined }
-export interface GuestLook { gender: "girl" | "boy"; hairStyle: "long" | "buns" | "short" | "cap"; hair: string; skin: string; accent: string; gesture: "rest" | "wave" | "cheek"; ledge?: boolean }
-export type Look = CritterLook | GuestLook;
+/** Khách: nam hoặc nữ, vẽ bằng ảnh `sprite` (xem SPRITES) và tô lại màu theo hair/skin/eye/coat/shirt */
+export interface GuestLook { gender: "girl" | "boy"; sprite: string; hair?: string; skin?: string; eye?: string; coat?: string; shirt?: string; ledge?: boolean }
+/** Thú cưng của tiệm: mỗi biểu cảm là một ảnh riêng (public/chars/pets/<id>-<mood>.png) */
+export interface PetLook { pet: PetId; wave?: boolean; ledge?: boolean; paws?: boolean }
+export type Look = GuestLook;
 
-export const CRITTERS: (CritterLook & { n: string })[] = [
-  { n: "Mèo Bơ",  kind: "cat",   fur: "#FFFFFF", pattern: "patch", mark: "#F2B266" },
-  { n: "Thỏ Mây", kind: "bunny", fur: "#FFFFFF", bow: "#FF8FAB" },
-  { n: "Gấu Mật", kind: "bear",  fur: "#E3B07A" },
-  { n: "Mèo Mun", kind: "cat",   fur: "#FFFFFF", pattern: "tux", mark: "#5A4A48" },
-  { n: "Cún Bơ",  kind: "dog",   fur: "#F6D59A", ear: "#D9A66B" },
-  { n: "Thỏ Sữa", kind: "bunny", fur: "#FFF4EE" },
-  { n: "Mèo Cam", kind: "cat",   fur: "#F4C57E", pattern: "tabby", mark: "#D9964A", bow: "#8FD9B6" },
-  { n: "Gấu Sữa", kind: "bear",  fur: "#FFF4EE" }
-];
-export const PETS: Record<PetId, CritterLook> = {
-  dog:   { kind: "dog", fur: "#FFFFFF", ear: "#F3ECE4", fluffy: true },
-  gold:  { kind: "brit", fur: "#F3DDAE", pattern: "shaded", mark: "#DDB978", eye: "#7DBA5E" },
-  white: { kind: "cat", fur: "#FFFFFF", eye: "#62AEE6" }
+export const PETS: Record<PetId, PetLook> = { dog: { pet: "dog" }, gold: { pet: "gold" }, white: { pet: "white" } };
+/** cỡ ảnh thú cưng (mọi biểu cảm cùng cỡ) */
+export const PET_SIZE: Record<PetId, [number, number]> = { dog: [256, 241], gold: [238, 236], white: [233, 254] };
+/** Nhân vật vẽ sẵn (ảnh trong public/chars), đổi màu bằng ui/sprite.ts.
+ *  w,h: cỡ ảnh. skin: màu da gốc. eyes: [tâm x, tâm y, nửa rộng, nửa cao] của từng mắt (để chớp mắt). */
+export interface SpriteDef { src: string; w: number; h: number; skin: string; eyes: [number, number, number, number][] }
+const FEMALE = (n: number, w: number, eyes: SpriteDef["eyes"]): SpriteDef => ({ src: `/chars/g${n}.png`, w, h: 400, skin: "#FCD2B2", eyes });
+const MALE = (n: number, w: number, eyes: SpriteDef["eyes"]): SpriteDef => ({ src: `/chars/b${n}.png`, w, h: 400, skin: "#F3C39A", eyes });
+export const SPRITES: Record<string, SpriteDef> = {
+  boy: { src: "/chars/anh.png", w: 279, h: 312, skin: "#F3C39A", eyes: [[145, 189, 22, 19]] },   // riêng cho "Anh"
+  b1: MALE(1, 266, [[156, 189, 13, 19], [210, 183, 9, 17]]),   // tóc dựng, hoodie
+  b2: MALE(2, 285, [[161, 192, 13, 19], [216, 187, 9, 17]]),   // tóc xoăn, áo len cổ sơ mi
+  b3: MALE(3, 274, [[149, 190, 13, 16], [205, 183, 9, 15]]),   // tóc vuốt, áo khoác jean
+  b4: MALE(4, 274, [[163, 174, 13, 18], [221, 167, 8, 16]]),   // tóc buộc thấp, yếm
+  b5: MALE(5, 240, [[146, 168, 13, 18], [203, 160, 5, 17]]),   // tóc cua, tai nghe, sơ mi nơ
+  b6: MALE(6, 264, [[150, 178, 13, 14], [208, 166, 9, 16]]),   // tóc nấm, áo khoác bomber
+  g1: FEMALE(1, 294, [[186, 166, 15, 19], [239, 164, 9, 18]]),   // tóc dài, áo hoodie
+  g2: FEMALE(2, 288, [[176, 171, 15, 19], [224, 167, 9, 18]]),   // hai búi, cardigan
+  g3: FEMALE(3, 317, [[213, 177, 15, 19], [265, 175, 8, 18]]),   // đuôi ngựa, yếm
+  g4: FEMALE(4, 265, [[160, 163, 15, 19], [211, 164, 8, 15]]),   // tóc ngắn, áo len
+  g5: FEMALE(5, 253, [[152, 164, 15, 19], [202, 162, 9, 18]]),   // tóc tết, sơ mi nơ
+  g6: FEMALE(6, 295, [[186, 159, 15, 19], [238, 155, 8, 18]])    // tóc gợn sóng, bờm, áo khoác
 };
-export const HIM: GuestLook = { gender: "boy", hairStyle: "short", hair: "#3B2A26", skin: "#FFE3D0", accent: "#8FD9B6", gesture: "cheek" };
+export const GIRL_SPRITES = ["g1", "g2", "g3", "g4", "g5", "g6"];
+export const BOY_SPRITES = ["b1", "b2", "b3", "b4", "b5", "b6"];
+export const HIM: GuestLook = { gender: "boy", sprite: "boy" };
 export const HAIR = ["#3B2A26", "#6B4A3A", "#C98B5A", "#E7B872", "#8C6BB5", "#F29AB2", "#5C7A99"];
 export const SKIN = ["#FFE9DA", "#FFE3D0", "#F7D1B5", "#E8B996", "#C98E6A"];
-export const ACCENT = ["#FF8FAB", "#8FD9B6", "#FFD166", "#C9B8F0", "#9FD8F5"];
+export const EYES = ["#5FA6C9", "#7A5A3E", "#4F9A6B", "#8A6BC9", "#3F4A5C", "#C9803F"];
+export const COAT = ["#2F6F86", "#2E4A7A", "#3D7A55", "#8A3D55", "#C9962E", "#6A4C93", "#4A4F5C"];
+export const SHIRT = ["#8A3D55", "#F2E6D0", "#C9962E", "#2E4A7A", "#3D7A55"];
 
 /* Đồ trang trí: pv = hình trong thẻ, rm = hình trong phòng */
-export type FxKey = "pat" | "tip" | "price" | "pet" | "cust";
+export type FxKey = "pat" | "tip" | "price" | "cust";
 export const GUEST_LINES: Record<number, string[]> = {
   3:["Ngon xỉu, mai tui ghé nữa!","Bánh xinh mà vị cũng xinh luôn.","Làm nhanh ghê, 10 điểm!","Chủ tiệm dễ thương quá trời.","Ngọt vừa đúng gu, mê!"],
   2:["Ngon nè, chờ hơi lâu xíu thôi.","Bánh ổn áp, lần sau quay lại.","Tiệm xinh, bánh thơm."],
   1:["Bánh ngon mà tui chờ hơi lâu.","Tạm ổn, mong nhanh hơn chút."],
   0:["Chờ lâu quá tui đi mất tiêu...","Tiệm đông quá, hẹn lần sau nha."]
-};
-export const PET_LINES: Record<PetId, string[]> = {
-  dog:["Gâu! (ý là ngon quá)","Gâu gâu! Cho Milo thêm miếng nữa!","*vẫy đuôi liên tục*"],
-  gold:["Meo~ Siro nằm lên quầy luôn không đi.","Siro chấm 3 sao rồi đi ngủ tiếp.","*dụi má vào tay chủ tiệm*"],
-  white:["Meo! Cacao ưng rồi đó.","*ngồi nghiêm túc canh khay bánh*","Meo meo, mai Cacao ghé nữa."]
 };
 
 /* ===== Kinh tế: nguyên liệu & nhân viên ===== */

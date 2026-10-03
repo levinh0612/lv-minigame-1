@@ -2,16 +2,17 @@
    Dùng chính code vẽ của game nên luôn khớp. Mở /storybook.html, hoặc ?story=<id> để xem một mục.
    `npm run capture` chụp từng mục ra design-kit/ để gửi Claude Design. */
 import "../styles/main.css";
+import "../styles/themes.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
 import {
-  CATS, CRITTERS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF,
-  type CritterLook, type GuestLook, type Mood, type PartKey
+  CATS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF,
+  type GuestLook, type Look, type Mood, type PartKey
 } from "../content/game";
 import { rollDay } from "../engine/progress";
 import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
-import { cakeSVG, critterSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
+import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
 import { claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { authHTML } from "../ui/screens/auth";
@@ -23,6 +24,9 @@ import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/scr
 import { prepHTML } from "../ui/screens/prep";
 import { roadmapHTML } from "../ui/screens/roadmap";
 import { shopHTML, tryDecor } from "../ui/screens/shop";
+import { applyTheme } from "../content/theme";
+import { profileSheet } from "../ui/profile";
+import { loadSprites } from "../ui/sprite";
 import { fitRooms, roomHTML } from "../ui/room";
 import { ROOM_CATS } from "../content/room";
 
@@ -43,23 +47,25 @@ function withDate<T>(y: number, m: number, d: number, fn: () => T): T {
   (globalThis as { Date: DateConstructor }).Date = Fake as DateConstructor;
   try { return fn(); } finally { (globalThis as { Date: DateConstructor }).Date = Real; }
 }
-const G = (gender: "girl" | "boy", hairStyle: GuestLook["hairStyle"], hair: string, accent: string, gesture: GuestLook["gesture"] = "rest"): GuestLook =>
-  ({ gender, hairStyle, hair, skin: "#FFE3D0", accent, gesture });
-const cust = (who: string, look: CritterLook | GuestLook, r: number, sweet: number, pat: number, extra: Partial<Customer> = {}): Customer =>
+/* khách mẫu: id ảnh + màu tóc, mắt, áo ngoài, áo trong, da */
+const P = (id: string, hair: string, eye: string, coat: string, shirt: string, skin = "#FFE3D0"): GuestLook =>
+  ({ gender: id[0] === "g" ? "girl" : "boy", sprite: id, hair, skin, eye, coat, shirt });
+const MAI = () => P("g4", "#F29AB2", "#8A6BC9", "#C9962E", "#8A3D55"), NA = () => P("g2", "#6B4A3A", "#7A5A3E", "#8A3D55", "#F2E6D0"), TUNG = () => P("b3", "#3B2A26", "#5FA6C9", "#2E4A7A", "#8A3D55");
+const cust = (who: string, look: Look, r: number, sweet: number, pat: number, extra: Partial<Customer> = {}): Customer =>
   ({ who, look, r: RECIPES[r], sweet, max: 40, pat, ...extra });
 const REVIEWS = [
   { who: CFG.hisName, look: HIM, s: 3, txt: CFG.notes[2], love: true },
-  { who: "Bé Na", look: G("girl", "buns", "#6B4A3A", "#8FD9B6"), s: 3, txt: "Ngon xỉu, mai tui ghé nữa!", love: false },
-  { who: "Mèo Bơ", look: CRITTERS[0], s: 2, txt: "Ngon nè, chờ hơi lâu xíu thôi.", love: false },
-  { who: "Anh Tùng", look: G("boy", "cap", "#3B2A26", "#9FD8F5"), s: 0, txt: "Chờ lâu quá tui đi mất tiêu...", love: false }
+  { who: "Bé Na", look: NA(), s: 3, txt: "Ngon xỉu, mai tui ghé nữa!", love: false },
+  { who: "Chị Mai", look: MAI(), s: 2, txt: "Ngon nè, chờ hơi lâu xíu thôi.", love: false },
+  { who: "Anh Tùng", look: TUNG(), s: 0, txt: "Chờ lâu quá tui đi mất tiêu...", love: false }
 ];
 function busyShift(): Shift {
   const sh = createShift();
   sh.seats = [
-    cust("Mèo Bơ", CRITTERS[0], 1, 0, 30, { by: "dog" }),
-    cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6", "wave"), 3, 1, 20),
+    cust("Chị Mai", MAI(), 1, 0, 30, { by: "dog" }),
+    cust("Bé Na", NA(), 3, 1, 20),
     cust(CFG.hisName, HIM, 0, 0, 8, { him: true, mood: "impatient" }),
-    cust("Anh Tùng", G("boy", "cap", "#3B2A26", "#9FD8F5"), 2, 2, 34, { by: "gold" })
+    cust("Anh Tùng", TUNG(), 2, 2, 34, { by: "gold" })
   ];
   sh.working = ["dog", "gold"];
   sh.bakers = [{ id: "dog", seat: 0, done: 4.5, need: 7.5 }, { id: "gold", seat: 3, done: 2, need: 10 }];
@@ -92,7 +98,7 @@ const SECTIONS: [string, string, string][] = [
   ["screens", "Màn hình", "Khung 390×844 (iPhone 14). Màn dài hơn một trang được bày nguyên chiều cao."],
   ["modals", "Hộp thoại", "Hộp thoại hiện đè lên màn hình."],
   ["cakes", "Bánh", "Bánh có mặt cười: 3 đế × 3 kem × 3 topping, độ ngọt, các bước ghép."],
-  ["chars", "Nhân vật", "Khách con vật, khách người và ba bé nhà mình ở mọi biểu cảm."],
+  ["chars", "Nhân vật", "Khách nam, khách nữ và ba bé nhà mình ở mọi biểu cảm."],
   ["ui", "Nút & thành phần", "Nút, chip nguyên liệu, thẻ gọi món, thẻ thông tin."],
   ["decor", "Trang trí", "Đồ trang trí trong cửa hàng và trong phòng."]
 ];
@@ -110,7 +116,7 @@ const STORIES: Story[] = [
       s.staff.dog = { hired: true, lv: 2, onDuty: true }; s.staff.gold = { hired: true, lv: 1, onDuty: true }; s.staff.white = { hired: true, lv: 1, onDuty: false }; }); return prepHTML(); } },
   { id: "play-empty", sec: "screens", title: "Chơi · đầu ca", desc: "Chưa có khách, đĩa trống", kind: "screen",
     html: () => { lvState(1); const sh = createShift(); _setShift(sh); return playHTML(sh); } },
-  { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "4 bàn trong một hàng; Milo làm cho Mèo Bơ 60%, Siro làm cho Anh Tùng 20%; chủ tiệm nhận đơn của Anh (sắp giận), chưa xem công thức; Hạt dẻ hết hàng", kind: "screen",
+  { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "4 bàn trong một hàng; Milo làm cho Chị Mai 60%, Siro làm cho Anh Tùng 20%; chủ tiệm nhận đơn của Anh (sắp giận), chưa xem công thức; Hạt dẻ hết hàng", kind: "screen",
     html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
   { id: "play-peek", sec: "screens", title: "Chơi · đã xem công thức", desc: "Bấm Xem công thức: hiện 3 nguyên liệu và dấu ✓/✕ trên nút; mất thưởng nhớ bài", kind: "screen",
     html: () => { lvState(5, s => { staffed(s); }); const sh = busyShift(); sh.peek = true; _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
@@ -170,6 +176,7 @@ const STORIES: Story[] = [
       earn("welcome", 300, "Quà khai trương"); spend("stock", 72, "Nhập hàng theo gợi ý"); earn("sales", 286); earn("tip", 64); earn("memo", 48); earn("goal", 70);
       note("Ca 12 · tiền bán bánh", 468); spend("quick", 9); note("Ca 12 · nhập nhanh giữa ca", -9); spend("decor", 90, "Mua Ren hồng"); spend("food", 30, "Mua 5 Hạt"); earn("gift", 60, "Quà mục tiêu ngày");
       return modalOver(homeHTML(), wallet); } },
+  { id: "m-profile", sec: "modals", title: "Hồ sơ của bạn", desc: "Chọn nhân vật, màu tóc/mắt/áo/da, tên tiệm, màu giao diện", kind: "modal", html: () => { lvState(4, s => { s.shop = "Vinh"; s.me = { sprite: "b2", hair: "#6B4A3A", eye: "#7A5A3E", coat: "#2E4A7A", shirt: "#F2E6D0", skin: "#F7D1B5" }; }); return modalOver(homeHTML(), profileSheet); } },
   { id: "m-menu", sec: "modals", title: "Menu", desc: "Chạm bảng Menu ở cảnh tiệm", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), menuSheet); } },
   { id: "m-cakes", sec: "modals", title: "Tủ bánh", desc: "Carousel các bánh đang bán", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), cakesSheet); } },
   { id: "m-days", sec: "modals", title: "Ngày kỷ niệm", desc: "Chạm số ngày yêu", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), daysSheet); } },
@@ -191,17 +198,19 @@ const STORIES: Story[] = [
       <div class="sbcell">${cakeSVG({ base: 2, cream: 1, top: 0, sweet: 1 }, { size: 120, done: true })}<b>Giao xong</b></div></div></div>` },
 
   /* ---------- Nhân vật ---------- */
-  { id: "c-critters", sec: "chars", title: "Khách con vật", desc: "Mỗi hàng là một khách, mỗi cột một biểu cảm", kind: "comp",
-    html: () => { const moods: Mood[] = ["happy", "open", "wink", "impatient", "love"];
-      return `<div class="board"><div class="sbrow" style="margin-bottom:6px">${["", ...moods].map(m => `<div class="sbcell" style="width:${m ? 96 : 80}px"><b>${m}</b></div>`).join("")}</div>
-        ${CRITTERS.map(k => `<div class="sbrow"><div class="sbcell" style="width:80px"><b>${esc(k.n)}</b></div>${moods.map(m => `<div class="sbcell" style="width:96px">${critterSVG({ ...k, mood: m }, 84)}</div>`).join("")}</div>`).join("")}</div>`; } },
   { id: "c-pets", sec: "chars", title: "Milo, Siro, Cacao", desc: "Thú cưng nhà mình (kiêm nhân viên)", kind: "comp",
     html: () => { const moods: Mood[] = ["happy", "open", "wink", "impatient", "love"];
-      return `<div class="board">${CFG.pets.map(p => `<div class="sbrow"><div class="sbcell" style="width:80px"><b>${esc(p.name)}</b>${STAFF.find(s => s.id === p.id)!.role}</div>${moods.map(m => `<div class="sbcell" style="width:110px">${critterSVG({ ...PETS[p.id], mood: m }, 100)}${m}</div>`).join("")}<div class="sbcell">${critterSVG({ ...PETS[p.id], wave: true, mood: "open" }, 100)}vẫy tay</div></div>`).join("")}</div>`; } },
-  { id: "c-guests", sec: "chars", title: "Khách người", desc: "Kiểu tóc × biểu cảm × cử chỉ; Anh (khách đặc biệt) ở hàng cuối", kind: "comp",
+      return `<div class="board">${CFG.pets.map(p => `<div class="sbrow"><div class="sbcell" style="width:80px"><b>${esc(p.name)}</b>${STAFF.find(s => s.id === p.id)!.role}</div>${moods.map(m => `<div class="sbcell" style="width:110px">${petSVG({ ...PETS[p.id], mood: m }, 100)}${m}</div>`).join("")}<div class="sbcell">${petSVG({ ...PETS[p.id], wave: true, mood: "open" }, 100)}vẫy tay</div></div>`).join("")}</div>`; } },
+  { id: "c-guests", sec: "chars", title: "Khách người", desc: "6 kiểu nữ và 6 kiểu nam vẽ sẵn, mỗi khách một bộ màu tóc/mắt/áo/da ngẫu nhiên; Anh (khách đặc biệt) ở hàng cuối", kind: "comp",
     html: () => { const moods: Mood[] = ["happy", "open", "wink", "impatient", "love"];
-      const rows: [string, GuestLook][] = [["Nữ tóc dài", G("girl", "long", "#6B4A3A", "#FF8FAB")], ["Nữ búi tóc", G("girl", "buns", "#C98B5A", "#8FD9B6", "wave")],
-        ["Nam tóc ngắn", G("boy", "short", "#3B2A26", "#FFD166")], ["Nam đội mũ", G("boy", "cap", "#5C7A99", "#C9B8F0", "cheek")], ["Anh", HIM]];
+      const rows: [string, GuestLook][] = [
+        ["Nữ 1 · tóc dài", P("g1", "#6B4A3A", "#6C8FC0", "#2F6F86", "#8A3D55")], ["Nữ 2 · hai búi", P("g2", "#C98B5A", "#7A5A3E", "#8A3D55", "#F2E6D0", "#FFE9DA")],
+        ["Nữ 3 · đuôi ngựa", P("g3", "#E7B872", "#4F9A6B", "#6A4C93", "#2E4A7A")], ["Nữ 4 · tóc ngắn", P("g4", "#F29AB2", "#8A6BC9", "#C9962E", "#8A3D55", "#F7D1B5")],
+        ["Nữ 5 · tóc tết", P("g5", "#3B2A26", "#C9803F", "#3D7A55", "#F2E6D0")], ["Nữ 6 · tóc sóng", P("g6", "#8C6BB5", "#5FA6C9", "#4A4F5C", "#C9962E", "#E8B996")],
+        ["Nam 1 · tóc dựng", P("b1", "#3B2A26", "#5FA6C9", "#2F6F86", "#8A3D55")], ["Nam 2 · tóc xoăn", P("b2", "#6B4A3A", "#7A5A3E", "#8A3D55", "#F2E6D0", "#F7D1B5")],
+        ["Nam 3 · tóc vuốt", P("b3", "#E7B872", "#4F9A6B", "#2E4A7A", "#C9962E", "#FFE9DA")], ["Nam 4 · buộc thấp", P("b4", "#8C6BB5", "#C9803F", "#3D7A55", "#F2E6D0", "#C98E6A")],
+        ["Nam 5 · tóc cua", P("b5", "#5C7A99", "#8A6BC9", "#6A4C93", "#2E4A7A")], ["Nam 6 · tóc nấm", P("b6", "#F29AB2", "#4F9A6B", "#4A4F5C", "#C9962E", "#E8B996")],
+        ["Anh", HIM]];
       return `<div class="board">${rows.map(([n, l]) => `<div class="sbrow"><div class="sbcell" style="width:80px"><b>${n}</b></div>${moods.map(m => `<div class="sbcell" style="width:100px">${guestSVG({ ...l, mood: m }, 90)}${m}</div>`).join("")}</div>`).join("")}</div>`; } },
 
   { id: "c-foods", sec: "chars", title: "Đồ ăn thú cưng", desc: "Hạt (lương bậc 1), Pate (bậc 2), Ức gà (bậc 3); cũng dùng để thưởng", kind: "comp",
@@ -223,7 +232,7 @@ const STORIES: Story[] = [
         <div class="sbrow">${KEYS.map(k => CATS[k].map((_, i) => ingSVG(k, i, 40)).join("")).join("")}</div></div>`; } },
   { id: "c-orders", sec: "ui", title: "Khách trong hàng đợi", desc: "Bình thường · đơn của bạn · sắp giận · bé đang làm (40%) · đã giao", kind: "comp",
     html: () => { lvState(5, staffed); const sh = createShift();
-      sh.seats = [cust("Bé Kem", G("girl", "long", "#E7B872", "#FF8FAB"), 5, 0, 36), cust("Mèo Bơ", CRITTERS[0], 1, 1, 30), cust("Thỏ Mây", CRITTERS[1], 2, 2, 6), cust("Gấu Mật", CRITTERS[2], 4, 1, 28, { by: "dog" }), cust("Bé Na", G("girl", "buns", "#6B4A3A", "#8FD9B6"), 0, 0, 30)];
+      sh.seats = [cust("Bé Kem", P("g1", "#E7B872", "#6C8FC0", "#2F6F86", "#8A3D55"), 5, 0, 36), cust("Chị Mai", MAI(), 1, 1, 30), cust("Bạn Tí", P("b1", "#6B4A3A", "#4F9A6B", "#3D7A55", "#F2E6D0"), 2, 2, 6), cust("Anh Gấu", P("b5", "#3B2A26", "#C9803F", "#6A4C93", "#C9962E"), 4, 1, 28, { by: "dog" }), cust("Bé Na", NA(), 0, 0, 30)];
       sh.bakers = [{ id: "dog", seat: 3, done: 3, need: 7.5 }]; sh.mine = 1;
       const st: ("" | "low" | "ok")[] = ["", "", "low", "", "ok"], lab = ["Bình thường", "Đơn của bạn", "Sắp giận", "Bé đang làm", "Đã giao"];
       return `<div class="board"><div class="queue" style="--n:5;width:560px;padding:0">${sh.seats.map((x, i) => `<div class="slot ${i === 1 ? "mine" : ""} ${x!.by ? "taken" : ""} ${st[i] === "low" ? "low" : ""}" style="height:152px">${slotHTML(sh, i, st[i])}</div>`).join("")}</div>
@@ -246,7 +255,9 @@ const STORIES: Story[] = [
 ];
 
 /* ================= Hiển thị ================= */
+await loadSprites();
 const q = new URLSearchParams(location.search), one = q.get("story"), root = document.getElementById("sb")!;
+applyTheme(q.get("theme") || "pink");   // ?theme=blue|green|purple|orange|slate để xem từng theme
 const wrap = (s: Story) => s.kind === "comp" ? s.html() : `<div class="frame ${s.long ? "long" : ""} ${s.resBg ? "res-bg" : ""}">${s.html()}</div>`;
 
 if (q.has("list")) {

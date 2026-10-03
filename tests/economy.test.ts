@@ -9,7 +9,7 @@ import { fame } from "../src/engine/economy";
 import { S, loadState, resetState } from "../src/engine/state";
 
 const customer = (over: Partial<Customer> = {}): Customer => ({
-  who: "Bé Na", look: { kind: "cat", fur: "#FFFFFF" }, r: RECIPES[0], sweet: 0, max: 40, pat: 40, ...over
+  who: "Bé Na", look: { gender: "girl", sprite: "g1" }, r: RECIPES[0], sweet: 0, max: 40, pat: 40, ...over
 });
 const lvUp = (L: number) => { S.xp = 40 * (L - 1) * (L - 1); };
 
@@ -199,7 +199,7 @@ describe("thú cưng làm nhân viên", () => {
 
   it("độ nổi tiếng tăng số bàn", () => {
     expect(fame().seats).toBe(3);
-    S.reviews = Array(10).fill({ who: "x", look: { kind: "cat", fur: "#fff" }, s: 3, txt: "", love: false });
+    S.reviews = Array(10).fill({ who: "x", look: { gender: "girl", sprite: "g1" }, s: 3, txt: "", love: false });
     Object.assign(S.room, { curtain: "1", lamp: "1", rug: "1" });
     expect(fame().seats).toBe(4);                            // 3 sao + 3 đồ × 0.4 = 4.2 → Được biết đến
     Object.assign(S.room, { wall: "mint", floor: "wood", counter: "mint", wallItem: "1", plant: "2" });

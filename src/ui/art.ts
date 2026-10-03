@@ -1,6 +1,7 @@
-import { CATS, type CritterLook, type GuestLook, type Look, type Mood, type PartKey } from "../content/game";
+import { lidColor, spriteURL } from "./sprite";
+import { CATS, PET_SIZE, SPRITES, type GuestLook, type Look, type Mood, type PartKey, type PetLook } from "../content/game";
 
-/* ===================== VẼ: chuyển từ component Cake / Critter / Guest của Claude Design ===================== */
+/* ===================== VẼ: bánh, thú cưng, khách (ảnh vẽ sẵn trong public/chars), đồ ăn, nguyên liệu ===================== */
 const INK = "#4A3438";
 const sparkle = (x: number, y: number, s: number, delay = 0, dur = 1.8) => `<path d="M${x} ${y} l${1.8*s} ${-4.6*s} l${1.8*s} ${4.6*s} l${4.6*s} ${1.8*s} l${-4.6*s} ${1.8*s} l${-1.8*s} ${4.6*s} l${-1.8*s} ${-4.6*s} l${-4.6*s} ${-1.8*s} Z" style="transform-box:fill-box;transform-origin:center;animation:cakeTw ${dur}s ease-in-out ${delay}s infinite"/>`;
 const heartP = (x: number, y: number, delay: number) => `<path d="M${x+6} ${y} C${x+6} ${y-4} ${x+1} ${y-5} ${x} ${y-1} C${x-1} ${y-5} ${x-6} ${y-4} ${x-6} ${y} C${x-6} ${y+4} ${x} ${y+7} ${x} ${y+9} C${x} ${y+7} ${x+6} ${y+4} ${x+6} ${y} Z" style="transform-box:fill-box;transform-origin:center;animation:cakeTw 1.4s ease-in-out ${delay}s infinite"/>`;
@@ -42,85 +43,29 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
   return `<svg width="${S}" height="${Math.round(S*114/140)}" viewBox="0 6 140 114" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${out}</svg>`;
 }
 
-let CID = 0;
-const HEAD = { def: "M12 94 C10 58 18 36 60 36 C102 36 110 58 108 94 Z", brit: "M6 94 C2 62 16 38 60 38 C104 38 118 62 114 94 Z" };
-export function critterSVG(p: CritterLook & { mood?: Mood }, S = 90){
-  const k = p.kind || "cat", fur = p.fur || "#FFFFFF", mood = p.mood || "happy", pattern = p.pattern || "none", mark = p.mark || "#E9A860", wave = !!p.wave;
-  const vbY = k==="bunny" ? -18 : 12, vbH = 98 - vbY, cid = "cr" + (++CID), head = k==="brit" ? HEAD.brit : HEAD.def;
-  const open = mood==="open" || mood==="impatient", happy = mood==="happy" || mood==="love", catLike = k==="cat" || k==="brit";
-  const headFill = pattern==="tux" ? mark : fur, earL = headFill, earR = (pattern==="tux"||pattern==="patch") ? mark : fur;
-  const pawFill = pattern==="tux" ? "#FFFFFF" : fur, blush = mood==="impatient" ? .3 : .75;
-  let s = `<defs><clipPath id="${cid}"><path d="${head}"/></clipPath></defs>`;
-  if (k==="cat") s += `<path d="M18 60 L22 18 L52 40 Z" fill="${earL}"/><path d="M27 46 L28 28 L43 40 Z" fill="#F7A8B8" stroke="none"/><path d="M102 60 L98 18 L68 40 Z" fill="${earR}"/><path d="M93 46 L92 28 L77 40 Z" fill="#F7A8B8" stroke="none"/>`;
-  if (k==="brit") s += `<path d="M14 58 C12 40 20 28 30 30 C38 32 44 38 46 42 Z" fill="${fur}"/><path d="M20 50 C20 40 25 35 30 36 C35 37 38 40 39 42 Z" fill="#F4B6BE" stroke="none"/><path d="M106 58 C108 40 100 28 90 30 C82 32 76 38 74 42 Z" fill="${fur}"/><path d="M100 50 C100 40 95 35 90 36 C85 37 82 40 81 42 Z" fill="#F4B6BE" stroke="none"/>`;
-  if (k==="bunny") s += `<path d="M36 44 C28 18 30 -12 42 -14 C54 -14 54 20 50 40 Z" fill="${fur}"/><path d="M41 34 C37 18 38 -4 42 -6 C46 -6 47 16 46 32 Z" fill="#F7A8B8" stroke="none"/><path d="M84 44 C92 18 90 -12 78 -14 C66 -14 66 20 70 40 Z" fill="${fur}"/><path d="M79 34 C83 18 82 -4 78 -6 C74 -6 73 16 74 32 Z" fill="#F7A8B8" stroke="none"/>`;
-  if (k==="bear") s += `<circle cx="28" cy="44" r="13" fill="${fur}"/><circle cx="28" cy="44" r="6" fill="#F7A8B8" stroke="none"/><circle cx="92" cy="44" r="13" fill="${fur}"/><circle cx="92" cy="44" r="6" fill="#F7A8B8" stroke="none"/>`;
-  if (p.fluffy) s += `<circle cx="14" cy="74" r="11" fill="${fur}"/><circle cx="106" cy="74" r="11" fill="${fur}"/><circle cx="30" cy="44" r="13" fill="${fur}"/><circle cx="45" cy="33" r="14" fill="${fur}"/><circle cx="62" cy="29" r="15" fill="${fur}"/><circle cx="79" cy="33" r="14" fill="${fur}"/><circle cx="92" cy="44" r="12" fill="${fur}"/>`;
-  s += `<path d="${head}" fill="${headFill}"/><g clip-path="url(#${cid})" stroke="none">`;
-  if (pattern==="tux") s += `<path d="M60 54 C46 54 38 70 30 96 L90 96 C82 70 74 54 60 54 Z" fill="${fur}"/>`;
-  if (pattern==="patch") s += `<circle cx="94" cy="48" r="24" fill="${mark}"/><circle cx="18" cy="88" r="12" fill="${p.mark2||"#5A4A48"}"/>`;
-  if (pattern==="tabby") s += `<path d="M51 41 L53 50 M60 39 V50 M69 41 L67 50 M11 62 L22 64 M11 70 L21 71 M109 62 L98 64 M109 70 L99 71" stroke="${mark}" stroke-width="3.6"/>`;
-  if (pattern==="shaded") s += `<ellipse cx="60" cy="30" rx="58" ry="22" fill="${mark}" opacity=".8"/><path d="M40 40 Q60 46 80 40 M30 46 Q60 54 90 46" stroke="#C9CCD6" stroke-width="2.2" opacity=".75" fill="none"/><ellipse cx="60" cy="82" rx="26" ry="15" fill="#FFF8EC"/>`;
-  if (k==="dog" && fur!=="#FFFFFF") s += `<ellipse cx="60" cy="82" rx="22" ry="13" fill="#FFFFFF" opacity=".9"/>`;
-  s += `</g><path d="${head}" fill="none"/>`;
-  if (k==="dog") s += `<path d="M24 44 C8 42 2 66 8 78 C14 88 28 74 32 52 Z" fill="${p.ear||"#E8D8CC"}"/><path d="M96 44 C112 42 118 66 112 78 C106 88 92 74 88 52 Z" fill="${p.ear||"#E8D8CC"}"/>`;
-  if (catLike) s += `<path d="M14 70 L2 67 M14 76 L3 78 M106 70 L118 67 M106 76 L117 78" stroke-width="2"/>`;
-  s += `<ellipse cx="30" cy="78" rx="7" ry="4" fill="#FF9FB6" stroke="none" opacity="${blush}"/><ellipse cx="90" cy="78" rx="7" ry="4" fill="#FF9FB6" stroke="none" opacity="${blush}"/>`;
-  const eyeO = (x: number) => `<circle cx="${x}" cy="67" r="7" fill="${p.eye||INK}" stroke="none"/><circle cx="${x}" cy="67.6" r="${p.eye ? 3.6 : 7}" fill="${INK}" stroke="none"/><circle cx="${x+2.5}" cy="64.4" r="2.4" fill="#fff" stroke="none"/>`;
-  if (open || mood==="wink") s += eyeO(42);
-  if (happy) s += `<path d="M35 68 Q42 60 49 68"/>`;
-  if (open) s += eyeO(78);
-  if (happy) s += `<path d="M71 68 Q78 60 85 68"/>`;
-  if (mood==="wink") s += `<path d="M84 63 L73 67.5 L84 72"/>`;
-  if (mood==="impatient") s += `<path d="M34 57 L46 54 M86 57 L74 54" stroke-width="2.4"/><path d="M104 42 C99 49 99 55 104 55 C109 55 109 49 104 42 Z" fill="#A8DDF5" stroke-width="2"/>`;
-  s += `<ellipse cx="60" cy="73" rx="3.4" ry="2.3" fill="${k==="dog"||k==="bear" ? INK : "#F48FA8"}" stroke="none"/>`;
-  if (mood==="love"||mood==="wink") s += `<path d="M55.5 77.5 Q60 87 64.5 77.5 Z" fill="#F07A95" stroke-width="2"/>`;
-  s += mood!=="impatient" ? `<path d="M53 76 Q56.5 81 60 76 Q63.5 81 67 76" stroke-width="2.4"/>` : `<path d="M54 81 Q60 76 66 81" stroke-width="2.4"/>`;
-  if (p.bow) s += `<g transform="translate(30 38) rotate(-18)"><path d="M0 0 L-12 -8 L-12 8 Z M0 0 L12 -8 L12 8 Z" fill="${p.bow}" stroke-width="2.2"/><circle r="4" fill="${p.bow}" stroke-width="2.2"/></g>`;
-  if (mood==="love") s += `<g style="animation:critHeart 1.6s ease-in-out infinite"><path d="M106 24 C106 19 100 18 99 23 C98 18 92 19 92 24 C92 29 99 32 99 35 C99 32 106 29 106 24 Z" fill="#FF6F91" stroke-width="2"/></g>`;
-  if (p.paws !== false) {
-    s += `<path d="M28 95 C27 85 45 85 44 95 Z" fill="${pawFill}"/><path d="M34 90 V94 M38.5 90 V94" stroke-width="2"/>`;
-    if (!wave) s += `<path d="M76 95 C75 85 93 85 92 95 Z" fill="${pawFill}"/><path d="M82 90 V94 M86.5 90 V94" stroke-width="2"/>`;
-  }
-  if (wave) s += `<g style="transform-origin:100px 94px;animation:critWave 1.4s ease-in-out infinite"><path d="M90 95 C90 78 92 62 94 55 C96 45 112 45 112 57 C112 68 108 82 108 95" fill="${pawFill}"/><ellipse cx="102.5" cy="60" rx="4.6" ry="3.8" fill="#F7A8B8" stroke="none"/><circle cx="97" cy="52.5" r="1.9" fill="#F7A8B8" stroke="none"/><circle cx="102.5" cy="50.5" r="1.9" fill="#F7A8B8" stroke="none"/><circle cx="108" cy="52.5" r="1.9" fill="#F7A8B8" stroke="none"/></g>`;
-  if (p.ledge !== false) s += `<path d="M-6 95 H126"/>`;
-  return `<svg width="${S}" height="${Math.round(S*vbH/120)}" viewBox="0 ${vbY} 120 ${vbH}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
+/* Thú cưng của tiệm: mỗi biểu cảm là một ảnh (vẫy tay là ảnh riêng), nằm sau quầy */
+export function petSVG(p: PetLook & { mood?: Mood }, S = 90){
+  const [w, h] = PET_SIZE[p.pet], H = Math.round(120 * h / w), file = p.wave ? "wave" : p.mood || "happy";
+  const px = Math.round(S * .77 * w / h);   // ảnh cao hơn bản vẽ cũ: giữ chiều cao tương đương S × 0.77 để các khung cũ vẫn vừa
+  return `<svg width="${px}" height="${Math.round(px*H/120)}" viewBox="0 0 120 ${H}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><image href="/chars/pets/${p.pet}-${file}.png" width="120" height="${H}"/>${p.ledge !== false ? `<path d="M-6 ${H} H126"/>` : ""}</svg>`;
 }
 
+/* Khách (nam/nữ): ảnh vẽ sẵn tô lại màu theo từng khách, thỉnh thoảng chớp mắt; ló nửa người sau quầy */
 export function guestSVG(p: GuestLook & { mood?: Mood }, S = 90){
-  const girl = (p.gender||"girl")==="girl", mood = p.mood||"happy", g = p.gesture||"rest", style = p.hairStyle || (girl?"long":"short");
-  const hair = p.hair || (girl?"#6B4A3A":"#3B2A26"), skin = p.skin || "#FFE3D0", acc = p.accent || "#FF8FAB";
-  const open = mood==="open"||mood==="impatient", happy = mood==="happy"||mood==="love", blush = mood==="impatient" ? .3 : .75;
-  let s = "";
-  if (girl && style==="buns") s += `<circle cx="24" cy="28" r="13" fill="${hair}"/><circle cx="96" cy="28" r="13" fill="${hair}"/>`;
-  if (girl && style==="long") s += `<path d="M8 97 C4 44 28 18 60 18 C92 18 116 44 112 97 Z" fill="${hair}"/>`;
-  if ((girl && style==="buns") || !girl) s += `<path d="M16 74 C12 36 34 20 60 20 C86 20 108 36 104 74 Z" fill="${hair}"/>`;
-  if (!girl) s += `<circle cx="19" cy="72" r="7" fill="${skin}"/><circle cx="101" cy="72" r="7" fill="${skin}"/>`;
-  s += `<path d="M20 97 C16 62 30 40 60 40 C90 40 104 62 100 97 Z" fill="${skin}"/>`;
-  if (girl) s += `<path d="M20 64 C18 34 40 24 60 24 C80 24 102 34 100 64 C94 56 88 48 84 42 C78 52 68 56 60 50 C52 56 42 56 36 46 C30 54 25 58 20 64 Z" fill="${hair}"/>`;
-  if (!girl && style!=="cap") s += `<path d="M17 66 C14 34 38 20 60 20 C84 20 106 34 103 66 C98 56 94 50 90 44 C86 52 78 53 73 45 C67 53 59 53 55 45 C49 53 41 53 37 45 C31 51 23 58 17 66 Z" fill="${hair}"/><path d="M58 21 C55 12 62 7 68 10"/>`;
-  if (!girl && style==="cap") s += `<path d="M17 58 C17 26 38 15 60 15 C82 15 103 26 103 58 Z" fill="${acc}"/><path d="M14 58 C40 51 80 51 106 58 C106 65 14 65 14 58 Z" fill="${acc}"/><circle cx="60" cy="16" r="3.2" fill="${acc}"/><path d="M20 64 C22 60 28 60 30 64 M90 64 C92 60 98 60 100 64" fill="${hair}" stroke-width="2"/>`;
-  if (girl && style==="long") s += `<g transform="translate(86 32) rotate(18)"><path d="M0 0 L-11 -8 L-11 8 Z M0 0 L11 -8 L11 8 Z" fill="${acc}" stroke-width="2.2"/><circle r="3.8" fill="${acc}" stroke-width="2.2"/></g>`;
-  s += `<ellipse cx="30" cy="81" rx="6.5" ry="3.8" fill="#FF9FB6" stroke="none" opacity="${blush}"/><ellipse cx="90" cy="81" rx="6.5" ry="3.8" fill="#FF9FB6" stroke="none" opacity="${blush}"/>`;
-  const eyeO = (x: number) => `<circle cx="${x}" cy="71" r="6.6" fill="${INK}" stroke="none"/><circle cx="${x+2.2}" cy="68.4" r="2.3" fill="#fff" stroke="none"/>`;
-  if (open || mood==="wink") s += eyeO(43);
-  if (happy) s += `<path d="M36 72 Q43 64 50 72"/>`;
-  if (open) s += eyeO(77);
-  if (happy) s += `<path d="M70 72 Q77 64 84 72"/>`;
-  if (mood==="wink") s += `<path d="M83 67 L72 71.5 L83 76"/>`;
-  if (girl && (open || mood==="wink")) s += `<path d="M35 66 L32 63 M85 66 L88 63" stroke-width="2.2"/>`;
-  if (mood==="impatient") s += `<path d="M35 61 L48 58 M85 61 L72 58" stroke-width="2.4"/><path d="M106 46 C101 53 101 59 106 59 C111 59 111 53 106 46 Z" fill="#A8DDF5" stroke-width="2"/>`;
-  if (mood==="love"||mood==="wink") s += `<path d="M54.5 80 Q60 90 65.5 80 Z" fill="#F07A95" stroke-width="2.2"/>`;
-  if (mood==="happy"||mood==="open") s += `<path d="M55 81 Q60 86 65 81" stroke-width="2.4"/>`;
-  if (mood==="impatient") s += `<path d="M55 85 Q60 80 65 85" stroke-width="2.4"/>`;
-  if (mood==="love") s += `<g style="animation:critHeart 1.6s ease-in-out infinite"><path d="M110 28 C110 23 104 22 103 27 C102 22 96 23 96 28 C96 33 103 36 103 39 C103 36 110 33 110 28 Z" fill="#FF6F91" stroke-width="2"/></g>`;
-  if (g==="rest") s += `<path d="M28 98 C27 87 45 87 44 98 Z" fill="${skin}"/><path d="M76 98 C75 87 93 87 92 98 Z" fill="${skin}"/>`;
-  if (g==="wave") s += `<path d="M28 98 C27 87 45 87 44 98 Z" fill="${skin}"/><g style="transform-origin:99px 98px;animation:critWave 1.4s ease-in-out infinite"><path d="M89 98 L92 68 L107 68 L110 98 Z" fill="${acc}"/><circle cx="99.5" cy="60" r="10" fill="${skin}"/><path d="M95 54 V57 M100 52.5 V56 M105 54 V57" stroke-width="1.8"/></g>`;
-  if (g==="cheek") s += `<path d="M10 98 C10 90 30 88 31 98 Z" fill="${acc}"/><circle cx="23" cy="86" r="9" fill="${skin}"/><path d="M110 98 C110 90 90 88 89 98 Z" fill="${acc}"/><circle cx="97" cy="86" r="9" fill="${skin}"/>`;
-  if (p.ledge !== false) s += `<path d="M-6 98 H126"/>`;
-  return `<svg width="${S}" height="${Math.round(S*94/120)}" viewBox="0 6 120 94" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${s}</svg>`;
+  const mood = p.mood || "happy", def = SPRITES[p.sprite], tint = { hair: p.hair, eye: p.eye, coat: p.coat, shirt: p.shirt, skin: p.skin };
+  const k = 92 / def.h, wd = def.w * k, x0 = (120 - wd) / 2, ex = Math.min(112, x0 + wd - 4);
+  let o = `<image href="${spriteURL(p.sprite, tint)}" x="${x0.toFixed(1)}" y="8" width="${wd.toFixed(1)}" height="92"/>`;
+  const closed = mood==="wink" || mood==="love";   // nháy mắt / mắt cười; còn lại thỉnh thoảng chớp
+  o += `<g${closed ? "" : ` class="blk" style="animation-delay:-${(Math.random()*4.2).toFixed(2)}s"`}>${def.eyes.map(([cx, cy, rx, ry]) => {
+    const X = x0 + cx * k, Y = 8 + cy * k, R = rx * k, V = ry * k * .8;
+    return `<ellipse cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" rx="${R.toFixed(1)}" ry="${V.toFixed(1)}" fill="${lidColor(p.sprite, p.skin)}" stroke="none"/><path d="M${(X-R*.8).toFixed(1)} ${Y.toFixed(1)} Q${X.toFixed(1)} ${(Y+V*.55).toFixed(1)} ${(X+R*.8).toFixed(1)} ${Y.toFixed(1)}" stroke-width="1.8"/>`;
+  }).join("")}</g>`;
+  if (mood==="impatient") o += `<path d="M${ex-6} 30 C${ex-11} 37 ${ex-11} 43 ${ex-6} 43 C${ex-1} 43 ${ex-1} 37 ${ex-6} 30 Z" fill="#A8DDF5" stroke-width="2"/>`;
+  if (mood==="love") o += `<g style="animation:critHeart 1.6s ease-in-out infinite" transform="translate(${ex-110} 0)"><path d="M110 28 C110 23 104 22 103 27 C102 22 96 23 96 28 C96 33 103 36 103 39 C103 36 110 33 110 28 Z" fill="#FF6F91" stroke-width="2"/></g>`;
+  if (p.ledge !== false) o += `<path d="M-6 100 H126"/>`;
+  return `<svg width="${S}" height="${Math.round(S*94/120)}" viewBox="0 6 120 94" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${o}</svg>`;
 }
-export const charSVG = (look: Look, mood: Mood, S?: number) => look.gender ? guestSVG({ ...look, mood }, S) : critterSVG({ ...look, mood }, S);
+export const charSVG = (look: Look, mood: Mood, S?: number) => guestSVG({ ...look, mood }, S);
 
 /* Đồ ăn thú cưng (FoodIcon của Claude Design): Hạt (bát), Pate (lon), Ức gà (miếng thịt) */
 const FOOD_ART = {

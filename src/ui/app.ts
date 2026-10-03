@@ -1,5 +1,7 @@
 /* Vẽ màn hình theo đường dẫn hiện tại */
+import { applyTheme } from "../content/theme";
 import { rollDay } from "../engine/progress";
+import { S } from "../engine/state";
 import { $, dropModal, hasModal } from "./dom";
 import { pauseMenu } from "./modals";
 import { account, isLocked, loggedIn } from "../net/cloud";
@@ -16,7 +18,7 @@ import { shopHTML } from "./screens/shop";
 
 let shown = "";
 export function render() {
-  rollDay();
+  rollDay(); applyTheme(S.theme);
   const path = currentPath(), r = resolve(path);
   // chưa đăng nhập: màn chào / đăng nhập; đã đăng nhập nhưng vừa mở app: hỏi PIN
   if (!SH && (!loggedIn() || isLocked())) {

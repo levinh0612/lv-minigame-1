@@ -2,18 +2,20 @@
 import { STAFF } from "../../content/game";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { decorCount, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
-import { S } from "../../engine/state";
+import { S, meLook } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { coinPill, esc } from "../dom";
+import { guestSVG } from "../art";
 import { roomHTML } from "../room";
 import { account, savedAgo } from "../../net/cloud";
 
 /* tiêu đề theo tên tiệm người chơi đặt: "Tiệm của Vinh" -> nhỏ "Tiệm Bánh của", to "Vinh" */
 export function shopTitle() {
-  const n = account();
-  if (!n) return `<div><small>Tiệm Bánh</small><b>Matcha</b></div>`;
+  const n = S.shop.trim() || account();
+  const me = `<button class="meav" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${guestSVG({ ...meLook(), ledge: false, mood: "happy" }, 38)}</button>`;
+  if (!n) return `<div><span class="trow"><small>Tiệm Bánh</small>${me}</span><b>Matcha</b></div>`;
   const len = [...n].length, fs = len <= 8 ? 44 : len <= 12 ? 36 : len <= 16 ? 29 : 24;
-  return `<div class="tname"><small>Tiệm Bánh của</small><b style="font-size:${fs}px">${esc(n)}</b></div>`;
+  return `<div class="tname"><span class="trow"><small>Tiệm Bánh của</small>${me}</span><b style="font-size:${fs}px">${esc(n)}</b></div>`;
 }
 export const cloudLine = () => { const a = savedAgo(); return a ? `☁︎ đã lưu ${a}` : "☁︎ chưa lưu"; };
 addEventListener("cloud:saved", () => { const e = document.getElementById("cloudAt"); if (e) e.textContent = cloudLine(); });

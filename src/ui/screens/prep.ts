@@ -6,7 +6,7 @@ import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { critterSVG, foodSVG, ingSVG } from "../art";
+import { petSVG, foodSVG, ingSVG } from "../art";
 import { coinPill, esc } from "../dom";
 
 const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
@@ -24,7 +24,7 @@ export function bakerTile(id: PetId) {
   else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
   else { btn = `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`; if (!on) cls = "off"; }
   const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(food.id, 18)}Bậc ${tier} · ${food.n}`;
-  return `<div class="btile ${cls}"><div class="av">${critterSVG({ ...PETS[id], mood: on && !hungry ? "happy" : hungry ? "impatient" : "open" }, 72)}</div>
+  return `<div class="btile ${cls}"><div class="av">${petSVG({ ...PETS[id], mood: on && !hungry ? "happy" : hungry ? "impatient" : "open" }, 72)}</div>
     <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${btn}</div>`;
 }
 

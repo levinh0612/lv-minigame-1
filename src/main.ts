@@ -1,4 +1,5 @@
 import "./styles/main.css";
+import "./styles/themes.css";
 import { registerSW } from "virtual:pwa-register";
 import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
@@ -8,6 +9,8 @@ import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { render } from "./ui/app";
+import { loadSprites } from "./ui/sprite";
+import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
 import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
@@ -34,6 +37,7 @@ document.addEventListener("click", e => {
     case "letter": return openLetter();
     case "claim": return claimGoals();
     case "settings": return settings();
+    case "profile": return profileSheet();
     case "account": return accountPanel();
     case "menu": return menuSheet();
     case "rank": return rankSheet();
@@ -130,6 +134,7 @@ async function autoUpdate() {
   if (!r) return;
   if (!SH && !triedRecently()) void applyUpdate(); else showUpdateBanner();
 }
+void loadSprites();   // ảnh khách nam: tải sẵn để tô màu từng khách
 if (import.meta.env.PROD) registerSW({
   immediate: true,
   onNeedRefresh() { void autoUpdate(); },

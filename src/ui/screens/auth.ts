@@ -4,7 +4,7 @@ import { sfx } from "../../audio/sound";
 import { PETS } from "../../content/game";
 import { S } from "../../engine/state";
 import { account, checkName, login, logout, pinTriesLeft, question, register, resetPin, unlock } from "../../net/cloud";
-import { critterSVG } from "../art";
+import { petSVG } from "../art";
 import { $, esc, haptic, toast } from "../dom";
 
 type View = "welcome" | "register" | "login" | "forgot" | "lock";
@@ -12,7 +12,7 @@ let view: View = "welcome", pin = "", fq = "", fUser = "";
 const QUESTIONS = ["Tên thú cưng đầu tiên của bạn?", "Món bánh bạn thích nhất?", "Biệt danh hồi nhỏ của bạn?", "Tên trường tiểu học của bạn?", "Hai đứa quen nhau ở đâu?"];
 const pinInput = (id: string, ph = "••••") => `<input id="${id}" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="${ph}" class="pinin">`;
 const userInput = (v = "") => `<input id="aUser" value="${esc(v)}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" maxlength="20" placeholder="vd: vinh.matcha">`;
-const hero = (m: "love" | "happy" | "wink" = "happy") => `<div class="ahero">${critterSVG({ ...PETS.dog, mood: m, ledge: false }, 70)}${critterSVG({ ...PETS.gold, mood: "love", ledge: false }, 80)}${critterSVG({ ...PETS.white, mood: m === "love" ? "love" : "open", wave: true, ledge: false }, 70)}</div>`;
+const hero = (m: "love" | "happy" | "wink" = "happy") => `<div class="ahero">${petSVG({ ...PETS.dog, mood: m, ledge: false }, 70)}${petSVG({ ...PETS.gold, mood: "love", ledge: false }, 80)}${petSVG({ ...PETS.white, mood: m === "love" ? "love" : "open", wave: true, ledge: false }, 70)}</div>`;
 
 export function authHTML(v?: View) {
   if (v) view = v;

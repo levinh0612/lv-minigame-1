@@ -12,7 +12,7 @@ import {
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { cakeSVG, charSVG, critterSVG, ingSVG } from "../art";
+import { cakeSVG, charSVG, petSVG, ingSVG } from "../art";
 import { $, bump, coinPill, esc, floatText, haptic, modal, toast } from "../dom";
 import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
@@ -109,7 +109,7 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const f = c.pat / c.max, S2 = faceSize(sh), mine = mineIdx(sh) === i;
   const b = c.by ? sh.bakers.find(x => x.id === c.by) : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
   const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
-  const who = c.by ? `<div class="who by" data-bake="${c.by}">${critterSVG({ ...PETS[c.by], ledge: false, paws: false }, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
+  const who = c.by ? `<div class="who by" data-bake="${c.by}">${petSVG({ ...PETS[c.by], ledge: false, paws: false }, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
   return `${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
@@ -129,7 +129,7 @@ export function crewHTML(sh: Shift) {
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeSVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
-    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${critterSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
+    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${petSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}</div>`;
 }
 /* bánh bé đang làm tới đâu: đế → kem → topping → độ ngọt theo phần trăm */
@@ -144,9 +144,9 @@ export function watchBaker(id: PetId) {
   const draw = () => {
     const sh = SH, box = $("#watch"); if (!sh || !box) { clearInterval(watchT); return; }
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null;
-    if (!b || !c) { box.innerHTML = `<div class="wch">${critterSVG({ ...PETS[id], mood: sh.lack[id] ? "impatient" : "open" }, 90)}</div><p class="sub">${sh.lack[id] ? `${esc(petName(id))} đang chờ vì thiếu ${esc(sh.lack[id]!)}. Nhập thêm ở nút hộp trên cùng nha.` : `${esc(petName(id))} đang nghỉ, có khách là bé nhận đơn ngay.`}</p>`; return; }
+    if (!b || !c) { box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: sh.lack[id] ? "impatient" : "open" }, 90)}</div><p class="sub">${sh.lack[id] ? `${esc(petName(id))} đang chờ vì thiếu ${esc(sh.lack[id]!)}. Nhập thêm ở nút hộp trên cùng nha.` : `${esc(petName(id))} đang nghỉ, có khách là bé nhận đơn ngay.`}</p>`; return; }
     const pct = Math.min(100, Math.round(b.done / b.need * 100)), n = needOf(c), step = Math.min(4, Math.floor(pct / 25));
-    box.innerHTML = `<div class="wch">${critterSVG({ ...PETS[id], mood: "happy", ledge: false }, 70)}<div class="wcake">${cakeSVG(bakerBuild(c, pct), { size: 130 })}</div></div>
+    box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: "happy", ledge: false }, 70)}<div class="wcake">${cakeSVG(bakerBuild(c, pct), { size: 130 })}</div></div>
       <p class="sub">Đang làm <b>${esc(c.r.n)}</b> · ${CATS.sweet[c.sweet][0]} cho <b>${esc(c.who)}</b></p>
       <div class="wbar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
       <div class="wsteps">${KEYS.map((k, i) => `<div class="${i < step ? "ok" : i === step ? "now" : ""}">${ingSVG(k, n[k], 26)}<small>${LABELS[k]}</small><b>${CATS[k][n[k]][0]}</b><em>${i < step ? "✓" : i === step ? "…" : ""}</em></div>`).join("")}</div>`;
@@ -462,7 +462,7 @@ export function resultHTML(r: Result | null = result) {
           <div class="stars">${[0, 1, 2].map(i => STAR(i < stars, i === 1 ? 54 : 44, i === 1 ? -6 : 0, (i - 1) * 10, 0.25 + i * 0.15)).join("")}</div>
           ${FACE(good)}<b>${sg.t}</b></div>${sparks}</div></div>
     <div class="rcard">
-      <div class="pets">${(["dog", "gold", "white"] as PetId[]).map((id, i) => critterSVG({ ...PETS[id], mood, ledge: false }, i === 1 ? 80 : 70)).join("")}</div>
+      <div class="pets">${(["dog", "gold", "white"] as PetId[]).map((id, i) => petSVG({ ...PETS[id], mood, ledge: false }, i === 1 ? 80 : 70)).join("")}</div>
       <div class="kp"><div class="k1"><b>${sh.served}/${total}</b><small>Khách vui</small></div><div class="k2"><b>${sh.memo}</b><small>Tự nhớ công thức</small></div><div class="k3"><b>${sh.helped}</b><small>Bé làm hộ</small></div></div>
       <div class="ledger"><h4>Sổ lãi hôm nay</h4>
         ${row("Tiền bánh", sh.coins, true)}${row("Tip", sh.tips, true)}${row("Thưởng tự nhớ (+50%)", sh.bonus, true)}${row(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true)}

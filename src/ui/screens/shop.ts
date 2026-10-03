@@ -6,7 +6,7 @@ import { decorCount, unlocked } from "../../engine/progress";
 import { S, petName, save } from "../../engine/state";
 import { spend } from "../../engine/wallet";
 import { fmtD, fmtN, parse } from "../../engine/util";
-import { critterSVG, foodSVG } from "../art";
+import { petSVG, foodSVG } from "../art";
 import { esc, heartRow } from "../dom";
 import { roomHTML } from "../room";
 import { pageHead } from "./prep";
@@ -68,7 +68,7 @@ export function petRowHTML(id: PetId) {
     : !st.hired ? `<button class="rb hire" data-hire="${id}"><b>Nhận</b><small>vào làm</small></button>`
     : `<button class="rb ${fed ? "done" : ""}" data-treat="${id}:${food.id}" ${fed || (!foodOf(food.id) && S.coins < food.cost) ? "disabled" : ""}>${foodSVG(food.id, 28)}<small>${fed ? "Đã thưởng" : "Thưởng"}</small></button>`;
   const train = st.hired && trainCost(id) ? `<button class="up" data-train="${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${st.lv + 1} · ${fmtN(trainCost(id))} xu</button>` : "";
-  return `<div class="prow"><div class="pav ${on ? "on" : ""}">${critterSVG({ ...PETS[id], mood: on ? "happy" : "open", ledge: false }, 70)}</div>
+  return `<div class="prow"><div class="pav ${on ? "on" : ""}">${petSVG({ ...PETS[id], mood: on ? "happy" : "open", ledge: false }, 70)}</div>
     <div class="pin"><div class="pn"><b>${esc(petName(id))}</b><span class="ptg t">Bậc ${tier}</span>${on ? `<span class="ptg w">Đi làm</span>` : st.hired ? `<span class="ptg o">Nghỉ</span>` : ""}</div>
       <div class="pw">${foodSVG(food.id, 20)}Lương: 1 ${food.n}/ca${st.hired && on && !meal ? ` <em>· hết đồ ăn</em>` : ""}</div>
       <div class="ph2"><span data-hearts="${id}">${heartRow(S.pets[id].aff)}</span><small>thân thiết</small></div>${train}</div>${act}</div>`;
@@ -79,16 +79,16 @@ export function petsHTML() {
     ${pageHead("Nhân viên nhỏ")}
     <div class="hero">
       <div class="hn"><b>${esc(petName(id))}</b><small>${BREED[id]}</small></div><span class="hint">Chạm để vuốt ve</span>
-      <button class="pet" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${critterSVG({ ...PETS[id], mood: fed ? "love" : "happy", wave: id === "white" && !fed, ledge: false }, 150)}</button>
+      <button class="pet" data-pet="${id}" aria-label="Vuốt ve ${esc(petName(id))}">${petSVG({ ...PETS[id], mood: fed ? "love" : "happy", wave: id === "white" && !fed, ledge: false }, 150)}</button>
       <div class="hb"><button class="feed" data-treat="${id}:${k.id}" ${fed || (!foodOf(k.id) && S.coins < k.cost) ? "disabled" : ""}>${foodSVG(k.id, 26)}${fed ? "Hôm nay ăn rồi ♥" : foodOf(k.id) ? `Cho ăn · 1 ${k.n}` : `Cho ăn · ${k.cost} xu`}</button>
         <div class="hh" data-hearts="${id}">${heartRow(S.pets[id].aff)}</div></div>
     </div>
-    <div class="ptabs">${CFG.pets.map(p => `<button class="${p.id === id ? "on" : ""}" data-sel-pet="${p.id}">${critterSVG({ ...PETS[p.id], paws: false, ledge: false }, 52)}<span>${esc(petName(p.id))}</span></button>`).join("")}</div>
+    <div class="ptabs">${CFG.pets.map(p => `<button class="${p.id === id ? "on" : ""}" data-sel-pet="${p.id}">${petSVG({ ...PETS[p.id], paws: false, ledge: false }, 52)}<span>${esc(petName(p.id))}</span></button>`).join("")}</div>
     <div class="sh2"><b>Ca làm việc</b><span class="lav">đi làm / nghỉ ở màn Chuẩn bị</span></div>
     <div class="prows">${CFG.pets.map(p => petRowHTML(p.id)).join("")}</div>
     <div class="sh2"><b>Tủ đồ ăn</b><span class="lav">lương & quà thưởng</span></div>
     ${pantryHTML()}
-    <p class="phint">Mỗi ngày thưởng một lần. Bé càng thân càng hay ghé tiệm mua bánh.</p>
+    <p class="phint">Mỗi ngày thưởng một lần. Cho ăn để bé thân thiết hơn.</p>
   </div>`;
 }
 function giftTab() {
