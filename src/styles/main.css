@@ -1061,8 +1061,6 @@ button.cm{position:relative}
 .song.on .si{background:var(--pink);color:#fff}
 
 /* ===== Hồ sơ của bạn: nhân vật, tên tiệm, theme ===== */
-.meav{flex:none;width:40px;height:40px;border-radius:50%;background:var(--pink-l);box-shadow:0 3px 0 var(--sh),inset 0 0 0 3px #fff;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding:0 0 2px}
-.trow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
 .pf-prev{display:flex;justify-content:center;background:var(--pink-l);border-radius:24px;padding:14px 0 0;margin-top:6px;overflow:hidden}
 .pf-h{font:900 13px var(--body);color:var(--soft);margin:14px 0 6px;text-align:left}
 .pf-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
@@ -1075,3 +1073,34 @@ button.cm{position:relative}
 .pf-th{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:14px;background:#fff;border:2px solid var(--pink-b);font:800 13px var(--body);color:var(--ink)}
 .pf-th i{width:16px;height:16px;border-radius:50%;flex:none}
 .pf-th.on{border-color:var(--pink);background:var(--pink-l)}
+
+/* ===== Cảnh tiệm 3D (ui/room3d.ts) ===== */
+.room3d.live{position:relative;aspect-ratio:361/340;border-radius:30px;overflow:hidden;background:var(--pink-l);box-shadow:0 0 0 3px #fff,0 5px 0 3px var(--sh)}
+.room3d canvas{display:block;width:100%;height:100%;touch-action:pan-y}
+.hs-layer{position:absolute;inset:0;pointer-events:none}
+.hs{position:absolute;left:0;top:0;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:transparent;pointer-events:auto;-webkit-tap-highlight-color:transparent}
+.rot3d{position:absolute;left:10px;bottom:10px;display:flex;gap:6px}
+.rot3d button{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 0 var(--k-f0d2da);font:800 18px/1 var(--body);color:var(--pink-d)}
+.zoom3d{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.zoom3d button{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 0 var(--k-f0d2da);font:800 19px/1 var(--body);color:var(--pink-d)}
+
+/* ===== Thẻ hồ sơ ở màn chính ===== */
+.prof{display:flex;gap:14px;align-items:center;padding:14px 18px 0}
+.pf-av{position:relative;flex:none;width:104px;height:92px;border-radius:26px;background:linear-gradient(var(--pink-l) 55%,#fff);box-shadow:0 0 0 3px #fff,0 5px 0 3px var(--sh);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding:0}
+.pf-av svg{display:block;margin-bottom:-1px}
+.pf-ed{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 0 var(--sh);display:grid;place-items:center;font:800 12px/1 var(--body);color:var(--pink-d)}
+.pf-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.pf-sub{font:700 14px/1 var(--display);color:var(--mint-d);letter-spacing:.4px}
+.pf-name{display:block;font-family:var(--display);font-weight:800;line-height:1.08;color:var(--pink-d);text-shadow:0 3px 0 #fff,0 5px 0 var(--k-f7bfcd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:4px}
+.lvp.wide{width:100%}.lvp.wide .tr{flex:1;width:auto}
+.pf-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px 0}
+.pchip{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 11px;border-radius:13px;background:#fff;box-shadow:0 2px 0 var(--sh);font:800 12px/1 var(--body);color:var(--soft)}
+.pchip.lav{color:var(--lav-d)}.pchip.mint{color:var(--mint-d)}
+
+/* ===== Tủ bánh: điều khiển cho máy tính ===== */
+.carow{position:relative}
+.cnav{position:absolute;top:42%;z-index:2;width:34px;height:34px;border-radius:50%;background:#fff;box-shadow:0 3px 0 var(--sh);font:800 22px/1 var(--body);color:var(--pink-d);display:grid;place-items:center;padding:0 0 3px}
+.cnav.l{left:4px}.cnav.r{right:4px}
+.caro{cursor:grab}.caro:active{cursor:grabbing}
+.cdots i{cursor:pointer}
+.zoom3d .vw{font-size:17px;padding:0}

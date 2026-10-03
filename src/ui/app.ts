@@ -7,6 +7,7 @@ import { pauseMenu } from "./modals";
 import { account, isLocked, loggedIn } from "../net/cloud";
 import { authHTML } from "./screens/auth";
 import { fitRooms } from "./room";
+import { keepRoom, mountRooms } from "./room3d";
 import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
 import { homeHTML } from "./screens/home";
@@ -18,7 +19,7 @@ import { shopHTML } from "./screens/shop";
 
 let shown = "";
 export function render() {
-  rollDay(); applyTheme(S.theme);
+  rollDay(); applyTheme(S.theme); keepRoom();
   const path = currentPath(), r = resolve(path);
   // chưa đăng nhập: màn chào / đăng nhập; đã đăng nhập nhưng vừa mở app: hỏi PIN
   if (!SH && (!loggedIn() || isLocked())) {
@@ -44,7 +45,7 @@ export function render() {
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
     case "rank": $("#app")!.innerHTML = homeHTML(); setTimeout(rankSheet, 0); break;   // link cũ: màn chính + hộp thoại
   }
-  fitRooms();
+  fitRooms(); void mountRooms();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu
   window.scrollTo(0, scroll ? y : 0);
 }

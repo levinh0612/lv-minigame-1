@@ -31,17 +31,31 @@ export function menuSheet() {
 export function cakesSheet() {
   const f = featured(), list = unlocked();
   modal(`<h2>Tủ bánh</h2><p class="sub">Vuốt để xem ${list.length} món đang bán</p>
+    <div class="carow"><button class="cnav l" data-cn="-1" aria-label="Món trước">‹</button><button class="cnav r" data-cn="1" aria-label="Món sau">›</button>
     <div class="caro" id="caro">${list.map(r => `<div class="cc ${r.id === f.id ? "star" : ""}">
       ${r.id === f.id ? `<span class="tagf">★ Món nổi bật hôm nay</span>` : ""}
       <div class="ck">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 170 })}</div>
-      <b>${esc(r.n)}</b><div class="ichips">${ingChips(r)}</div><span class="cp">${r.price} xu / bánh</span></div>`).join("")}</div>
-    <div class="cdots" id="cdots">${list.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>
+      <b>${esc(r.n)}</b><div class="ichips">${ingChips(r)}</div><span class="cp">${r.price} xu / bánh</span></div>`).join("")}</div></div>
+    <div class="cdots" id="cdots">${list.map((_, i) => `<i class="${i ? "" : "on"}" data-i="${i}"></i>`).join("")}</div>
     <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
-  const c = $("#caro")!;
+  const c = $("#caro")!, page = () => Math.round(c.scrollLeft / c.clientWidth), last = list.length - 1;
+  const goto = (i: number) => c.scrollTo({ left: Math.max(0, Math.min(last, i)) * c.clientWidth, behavior: "smooth" });
   c.addEventListener("scroll", () => {
-    const i = Math.round(c.scrollLeft / c.clientWidth);
+    const i = page();
     $("#cdots")!.querySelectorAll("i").forEach((d, j) => d.classList.toggle("on", j === i));
   }, { passive: true });
+  /* máy tính: nút ‹ ›, bấm chấm, phím mũi tên, lăn chuột, kéo chuột (điện thoại vẫn vuốt ngang như cũ) */
+  document.querySelectorAll<HTMLElement>("[data-cn]").forEach(b => b.addEventListener("click", () => goto(page() + +b.dataset.cn!)));
+  $("#cdots")!.addEventListener("click", e => { const d = (e.target as HTMLElement).closest<HTMLElement>("[data-i]"); if (d) goto(+d.dataset.i!); });
+  const key = (e: KeyboardEvent) => { if (!document.getElementById("caro")) return removeEventListener("keydown", key); if (e.key === "ArrowRight") goto(page() + 1); else if (e.key === "ArrowLeft") goto(page() - 1); };
+  addEventListener("keydown", key);
+  let wheelAt = 0;
+  c.addEventListener("wheel", e => { const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; if (!d) return; e.preventDefault(); if (e.timeStamp - wheelAt < 380) return; wheelAt = e.timeStamp; goto(page() + (d > 0 ? 1 : -1)); }, { passive: false });
+  let x0 = 0, s0 = 0, drag = false;
+  c.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") return; drag = true; x0 = e.clientX; s0 = c.scrollLeft; c.style.scrollSnapType = "none"; c.setPointerCapture(e.pointerId); });
+  c.addEventListener("pointermove", e => { if (drag) c.scrollLeft = s0 - (e.clientX - x0); });
+  const end = () => { if (!drag) return; drag = false; c.style.scrollSnapType = ""; goto(page()); };
+  c.addEventListener("pointerup", end); c.addEventListener("pointercancel", end);
 }
 
 /* Ngày kỷ niệm & ngày quan trọng */

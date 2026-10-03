@@ -24,6 +24,7 @@ export interface State {
   me: Avatar;                     // nhân vật của người chơi (chọn kiểu + màu), đồng bộ theo tài khoản
   shop: string;                   // tên tiệm hiện ở màn chính (để trống thì dùng tên tài khoản)
   theme: string;                  // theme màu giao diện (content/theme.ts)
+  scene3d: boolean;               // cảnh tiệm 3D ở màn chính (tắt trên máy yếu thì dùng cảnh 2D)
   photo: string;                  // ảnh treo tường tiệm (data URL đã thu nhỏ)
   cloud: Cloud;
 }
@@ -45,7 +46,7 @@ export function fresh(): State {
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
-    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", photo: "",
+    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
 }
@@ -106,7 +107,7 @@ export function loadState(raw: string | null): State {
   s.cloud = Object.assign(fresh().cloud, s.cloud || {});
   s.book = Object.assign(freshBook(), s.book || {});
   s.me = Object.assign({ ...DEFAULT_ME }, s.me || {}); if (!(s.me.sprite in SPRITES)) s.me = { ...DEFAULT_ME };
-  s.shop = typeof s.shop === "string" ? s.shop : ""; s.theme = typeof s.theme === "string" ? s.theme : "pink";
+  s.shop = typeof s.shop === "string" ? s.shop : ""; s.theme = typeof s.theme === "string" ? s.theme : "pink"; s.scene3d = s.scene3d !== false;
   ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }

@@ -6,16 +6,20 @@ import { S, meLook } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { coinPill, esc } from "../dom";
 import { guestSVG } from "../art";
-import { roomHTML } from "../room";
+import { room3dHTML } from "../room3d";
 import { account, savedAgo } from "../../net/cloud";
 
-/* tiêu đề theo tên tiệm người chơi đặt: "Tiệm của Vinh" -> nhỏ "Tiệm Bánh của", to "Vinh" */
-export function shopTitle() {
-  const n = S.shop.trim() || account();
-  const me = `<button class="meav" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${guestSVG({ ...meLook(), ledge: false, mood: "happy" }, 38)}</button>`;
-  if (!n) return `<div><span class="trow"><small>Tiệm Bánh</small>${me}</span><b>Matcha</b></div>`;
-  const len = [...n].length, fs = len <= 8 ? 44 : len <= 12 ? 36 : len <= 16 ? 29 : 24;
-  return `<div class="tname"><span class="trow"><small>Tiệm Bánh của</small>${me}</span><b style="font-size:${fs}px">${esc(n)}</b></div>`;
+/* Thẻ hồ sơ ở đầu màn chính: chân dung nhân vật của bạn (nửa người sau quầy), tên tiệm, cấp và kinh nghiệm */
+export function profileCard(L: number, cur: number, need: number) {
+  const n = S.shop.trim() || account(), len = [...n || "Matcha"].length, fs = len <= 8 ? 38 : len <= 12 ? 31 : len <= 16 ? 25 : 21;
+  return `<div class="prof">
+    <button class="pf-av" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${guestSVG({ ...meLook(), mood: "happy" }, 104)}<span class="pf-ed" aria-hidden="true">✎</span></button>
+    <div class="pf-main">
+      <small class="pf-sub">${n ? "Tiệm Bánh của" : "Tiệm Bánh"}</small>
+      <b class="pf-name" style="font-size:${fs}px">${esc(n || "Matcha")}</b>
+      <button class="lvp wide" data-go="/muc-tieu" aria-label="Cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lb">Lv ${L}</span><span class="tr"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button>
+    </div>
+  </div>`;
 }
 export const cloudLine = () => { const a = savedAgo(); return a ? `☁︎ đã lưu ${a}` : "☁︎ chưa lưu"; };
 addEventListener("cloud:saved", () => { const e = document.getElementById("cloudAt"); if (e) e.textContent = cloudLine(); });
@@ -56,10 +60,9 @@ export function homeHTML() {
       <button class="rbtn" data-act="settings" aria-label="Cài đặt">${GEAR}</button>
       ${coinPill()}
     </div>
-    <div class="htitle">${shopTitle()}
-      <div class="hr"><button class="lvp" data-go="/muc-tieu" aria-label="Cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lb">Lv ${L}</span><span class="tr"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button>
-        <span class="own">${decorCount()} đồ trang trí · ${hired} nhân viên</span><span class="hmeta"><button class="saved" data-act="account" id="cloudAt">${cloudLine()}</button> · <button class="soon4" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></span></div></div>
-    <div class="hroom">${roomHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) })}
+    ${profileCard(L, cur, need)}
+    <div class="pf-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
+    <div class="hroom">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) })}
       <button class="fix" data-go="/cua-hang">${PEN}Sửa tiệm</button></div>
     ${card}
     <div class="openw4"><button class="b3" data-go="/chuan-bi">Mở tiệm</button></div>

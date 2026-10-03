@@ -74,6 +74,7 @@ export function settings() {
       <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
       <button type="button" class="b3 w cloudbtn" data-act="profile">🎨 Hồ sơ · nhân vật · tên tiệm · màu giao diện</button>
       <button type="button" class="b3 w cloudbtn" data-act="music">🎵 Chọn bài · ${esc(songName())}</button>
+      <label class="tg"><input id="fScene" type="checkbox" ${S.scene3d ? "checked" : ""}>Cảnh tiệm 3D (tắt nếu máy bị nóng hoặc giật)</label>
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
       <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
@@ -87,7 +88,7 @@ export function settings() {
     S.names.her = v("#fHer") || CFG.herName; S.names.his = v("#fHis") || CFG.hisName;
     S.names.girls = v("#fGirls") || CFG.girlNames; S.names.boys = v("#fBoys") || CFG.boyNames;
     CFG.pets.forEach(p => { S.names.pets[p.id] = v("#fPet_" + p.id) || p.name; });
-    S.sound = $<HTMLInputElement>("#fSound")!.checked; const vb = $<HTMLInputElement>("#fVibe"); if (vb) S.vibe = vb.checked;
+    S.scene3d = $<HTMLInputElement>("#fScene")!.checked; S.sound = $<HTMLInputElement>("#fSound")!.checked; const vb = $<HTMLInputElement>("#fVibe"); if (vb) S.vibe = vb.checked;
     const m = $<HTMLInputElement>("#fMusic")!.checked; if (m !== S.music) Sound.setMusic(m);
     save(); closeModal(); toast("Đã lưu");
   });
