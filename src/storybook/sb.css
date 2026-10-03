@@ -32,3 +32,7 @@ body.sb{background:#F4ECEE;margin:0}
 body.one{background:transparent}
 body.one .sbw{padding:24px;max-width:none;display:inline-block;margin:0}
 body.one .frame{box-shadow:none;border-radius:0}
+.sbexp{width:auto;height:46px;padding:0 20px;margin-top:14px;font-size:15px}
+/* trang storybook luôn cuộn được, kể cả khi game khoá cuộn */
+html:has(body.sb){height:auto;overflow:auto!important;position:static!important}
+body.sb{height:auto;overflow:visible!important;overscroll-behavior:auto}

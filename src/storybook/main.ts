@@ -80,6 +80,7 @@ function modalOver(screen: string, open: () => void) {
   const layer = document.createElement("div"); layer.id = "layer"; document.body.appendChild(layer);
   open();
   const html = layer.innerHTML; layer.remove();
+  document.documentElement.classList.remove("mlock");   // hộp thoại mẫu không được khoá cuộn trang
   document.querySelectorAll(".fh,.toast").forEach(e => e.remove());
   return screen + html;
 }
@@ -263,12 +264,30 @@ if (q.has("list")) {
   }, 300));
 } else {
   root.innerHTML = `<div class="sbw">
-    <div class="sbh"><h1>Tiệm Bánh Storybook</h1><p>Mọi màn hình, hộp thoại và thành phần của game, vẽ bằng chính code của game với dữ liệu mẫu. Trang này không đụng tới tiến trình chơi thật. Chạm “mở riêng” để xem một mục ở kích thước thật.</p></div>
+    <div class="sbh"><h1>Tiệm Bánh Storybook</h1><p>Mọi màn hình, hộp thoại và thành phần của game, vẽ bằng chính code của game với dữ liệu mẫu. Trang này không đụng tới tiến trình chơi thật. Chạm “mở riêng” để xem một mục ở kích thước thật.</p>
+      <button class="b3 sbexp" id="sbexp" type="button">⬇ Xuất file Storybook (gửi Claude Design)</button></div>
     <nav class="sbnav">${SECTIONS.map(([id, n]) => `<a href="#${id}">${n}</a>`).join("")}</nav>
     ${SECTIONS.map(([id, n, d]) => `<section class="sbsec" id="${id}"><h2>${n}</h2><p>${d}</p><div class="sbgrid">
       ${STORIES.filter(s => s.sec === id).map(s => `<div class="story"><div class="cap">${esc(s.title)} <a href="?story=${s.id}">mở riêng</a><small>${esc(s.desc)}</small></div>${wrap(s)}</div>`).join("")}
     </div></section>`).join("")}
   </div>`;
   fitRooms();
+  document.getElementById("sbexp")!.onclick = exportBook;
 }
 _setShift(null);
+
+/* Gói cả trang thành 1 file HTML tự đủ (CSS nhúng sẵn, bỏ nút xuất) để gửi Claude Design */
+function exportBook() {
+  const css = [...document.styleSheets].map(ss => { try { return [...ss.cssRules].map(r => r.cssText).join("\n"); } catch { return ""; } }).join("\n");
+  const body = root.cloneNode(true) as HTMLElement;
+  body.querySelector("#sbexp")?.remove();
+  body.querySelectorAll(".cap a").forEach(a => a.remove());   // bỏ link "mở riêng" (file tách rời không dùng được)
+  const html = `<!DOCTYPE html>\n<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiệm Bánh Storybook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;600;700;800;900&display=swap">
+<style>${css}</style></head><body class="sb">${body.outerHTML}</body></html>`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  a.download = `tiem-banh-storybook-${new Date().toISOString().slice(0, 10)}.html`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
