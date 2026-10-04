@@ -16,6 +16,8 @@ const DEFS: Record<string, Def> = {
   n2: { dir: "cyber-girl", file: "", head: /^head_/, headBone: "head_08", h: 1.55, seatY: .1, seatZ: 0 },
   n3: { dir: "lynae", file: "", head: /^Bip001Head_/, headBone: "Bip001Head_011", h: 1.6, seatY: .1, seatZ: 0 },
   n4: { dir: "auto-girl", file: "", head: /^Head_/, headBone: "", h: 1.6, seatY: .1, seatZ: 0 },
+  n5: { dir: "anarky-girl", file: "", head: /^Head_/, headBone: "", h: 1.6, seatY: .1, seatZ: 0 },
+  m2: { dir: "cuc-boy", file: "", head: /^Head_/, headBone: "", h: 1.6, seatY: .1, seatZ: 0 },
   m1: { dir: "real-boy", file: "", head: /^Head_/, headBone: "Head_3", h: 1.6, seatY: .1, seatZ: 0 }
 };
 /** khách trong bộ "customer_all_characters" (low-poly): k4..k11, mỗi người một model + chuyển động riêng. Nam: k5, k6, k7 */

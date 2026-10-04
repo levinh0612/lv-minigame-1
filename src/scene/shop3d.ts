@@ -244,7 +244,7 @@ export function createShop(o: ShopOpts): ShopScene {
     { sprite: "b5", look: { skin: "#FFE3D0", hair: "#3B2A26", coat: "#6A4C93", shirt: "#F29AB2", eye: "#4F9A6B" } },
     { sprite: "g1", look: { skin: "#F3C39A", hair: "#C98B5A", coat: "#3D7A55", shirt: "#F2E6D0", eye: "#5FA6C9" } },
     { sprite: "b4", look: { skin: "#FFE9DA", hair: "#E7B872", coat: "#2E4A7A", shirt: "#C9962E", eye: "#7A5A3E" } },
-    ...["n1", "n2", "n3", "n4", "m1", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11"].map(sprite => ({ sprite, look: { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" } }))   // khách 3D làm sẵn (giữ nguyên trang phục)
+    ...["n1", "n2", "n3", "n4", "n5", "m1", "m2", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11"].map(sprite => ({ sprite, look: { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" } }))   // khách 3D làm sẵn (giữ nguyên trang phục)
   ];
   const fwd = (st: { x: number; z: number; a: number }, f: number) => new THREE.Vector2(st.x + Math.sin(st.a) * f, st.z + Math.cos(st.a) * f);
   const STREET = [new THREE.Vector2(DOOR_X, 4.8), new THREE.Vector2(-1.3, 4.95)];           // vỉa hè bên trái cửa (bên phải có cây và biển menu)
