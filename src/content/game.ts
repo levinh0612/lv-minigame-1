@@ -65,8 +65,7 @@ export const COAT = ["#2F6F86", "#2E4A7A", "#3D7A55", "#8A3D55", "#C9962E", "#6A
     scene/accessories.ts dựng phụ kiện/tóc giả tương ứng. */
 export const STYLES: [string, string][] = [
   ["", "Gốc"], ["beanie", "Mũ len"], ["headband", "Băng đô"], ["bun", "Búi tóc"], ["ponytail", "Đuôi ngựa"], ["twintails", "Hai chùm"],
-  ["ears", "Tai mèo"], ["bow", "Nơ lớn"], ["twinbows", "Hai nơ"], ["flower", "Hoa cài"], ["glasses", "Kính tròn"],
-  ["bob", "Tóc bob"], ["long", "Tóc dài"], ["curly", "Tóc xoăn"], ["spiky", "Tóc dựng"], ["afro", "Tóc bồng"]
+  ["ears", "Tai mèo"], ["bow", "Nơ lớn"], ["twinbows", "Hai nơ"], ["flower", "Hoa cài"], ["glasses", "Kính tròn"]
 ];
 export const STYLE_NAME: Record<string, string> = Object.fromEntries(STYLES);
 /** người chơi cũ chọn theo mã nhân vật (b2, g3...): ánh xạ sang kiểu đầu tương ứng */
