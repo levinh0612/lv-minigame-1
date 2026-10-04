@@ -52,6 +52,7 @@ function loop(now: number) {
   const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
   if (!SH.paused) {
     const ev = tick(SH, dt);
+    if (ev.rush) { sfx("level"); toast(`Giờ vàng! Khách đông bất ngờ, thêm ${ev.rush} khách`); }
     if (ev.spawned >= 0) { renderSlot(ev.spawned, true); sfx("bell"); }
     ev.left.forEach(onLeave);
     ev.claimed.forEach(b => renderSlot(b.seat));

@@ -244,14 +244,14 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
   const GROUND = 4 + 2 * wide;         // chỗ đặt bàn mỗi lầu: 4, mỗi lần mở rộng thêm 2
-  const COLS = Math.ceil(GROUND / 2), STEP = COLS > 1 ? (W - 3.7) / (COLS - 1) : 0;   // các cột bàn trải đều theo chiều rộng phòng
+  const COLS = Math.ceil(GROUND / 2), STEP = COLS > 1 ? (W - 5.1) / (COLS - 1) : 0;   // chừa góc đông cho cầu thang   // các cột bàn trải đều theo chiều rộng phòng
   const SPOTS: [number, number][] = Array.from({ length: 2 * COLS }, (_, i) => [-1.9 + STEP * Math.floor(i / 2), i % 2 ? 2.2 : .7]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
   const ANG = [2.4, -2.4, .1, 3.14];
   /** dựng các bàn của lầu f vào nhóm lầu đó; lầu trệt luôn có ít nhất 2 bàn (khách ngồi) */
   const buildTables = (f: number) => {
     let lvs = o.tables.filter((_, i) => i % floors === f).slice(0, GROUND);          // bàn chia đều cho các lầu
     if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
-    const cols = Math.max(2, Math.ceil(lvs.length / 2)), step = (W - 3.7) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
+    const cols = Math.max(2, Math.ceil(lvs.length / 2)), step = (W - 5.1) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
     return lvs.map((lv, i) => {
       const x = -1.9 + step * (i % cols), z = i < cols ? .7 : 2.2, r = .6 + .1 * lv, par = flG[f]!;
       const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par);

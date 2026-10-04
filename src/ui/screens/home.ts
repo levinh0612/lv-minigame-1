@@ -75,7 +75,7 @@ export function homeHTML() {
         ${coinPill()}
       </div>
       ${prof}
-      <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip ${needUpgrade() ? "warn" : "lav"}" data-act="venue">🪑 ${capacity()}/${demand()} ghế${needUpgrade() ? " · cần nâng cấp" : ""}</button><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
+      <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip ${needUpgrade() ? "warn" : "lav"}" data-act="venue">🪑 Sức chứa ${capacity()} · cao điểm ${demand()}${needUpgrade() ? " · cần nâng cấp" : ""}</button><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
     </div>
     <div class="h5-bottom">
       ${te.length ? card : ""}

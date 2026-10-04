@@ -6,7 +6,7 @@ import {
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
 import { BAKE_TIME, type FoodId } from "../content/game";
-import { dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatsNow, stockOf, unitCost } from "./economy";
+import { comfortPat, comfortTip, dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, save } from "./state";
@@ -17,6 +17,7 @@ export interface Customer {
   who: string; look: Look; r: Recipe; sweet: number; max: number; pat: number;
   him?: boolean; gone?: boolean; mood?: Mood; note?: string;
   by?: PetId;          // thú cưng đang làm đơn này (người chơi không chọn được)
+  seatLv?: number;     // cấp bàn khách đang ngồi (1..3)
 }
 /* một bé thợ bánh trong ca: đang làm cho ghế nào, được bao nhiêu */
 export interface Baker { id: PetId; seat: number; done: number; need: number }
@@ -28,6 +29,7 @@ export interface Shift {
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
   bonus: number; lack: Partial<Record<PetId, string>>;
   ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[]; meals: Partial<Record<PetId, FoodId>>;
+  seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
   goals: ShiftGoal[]; goalCoins: number;
@@ -38,13 +40,18 @@ export const needOf = (c: Customer): Record<PartKey, number> => ({ base: c.r.bas
 export const matches = (c: Customer | null | undefined, b: Build) => !!c && !c.gone && !c.by && KEYS.every(k => needOf(c)[k] === b[k]);
 export const isComplete = (b: Build) => KEYS.every(k => b[k] != null);
 
+/** giờ vàng: có ghế dư thì giữa ca có một đợt khách đông bất ngờ, thêm 1 đến (số ghế dư) khách */
+function rushPlan() {
+  const spare = spareSeats(), total = expectedCustomers();
+  return { rushExtra: spare > 0 ? 1 + Math.floor(Math.random() * spare) : 0, rushAt: Math.floor(total * rnd(0.35, 0.6)), rushUntil: 0, rushDone: false };
+}
 export function createShift(): Shift {
   const L = lvl();
   return {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
   };
 }
 
@@ -71,15 +78,17 @@ export function makeCustomer(sh: Shift): Customer {
 
 /* Chạy thời gian. Trả về ghế vừa có khách và các ghế khách vừa bỏ về. */
 export type StaffDone = { baker: Baker; res: Extract<ServeResult, { ok: true }> };
-export interface TickOut { spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: PetId; what: string }[] }
+export interface TickOut { rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: PetId; what: string }[] }
 export function tick(sh: Shift, dt: number): TickOut {
-  const out: TickOut = { spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [] };
+  const out: TickOut = { rush: 0, spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [] };
   if (sh.paused) return out;
   sh.t += dt;
+  if (!sh.rushDone && sh.rushExtra > 0 && sh.spawned >= sh.rushAt) { sh.rushDone = true; sh.total += sh.rushExtra; sh.rushUntil = sh.t + 25; out.rush = sh.rushExtra; }
   const free = sh.seats.findIndex(s => !s);
   if (sh.spawned < sh.total && sh.t >= sh.next && free >= 0) {
-    sh.seats[free] = makeCustomer(sh); sh.spawned++; out.spawned = free;
-    sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv];
+    const c = makeCustomer(sh), lv = sh.seatLv[free] ?? 1; c.seatLv = lv; c.max *= comfortPat(lv); c.pat = c.max;     // bàn cao cấp: khách kiên nhẫn hơn
+    sh.seats[free] = c; sh.spawned++; out.spawned = free;
+    sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv] * (sh.t < sh.rushUntil ? 0.55 : 1);
   }
   sh.seats.forEach((c, i) => {
     if (!c || c.gone) return;
@@ -187,7 +196,7 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   const c = sh.seats[idx]!; c.gone = true;
   const f = c.pat / c.max, stars = f > 0.55 ? 3 : f > 0.3 ? 2 : 1, mult = coinMult();
   const price = Math.round(c.r.price * (1 + fx("price"))) * mult;
-  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip"))) * mult;
+  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1)) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
   earn("sales", price); earn("tip", tip); earn("memo", bonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;

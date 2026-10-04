@@ -132,8 +132,10 @@ export function payCrew(): { cost: number; fed: { id: PetId; meal: FoodId }[]; h
 /* Độ nổi tiếng: sao trung bình 20 đánh giá gần nhất (0..3) + đồ trang trí + cấp tiệm */
 export function fameScore() {
   const r = S.reviews.slice(0, 20), avg = r.length ? r.reduce((a, x) => a + x.s, 0) / r.length : 2;
-  return avg + decorCount() * 0.4 + (lvl() - 1) * 0.3;
+  return avg + decorCount() * 0.4 + (lvl() - 1) * 0.3 + venueFame();
 }
+/** đầu tư vào tiệm cộng điểm nổi tiếng: mỗi lầu thêm 0,8, mỗi lần mở rộng 0,5, mỗi cấp nâng của bàn 0,25 */
+export const venueFame = () => (S.venue.floors - 1) * 0.8 + S.venue.wide * 0.5 + S.venue.tbl.reduce((a, l) => a + (l - 1) * 0.25, 0);
 export const fameLevel = () => { const x = fameScore(); return FAME_AT.filter(t => x >= t).length; };
 export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });
 
@@ -154,6 +156,11 @@ export const capacity = () => tableLvs().reduce((a, l) => a + SHOP.seatsOf(l), 0
 export const spots = () => S.venue.floors * (SHOP.perFloor + SHOP.perWide * S.venue.wide);
 export const seatsNow = () => Math.min(demand(), capacity());           // số khách ngồi cùng lúc trong ca
 export const needUpgrade = () => demand() > capacity();
+export const spareSeats = () => Math.max(0, capacity() - demand());      // ghế dư: chỗ cho khách giờ vàng
+/** cấp bàn của từng ghế trong ca (bàn cấp cao đứng trước, khách ngồi bàn xịn trước): ngồi bàn càng cao càng kiên nhẫn, tip càng nhiều */
+export const seatLevels = (): number[] => tableLvs().flatMap(l => Array(SHOP.seatsOf(l)).fill(l)).slice(0, seatsNow());
+export const comfortPat = (lv: number) => 1 + 0.15 * (lv - 1);
+export const comfortTip = (lv: number) => 1 + 0.25 * (lv - 1);
 const lowest = () => Math.min(...tableLvs());
 export const upgradeOptions = () => [
   { id: "table" as const, cost: SHOP.tableCost(tableLvs().length + 1), ok: tableLvs().length < spots() },

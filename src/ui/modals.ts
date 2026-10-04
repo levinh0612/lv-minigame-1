@@ -249,7 +249,7 @@ export function giftSheet() { modal(`<h2>Quà tặng</h2>${giftBody()}<div class
    forced = khách đông hơn số bàn: không đóng được, phải chọn một cách nâng cấp (trừ khi không đủ xu cho cách nào) */
 const VENUE_OPT = {
   table: { ic: "🪑", n: "Mua thêm bàn", d: () => `Bàn cấp 1 chứa 2 người · bàn thứ ${tableLvs().length + 1}, đang có ${tableLvs().length}/${spots()} chỗ đặt` },
-  up: { ic: "⭐", n: "Nâng cấp bàn", d: () => `Bàn cấp ${Math.min(...tableLvs())} lên cấp ${Math.min(...tableLvs()) + 1}, thêm 1 ghế` },
+  up: { ic: "⭐", n: "Nâng cấp bàn", d: () => `Bàn cấp ${Math.min(...tableLvs())} lên cấp ${Math.min(...tableLvs()) + 1}: thêm 1 ghế, khách kiên nhẫn và tip nhiều hơn` },
   floor: { ic: "🏢", n: "Xây thêm lầu", d: () => `Thêm ${4 + 2 * S.venue.wide} chỗ đặt bàn · lầu ${S.venue.floors + 1}` },
   wide: { ic: "↔️", n: "Mở rộng cửa hàng", d: () => `Rộng thêm, mỗi lầu +2 chỗ đặt bàn · lần ${S.venue.wide + 1}` }
 } as const;
@@ -262,7 +262,7 @@ export function upgradeModal(forced = false) {
   }).join("");
   const foot = forced && !stuck ? "" : `<div class="mbtns">${stuck ? `<button class="b3" data-act="start-anyway">Chơi với ${seatsNow()} ghế</button>` : `<button class="b3" data-close>Đóng</button>`}</div>`;
   modal(`<h2>${forced ? "Tiệm đông quá rồi!" : "Nâng cấp tiệm"}</h2><p class="sub">${need ? `Giờ cao điểm có ${demand()} khách mà tiệm chỉ có ${capacity()} ghế. ${forced ? "Phải nâng cấp mới mở cửa được." : "Nâng cấp để đón đủ khách."}` : `Tiệm có ${tableLvs().length} bàn · ${S.venue.floors} lầu · mở rộng ${S.venue.wide} lần.`}</p>
-    <div class="vstat"><span>🪑 ${capacity()}/${demand()} ghế</span><span>🏢 ${S.venue.floors} lầu</span><span>${tableLvs().length}/${spots()} chỗ đặt bàn</span></div>
+    <div class="vstat"><span>🪑 Sức chứa ${capacity()} ghế</span><span>👥 Cao điểm ${demand()} khách</span><span>🏢 ${S.venue.floors} lầu</span><span>${tableLvs().length}/${spots()} chỗ đặt bàn</span></div>
     <div class="vopts">${opts}</div>${stuck ? `<p class="sub">Chưa đủ xu cho cách nào. Bán thêm bánh rồi quay lại nhé.</p>` : ""}${foot}`, undefined, forced && !stuck);
 }
 /** mua xong: còn thiếu bàn thì giữ hộp thoại bắt buộc, đủ rồi thì đóng */

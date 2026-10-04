@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RECIPES } from "../src/content/game";
 import {
-  buy, buyFood, buySuggested, buyVenue, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
+  buy, buyFood, buySuggested, buyVenue, seatLevels, spareSeats, venueFame, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
@@ -336,6 +336,40 @@ describe("ví: sổ thu chi", () => {
       S.coins = 10; tableLvs();
       expect(canAffordUpgrade()).toBe(false); expect(buyVenue("table")).toBe(false);
       expect(seatsNow()).toBe(Math.min(demand(), 4));
+    });
+  });
+
+  describe("đầu tư tiệm sinh lời", () => {
+    it("lầu, mở rộng và bàn cấp cao cộng điểm nổi tiếng", () => {
+      S.coins = 1e6; tableLvs();
+      expect(venueFame()).toBe(0);
+      buyVenue("floor"); expect(venueFame()).toBeCloseTo(0.8);
+      buyVenue("wide"); expect(venueFame()).toBeCloseTo(1.3);
+      buyVenue("up"); expect(venueFame()).toBeCloseTo(1.55);
+    });
+
+    it("khách ngồi bàn cao trước; bàn cao khách kiên nhẫn hơn", () => {
+      S.coins = 1e6; tableLvs(); buyVenue("up");                   // [2,1], 5 ghế, cao điểm 3
+      expect(seatLevels()).toEqual([2, 2, 2]);
+      const sh = createShift(); sh.next = 0; tick(sh, 1);
+      const c = sh.seats[0]!; expect(c.seatLv).toBe(2); expect(c.max).toBeGreaterThanOrEqual(26 * 1.15 - 0.01);
+    });
+
+    it("ghế dư thì giữa ca có giờ vàng, thêm khách tối đa bằng ghế dư", () => {
+      S.coins = 1e6; tableLvs(); for (let i = 0; i < 4; i++) buyVenue("up");   // [3,3]: 8 ghế, cao điểm 3 -> dư 5
+      expect(spareSeats()).toBe(capacity() - demand());
+      expect(spareSeats()).toBeGreaterThanOrEqual(4);
+      const sh = createShift(), total0 = sh.total;
+      expect(sh.rushExtra).toBeGreaterThanOrEqual(1); expect(sh.rushExtra).toBeLessThanOrEqual(spareSeats());
+      sh.spawned = sh.rushAt;
+      const out = tick(sh, 0.1);
+      expect(out.rush).toBe(sh.rushExtra); expect(sh.total).toBe(total0 + sh.rushExtra);
+      expect(tick(sh, 0.1).rush).toBe(0);                                         // chỉ một lần mỗi ca
+    });
+
+    it("không có ghế dư thì không có giờ vàng", () => {
+      tableLvs(); S.venue.tbl = [1];                  // 2 ghế < cao điểm 3: không dư
+      expect(spareSeats()).toBe(0); expect(createShift().rushExtra).toBe(0);
     });
   });
 });
