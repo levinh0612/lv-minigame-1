@@ -318,6 +318,20 @@ export function createShop(o: ShopOpts): ShopScene {
   blob(-.8, -1.55, 2.9, .85, .8); SPOTS.slice(0, tbls.length).forEach(([x, z]) => blob(x, z, .95, .95, 1, flG[0])); blob(-3.3, 2.05, .85, 1.1);
   tbls.flat().forEach(st => blob(st.x, st.z, .4, .4, 1, flG[0])); [-2.6, -1.2, .2, 1.4].forEach(x => blob(x, -.95, .38, .38, .7));
   /* các lầu trên: cùng vỏ nhà, chỉ có bàn ghế riêng và đèn riêng; xem từng lầu bằng nút chuyển tầng */
+  /* cầu thang nối các lầu (góc đông bắc): lầu dưới và lầu giữa có bậc đi lên, lầu trên cùng có miệng cầu thang xuống kèm lan can */
+  if (floors > 1) {
+    const sx = W - 4.9, wood = T("#C98E5A"), rail = T("#B98450");
+    for (let f = 0; f < floors; f++) {
+      const g = flG[f]!, top = f === floors - 1;
+      if (!top) {
+        for (let i = 0; i < 8; i++) add(g, RB(1.1, .36 * (i + 1), .4, .03), wood, sx, .18 * (i + 1), -.2 - i * .38, { ol: "thin" });
+        ([-1, 1] as const).forEach(sd => add(g, RB(.06, 1.0, 3.1, .02), rail, sx + sd * .6, 1.55, -1.7, { ol: "thin", cast: false }));
+      } else {
+        const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.0), new THREE.MeshBasicMaterial({ color: "#2B2233" })); hole.rotation.x = -Math.PI / 2; hole.position.set(sx, .012, -.7); g.add(hole);
+        add(g, RB(1.2, .5, .05, .02), rail, sx, .5, -.15, { ol: "thin" }); ([-1, 1] as const).forEach(sd => add(g, RB(.05, .5, 1.05, .02), rail, sx + sd * .6, .5, -.7, { ol: "thin" }));
+      }
+    }
+  }
   const upLamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
   for (let f = 1; f < floors; f++) {
     const g = flG[f]!, t = buildTables(f);
