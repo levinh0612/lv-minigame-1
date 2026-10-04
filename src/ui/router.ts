@@ -3,7 +3,7 @@
 export type ShopTab = "decor" | "pets" | "gift";
 export type Route =
   | { name: "home" } | { name: "goals" } | { name: "roadmap" } | { name: "prep" }
-  | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" } | { name: "rank" };
+  | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" } | { name: "rank" } | { name: "visit"; user: string };
 
 const ROUTES: [string, Route][] = [
   ["/", { name: "home" }],
@@ -20,7 +20,8 @@ const ROUTES: [string, Route][] = [
 export const SHOP_PATH: Record<ShopTab, string> = { decor: "/cua-hang", pets: "/cua-hang/thu-cung", gift: "/cua-hang/qua-tang" };
 
 export const currentPath = () => location.hash.replace(/^#/, "") || "/";
-export const resolve = (path: string): Route => ROUTES.find(([p]) => p === path)?.[1] ?? { name: "home" };
+export const resolve = (path: string): Route =>
+  path.startsWith("/ghe-tham/") && path.length > 10 ? { name: "visit", user: decodeURIComponent(path.slice(10)) } : ROUTES.find(([p]) => p === path)?.[1] ?? { name: "home" };
 
 /* replace = không thêm vào lịch sử (đổi tab, sang màn kết quả) */
 export function navigate(path: string, replace = false) {

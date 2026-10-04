@@ -45,3 +45,17 @@ CREATE TABLE IF NOT EXISTS push_subs (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS push_subs_user_idx ON push_subs (user_id);
+
+-- ghé thăm tiệm hàng xóm: mỗi người ghé mỗi tiệm một lần mỗi ngày (giờ Việt Nam); chủ tiệm nhận tiền mừng ở lần mở app sau
+CREATE TABLE IF NOT EXISTS visits (
+  id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  host_id     bigint      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  visitor_id  bigint      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day         date        NOT NULL,
+  fee         integer     NOT NULL,                    -- phí vé khách đã trả
+  gift        integer     NOT NULL,                    -- tiền mừng chủ tiệm nhận
+  claimed     boolean     NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (visitor_id, host_id, day)
+);
+CREATE INDEX IF NOT EXISTS visits_host_idx ON visits (host_id, claimed);

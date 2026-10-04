@@ -6,6 +6,7 @@ import { RECIPES, STYLE_OF } from "../content/game";
 import type { PetId } from "../content/couple";
 import { S, petName } from "../engine/state";
 import { account } from "../net/cloud";
+import { visiting } from "../engine/visit";
 import type { Hotspot, ShopOpts, ShopScene } from "../scene/shop3d";
 import { roomHTML, type RoomOpts } from "./room";
 
@@ -15,7 +16,7 @@ let live: Live | null = null, kept: Live | null = null, token = 0;
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
   const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "", fullAttr = full ? ' data-full="1"' : "";
-  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-tables="${o.tables ?? "1,1,1"}" data-wide="${o.wide ?? 0}" data-floors="${o.floors ?? 1}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
+  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-tables="${o.tables ?? "1,1,1"}" data-wide="${o.wide ?? 0}" data-floors="${o.floors ?? 1}"${o.user ? ` data-user="${o.user}"` : ""} data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
 
@@ -40,9 +41,9 @@ function insets(el: HTMLElement, scene: ShopScene) {
 const el0hs = (el: HTMLElement) => el.dataset.hs !== "0";      // màn trang trí: không có nút chạm trên cảnh
 const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
 function optsOf(el: HTMLElement): ShopOpts {
-  const n = +(el.dataset.recipes || 4), g = S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
+  const n = +(el.dataset.recipes || 4), vs = el.dataset.user ? visiting() : null, g = vs ? (vs.me as unknown as typeof S.me) : S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {
-    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), wide: +(el.dataset.wide || 0), floors: +(el.dataset.floors || 1), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
+    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), wide: +(el.dataset.wide || 0), floors: +(el.dataset.floors || 1), giftDot: el.dataset.gift === "1", photo: vs ? "" : S.photo, menuCount: n, shopName: vs ? vs.shop.trim() || vs.username : S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
     me: { sprite: g.sprite, look: look(g as unknown as Record<string, string>) },
     guestLooks: [
@@ -52,7 +53,7 @@ function optsOf(el: HTMLElement): ShopOpts {
   };
 }
 /** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
-const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
+const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
@@ -107,7 +108,7 @@ export async function mountRooms() {
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
     const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
     box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">${ICON.left}</button><button data-rot="1" aria-label="Xoay sang phải">${ICON.right}</button></div>`);
-    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button>${scene.floors > 1 ? `<button data-floor aria-label="Chuyển tầng" class="vw fl">T1</button>` : ""}${box.dataset.full === "1" ? `<button data-act="venue" aria-label="Nâng cấp tiệm" class="vw up">${ICON.up}</button>` : ""}</div>`);
+    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button>${scene.floors > 1 ? `<button data-floor aria-label="Chuyển tầng" class="vw fl">T1</button>` : ""}${box.dataset.full === "1" && !box.dataset.user ? `<button data-act="venue" aria-label="Nâng cấp tiệm" class="vw up">${ICON.up}</button>` : ""}</div>`);
     box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.innerHTML = on ? ICON.room : ICON.shop; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });
     box.querySelector<HTMLElement>("[data-floor]")?.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement; scene.setFloor((scene.floor() + 1) % scene.floors); b.textContent = "T" + (scene.floor() + 1); });
     box.querySelectorAll<HTMLElement>("[data-zoom]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.zoomBy(+b.dataset.zoom!); }));

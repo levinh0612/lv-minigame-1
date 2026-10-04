@@ -1246,3 +1246,23 @@ button.cm{position:relative}
 .pchip.warn{background:#FFF0C9;color:#8A5A00;box-shadow:0 2px 0 #F0D78A}
 
 .zoom3d .fl{font:900 14px var(--display)}
+
+/* ghé thăm tiệm hàng xóm */
+.vz-art{width:84px;height:84px;margin:0 auto 4px;border-radius:50%;background:var(--pink-l);display:grid;place-items:center;font-size:44px;box-shadow:0 4px 0 var(--sh)}
+.vz-art.gift{background:#FFE3E3}
+.vz-fee b{color:var(--red,#D9486B)}
+.vbtn{flex:none;height:30px;padding:0 11px;border-radius:15px;background:var(--pink-l);color:var(--pink-d);font:800 12px/1 var(--body);box-shadow:0 2px 0 var(--sh)}
+.vbtn:active{transform:translateY(1px)}
+.cvisit{margin:8px 0 0;width:100%;height:34px}
+.vload{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:800 16px var(--display);color:var(--ink2)}
+.vcard{display:flex;align-items:center;gap:10px;margin:8px 12px 0;padding:10px 12px;border-radius:22px;background:#fff;box-shadow:0 3px 0 var(--sh)}
+.vcard .vav{flex:none;width:44px;height:44px;border-radius:50%;background:var(--pink-l);display:grid;place-items:center;font-size:24px}
+.vcard .vmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.vcard small{font:800 11px var(--body);color:var(--mint-d,#3F9C78)}
+.vcard b{font:900 20px/1.1 var(--display);color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcard em{font:700 11px var(--body);color:var(--soft2);font-style:normal}
+.vcard .vlv{flex:none;padding:5px 11px;border-radius:14px;background:#FFE9A8;color:#8A5A00;font:900 14px var(--display)}
+.vstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 12px;padding:10px 6px;border-radius:20px;background:#fff;box-shadow:0 3px 0 var(--sh)}
+.vstats div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.vstats b{font:900 17px var(--display);color:var(--ink2)}.vstats small{font:700 11px var(--body);color:var(--soft2)}
+.vnote{margin:8px 16px 4px;text-align:center;font:700 12px var(--body);color:var(--soft2)}

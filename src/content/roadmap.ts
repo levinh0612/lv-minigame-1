@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.64", date: "05/10/2026", notes: ["Ghé thăm nhà hàng xóm: bấm Ghé thăm ở bảng xếp hạng hoặc ô người ấy, xem cảnh 3D tiệm của họ theo đúng dữ liệu của họ", "Phí vé 2% số xu (tối thiểu 10, tối đa 100), mỗi tiệm một lần mỗi ngày, ghé lại trong ngày thì miễn phí", "Chủ tiệm nhận 70% phí làm tiền mừng và có hộp thoại báo: Quý nhân tới thăm và gửi tiền mừng"] },
   { v: "2.63", date: "05/10/2026", notes: ["Giờ vàng: tiệm còn ghế dư thì giữa ca có đợt khách đông bất ngờ, thêm tối đa bằng số ghế dư", "Đầu tư tiệm làm tăng độ nổi tiếng: mỗi lầu +0,8, mỗi lần mở rộng +0,5, mỗi cấp nâng bàn +0,25 điểm", "Khách ngồi bàn cấp cao kiên nhẫn hơn (+15% mỗi cấp) và tip nhiều hơn (+25% mỗi cấp)", "Màn Chuẩn bị báo số ghế dư và khả năng gặp giờ vàng"] },
   { v: "2.62", date: "05/10/2026", notes: ["Hiện rõ Sức chứa hiện tại và số khách giờ cao điểm ở màn chính và bảng nâng cấp tiệm", "Bàn không còn xếp sát cầu thang, chừa chỗ riêng cho cầu thang ở góc đông"] },
   { v: "2.61", date: "05/10/2026", notes: ["Sửa lầu trên bị thiếu bàn ghế (do bước gộp nội thất làm mất)", "Bàn trải đều theo chiều rộng phòng ở từng lầu", "Ban đêm sáng hơn: đèn tỏa xa hơn và mạnh hơn, ánh sáng nền cao hơn", "Khách không còn đi lạc vào lầu trên"] },

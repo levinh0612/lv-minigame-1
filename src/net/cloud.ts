@@ -3,6 +3,7 @@
    - Tiến trình tự lưu lên server khi có thay đổi; mở app thì tải bản mới hơn (máy khác chơi) về.
    - Không có mạng vẫn chơi được, có mạng lại thì tự đẩy lên. */
 import { lvl } from "../engine/progress";
+import type { VisitShop } from "../engine/visit";
 import { KEY, S, loadState, replaceState, save, whenSaved, type State } from "../engine/state";
 
 const AUTH = "tiem-auth";
@@ -155,6 +156,12 @@ export function savedAgo() {
 export interface Rank { rank: number; username: string; lv: number; earned: number; me?: boolean }
 export interface Board { period: "week" | "all"; top: Rank[]; me: { username: string; lv: number; earned: number; rank: number | null } | null; follow: { username: string; lv: number; earned: number; savedAt: string } | null }
 export const leaderboard = (period: "week" | "all") => api<Board>("leaderboard?period=" + period);
+/* ===== Ghé thăm tiệm hàng xóm ===== */
+export interface VisitQuote { username: string; lv: number; fee: number; free: boolean; coins: number }
+export const visitQuote = (username: string) => api<VisitQuote>("visit?user=" + encodeURIComponent(username));
+export const visitEnter = (username: string) => post<{ fee: number; shop: VisitShop }>("visit", { user: username });
+export const visitPending = () => api<{ pending: number; total: number }>("visit?inbox=1");
+export const visitClaim = () => post<{ gifts: { visitor: string; gift: number }[] }>("visit", { claim: true });
 export const follow = (username: string) => post<{ username?: string }>("auth", { action: "follow", username });
 
 /* ===== Thông báo 7g sáng / 11g tối ===== */

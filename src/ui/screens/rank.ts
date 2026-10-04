@@ -9,7 +9,7 @@ let period: "week" | "all" = "week";
 const MEDAL = ["#FFC53D", "#C9CCD6", "#E3A06B"];
 const HEART = `<svg width="22" height="20" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="#FF6F91" stroke="#4A3438" stroke-width="1.4"/></svg>`;
 const row = (r: Rank) => `<div class="rk ${r.me ? "me" : ""}"><span class="no" ${r.rank <= 3 ? `style="background:${MEDAL[r.rank - 1]};color:#4A3438"` : ""}>${r.rank}</span>
-  <span class="nm"><span class="n1">${esc(r.username)}${r.me ? " <em>bạn</em>" : ""}</span><small>Lv ${r.lv}</small></span><b>${fmtN(r.earned)} xu</b></div>`;
+  <span class="nm"><span class="n1">${esc(r.username)}${r.me ? " <em>bạn</em>" : ""}</span><small>Lv ${r.lv}</small></span><b>${fmtN(r.earned)} xu</b>${r.me ? "" : `<button class="vbtn" data-visit="${esc(r.username)}" aria-label="Ghé thăm tiệm ${esc(r.username)}">Ghé thăm</button>`}</div>`;
 const ago = (iso?: string) => { if (!iso) return ""; const m = Math.round((Date.now() - +new Date(iso)) / 60000); return m < 1 ? "vừa chơi" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`; };
 
 function coupleHTML(d: Board) {
@@ -20,7 +20,7 @@ function coupleHTML(d: Board) {
   const lead = !diff ? "Hoà nhau" : `${esc(diff > 0 ? a.username : b.username)} dẫn trước ${fmtN(Math.abs(diff))} xu`;
   const side = (n: string, e: number, lv: number, sub: string, me: boolean) => `<div class="cs ${me ? "me" : ""}"><small>${me ? "Bạn" : "Người ấy"}</small><b>${esc(n)}</b><span>${fmtN(e)}</span><em>Lv ${lv}${sub}</em></div>`;
   return `<div class="couple"><div class="ch">Hai đứa mình · ${period === "week" ? "tuần này" : "tất cả"}<button class="alink" id="fwOff">bỏ theo dõi</button></div>
-    <div class="cr">${side(a.username, a.earned, a.lv, "", true)}<span class="hv">${HEART}</span>${side(b.username, b.earned, b.lv, ` · ${ago(b.savedAt)}`, false)}</div><div class="cl">${lead}</div></div>`;
+    <div class="cr">${side(a.username, a.earned, a.lv, "", true)}<span class="hv">${HEART}</span>${side(b.username, b.earned, b.lv, ` · ${ago(b.savedAt)}`, false)}</div><div class="cl">${lead}</div><button class="vbtn cvisit" data-visit="${esc(b.username)}">🏪 Ghé thăm tiệm ${esc(b.username)}</button></div>`;
 }
 
 /* Bảng xếp hạng dạng hộp thoại trượt từ dưới lên (mở từ nút 🏆, không sang màn khác) */

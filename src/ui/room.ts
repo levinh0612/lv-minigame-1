@@ -27,7 +27,7 @@ const B = "border:2.5px solid #4A3438";
 const HEART = `<svg width="18" height="16" viewBox="0 0 16 14"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="#FF6F91" stroke="#4A3438" stroke-width="1.4"/></svg>`;
 const PET_MOOD: Record<PetId, "happy" | "wink" | "open"> = { dog: "happy", gold: "wink", white: "open" };
 
-export interface RoomOpts { hl?: string; event?: boolean; guests?: number; tables?: string; wide?: number; floors?: number; recipes?: number; giftDot?: boolean; love?: PetId | null }
+export interface RoomOpts { hl?: string; event?: boolean; guests?: number; tables?: string; wide?: number; floors?: number; user?: string; recipes?: number; giftDot?: boolean; love?: PetId | null }
 
 export function roomHTML(r: Room, o: RoomOpts = {}) {
   const ev = !!o.event, g = o.guests ?? 2, glow = (k: string) => (o.hl === k ? " glow" : "");

@@ -13,6 +13,7 @@ import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
 import { homeHTML } from "./screens/home";
 import { prepHTML } from "./screens/prep";
+import { visitHTML } from "./screens/visit";
 import { SH, hasResult, renderPlay, resultHTML } from "./screens/play";
 import { roadmapHTML } from "./screens/roadmap";
 import { rankSheet } from "./screens/rank";
@@ -45,6 +46,7 @@ export function render(keepModal?: boolean) {
     case "prep": $("#app")!.innerHTML = prepHTML(); break;
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
+    case "visit": $("#app")!.innerHTML = visitHTML(r.user); break;
     case "rank": $("#app")!.innerHTML = homeHTML(); setTimeout(rankSheet, 0); break;   // link cũ: màn chính + hộp thoại
   }
   fitRooms(); void mountRooms(); hydratePortraits();

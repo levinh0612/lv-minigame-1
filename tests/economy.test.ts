@@ -6,6 +6,8 @@ import {
 import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
 import { fame } from "../src/engine/economy";
+import { hostGift, seatsOfTables, visitFee } from "../src/engine/visit";
+import { resolve } from "../src/ui/router";
 import { S, loadState, resetState } from "../src/engine/state";
 
 const customer = (over: Partial<Customer> = {}): Customer => ({
@@ -370,6 +372,26 @@ describe("ví: sổ thu chi", () => {
     it("không có ghế dư thì không có giờ vàng", () => {
       tableLvs(); S.venue.tbl = [1];                  // 2 ghế < cao điểm 3: không dư
       expect(spareSeats()).toBe(0); expect(createShift().rushExtra).toBe(0);
+    });
+  });
+
+  describe("ghé thăm tiệm hàng xóm", () => {
+    it("phí vé 2% số xu, tối thiểu 10, tối đa 100", () => {
+      expect(visitFee(0)).toBe(10); expect(visitFee(200)).toBe(10); expect(visitFee(1000)).toBe(20);
+      expect(visitFee(5000)).toBe(100); expect(visitFee(1e7)).toBe(100);
+    });
+
+    it("chủ tiệm nhận 70% phí làm tiền mừng", () => {
+      expect(hostGift(10)).toBe(7); expect(hostGift(100)).toBe(70); expect(hostGift(33)).toBe(23);
+    });
+
+    it("sức chứa của tiệm hàng xóm tính theo cấp bàn", () => {
+      expect(seatsOfTables([1, 1])).toBe(4); expect(seatsOfTables([3, 2, 1])).toBe(9);
+    });
+
+    it("đường dẫn ghé thăm nhận tên tiệm", () => {
+      expect(resolve("/ghe-tham/ban.thu")).toEqual({ name: "visit", user: "ban.thu" });
+      expect(resolve("/ghe-tham/")).toEqual({ name: "home" });
     });
   });
 });

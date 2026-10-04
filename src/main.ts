@@ -9,13 +9,15 @@ import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, foodDef, hir
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { tickIncident } from "./engine/incident";
+import { earn } from "./engine/wallet";
 import { claimPassive } from "./engine/passive";
 import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
-import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, venueBuy, wallet, welcome, whatsNew } from "./ui/modals";
-import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
+import { askVisit } from "./ui/screens/visit";
+import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
 import { rankSheet } from "./ui/screens/rank";
@@ -76,6 +78,7 @@ document.addEventListener("click", e => {
     return render();
   }
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } return render(); }
+  if (d.visit) { sfx("click"); return void askVisit(d.visit); }
   if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }
@@ -130,6 +133,19 @@ function passive() {
   save(); sfx("level"); rewardModal(c); render();
 }
 setInterval(passive, 20000);
+/* tiền mừng của khách ghé thăm tiệm mình: nhận rồi báo bằng hộp thoại */
+let giftBusy = false;
+async function visitGifts() {
+  if (giftBusy || document.hidden || isLocked() || SH || hasModal() || !loggedIn() || !S.tut || !S.welcome) return;
+  giftBusy = true;
+  try {
+    if (!(await visitPending()).pending) return;
+    if (SH || hasModal()) return;                         // đang bận: lần sau
+    const { gifts } = await visitClaim(); if (!gifts.length) return;
+    earn("visit", gifts.reduce((a, g) => a + g.gift, 0), "Tiền mừng khách ghé thăm"); save(); sfx("level"); render(true); visitGiftModal(gifts);
+  } catch { /* không có mạng: lần sau */ } finally { giftBusy = false; }
+}
+setInterval(() => void visitGifts(), 45000); setTimeout(() => void visitGifts(), 4000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", () => render());

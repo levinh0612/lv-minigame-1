@@ -274,3 +274,14 @@ export function venueBuy(id: string, forced: boolean) {
   if (forced) { closeModal(); toast("Đủ bàn rồi, bắt đầu ca thôi!"); return; }
   upgradeModal(false);
 }
+
+/** chủ tiệm mở app thì biết có khách ghé thăm và gửi tiền mừng */
+export function visitGiftModal(gifts: { visitor: string; gift: number }[]) {
+  const total = gifts.reduce((a, g) => a + g.gift, 0), one = gifts.length === 1;
+  const rows = gifts.map(g => `<div class="rwrow"><span>Quý nhân "${esc(g.visitor)}" tới thăm</span><b>+${fmtN(g.gift)} xu</b></div>`).join("");
+  modal(`<div class="vz-art gift" aria-hidden="true">🧧</div><h2>Có quý nhân ghé thăm!</h2>
+    <p class="sub">${one ? `Quý nhân "<b>${esc(gifts[0]!.visitor)}</b>" tới thăm và gửi tiền mừng: <b>${fmtN(total)} xu</b>.` : `${gifts.length} quý nhân đã tới thăm tiệm của bạn và gửi tiền mừng.`}</p>
+    ${one ? "" : `<div class="rwbox">${rows}</div>`}
+    <div class="inccost"><b>+${fmtN(total)} xu</b><small>Số xu hiện có ${fmtN(S.coins)} xu · xem ở Ví</small></div>
+    <div class="mbtns"><button class="b3" data-close>Cảm ơn quý nhân!</button></div>`);
+}
