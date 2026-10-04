@@ -132,7 +132,7 @@ function passive() {
 setInterval(passive, 20000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
-window.addEventListener("hashchange", render);
+window.addEventListener("hashchange", () => render());
 
 render();
 Sound.play("home");

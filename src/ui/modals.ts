@@ -268,7 +268,8 @@ export function upgradeModal(forced = false) {
 /** mua xong: còn thiếu bàn thì giữ hộp thoại bắt buộc, đủ rồi thì đóng */
 export function venueBuy(id: string, forced: boolean) {
   if (!buyVenue(id as "table" | "up" | "floor" | "wide")) { toast("Không đủ xu"); return; }
-  sfx("level"); toast(id === "table" ? "Đã thêm bàn!" : id === "up" ? "Đã nâng cấp bàn!" : id === "floor" ? "Đã xây thêm lầu!" : "Đã mở rộng cửa hàng!");
+  sfx("level"); render(true);                           // trừ xu và dựng lại cảnh tiệm ngay, hộp thoại vẫn mở
+  toast(id === "table" ? "Đã thêm bàn!" : id === "up" ? "Đã nâng cấp bàn!" : id === "floor" ? "Đã xây thêm lầu!" : "Đã mở rộng cửa hàng!");
   if (forced && needUpgrade()) return upgradeModal(true);
   if (forced) { closeModal(); toast("Đủ bàn rồi, bắt đầu ca thôi!"); return; }
   upgradeModal(false);

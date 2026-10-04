@@ -19,7 +19,8 @@ import { rankSheet } from "./screens/rank";
 import { shopHTML } from "./screens/shop";
 
 let shown = "";
-export function render() {
+/** keepModal === true: vẽ lại màn phía sau mà giữ nguyên hộp thoại đang mở (nâng cấp tiệm cập nhật tiền và cảnh ngay) */
+export function render(keepModal?: boolean) {
   rollDay(); applyTheme(S.theme); keepRoom();
   const path = currentPath(), r = resolve(path);
   // chưa đăng nhập: màn chào / đăng nhập; đã đăng nhập nhưng vừa mở app: hỏi PIN
@@ -31,7 +32,7 @@ export function render() {
   if (SH && r.name !== "play") { history.pushState(null, "", "#/choi"); if (!hasModal()) pauseMenu(); return; }
   if (r.name === "play" && !SH) return void location.replace("#/");
   if (r.name === "result" && !hasResult()) return void location.replace("#/");
-  if (r.name !== "play" && r.name !== "result") dropModal();
+  if (keepModal !== true && r.name !== "play" && r.name !== "result") dropModal();
   document.body.dataset.scr = r.name;
   const scroll = shown === path;
   shown = path;

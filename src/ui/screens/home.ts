@@ -64,7 +64,7 @@ export function homeHTML() {
     </div>`;
   /* 3D chiếm cả màn hình; mọi thứ khác (thanh trên, hồ sơ, thư, nút Mở tiệm, 4 nút) là lớp phủ trên và dưới */
   return `<div class="scr home5">
-    <div class="h5-room">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(",") }, false, true)}</div>
+    <div class="h5-room">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide }, false, true)}</div>
     <div class="h5-top">
       <div class="hrow4">
         <button class="pill love4" data-act="days" aria-label="Ngày kỷ niệm"><span>${HEART}</span>${fmtN(daysTogether())} ngày<em> yêu</em></button>

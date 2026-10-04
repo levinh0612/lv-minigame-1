@@ -43,7 +43,7 @@ export function decorHTML() {
   return `<div class="scr decor4">
     ${pageHead("Trang trí tiệm", "")}
     <p class="dsub">Đã có ${decorCount()} món · hiện ở màn chính</p>
-    <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(",") }, true)}
+    <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
     <div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
     <div class="ditems">${items}</div>

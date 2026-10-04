@@ -11,6 +11,7 @@ export interface ShopOpts {
   room: Record<string, string>;            // wall, floor, counter, curtain, lamp, wallItem, plant, rug
   event: boolean;                          // ngày đặc biệt: tường vàng, cờ và bóng bay
   guests: number;                          // 0..2 khách đang ngồi
+  wide: number;                            // số lần mở rộng ngang: mỗi lần rộng thêm 2 về phía đông
   tables: number[];                        // cấp từng bàn (1..3): bàn cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4. Cảnh vẽ tối đa 6 bàn
   giftDot: boolean;
   photo: string;                           // ảnh treo tường (data URL) hoặc ""
@@ -36,7 +37,7 @@ function getRenderer() {
   if (!renderer) {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "low-power" });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;   // bóng tự vẽ lại thưa hơn (xem frame)
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false;   // bóng tự vẽ lại thưa hơn (xem frame)
   }
   return renderer;
 }
@@ -68,12 +69,13 @@ const FLOOR: Record<string, () => THREE.Texture> = {
 };
 const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"] };
 
-const W = 8, D = 6, HH = 3.2, PET_S = .92;
+const W0 = 8, D = 6, HH = 3.2, PET_S = .92;
 const DOOR_X = 1.3, DOOR_W = 1.5, DOOR_H = 2.35;   // lối cửa chính trên tường Nam
 let blobTex: THREE.CanvasTexture | null = null;
 const blobMap = () => blobTex ??= (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d")!, gr = g.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(60,30,40,.55)"); gr.addColorStop(1, "rgba(60,30,40,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
 
 export function createShop(o: ShopOpts): ShopScene {
+  const wide = Math.max(0, Math.min(4, o.wide | 0)), W = W0 + 2 * wide, CX = (W - W0) / 2, DX = DOOR_X - CX;   // phòng mở rộng về phía đông; CX = tâm mới, DX = tọa độ cửa trong khung tường Nam
   const r = getRenderer(), scene = new THREE.Scene(), root = new THREE.Group(); scene.add(root);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 80);
   const ups: ((t: number) => void)[] = [], hotspots: Hotspot[] = [], walls: { group: THREE.Group; decor: THREE.Group; nx: number; nz: number; mats: THREE.Material[] }[] = [];
@@ -97,16 +99,16 @@ export function createShop(o: ShopOpts): ShopScene {
   const cur: Record<string, string> = { ...R }, wallMains: [THREE.MeshToonMaterial, number][] = [], tableTops: THREE.MeshToonMaterial[] = [], tableLegs: THREE.MeshToonMaterial[] = [], counterBits: { top?: THREE.MeshToonMaterial; wood?: THREE.MeshToonMaterial } = {};
 
   /* nền nhà */
-  add(root, RB(W + .5, .35, D + .5, .06), T("#B98450"), 0, -.175, 0);
+  add(root, RB(W + .5, .35, D + .5, .06), T("#B98450"), CX, -.175, 0);
   const fm = sel("rug", T("#fff", { map: (FLOOR[R.floor] || FLOOR.check)() }));
-  const floor = add(root, new THREE.PlaneGeometry(W, D), fm, 0, .002, 0, { cast: false, ol: null }); floor.rotation.x = -Math.PI / 2;
+  const floor = add(root, new THREE.PlaneGeometry(W, D), fm, CX, .002, 0, { cast: false, ol: null }); floor.rotation.x = -Math.PI / 2;
 
   /* tường */
   const wstyle = (WALL[ev ? "party" : R.wall] || WALL.pink)();
   function wall(len: number, nx: number, nz: number, x: number, z: number, ry: number, gap?: [number, number]) {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
     const mats: THREE.Material[] = [];
-    const m = sel("wall", T(wstyle.color, { map: wstyle.map.clone(), transparent: true })); (m.map as THREE.Texture).repeat.set(len / W * 10, 1); (m.map as THREE.Texture).needsUpdate = true; mats.push(m); wallMains.push([m, len]);
+    const m = sel("wall", T(wstyle.color, { map: wstyle.map.clone(), transparent: true })); (m.map as THREE.Texture).repeat.set(len / W0 * 10, 1); (m.map as THREE.Texture).needsUpdate = true; mats.push(m); wallMains.push([m, len]);
     const sk = T("#E9B98A", { transparent: true }); mats.push(sk);
     const rl = T("#E9B98A", { transparent: true }); mats.push(rl);
     const segs: [number, number][] = gap ? [[-len / 2, gap[0]], [gap[1], len / 2]] : [[-len / 2, len / 2]];   // chừa lối cửa
@@ -116,7 +118,7 @@ export function createShop(o: ShopOpts): ShopScene {
     const decor = new THREE.Group(); g.add(decor);
     const w = { group: g, decor, nx, nz, mats }; walls.push(w); return w;
   }
-  const wN = wall(W, 0, -1, 0, -D / 2 - .1, 0), wW = wall(D, -1, 0, -W / 2 - .1, 0, Math.PI / 2), wS = wall(W, 0, 1, 0, D / 2 + .1, 0, [DOOR_X - DOOR_W / 2, DOOR_X + DOOR_W / 2]), wE = wall(D, 1, 0, W / 2 + .1, 0, Math.PI / 2);
+  const wN = wall(W, 0, -1, CX, -D / 2 - .1, 0), wW = wall(D, -1, 0, -W0 / 2 - .1, 0, Math.PI / 2), wS = wall(W, 0, 1, CX, D / 2 + .1, 0, [DX - DOOR_W / 2, DX + DOOR_W / 2]), wE = wall(D, 1, 0, W / 2 + CX + .1, 0, Math.PI / 2);
   const wi = (w: typeof wN) => walls.indexOf(w);
 
   /* cửa sổ + rèm */
@@ -236,9 +238,10 @@ export function createShop(o: ShopOpts): ShopScene {
       ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T("#B98450"), dx, .23, dz, { ol: null })); return { x: cx, z: cz, a: a + Math.PI }; });
   }
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
-  const SPOTS: [number, number][] = [[-1.9, .7], [2.3, .7], [.2, 2.2], [-1.9, 2.2], [2.3, 2.2], [.2, .7]], CHAIRS = ["#7FC8D6", "#E8A0B4"];
+  const GROUND = 4 + wide;             // chỗ đặt bàn ở tầng trệt (tầng trên chưa vẽ)
+  const SPOTS: [number, number][] = Array.from({ length: 2 * Math.ceil(GROUND / 2) }, (_, i) => [-1.9 + 2.1 * Math.floor(i / 2), i % 2 ? 2.2 : .7]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
   const ANG = [2.4, -2.4, .1, 3.14];
-  const tbls = SPOTS.slice(0, Math.max(2, Math.min(6, o.tables.length))).map(([x, z], i) => {
+  const tbls = SPOTS.slice(0, Math.max(2, Math.min(GROUND, o.tables.length))).map(([x, z], i) => {
     const lv = o.tables[i] ?? 1, r = .6 + .1 * lv;
     const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r);
     place(cake((i * 2) % 3, (i + 1) % 3, i % 3, 1), x, .83, z); return chairs;
@@ -344,7 +347,7 @@ export function createShop(o: ShopOpts): ShopScene {
       for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; add(plantG, SPH(.3 * s, 12, 8), T("#6FB27A"), x + Math.cos(a) * .3 * s, 1.45 * s, z + Math.sin(a) * .3 * s, { s: [1, .22, .42], r: [0, -a, -.35], ol: "thin" }); }
     }
   };
-  const buildPlants = () => { plantAt(3.3, 2.3, 1.2); plantAt(-3.5, 2.5, .9); }; buildPlants();
+  const buildPlants = () => { plantAt(3.3 + (W - W0), 2.3, 1.2); plantAt(-3.5, 2.5, .9); }; buildPlants();
 
   /* đèn */
   const lamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
@@ -378,14 +381,14 @@ export function createShop(o: ShopOpts): ShopScene {
   /* ---------- phía ngoài tiệm: mặt tiền, biển hiệu, vỉa hè, đường, cây (chỉ hiện khi xem ngoài) ---------- */
   const outside = new THREE.Group(); outside.visible = false; root.add(outside);
   const extGlass: THREE.MeshToonMaterial[] = [], neon: THREE.MeshBasicMaterial[] = [];
-  const z0 = D / 2 + .2, x0 = W / 2 + .2;
+  const z0 = D / 2 + .2, x0 = W / 2 + CX + .2;
   const streetPl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); streetPl.position.set(-4.9, 3.1, z0 + 1.7); outside.add(streetPl);
   const lampBulb = new THREE.MeshStandardMaterial({ color: "#FFF1CC", emissive: new THREE.Color("#FFD27A"), emissiveIntensity: 0 });
   // cửa chính: khung + cánh cửa quay quanh bản lề; mở khi có người đi qua
-  const doorPivot = new THREE.Group(); doorPivot.position.set(DOOR_X - DOOR_W / 2 + .03, 0, 0); wS.group.add(doorPivot);
+  const doorPivot = new THREE.Group(); doorPivot.position.set(DX - DOOR_W / 2 + .03, 0, 0); wS.group.add(doorPivot);
   { const lw = DOOR_W - .06, wood = T("#8A5A3A", { transparent: true }), frame = T("#6E4529", { transparent: true });
     wS.mats.push(wood, frame);
-    ([-1, 1] as const).forEach(sd => add(wS.group, RB(.1, DOOR_H, .26, .02), frame, DOOR_X + sd * (DOOR_W / 2 + .02), DOOR_H / 2, 0, { ol: null })); add(wS.group, RB(DOOR_W + .14, .1, .26, .02), frame, DOOR_X, DOOR_H + .02, 0, { ol: null });
+    ([-1, 1] as const).forEach(sd => add(wS.group, RB(.1, DOOR_H, .26, .02), frame, DX + sd * (DOOR_W / 2 + .02), DOOR_H / 2, 0, { ol: null })); add(wS.group, RB(DOOR_W + .14, .1, .26, .02), frame, DX, DOOR_H + .02, 0, { ol: null });
     add(doorPivot, RB(lw, DOOR_H - .05, .08, .02), wood, lw / 2, (DOOR_H - .05) / 2, 0, { ol: null });
     const gm = T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .3, transparent: true }); extGlass.push(gm); wS.mats.push(gm);
     add(doorPivot, RB(lw - .35, 1.45, .05, .02), gm, lw / 2, 1.45, .03, { ol: null });
@@ -401,12 +404,12 @@ export function createShop(o: ShopOpts): ShopScene {
     if (outsideBuilt) return; outsideBuilt = true;
     const road = { z: D / 2 + 4.3 };
     const gnd = add(outside, new THREE.PlaneGeometry(70, 60), T("#BFD8A6"), 0, -.352, 0, { cast: false, ol: null }); gnd.rotation.x = -Math.PI / 2;
-    const walk = add(outside, new THREE.PlaneGeometry(16, 8.6), T("#fff", { map: tex(64, 64, (g, w, h) => { g.fillStyle = "#EAE5DD"; g.fillRect(0, 0, w, h); g.strokeStyle = "#D8D1C6"; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }, [16, 8]) }), 0, -.34, D / 2 + 1.4, { cast: false, ol: null }); walk.rotation.x = -Math.PI / 2;
+    const walk = add(outside, new THREE.PlaneGeometry(16 + (W - W0), 8.6), T("#fff", { map: tex(64, 64, (g, w, h) => { g.fillStyle = "#EAE5DD"; g.fillRect(0, 0, w, h); g.strokeStyle = "#D8D1C6"; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }, [16, 8]) }), 0, -.34, D / 2 + 1.4, { cast: false, ol: null }); walk.rotation.x = -Math.PI / 2;
     const rd = add(outside, new THREE.PlaneGeometry(70, 3.4), T("#7E8088"), 0, -.335, road.z, { cast: false, ol: null }); rd.rotation.x = -Math.PI / 2;
     for (let i = -6; i <= 6; i++) { const dsh = add(outside, new THREE.PlaneGeometry(.9, .14), T("#FFF1A8"), i * 2.2, -.33, road.z, { cast: false, ol: null }); dsh.rotation.x = -Math.PI / 2; }
     // mái nhà
-    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : PKM), 0, HH + .14, 0, { ol: "mid" });
-    add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), 0, HH + .37, 0, { ol: "thin" });
+    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : PKM), CX, HH + .14, 0, { ol: "mid" });
+    add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), CX, HH + .37, 0, { ol: "thin" });
     add(outside, RB(1.0, .5, .8, .04), T("#DDEBF2"), -2.2, HH + .7, -1.2, { ol: "thin" });                          // máy lạnh trên mái
     // biển hiệu
     const signTex = (() => { const c = document.createElement("canvas"); c.width = 768; c.height = 160; const g = c.getContext("2d")!;
@@ -430,7 +433,7 @@ export function createShop(o: ShopOpts): ShopScene {
     extWin(-2.2, 1.45, z0, 0, 2.6, 1.5, true);
     extWin(x0, 1.45, -1.3, Math.PI / 2, 1.8, 1.4, true); extWin(x0, 1.45, 1.4, Math.PI / 2, 1.8, 1.4, true);
     extWin(-1.6, 1.45, -D / 2 - .2, Math.PI, 2.2, 1.4, false); extWin(2.0, 1.45, -D / 2 - .2, Math.PI, 2.2, 1.4, false);
-    extWin(-W / 2 - .2, 1.45, -1.0, -Math.PI / 2, 1.8, 1.4, false); extWin(-W / 2 - .2, 1.45, 1.6, -Math.PI / 2, 1.8, 1.4, false);
+    extWin(-W0 / 2 - .2, 1.45, -1.0, -Math.PI / 2, 1.8, 1.4, false); extWin(-W0 / 2 - .2, 1.45, 1.6, -Math.PI / 2, 1.8, 1.4, false);
     // tấm bảng menu đứng, thảm chùi chân, chậu cây
     add(outside, RB(.9, 1.1, .08, .02), T("#5E6F5B"), 3.2, .62, z0 + 1.1, { r: [-.12, .3, 0], ol: "mid" }); add(outside, RB(.78, .98, .03, .01), T("#fff", { map: menuTex }), 3.2, .62, z0 + 1.15, { r: [-.12, .3, 0], ol: null });
     [[.3, "#7BC47F"], [2.4, "#6FB27A"]].forEach(([x, c]) => { add(outside, CYL(.26, .2, .5, 16), T("#E9A27C"), x as number, -.1, z0 + .55, { ol: "mid" }); [[0, .45, 0, .3], [.15, .7, .05, .22], [-.14, .65, -.04, .2]].forEach(([dx, dy, dz, rr]) => add(outside, SPH(rr, 12, 10), T(c as string), (x as number) + dx, dy - .15, z0 + .55 + dz, { ol: "thin" })); });
@@ -506,9 +509,9 @@ export function createShop(o: ShopOpts): ShopScene {
   setHour(hq !== null ? +hq : new Date().getHours() + new Date().getMinutes() / 60);
 
   /* ---------- camera xoay 4 góc ---------- */
-  let insTop = 0, insBot = 0; const FR = 5.2; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
+  let insTop = 0, insBot = 0; const FR = 5.2 + (W - W0) * .5; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
   function layout() {
-    const r2 = 26; cam.position.set(Math.sin(az) * Math.cos(el) * r2, Math.sin(el) * r2 + .8, Math.cos(az) * Math.cos(el) * r2); cam.lookAt(0, 1.0 + pan, 0);
+    const r2 = 26; cam.position.set(CX + Math.sin(az) * Math.cos(el) * r2, Math.sin(el) * r2 + .8, Math.cos(az) * Math.cos(el) * r2); cam.lookAt(CX, 1.0 + pan, 0);
     cam.position.y += pan; cam.zoom = zoom;
     if (insTop || insBot) cam.setViewOffset(w, h, 0, (insBot - insTop) / 2, w, h); else cam.clearViewOffset();      // đẩy căn phòng vào giữa vùng không bị lớp phủ che
     cam.updateProjectionMatrix();
@@ -545,7 +548,7 @@ export function createShop(o: ShopOpts): ShopScene {
     const SOFT = ["wall", "floor", "counter", "curtain", "wallItem", "rug", "plant", "lamp"];
     if (keys.some(k => !SOFT.includes(k))) return false;
     if (keys.includes("wall") && outsideBuilt) return false;
-    if (keys.includes("wall") && !ev) { const st = (WALL[nr.wall!] || WALL.pink)(); wallMains.forEach(([m, len]) => { m.map?.dispose(); m.color.set(st.color); m.map = st.map.clone(); m.map.repeat.set(len / W * 10, 1); m.map.needsUpdate = true; m.needsUpdate = true; }); st.map.dispose(); }
+    if (keys.includes("wall") && !ev) { const st = (WALL[nr.wall!] || WALL.pink)(); wallMains.forEach(([m, len]) => { m.map?.dispose(); m.color.set(st.color); m.map = st.map.clone(); m.map.repeat.set(len / W0 * 10, 1); m.map.needsUpdate = true; m.needsUpdate = true; }); st.map.dispose(); }
     if (keys.includes("floor")) { fm.map?.dispose(); fm.map = (FLOOR[nr.floor!] || FLOOR.check)(); fm.needsUpdate = true; tableLegs.forEach(m => m.color.set(nr.floor === "wood" ? "#C98E5A" : "#E9B98A")); }
     if (keys.includes("counter")) { const [a, b] = COUNTER_C[nr.counter!] || COUNTER_C.pink, mint = nr.counter === "mint"; cm1.color.set(a); cm2.color.set(b); counterBits.top?.color.set(mint ? "#F2FBF6" : "#FFF8F0"); counterBits.wood?.color.set(mint ? "#B6E6CF" : "#E9B98A"); tableTops.forEach(m => m.color.set(mint ? "#E4F6EC" : "#fff")); }
     Object.assign(cur, nr);

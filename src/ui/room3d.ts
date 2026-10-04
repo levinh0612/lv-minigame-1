@@ -15,7 +15,7 @@ let live: Live | null = null, kept: Live | null = null, token = 0;
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
   const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "", fullAttr = full ? ' data-full="1"' : "";
-  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-tables="${o.tables ?? "1,1,1"}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
+  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-tables="${o.tables ?? "1,1,1"}" data-wide="${o.wide ?? 0}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
 
@@ -27,6 +27,7 @@ const ICON = {
   plus: IC('<circle cx="10.5" cy="10.5" r="6.2" fill="currentColor" fill-opacity=".12"/><path d="M15.2 15.2l5 5"/><path d="M10.5 7.8v5.4M7.8 10.5h5.4"/>'),
   minus: IC('<circle cx="10.5" cy="10.5" r="6.2" fill="currentColor" fill-opacity=".12"/><path d="M15.2 15.2l5 5"/><path d="M7.8 10.5h5.4"/>'),
   shop: IC('<path d="M3.8 9.6 5.4 4.4h13.2l1.6 5.2c0 1.5-1.1 2.4-2.3 2.4s-2.3-.9-2.3-2.4c0 1.5-1.1 2.4-2.3 2.4S9.7 11.1 9.7 9.6c0 1.5-1.1 2.4-2.3 2.4S3.8 11.1 3.8 9.6z" fill="currentColor" fill-opacity=".15"/><path d="M5.6 12.4v7.2h12.8v-7.2"/><path d="M10 19.6v-4.6h4v4.6"/>'),
+  up: IC('<path d="M4 20V9.5l6-3.3 6 3.3V20" fill="currentColor" fill-opacity=".14"/><path d="M2.8 20h14.4"/><path d="M19.5 13.5V4.8M16.8 7.4l2.7-2.7 2.7 2.7"/><path d="M8 20v-4.4h4V20"/>'),
   room: IC('<path d="M5 12V9.2A3.2 3.2 0 0 1 8.2 6h7.6A3.2 3.2 0 0 1 19 9.2V12" fill="currentColor" fill-opacity=".12"/><path d="M3 13.6a2 2 0 0 1 4 0V15h10v-1.4a2 2 0 0 1 4 0V18.4H3z" fill="currentColor" fill-opacity=".18"/><path d="M6.4 18.4v2M17.6 18.4v2"/>')
 };
 
@@ -41,7 +42,7 @@ const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = 
 function optsOf(el: HTMLElement): ShopOpts {
   const n = +(el.dataset.recipes || 4), g = S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {
-    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
+    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), wide: +(el.dataset.wide || 0), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
     me: { sprite: g.sprite, look: look(g as unknown as Record<string, string>) },
     guestLooks: [
@@ -51,7 +52,7 @@ function optsOf(el: HTMLElement): ShopOpts {
   };
 }
 /** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
-const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.tables, el.dataset.gift, el.dataset.recipes]);
+const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.tables, el.dataset.wide, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
@@ -106,7 +107,7 @@ export async function mountRooms() {
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
     const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
     box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">${ICON.left}</button><button data-rot="1" aria-label="Xoay sang phải">${ICON.right}</button></div>`);
-    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button></div>`);
+    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button>${box.dataset.full === "1" ? `<button data-act="venue" aria-label="Nâng cấp tiệm" class="vw up">${ICON.up}</button>` : ""}</div>`);
     box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.innerHTML = on ? ICON.room : ICON.shop; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });
     box.querySelectorAll<HTMLElement>("[data-zoom]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.zoomBy(+b.dataset.zoom!); }));
     box.querySelectorAll<HTMLElement>("[data-rot]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.rotate(+b.dataset.rot!); }));
