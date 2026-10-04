@@ -2,6 +2,7 @@
    và bộ chuyển động đứng/đi/ngồi đúc sẵn từ chuyển động của nhân vật nữ cũ (clips.json).
    - n1 "Nữ anime": “cute anime girl” của udream studio (CC BY 4.0)
    - n2 "Nữ cyber": “cyber girl” (bạn tải từ Sketchfab; giấy phép cần xác nhận)
+   - n3 "Nữ Lynae": model 3D tạo dáng đứng (giấy phép cần xác nhận)
    - m1 "Nam đời thực": avatar kiểu Ready Player Me (giấy phép cần xác nhận)
    Phần dùng chung nằm ở figure3d.ts. */
 import * as THREE from "three";
@@ -13,6 +14,8 @@ interface Def { dir: string; file: string; head: RegExp; headBone: string; h: nu
 const DEFS: Record<string, Def> = {
   n1: { dir: "anime-girl", file: "", head: /^Head_/, headBone: "Head_47", h: 1.5, seatY: .1, seatZ: 0 },
   n2: { dir: "cyber-girl", file: "", head: /^head_/, headBone: "head_08", h: 1.55, seatY: .1, seatZ: 0 },
+  n3: { dir: "lynae", file: "", head: /^Bip001Head_/, headBone: "Bip001Head_011", h: 1.6, seatY: .1, seatZ: 0 },
+  n4: { dir: "auto-girl", file: "", head: /^Head_/, headBone: "", h: 1.6, seatY: .1, seatZ: 0 },
   m1: { dir: "real-boy", file: "", head: /^Head_/, headBone: "Head_3", h: 1.6, seatY: .1, seatZ: 0 }
 };
 /** khách trong bộ "customer_all_characters" (low-poly): k4..k11, mỗi người một model + chuyển động riêng. Nam: k5, k6, k7 */

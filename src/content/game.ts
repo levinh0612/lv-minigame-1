@@ -55,12 +55,12 @@ export const SPRITES: Record<string, SpriteDef> = {
   g6: FEMALE(6, 295, [[186, 159, 15, 19], [238, 155, 8, 18]])    // tóc gợn sóng, bờm, áo khoác
 };
 /** nhân vật 3D làm sẵn (n1 nữ anime, n2 nữ cyber, m1 nam đời thực): không có ảnh 2D riêng nên dùng tạm ảnh g1/b1 khi model 3D chưa tải được */
-SPRITES.n1 = SPRITES.g1!; SPRITES.n2 = SPRITES.g1!; SPRITES.m1 = SPRITES.b1!;
+SPRITES.n1 = SPRITES.g1!; SPRITES.n2 = SPRITES.g1!; SPRITES.n3 = SPRITES.g1!; SPRITES.n4 = SPRITES.g1!; SPRITES.m1 = SPRITES.b1!;
 for (let n = 4; n <= 11; n++) SPRITES["k" + n] = (n >= 5 && n <= 7 ? SPRITES.b1 : SPRITES.g1)!;   // khách k4..k11 (bộ customer_all_characters)
 /** khách 3D làm sẵn, thỉnh thoảng thay khách thường */
-export const FIXED_GUESTS = { girl: ["n1", "n2", "k4", "k8", "k9", "k10", "k11"], boy: ["m1", "k5", "k6", "k7"] };
+export const FIXED_GUESTS = { girl: ["n1", "n2", "n3", "n4", "k4", "k8", "k9", "k10", "k11"], boy: ["m1", "k5", "k6", "k7"] };
 /** nhân vật giữ nguyên trang phục: không tuỳ chỉnh màu, kiểu tóc */
-export const FIXED_CHARS: [string, string][] = [["n1", "Nữ anime"], ["n2", "Nữ cyber"], ["m1", "Nam thật"]];
+export const FIXED_CHARS: [string, string][] = [["n1", "Nữ anime"], ["n2", "Nữ cyber"], ["n3", "Nữ Lynae"], ["n4", "Nữ thường phục"], ["m1", "Nam thật"]];
 export const isFixedChar = (sprite: string) => FIXED_CHARS.some(c => c[0] === sprite);
 export const GIRL_SPRITES = ["g1", "g2", "g3", "g4", "g5", "g6"];
 export const BOY_SPRITES = ["b1", "b2", "b3", "b4", "b5", "b6"];
