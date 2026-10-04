@@ -2,6 +2,7 @@
    tai mèo, kính, nơ, hoa cài). Gắn vào xương đầu nên đi theo khi cử động. Kích thước tính theo đầu thật của từng model. */
 import * as THREE from "three";
 import { STYLE_OF } from "../content/game";
+import { buildHair, HAIR_KINDS } from "./hair3d";
 
 export interface HeadCtx { R: number; H: number; D: number; hair: string; coat: string; shirt: string; eyeY: number; eyeZ: number }
 const mat = (c: string) => new THREE.MeshLambertMaterial({ color: c });
@@ -30,6 +31,7 @@ const BUILD: Record<string, (g: THREE.Group, c: HeadCtx) => void> = {
 };
 
 export function buildStyle(sprite: string, c: HeadCtx): THREE.Group | null {
+  if (HAIR_KINDS.has(sprite)) return buildHair(sprite, c);
   const k = BUILD[sprite] ? sprite : STYLE_OF[sprite]; if (!k || !BUILD[k]) return null;
   try { const g = new THREE.Group(); BUILD[k]!(g, c); return g; } catch (e) { console.warn("Không dựng được kiểu đầu", sprite, e); return null; }
 }

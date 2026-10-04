@@ -14,8 +14,10 @@ function load(): Promise<Assets> {
     a.scene.traverse(o => { if (/Head$/.test(o.name)) o.scale.setScalar(HEAD_K); });     // đầu to kiểu chibi
     a.scene.updateMatrixWorld(true);
     const sm = a.scene.getObjectByProperty("isSkinnedMesh", true) as THREE.SkinnedMesh; sm.skeleton.update();
+    const head = headInfo(a.scene), bind = headBind(a.scene);
     const box = new THREE.Box3().setFromObject(a.scene, true);
-    return { scene: a.scene, idle: inPlace(a.animations[0], [0, 2]), walk: inPlace(w.animations[0], [0, 2]), sit: inPlace(s.animations[0], [0, 2], true), tex, scale: H / (box.max.y - box.min.y), head: headInfo(a.scene), bind: headBind(a.scene), headBone: "mixamorigHead" };
+    const bald = baldGeo(sm, tex, head, bind);
+    return { bald, scene: a.scene, idle: inPlace(a.animations[0], [0, 2]), walk: inPlace(w.animations[0], [0, 2]), sit: inPlace(s.animations[0], [0, 2], true), tex, scale: H / (box.max.y - box.min.y), head, bind, headBone: "mixamorigHead" };
   })().catch(e => { assets = null; throw e; });
 }
 
@@ -41,4 +43,22 @@ export const boyActor = (look: PersonLook, fallback: () => Actor, style = ""): A
 /** Một nhân vật nam đứng hoặc ngồi tĩnh (chủ tiệm, khách ngồi sẵn) */
 export function boyPerson(look: PersonLook, pose: Pose, fallback: () => Actor, style = "") {
   const a = boyActor(look, fallback, style); a.mode(pose === "seat" ? "sit" : "idle"); if (pose === "seat") a.snap(); return a;
+}
+
+/** bản hình học không có tóc gốc: nhận các tam giác tóc theo màu texture ở phần trên đầu (tóc là phần "nắp" của đầu) */
+function baldGeo(sm: THREE.SkinnedMesh, tex: THREE.Texture, _head: unknown, bind: { c: THREE.Vector3; s: THREE.Vector3 }): THREE.BufferGeometry | undefined {
+  try {
+    const img = tex.image as CanvasImageSource & { width: number; height: number }, cv = document.createElement("canvas"); cv.width = img.width; cv.height = img.height;
+    const cx = cv.getContext("2d")!; cx.drawImage(img, 0, 0); const px = cx.getImageData(0, 0, cv.width, cv.height).data;
+    const g = sm.geometry, pos = g.attributes.position!, uv = g.attributes.uv!, idx = g.index!, top = bind.c.y + bind.s.y / 2, bot = bind.c.y - bind.s.y / 2, hair = new Uint8Array(pos.count);
+    for (let i = 0; i < pos.count; i++) {
+      const x = Math.min(cv.width - 1, Math.max(0, Math.floor(uv.getX(i) * cv.width))), y = Math.min(cv.height - 1, Math.max(0, Math.floor(uv.getY(i) * cv.height))), o = (y * cv.width + x) * 4;
+      const r = px[o]! / 255, gg = px[o + 1]! / 255, b = px[o + 2]! / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), d = mx - mn;
+      const h = d ? (mx === r ? ((gg - b) / d + 6) % 6 : mx === gg ? (b - r) / d + 2 : (r - gg) / d + 4) * 60 : 0, s = mx ? d / mx : 0;
+      hair[i] = (pos.getY(i) - bot) / (top - bot) > .52 && h < 42 && s > .25 && mx < .7 ? 1 : 0;
+    }
+    const keep: number[] = [];
+    for (let t = 0; t < idx.count; t += 3) { const a = idx.getX(t), b = idx.getX(t + 1), c = idx.getX(t + 2); if (hair[a]! + hair[b]! + hair[c]! < 2) keep.push(a, b, c); }
+    const out = g.clone(); out.setIndex(keep); return out;
+  } catch { return undefined; }
 }

@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tách tóc từ model</title>
+<style>body{margin:0;background:#EEE6F0;font:700 13px system-ui;color:#4A3438}#c{width:100vw;height:100vh;display:block}#h{position:fixed;left:10px;top:8px;background:#fff;border-radius:10px;padding:4px 10px}</style></head>
+<body><div id="h">?m=boy|girl · ?debug=1 tô xanh phần tóc đã tách · ?az=0|180</div><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { headBind } from "/src/scene/figure3d.ts";
+const q = new URLSearchParams(location.search), m = q.get("m") || "boy", debug = q.has("debug");
+const canvas = document.getElementById("c"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#F4EFE8");
+scene.add(new THREE.HemisphereLight("#fff6ec", "#b9a58c", 1.6)); const sun = new THREE.DirectionalLight("#fff", 1.4); sun.position.set(3, 5, 4); scene.add(sun);
+const dir = "/models/" + (m === "boy" ? "boy-lo/" : "girl-lo/");
+const gl = new GLTFLoader();
+const [gltf, img] = await Promise.all([gl.loadAsync(dir + (m === "boy" ? "idle.glb" : "mesh.glb")), new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = dir + "tex.jpg"; })]);
+const cv = document.createElement("canvas"); cv.width = img.width; cv.height = img.height; const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0); const px = cx.getImageData(0, 0, cv.width, cv.height).data;
+const hsv = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { if (mx === r) h = ((g - b) / d + 6) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; } return [h * 60, mx ? d / mx : 0, mx]; };
+const tex = new THREE.Texture(img); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; tex.needsUpdate = true;
+const root = gltf.scene; root.updateMatrixWorld(true);
+const sm = root.getObjectByProperty("isSkinnedMesh", true), g = sm.geometry, pos = g.attributes.position, uv = g.attributes.uv, idx = g.index;
+const hb = headBind(root); const top = hb.c.y + hb.s.y / 2, bot = hb.c.y - hb.s.y / 2;
+console.log("head", hb.c.toArray(), hb.s.toArray(), "verts", pos.count, "tris", idx.count / 3);
+const isHair = new Uint8Array(pos.count);
+const HUE = m === "boy" ? [0, 42] : [0, 50];
+for (let i = 0; i < pos.count; i++) {
+  const x = Math.min(cv.width - 1, Math.max(0, Math.floor(uv.getX(i) * cv.width))), y = Math.min(cv.height - 1, Math.max(0, Math.floor(uv.getY(i) * cv.height))), o = (y * cv.width + x) * 4;
+  const [h, s, v] = hsv(px[o], px[o + 1], px[o + 2]);
+  const hy = (pos.getY(i) - bot) / (top - bot);
+  isHair[i] = (hy > .52 && h >= HUE[0] && h < HUE[1] && s > .25 && v < .7) ? 1 : 0;
+}
+const A = [], B = [];
+for (let t = 0; t < idx.count; t += 3) { const a = idx.getX(t), b = idx.getX(t + 1), c = idx.getX(t + 2); ((isHair[a] + isHair[b] + isHair[c]) >= 2 ? B : A).push(a, b, c); }
+console.log("hair tris", B.length / 3, "body tris", A.length / 3);
+const cutY = bot - hb.s.y * .35;   // chỉ vẽ từ cổ trở lên
+const clip = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -cutY)];
+const bodyMat = new THREE.MeshLambertMaterial({ map: tex, clippingPlanes: clip }), hairMat = debug ? new THREE.MeshBasicMaterial({ color: "#3f3", clippingPlanes: clip }) : bodyMat;
+renderer.localClippingEnabled = true;
+const H = top - bot, cx0 = hb.c.x, cz0 = hb.c.z, cy0 = hb.c.y;
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+/* mỗi kiểu: biến đổi toạ độ đỉnh tóc (mặc định tư thế gốc) và/hoặc lọc tam giác */
+const VARS = {
+  "Gốc": {},
+  "Trọc": { keep: () => false },
+  "Cua (ngắn)": { keep: (p) => p.y > top - H * .30 },
+  "Phồng": { move: (p) => { const k = 1.14; p.x = cx0 + (p.x - cx0) * k; p.z = cz0 + (p.z - cz0) * k; p.y = cy0 + (p.y - cy0) * 1.08; } },
+  "Dài": { move: (p) => { const back = sstep(cz0 + H * .05, cz0 - H * .25, p.z), side = sstep(H * .28, H * .5, Math.abs(p.x - cx0)), low = sstep(top - H * .15, bot + H * .45, p.y); p.y -= H * .75 * Math.max(back, side * .8) * low; const o = 1 + .1 * Math.max(back, side) * low; p.x = cx0 + (p.x - cx0) * o; } },
+  "Mohawk": { keep: (p) => Math.abs(p.x - cx0) < H * .22, move: (p) => { p.y = top + (p.y - top) * 1.0 + H * .18 * sstep(H * .22, 0, Math.abs(p.x - cx0)); p.x = cx0 + (p.x - cx0) * .75; } },
+  "Bồng": { move: (p) => { const k = 1.42; p.x = cx0 + (p.x - cx0) * k; p.z = cz0 - H * .05 + (p.z - cz0) * k; p.y = cy0 + (p.y - cy0) * 1.25 + H * .08; } }
+};
+const hairIdx = B, names = Object.keys(VARS), gap = hb.s.x * 1.9;
+const only = q.get("only");
+names.filter(n => !only || n === only).forEach((n, i, arr) => {
+  const v = VARS[n], r = clone(root); r.position.x = (i - (arr.length - 1) / 2) * gap; scene.add(r); r.updateMatrixWorld(true);
+  const sk = r.getObjectByProperty("isSkinnedMesh", true); sk.visible = false;
+  const mk = (ids, mat, edit) => { const gg = g.clone(); gg.setAttribute("position", g.attributes.position.clone()); if (edit) { const P = gg.attributes.position, p = new THREE.Vector3(); for (let j = 0; j < P.count; j++) if (isHair[j]) { p.fromBufferAttribute(P, j); edit(p); P.setXYZ(j, p.x, p.y, p.z); } }
+    gg.setIndex(ids); const s2 = new THREE.SkinnedMesh(gg, mat); s2.bind(sk.skeleton, sk.bindMatrix); return s2; };
+  let ids = hairIdx; if (v.keep) { const f = []; for (let t = 0; t < hairIdx.length; t += 3) { const p = new THREE.Vector3(); let ok = false; for (let k = 0; k < 3; k++) { p.fromBufferAttribute(g.attributes.position, hairIdx[t + k]); if (v.keep(p)) ok = true; } if (ok) f.push(hairIdx[t], hairIdx[t + 1], hairIdx[t + 2]); } ids = f; }
+  const sp = sk.parent; sp.add(mk(A, bodyMat), mk(ids, hairMat, v.move));
+  const lab = document.createElement("div"); lab.textContent = n; lab.style.cssText = "position:fixed;bottom:12px;background:#fff;border-radius:10px;padding:3px 10px;transform:translateX(-50%)"; lab.dataset.i = i; lab.dataset.n = arr.length; document.body.appendChild(lab);
+});
+const box = new THREE.Box3().setFromObject(root, true), sz = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+const cam = new THREE.PerspectiveCamera(22, 1, .01, 100000);
+let az = +(q.get("az") || 0) * Math.PI / 180; const n = only ? 1 : names.length, d = Math.max(hb.s.y * 2.2, gap * n * .5 / Math.tan(11 * Math.PI / 180) * .62);
+const fit = () => { renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); document.querySelectorAll("[data-n]").forEach(l => { l.style.left = (50 + (l.dataset.i - (l.dataset.n - 1) / 2) * 15) + "%"; }); }; fit(); addEventListener("resize", fit);
+const loop = () => { cam.position.set(Math.sin(az) * d, cy0, Math.cos(az) * d); cam.lookAt(0, cy0 - H * .1, 0); renderer.render(scene, cam); requestAnimationFrame(loop); }; loop();
+addEventListener("pointermove", e => { if (e.buttons) az -= e.movementX * .01; });
+window.hv = { isHair, hb };
+</script></body></html>

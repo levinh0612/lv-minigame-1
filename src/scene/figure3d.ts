@@ -4,9 +4,10 @@
 import * as THREE from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { buildStyle } from "./accessories";
+import { HAIR_KINDS } from "./hair3d";
 import type { Actor, ActorMode, PersonLook } from "./people";
 
-export interface Assets { scene: THREE.Group; idle: THREE.AnimationClip; walk: THREE.AnimationClip; sit: THREE.AnimationClip; tex: THREE.Texture; scale: number; head: { c: THREE.Vector3; s: THREE.Vector3 }; bind: { c: THREE.Vector3; s: THREE.Vector3 }; headBone: string }
+export interface Assets { scene: THREE.Group; idle: THREE.AnimationClip; walk: THREE.AnimationClip; sit: THREE.AnimationClip; tex: THREE.Texture; bald?: THREE.BufferGeometry; scale: number; head: { c: THREE.Vector3; s: THREE.Vector3 }; bind: { c: THREE.Vector3; s: THREE.Vector3 }; headBone: string }
 export interface FigureCfg {
   key: string;                         // khoá chương trình shader
   assets: () => Promise<Assets>;
@@ -97,7 +98,7 @@ export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Acto
   };
   cfg.assets().then(a => {
     const model = clone(a.scene) as THREE.Group; model.scale.setScalar(a.scale); const mats: THREE.Material[] = []; a.tex.userData.keep = true;
-    model.traverse(o => { const sm = o as THREE.SkinnedMesh; if (sm.isSkinnedMesh) { sm.geometry.userData.keep = true; sm.material = material(cfg, a.tex, look, a.bind); mats.push(sm.material); sm.castShadow = true; sm.frustumCulled = false; } });
+    model.traverse(o => { const sm = o as THREE.SkinnedMesh; if (sm.isSkinnedMesh) { if (a.bald && HAIR_KINDS.has(style)) sm.geometry = a.bald; sm.geometry.userData.keep = true; sm.material = material(cfg, a.tex, look, a.bind); mats.push(sm.material); sm.castShadow = true; sm.frustumCulled = false; } });
     model.updateMatrixWorld(true);                                  // tư thế mặc định: tính vị trí phụ kiện trước khi chạy animation
     // kiểu đầu: phụ kiện gắn vào xương đầu, kích thước theo đầu thật
     const hb = a.head, k = a.scale, bone = model.getObjectByName(a.headBone);

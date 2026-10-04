@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.33", date: "04/10/2026", notes: ["Nhân vật nam có 5 kiểu tóc 3D dựng mới thay hẳn tóc gốc: tóc cua, mái ngố, bob, tóc dài, tóc dựng (đổi theo màu tóc)"] },
   { v: "2.32", date: "04/10/2026", notes: ["Gỡ 5 kiểu tóc 3D thử nghiệm (bob, dài, xoăn, dựng, bồng) vì nhìn không đẹp"] },
   { v: "2.31", date: "04/10/2026", notes: ["Màn nhập PIN làm lại: ảnh đại diện 3D trong vòng màu, nền theo màu giao diện, ô số bo tròn mới", "Biển hiệu, mái hiên, mái nhà và rèm theo màu giao diện bạn chọn (cam thì ra cam, không còn hồng)", "Trang trí thêm nhiều món: 3 tường, 2 sàn, 2 quầy, 2 rèm, 2 đèn, 3 đồ treo tường, 3 cây, 3 thảm"] },
   { v: "2.30", date: "04/10/2026", notes: ["Trang trí tiệm mượt hơn nữa: đổi rèm, đèn, cây, thảm và đồ treo tường giờ cũng đổi ngay tại chỗ, không còn khựng"] },
