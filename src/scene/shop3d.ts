@@ -300,8 +300,8 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* bóng tiếp đất cho đồ vật để không bị "dán" lên sàn */
   const blob = (x: number, z: number, rx: number, rz = rx, a = 1) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(rx * 2, rz * 2), new THREE.MeshBasicMaterial({ map: blobMap(), transparent: true, opacity: a, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .014, z); root.add(m); };
-  blob(-.8, -1.55, 2.9, .85, .8); blob(-1.8, 1.0, 1.1, 1.1); blob(2.2, 1.5, 1.1, 1.1); blob(-3.3, 2.05, .85, 1.1);
-  [s1[0], s1[1], s2[0], s2[1], s2[2]].forEach(st => blob(st.x, st.z, .4)); [-2.6, -1.2, .2, 1.4].forEach(x => blob(x, -.95, .38, .38, .7));
+  blob(-.8, -1.55, 2.9, .85, .8); SPOTS.slice(0, tbls.length).forEach(([x, z]) => blob(x, z, .95, .95)); blob(-3.3, 2.05, .85, 1.1);
+  tbls.flat().forEach(st => blob(st.x, st.z, .4)); [-2.6, -1.2, .2, 1.4].forEach(x => blob(x, -.95, .38, .38, .7));
 
   /* thảm */
   const rugG = new THREE.Group(); root.add(rugG);
@@ -363,7 +363,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const bulbsStr: THREE.Mesh[] = [];
   const buildLamps = () => {
   const lk = cur.lamp === "1" || cur.lamp === "3" || cur.lamp === "4" ? cur.lamp : "0";
-  pendant(-1.8, 1.0, lk); pendant(2.2, 1.5, lk); pendant(-.8, -1.0, lk);
+  pendant(SPOTS[0]![0], SPOTS[0]![1], lk); pendant(SPOTS[1]![0], SPOTS[1]![1], lk); pendant(-.8, -1.0, lk);
   if (cur.lamp === "2" || ev) {
     const pts: THREE.Vector3[] = []; for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector3(-3.8 + t * 7.6, 2.95 - Math.sin(t * Math.PI) * .35, -2.8)); }
     lampG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .008, 4), new THREE.MeshBasicMaterial({ color: INK })));
