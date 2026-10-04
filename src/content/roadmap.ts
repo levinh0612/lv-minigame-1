@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.48", date: "04/10/2026", notes: ["Thưởng đăng nhập mỗi ngày (10% số xu đang có) có trần 2.000 xu"] },
   { v: "2.47", date: "04/10/2026", notes: ["Đồng xu sự cố giờ cách nhau 3 phút chơi (trước đây 1 phút)"] },
   { v: "2.46", date: "04/10/2026", notes: ["Sự cố bất ngờ giờ là một đồng xu để tự bấm, mỗi phút chơi có một lần: 70% bình an, 30% gặp sự cố; mức thấp trừ 3%, trung bình 6%, cao 8% số xu đang có", "Đền bù 3.000 xu một lần vì trừ xu quá tay", "Thưởng đăng nhập đầu tiên mỗi ngày: 10% số xu đang có (hiện ở Ví)"] },
   { v: "2.45", date: "04/10/2026", notes: ["Thêm Nữ mũ mèo và Nam kiếm sĩ (tự gắn xương cho tượng tĩnh) vào Hồ sơ và làm khách ra vào tiệm"] },

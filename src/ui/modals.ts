@@ -234,7 +234,7 @@ export function coinModal(onClose?: () => void) {
 
 /** Thông báo thưởng đăng nhập mỗi ngày và khoản đền bù */
 export function rewardModal(c: { daily: number; comp: number }) {
-  const rows = [c.comp ? `<div class="rwrow"><span>🎁 Đền bù vì trừ xu quá tay</span><b>+${fmtN(c.comp)} xu</b></div>` : "", c.daily ? `<div class="rwrow"><span>☀️ Thưởng đăng nhập hôm nay (10% số xu)</span><b>+${fmtN(c.daily)} xu</b></div>` : ""].join("");
+  const rows = [c.comp ? `<div class="rwrow"><span>🎁 Đền bù vì trừ xu quá tay</span><b>+${fmtN(c.comp)} xu</b></div>` : "", c.daily ? `<div class="rwrow"><span>☀️ Thưởng đăng nhập hôm nay (10% số xu, tối đa 2.000)</span><b>+${fmtN(c.daily)} xu</b></div>` : ""].join("");
   modal(`<h2>${c.comp ? "Xin lỗi vì trừ hơi ghê!" : "Chào ngày mới!"}</h2><p class="sub">${c.comp ? "Tiệm gửi bạn món quà đền bù và quà đăng nhập." : "Quà cho lần đăng nhập đầu tiên trong ngày."}</p>
     <div class="rwbox">${rows}</div><div class="inccost"><small>Số xu hiện có ${fmtN(S.coins)} xu · xem ở Ví</small></div>
     <div class="mbtns"><button class="b3" data-close>Nhận luôn</button></div>`);

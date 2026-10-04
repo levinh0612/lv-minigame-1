@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GAP, INCIDENTS, LEVELS, LOSE_CHANCE, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, tickIncident, tossCoin } from "../src/engine/incident";
-import { COMP_COINS, claimPassive, dayKey } from "../src/engine/passive";
+import { COMP_COINS, DAILY_MAX, claimPassive, dayKey } from "../src/engine/passive";
 import { S, resetState } from "../src/engine/state";
 
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 27, 10)); resetState(); resetIncidentClock(); S.shifts = 5; S.coins = 1000; });
@@ -74,6 +74,13 @@ describe("khoản cộng thụ động", () => {
     expect(claimPassive()).toEqual({ daily: 0, comp: 0 }); expect(S.coins).toBe(coins);
     vi.setSystemTime(new Date(2026, 8, 28, 9));
     const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(Math.floor(coins * 0.1)); expect(S.coins).toBe(coins + c.daily);
+  });
+
+  it("thưởng đăng nhập mỗi ngày tối đa 2.000 xu", () => {
+    S.coins = 50000; S.shifts = 5; S.comp = 1;
+    expect(claimPassive().daily).toBe(DAILY_MAX); expect(DAILY_MAX).toBe(2000);
+    vi.setSystemTime(new Date(2026, 8, 28, 9)); S.coins = 20000; expect(claimPassive().daily).toBe(2000);
+    vi.setSystemTime(new Date(2026, 8, 29, 9)); S.coins = 15000; expect(claimPassive().daily).toBe(1500);      // dưới trần thì vẫn 10%
   });
 
   it("người chơi mới (chưa chơi ca nào) không nhận đền bù nhưng vẫn được đánh dấu để không nhận lẻ sau này", () => {
