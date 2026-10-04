@@ -1,4 +1,4 @@
-/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 1 phút chơi lại có một đồng xu để người chơi tự bấm tung.
+/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 3 phút chơi lại có một đồng xu để người chơi tự bấm tung.
    70% bình an, 30% gặp sự cố và bị trừ xu theo ba mức: thấp 3%, trung bình 6%, cao 8% số xu đang có.
    Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện. */
 import type { PetId } from "../content/couple";
@@ -18,7 +18,7 @@ export const INCIDENTS: Incident[] = [
   { id: "fridge", title: "Tủ lạnh hỏng", text: "Tủ lạnh kêu \"tách tách\" rồi tắt hẳn. Gọi thợ điện lạnh tới sửa.", emoji: "🧊", bg: "#D6F0F2", pet: "gold" }
 ];
 
-export const MIN_SHIFTS = 3, MIN_COINS = 100, GAP = 60, RETRY = 30, LOSE_CHANCE = 0.3;   // giây: cứ 1 phút có một đồng xu
+export const MIN_SHIFTS = 3, MIN_COINS = 100, GAP = 180, RETRY = 60, LOSE_CHANCE = 0.3;   // giây: cứ 3 phút có một đồng xu
 export type Level = "low" | "mid" | "high";
 export const LEVELS: Record<Level, { name: string; pct: number }> = { low: { name: "Thấp", pct: 0.03 }, mid: { name: "Trung bình", pct: 0.06 }, high: { name: "Cao", pct: 0.08 } };
 export interface Hit { inc: Incident; cost: number; level: Level }

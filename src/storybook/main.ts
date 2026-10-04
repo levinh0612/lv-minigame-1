@@ -166,7 +166,7 @@ const STORIES: Story[] = [
     html: () => { lvState(1, s => { s.welcome = false; }); return modalOver(homeHTML(), welcome); } },
   ...INCIDENTS.map((inc, n) => ({ id: "m-inc-" + inc.id, sec: "modals", title: "Sự cố: " + inc.title, desc: "Sau khi tung đồng xu trúng 30%: trừ 3%, 6% hoặc 8% xu theo mức; hộp thoại trượt từ dưới lên", kind: "modal" as const,
     html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => incidentModal(inc, 120 + n * 3, undefined, (['low', 'mid', 'high'] as const)[n % 3])); } })),
-  { id: "m-coin", sec: "modals", title: "Đồng xu may rủi", desc: "Mỗi phút chơi có một đồng xu để tự bấm: 70% bình an, 30% gặp sự cố", kind: "modal",
+  { id: "m-coin", sec: "modals", title: "Đồng xu may rủi", desc: "Mỗi 3 phút chơi có một đồng xu để tự bấm: 70% bình an, 30% gặp sự cố", kind: "modal",
     html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => coinModal()); } },
   { id: "m-reward", sec: "modals", title: "Thưởng đăng nhập + đền bù", desc: "Đền bù 3000 xu một lần và 10% số xu cho lần đăng nhập đầu tiên mỗi ngày", kind: "modal",
     html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => rewardModal({ daily: 120, comp: 3000 })); } },

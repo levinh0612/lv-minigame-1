@@ -16,8 +16,8 @@ describe("đồng xu sự cố", () => {
     expect(LEVELS.high.pct).toBeGreaterThan(LEVELS.mid.pct); expect(LEVELS.mid.pct).toBeGreaterThan(LEVELS.low.pct);
   });
 
-  it("đồng hồ: sau đúng 1 phút chơi mới hiện đồng xu, rồi đếm lại", () => {
-    expect(tickIncident(0)).toBe(false); expect(incidentLeft()).toBe(GAP); expect(GAP).toBe(60);
+  it("đồng hồ: sau đúng 3 phút chơi mới hiện đồng xu, rồi đếm lại", () => {
+    expect(tickIncident(0)).toBe(false); expect(incidentLeft()).toBe(GAP); expect(GAP).toBe(180);
     expect(tickIncident(GAP - 1)).toBe(false);
     expect(tickIncident(1)).toBe(true);
     expect(incidentLeft()).toBe(GAP);
