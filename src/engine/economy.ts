@@ -1,6 +1,6 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
-import { CATS, FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StockKey } from "../content/game";
+import { CATS, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, SHOP, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StockKey } from "../content/game";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
 import { S, petName, save } from "./state";
@@ -10,7 +10,7 @@ export const unitCost = (k: StockKey, i: number) => UNIT_COST[k][i];
 export const packPrice = (k: StockKey, i: number, n: number) => Math.ceil(unitCost(k, i) * n * (1 - (PACKS.find(p => p.n === n)?.disc ?? 0)));
 export const quickPrice = (k: StockKey, i: number) => Math.ceil(unitCost(k, i) * QUICK_MULT);
 export const stockOf = (k: StockKey, i: number) => S.stock[k][i] ?? 0;
-export const expectedCustomers = () => Math.min(20, 6 + lvl() + fx("cust") + fameLevel() * 2);
+export const expectedCustomers = () => Math.min(30, 6 + lvl() + fx("cust") + fameLevel() * 2);
 
 export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n), cat: "stock" | "quick" = "stock", log = true): boolean {
   if (S.coins < price) return false;
@@ -134,8 +134,40 @@ export function fameScore() {
   const r = S.reviews.slice(0, 20), avg = r.length ? r.reduce((a, x) => a + x.s, 0) / r.length : 2;
   return avg + decorCount() * 0.4 + (lvl() - 1) * 0.3;
 }
-export const fameLevel = () => { const x = fameScore(); return x < 3 ? 0 : x < 4.5 ? 1 : x < 6 ? 2 : 3; };
+export const fameLevel = () => { const x = fameScore(); return FAME_AT.filter(t => x >= t).length; };
 export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });
+
+/* ===== Sức chứa tiệm: bàn, lầu, mở rộng ngang =====
+   Độ nổi tiếng quyết định số bàn khách muốn ngồi (demand); số bàn có thật là venue.tables.
+   Thiếu bàn thì phải nâng cấp mới mở tiệm được. */
+export const demand = () => FAME[fameLevel()].seats;
+export const tables = () => {
+  const v = S.venue;
+  if (!v.tables) { v.tables = Math.max(SHOP.startTables, Math.min(6, demand())); save(); }   // người chơi cũ: tặng đủ số bàn đang có
+  return v.tables;
+};
+export const spaceFor = (floors: number, wide: number) => floors * (SHOP.perFloor + SHOP.perWide * wide);
+export const space = () => spaceFor(S.venue.floors, S.venue.wide);
+export const seatsNow = () => Math.min(demand(), tables());           // số bàn dùng trong ca
+export const needUpgrade = () => demand() > tables();
+export const tableCost = () => SHOP.tableCost(tables() + 1);
+export const floorCost = () => SHOP.floorCost(S.venue.floors - 1);
+export const wideCost = () => SHOP.wideCost(S.venue.wide);
+export const canBuyTable = () => tables() < space();
+export const upgradeOptions = () => [
+  { id: "table" as const, cost: tableCost(), ok: canBuyTable() },
+  { id: "floor" as const, cost: floorCost(), ok: true },
+  { id: "wide" as const, cost: wideCost(), ok: true }
+];
+export const canAffordUpgrade = () => upgradeOptions().some(o => o.ok && S.coins >= o.cost);
+export function buyVenue(id: "table" | "floor" | "wide"): boolean {
+  const o = upgradeOptions().find(x => x.id === id)!;
+  if (!o.ok || S.coins < o.cost) return false;
+  if (id === "table") { spend("venue", o.cost, `Mua bàn thứ ${tables() + 1}`); S.venue.tables = tables() + 1; }
+  else if (id === "floor") { spend("venue", o.cost, `Xây lầu ${S.venue.floors + 1}`); S.venue.floors++; }
+  else { spend("venue", o.cost, `Mở rộng ngang lần ${S.venue.wide + 1}`); S.venue.wide++; }
+  save(); return true;
+}
 
 /* ===== Tài sản (bảng xếp hạng): xu + đồ trang trí đã mua + nguyên liệu trong kho + đồ ăn trong tủ ===== */
 export function netWorth() {

@@ -18,6 +18,7 @@ export interface State {
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
   food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
+  venue: { tables: number; floors: number; wide: number };   // số bàn đã có (0 = chưa đặt, người chơi cũ được tặng theo độ nổi tiếng), số lầu, số lần mở rộng ngang
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
   earned: number;                 // tổng xu kiếm được từ bán bánh (bảng xếp hạng)
   book: Book;                     // sổ thu chi (bảng Ví)
@@ -48,7 +49,7 @@ export function fresh(): State {
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
-    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true,
+    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true, venue: { tables: 0, floors: 1, wide: 0 },
     room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
@@ -105,6 +106,7 @@ export function loadState(raw: string | null): State {
   s.staff = Object.assign(fresh().staff, s.staff || {});
   s.stock = Object.assign(fresh().stock, s.stock || {});
   s.food = Object.assign(fresh().food, s.food || {});
+  s.venue = Object.assign(fresh().venue, s.venue || {});
   s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});
   s.owned = s.owned || [];
   s.cloud = Object.assign(fresh().cloud, s.cloud || {});

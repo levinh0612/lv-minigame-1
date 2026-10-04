@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import type { PetId } from "../../content/couple";
 import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
-import { canHire, foodOf, crewPlan, expectedCustomers, fame, foodDef, mealChoices, mealFor, mealOf, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { canHire, demand, needUpgrade, tables, foodOf, crewPlan, expectedCustomers, fame, foodDef, mealChoices, mealFor, mealOf, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
@@ -45,6 +45,7 @@ export function prepHTML() {
   return `<div class="scr prep2">
     ${pageHead("Chuẩn bị mở tiệm", `Ca ${S.shifts + 1}`)}
     <div class="feat">${ingSVG("cream", feat.cream, 18)}Món nổi bật: <b>${esc(feat.n)}</b><span>✦ ${f.n}</span></div>
+    ${needUpgrade() ? `<button class="vwarn" data-act="venue"><span>🪑</span><div><b>Khách đông hơn số bàn</b><small>Cần ${demand()} bàn, tiệm có ${tables()}. Chạm để nâng cấp.</small></div></button>` : ""}
     <div class="custcnt"><span class="cntico">👥</span><div><b>Hôm nay có ${expectedCustomers()} khách</b><small>Ca ${S.shifts + 1} · ${goals[0]?.n ?? 0} khách vui là đạt mục tiêu</small></div></div>
     <div class="sh2"><b>Ai đi làm hôm nay?</b><span class="lav">${plan.filter(x => x.meal).length}/${STAFF.length} bé</span></div>
     <div class="btiles">${STAFF.map(d => bakerTile(d.id)).join("")}</div>

@@ -5,7 +5,7 @@ import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
 import { CATS, type PartKey, type StockKey } from "./content/game";
 import type { RoomKey } from "./content/room";
-import { buy, buyFood, buySuggested, foodDef, hire, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
+import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, foodDef, hire, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { tickIncident } from "./engine/incident";
@@ -14,7 +14,7 @@ import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
-import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, venueBuy, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
@@ -35,7 +35,11 @@ document.addEventListener("click", e => {
   if (d.go === "/cua-hang/qua-tang" && !SH) { sfx("click"); return giftSheet(); }
   if (d.go) { sfx("click"); return navigate(d.go, t.hasAttribute("data-replace")); }
   switch (d.act) {
-    case "start": dropModal(); return startShift();
+    case "start":
+      if (needUpgrade() && canAffordUpgrade()) { sfx("click"); return upgradeModal(true); }
+      dropModal(); return startShift();
+    case "start-anyway": dropModal(); return startShift();
+    case "venue": sfx("click"); return upgradeModal(false);
     case "suggest": { const sp = buySuggested(); if (sp) { sfx("coin"); toast(`Đã nhập hàng · ${sp} xu`); } else toast("Không đủ xu để nhập theo gợi ý"); return render(); }
     case "tutorial": return tutorial();
     case "letter": return openLetter();
@@ -72,6 +76,7 @@ document.addEventListener("click", e => {
     return render();
   }
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } return render(); }
+  if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }
   if (d.train) { if (train(d.train as PetId)) { sfx("level"); toast(`${petName(d.train as PetId)} lên bậc ${S.staff[d.train as PetId].lv}!`); } return render(); }

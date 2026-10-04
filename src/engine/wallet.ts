@@ -2,12 +2,12 @@
 import { S } from "./state";
 
 export type InCat = "sales" | "tip" | "memo" | "goal" | "gift" | "welcome" | "daily" | "comp";
-export type OutCat = "stock" | "quick" | "decor" | "food" | "train" | "incident";
+export type OutCat = "stock" | "quick" | "decor" | "food" | "train" | "incident" | "venue";
 export const IN_LABEL: Record<InCat, string> = {
   sales: "Tiền bánh", tip: "Tip", memo: "Thưởng tự nhớ công thức", goal: "Thưởng mục tiêu ca", gift: "Quà mục tiêu ngày", welcome: "Quà khai trương", daily: "Thưởng đăng nhập mỗi ngày", comp: "Đền bù"
 };
 export const OUT_LABEL: Record<OutCat, string> = {
-  stock: "Nhập nguyên liệu", quick: "Nhập nhanh giữa ca", decor: "Đồ trang trí", food: "Đồ ăn thú cưng", train: "Huấn luyện các bé", incident: "Sự cố bất ngờ"
+  stock: "Nhập nguyên liệu", quick: "Nhập nhanh giữa ca", decor: "Đồ trang trí", food: "Đồ ăn thú cưng", train: "Huấn luyện các bé", incident: "Sự cố bất ngờ", venue: "Bàn, lầu, mở rộng tiệm"
 };
 export interface Entry { t: number; n: string; v: number }
 export interface Book {

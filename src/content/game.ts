@@ -120,8 +120,17 @@ export const BAKE_TIME = [10, 7.5, 5];
 const BAKE_TEXT: [string, string, string] = ["Tự nhận đơn, 10 giây một bánh", "Tự nhận đơn, 7,5 giây một bánh", "Tự nhận đơn, 5 giây một bánh"];
 /* Độ nổi tiếng: càng nổi tiếng càng nhiều bàn, khách đến càng dày */
 export const FAME = [
-  { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Viral", seats: 6 }
+  { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Viral", seats: 6 },
+  { n: "Nổi như cồn", seats: 8 }, { n: "Địa điểm check-in", seats: 10 }, { n: "Huyền thoại", seats: 12 }
 ];
+export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13];     // điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi)
+/* Sức chứa tiệm: số bàn mua dần (bàn 1-3 tặng), mỗi lầu chứa 6 bàn, mở rộng ngang thêm 2 bàn mỗi lầu */
+export const SHOP = {
+  perFloor: 6, perWide: 2, startTables: 3,
+  tableCost: (n: number) => (n <= 3 ? 0 : n === 4 ? 300 : n === 5 ? 600 : n === 6 ? 1000 : 1000 + (n - 6) * 500),   // giá bàn thứ n
+  floorCost: (built: number) => 1000 * 2 ** built,      // xây thêm lầu: lần 1 là 1.000, rồi gấp đôi
+  wideCost: (built: number) => 2000 * 2 ** built        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
+};
 export interface StaffDef { id: PetId; role: string; unlock: number; train: [number, number]; effect: [string, string, string] }
 export const STAFF: StaffDef[] = [
   { id: "dog", role: "Thợ bánh", unlock: 2, train: [120, 300], effect: BAKE_TEXT },

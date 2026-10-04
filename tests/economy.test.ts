@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RECIPES } from "../src/content/game";
 import {
-  buy, buyFood, buySuggested, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
+  buy, buyFood, buySuggested, buyVenue, canAffordUpgrade, demand, needUpgrade, seatsNow, space, tables, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
@@ -293,5 +293,39 @@ describe("ví: sổ thu chi", () => {
     expect(S.book.in.welcome).toBe(300);
     expect(S.book.in.sales).toBeGreaterThan(0);
     expect(S.book.log[S.book.log.length - 1].n).toBe("Quà khai trương");
+  });
+
+  describe("sức chứa tiệm", () => {
+    it("người chơi mới có 3 bàn, 1 lầu, 6 chỗ", () => {
+      expect(tables()).toBe(3); expect(space()).toBe(6); expect(needUpgrade()).toBe(false);
+    });
+
+    it("người chơi cũ được tặng đủ bàn theo độ nổi tiếng (tối đa 6)", () => {
+      S.venue.tables = 0; S.decor = Array(12).fill("x") as never; S.owned = Array(12).fill("wall:pink");
+      const d = demand(); expect(tables()).toBe(Math.max(3, Math.min(6, d)));
+    });
+
+    it("giá bàn 300/600/1000; lầu 1000 gấp đôi; mở rộng ngang 2000 gấp đôi", () => {
+      S.coins = 100000; S.venue.tables = 3;
+      const c0 = S.coins; buyVenue("table"); expect(c0 - S.coins).toBe(300); expect(tables()).toBe(4);
+      const c1 = S.coins; buyVenue("floor"); expect(c1 - S.coins).toBe(1000); expect(S.venue.floors).toBe(2);
+      const c2 = S.coins; buyVenue("floor"); expect(c2 - S.coins).toBe(2000);
+      const c3 = S.coins; buyVenue("wide"); expect(c3 - S.coins).toBe(2000);
+      const c4 = S.coins; buyVenue("wide"); expect(c4 - S.coins).toBe(4000);
+      expect(space()).toBe(3 * (6 + 4));
+    });
+
+    it("hết chỗ đặt bàn thì không mua bàn được, phải lầu hoặc mở rộng", () => {
+      S.coins = 100000; S.venue.tables = 6;
+      expect(buyVenue("table")).toBe(false);
+      expect(buyVenue("floor")).toBe(true);
+      expect(buyVenue("table")).toBe(true);
+    });
+
+    it("thiếu xu thì không nâng cấp; số bàn trong ca = min(khách cần, bàn có)", () => {
+      S.coins = 10; S.venue.tables = 3;
+      expect(canAffordUpgrade()).toBe(false); expect(buyVenue("table")).toBe(false);
+      expect(seatsNow()).toBe(Math.min(demand(), 3));
+    });
   });
 });

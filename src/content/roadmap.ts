@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.52", date: "04/10/2026", notes: ["Số bàn theo độ viral: thêm 3 bậc nổi tiếng mới (tối đa 12 bàn)", "Mua thêm bàn (300 / 600 / 1.000 xu), xây thêm lầu (1.000 xu, gấp đôi mỗi lần), mở rộng cửa hàng ngang (2.000 xu, gấp đôi mỗi lần)", "Khách đông hơn số bàn thì bắt buộc nâng cấp mới mở tiệm được", "Người chơi cũ được tặng sẵn số bàn đang có", "Cảnh tiệm hiện đúng số ghế (3 đến 6); hàng đợi tự xuống hàng khi trên 6 bàn"] },
   { v: "2.51", date: "04/10/2026", notes: ["Đồng xu may rủi và kết quả của nó không tắt được bằng nút ✕, chạm nền hay kéo xuống nữa, phải bấm đồng xu và bấm nút trong hộp thoại"] },
   { v: "2.50", date: "04/10/2026", notes: ["Chọn món ăn cho từng bé ở màn Chuẩn bị ca (bé bậc 2, 3 chọn được món thấp hơn bậc)", "Hết món đã chọn thì bé ăn món kém hơn kế tiếp thay vì nghỉ đói, nhưng làm bánh chậm hơn 25% mỗi bậc", "Hạt và Pate không còn vô dụng sau khi bé lên bậc 3"] },
   { v: "2.49", date: "04/10/2026", notes: ["Sửa lỗi huy hiệu số xu ở thanh trên cùng bị phóng to và che chữ (do kiểu CSS của đồng xu may rủi trùng tên)"] },

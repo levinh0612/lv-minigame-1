@@ -95,7 +95,7 @@ function updateBaking() {
 }
 
 /* ================= HTML thuần ================= */
-const faceSize = (sh: Shift) => ({ 3: 70, 4: 60, 5: 52, 6: 46 } as Record<number, number>)[sh.seats.length] ?? 46;
+const faceSize = (sh: Shift) => ({ 3: 70, 4: 60, 5: 52, 6: 46 } as Record<number, number>)[Math.min(6, sh.seats.length)] ?? 46;
 const cakeOf = (c: Customer, size: number) => cakeSVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, sweet: c.sweet }, { size, still: true });
 const LV_BADGE = `<svg width="44" height="44" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 1 L28 5.5 L34.5 4 L36.5 10.5 L42.5 13 L41 19.5 L45 25 L40 29.5 L40.5 36 L34 37 L30.5 43 L24.5 40.5 L18 43 L15 37 L8.5 36 L9 29.5 L4 25 L8 19.5 L6.5 13 L12.5 10.5 L14.5 4 L21 5.5 Z" fill="#FF7FA1" stroke="#E0567A" stroke-width="2" stroke-linejoin="round"/><circle cx="23" cy="23" r="13.5" fill="#FFF3F6"/></svg>`;
 const BOX = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4A3438" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8 L12 3.5 L21 8 V17 L12 21.5 L3 17 Z" fill="#F6D59A"/><path d="M3 8 L12 12.5 L21 8 M12 12.5 V21.5"/><path d="M7.5 5.8 L16.5 10.3" stroke-width="1.8"/></svg>`;
@@ -240,7 +240,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
     <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
-    <div class="queue" style="--n:${sh.seats.length}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
+    <div class="queue" style="--n:${Math.min(6, sh.seats.length)}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
       <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeSVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>

@@ -6,7 +6,7 @@ import {
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
 import { BAKE_TIME, type FoodId } from "../content/game";
-import { dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, stockOf, unitCost } from "./economy";
+import { dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatsNow, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, save } from "./state";
@@ -42,7 +42,7 @@ export function createShift(): Shift {
   const L = lvl();
   return {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
-    seats: Array(fame().seats).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
+    seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
   };
@@ -79,7 +79,7 @@ export function tick(sh: Shift, dt: number): TickOut {
   const free = sh.seats.findIndex(s => !s);
   if (sh.spawned < sh.total && sh.t >= sh.next && free >= 0) {
     sh.seats[free] = makeCustomer(sh); sh.spawned++; out.spawned = free;
-    sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62][fame().lv];
+    sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv];
   }
   sh.seats.forEach((c, i) => {
     if (!c || c.gone) return;

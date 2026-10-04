@@ -11,6 +11,7 @@ export interface ShopOpts {
   room: Record<string, string>;            // wall, floor, counter, curtain, lamp, wallItem, plant, rug
   event: boolean;                          // ngày đặc biệt: tường vàng, cờ và bóng bay
   guests: number;                          // 0..2 khách đang ngồi
+  seats: number;                           // số ghế trong tiệm (3..6 hiện trong cảnh)
   giftDot: boolean;
   photo: string;                           // ảnh treo tường (data URL) hoặc ""
   cakes: [number, number, number][];       // bánh trong tủ kính (đế, kem, topping)
@@ -234,7 +235,10 @@ export function createShop(o: ShopOpts): ShopScene {
       add(ch, RB(.46, .09, .46, .04), T(c), 0, .5, 0, { ol: "thin" }); add(ch, RB(.46, .5, .07, .03), T("#B98450"), 0, .8, -.2, { ol: "thin" });
       ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T("#B98450"), dx, .23, dz, { ol: null })); return { x: cx, z: cz, a: a + Math.PI }; });
   }
-  const s1 = table(-1.8, 1.0, [["#7FC8D6", 2.4], ["#E8A0B4", -2.4]]), s2 = table(2.2, 1.5, [["#7FC8D6", .2], ["#E8A0B4", 2.6], ["#7FC8D6", -2.3]]);
+  /* số ghế theo số bàn người chơi có (3..6): thêm dần ghế ở hai bàn */
+  const CH1: [string, number][] = [["#7FC8D6", 2.4], ["#E8A0B4", -2.4], ["#7FC8D6", .1]], CH2: [string, number][] = [["#7FC8D6", .2], ["#E8A0B4", 2.6], ["#7FC8D6", -2.3]];
+  const nSeat = Math.max(3, Math.min(6, o.seats)), n1 = Math.min(3, Math.floor(nSeat / 2)), n2 = Math.min(3, nSeat - n1);
+  const s1 = table(-1.8, 1.0, CH1.slice(0, n1)), s2 = table(2.2, 1.5, CH2.slice(0, n2));
   place(cake(0, 0, 0, 1), -1.8, .83, 1.0); place(cake(1, 2, 1, 1), 2.2, .83, 1.5);
   /* khách ra vào: mỗi chỗ ngồi tự chạy vòng ngồi → đứng dậy → ra cửa → vắng → khách khác vào → ngồi xuống */
   const POOL: { sprite: string; look: PersonLook }[] = [

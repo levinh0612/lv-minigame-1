@@ -15,7 +15,7 @@ let live: Live | null = null, kept: Live | null = null, token = 0;
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
   const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "", fullAttr = full ? ' data-full="1"' : "";
-  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
+  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-seats="${o.seats ?? 5}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
 
@@ -41,7 +41,7 @@ const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = 
 function optsOf(el: HTMLElement): ShopOpts {
   const n = +(el.dataset.recipes || 4), g = S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {
-    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
+    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), seats: +(el.dataset.seats || 5), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
     me: { sprite: g.sprite, look: look(g as unknown as Record<string, string>) },
     guestLooks: [
@@ -51,7 +51,7 @@ function optsOf(el: HTMLElement): ShopOpts {
   };
 }
 /** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
-const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.gift, el.dataset.recipes]);
+const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.seats, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */

@@ -1,6 +1,6 @@
 /* Màn Chính (HomeScreen của Claude Design): mái hiên, cảnh tiệm, thư hôm nay, Mở tiệm, 4 nút dưới */
 import { portraitHTML } from "../portrait";
-import { expectedCustomers } from "../../engine/economy";
+import { demand, expectedCustomers, needUpgrade, tables } from "../../engine/economy";
 import { STAFF } from "../../content/game";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { decorCount, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
@@ -64,7 +64,7 @@ export function homeHTML() {
     </div>`;
   /* 3D chiếm cả màn hình; mọi thứ khác (thanh trên, hồ sơ, thư, nút Mở tiệm, 4 nút) là lớp phủ trên và dưới */
   return `<div class="scr home5">
-    <div class="h5-room">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) }, false, true)}</div>
+    <div class="h5-room">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1), seats: tables() }, false, true)}</div>
     <div class="h5-top">
       <div class="hrow4">
         <button class="pill love4" data-act="days" aria-label="Ngày kỷ niệm"><span>${HEART}</span>${fmtN(daysTogether())} ngày<em> yêu</em></button>
@@ -75,7 +75,7 @@ export function homeHTML() {
         ${coinPill()}
       </div>
       ${prof}
-      <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
+      <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip ${needUpgrade() ? "warn" : "lav"}" data-act="venue">🪑 ${tables()}/${demand()} bàn${needUpgrade() ? " · cần nâng cấp" : ""}</button><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
     </div>
     <div class="h5-bottom">
       ${te.length ? card : ""}

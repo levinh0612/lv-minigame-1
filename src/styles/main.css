@@ -1229,3 +1229,18 @@ button.cm{position:relative}
 .rwrow b{font:900 18px var(--display);color:var(--mint-d,#3F9C78);white-space:nowrap}
 .tosscoin .cfa{display:grid;place-items:center;width:74px;height:74px;border-radius:50%;border:4px solid rgba(190,128,20,.55);background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.55),rgba(255,255,255,0) 60%)}
 .tosscoin .cfa i{font:900 30px var(--display);font-style:normal;color:#B5760F;text-shadow:0 2px 0 rgba(255,255,255,.55);letter-spacing:.5px}
+
+/* nâng cấp tiệm */
+.vstat{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 10px}
+.vstat span{padding:5px 10px;border-radius:12px;background:var(--pink-l);font:800 12px var(--body);color:var(--ink2)}
+.vopts{display:flex;flex-direction:column;gap:8px}
+.vopt{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:18px;background:#fff;box-shadow:0 3px 0 var(--sh);text-align:left}
+.vopt:disabled{opacity:.5}
+.vopt .vi{flex:none;font-size:26px}
+.vopt .vt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.vopt .vt b{font:800 15px var(--display);color:var(--ink2)}
+.vopt .vt small{font:700 11px/1.25 var(--body);color:var(--soft2)}
+.vopt em{flex:none;font:900 14px var(--display);font-style:normal;color:#A77A0E}
+.vwarn{display:flex;align-items:center;gap:10px;margin:8px 16px 0;width:calc(100% - 32px);padding:10px 12px;border-radius:18px;background:#FFF0C9;box-shadow:0 3px 0 #F0D78A;text-align:left}
+.vwarn>span{font-size:24px}.vwarn b{display:block;font:800 14px var(--display);color:#8A5A00}.vwarn small{font:700 11px var(--body);color:#A77A0E}
+.pchip.warn{background:#FFF0C9;color:#8A5A00;box-shadow:0 2px 0 #F0D78A}
