@@ -93,7 +93,7 @@ document.addEventListener("click", e => {
   }
   if (d.foodBuy) {
     const [id, n] = d.foodBuy.split(":"), f = foodDef(id as FoodId);
-    if (buyFood(f.id, +n)) { sfx("tap"); toast(`+${n} ${f.n} · ${f.cost * +n} xu`); } else toast("Không đủ xu");
+    if (buyFood(f.id, +n)) { if (d.for) { S.staff[d.for as PetId].prio = Date.now(); save(); } sfx("tap"); toast(`+${n} ${f.n} · ${f.cost * +n} xu`); } else toast("Không đủ xu");
     return render();
   }
   if (d.treat) {

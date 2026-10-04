@@ -110,7 +110,7 @@ export const mealSlow = (id: PetId, meal: FoodId) => 1 + 0.25 * Math.max(0, tier
 /** bữa ăn dự kiến của các bé đi làm: kho dùng chung nên mỗi bé lấy phần của mình trước khi tới bé sau (giống lúc mở ca) */
 export function crewPlan() {
   const left: Record<FoodId, number> = { kibble: foodOf("kibble"), pate: foodOf("pate"), chicken: foodOf("chicken") };
-  return STAFF.filter(d => onDuty(d.id)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
+  return STAFF.filter(d => onDuty(d.id)).sort((a, b) => (S.staff[b.id].prio ?? 0) - (S.staff[a.id].prio ?? 0)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
 }
 /** bữa của một bé: đi làm thì theo kế hoạch chung, đang nghỉ thì chỉ xem món nào còn trong kho */
 export const plannedMeal = (id: PetId): FoodId | null => (onDuty(id) ? crewPlan().find(x => x.id === id)?.meal ?? null : mealFor(id));

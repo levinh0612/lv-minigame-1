@@ -128,6 +128,14 @@ describe("thú cưng làm nhân viên", () => {
     expect(pay.fed.map(x => x.id)).toEqual(["dog"]); expect(pay.hungry).toEqual(["gold", "white"]);
   });
 
+  it("mua đồ ăn trên thẻ bé nào thì bé đó được chia phần trước", () => {
+    lvUp(4); S.coins = 1000; ["dog", "gold", "white"].forEach(id => { hire(id as never); S.staff[id as "dog"].lv = 3; });
+    buyFood("chicken", 1); S.staff.white.prio = Date.now();             // bấm Mua trên thẻ Cacao
+    expect(crewPlan()).toEqual([{ id: "white", meal: "chicken" }, { id: "dog", meal: null }, { id: "gold", meal: null }]);
+    const { pay } = beginShift();
+    expect(pay.fed.map(x => x.id)).toEqual(["white"]); expect(pay.hungry).toEqual(["dog", "gold"]);
+  });
+
   it("hết đồ ăn thì bé đói và nghỉ ca đó", () => {
     lvUp(2); hire("dog");
     const { pay } = beginShift();
