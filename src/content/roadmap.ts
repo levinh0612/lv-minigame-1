@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.61", date: "05/10/2026", notes: ["Sửa lầu trên bị thiếu bàn ghế (do bước gộp nội thất làm mất)", "Bàn trải đều theo chiều rộng phòng ở từng lầu", "Ban đêm sáng hơn: đèn tỏa xa hơn và mạnh hơn, ánh sáng nền cao hơn", "Khách không còn đi lạc vào lầu trên"] },
   { v: "2.60", date: "05/10/2026", notes: ["Các lầu nối với nhau bằng cầu thang ở góc đông bắc; chỉ lầu trệt có cửa chính"] },
   { v: "2.59", date: "05/10/2026", notes: ["Lầu mới không còn trống: bàn được chia đều cho các lầu, lầu trên không có cánh cửa chính của lầu trệt", "Mỗi lần mở rộng ngang thêm 2 chỗ đặt bàn mỗi lầu; các bàn trải đều theo chiều rộng phòng", "Đèn treo đặt theo từng cột bàn nên phần mở rộng không còn bị tối"] },
   { v: "2.58", date: "05/10/2026", notes: ["Xây thêm lầu thì có thêm lầu thật: nút T1, T2... trong cảnh 3D để chuyển xem từng lầu", "Bàn nhiều hơn chỗ ở lầu trệt thì tự xếp lên lầu trên", "Nhìn từ ngoài tiệm thấy các lầu chồng lên nhau"] },

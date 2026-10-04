@@ -251,13 +251,14 @@ export function createShop(o: ShopOpts): ShopScene {
   const buildTables = (f: number) => {
     let lvs = o.tables.filter((_, i) => i % floors === f).slice(0, GROUND);          // bàn chia đều cho các lầu
     if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
+    const cols = Math.max(2, Math.ceil(lvs.length / 2)), step = (W - 3.7) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
     return lvs.map((lv, i) => {
-      const [x, z] = SPOTS[i]!, r = .6 + .1 * lv, par = flG[f]!;
+      const x = -1.9 + step * (i % cols), z = i < cols ? .7 : 2.2, r = .6 + .1 * lv, par = flG[f]!;
       const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par);
-      const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return chairs;
+      const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return { x, z, chairs };
     });
   };
-  const tbls = buildTables(0);
+  const placed0 = buildTables(0), tbls = placed0.map(t => t.chairs);
   const s1 = tbls[0]!, s2 = tbls[1]!;
   /* khách ra vào: mỗi chỗ ngồi tự chạy vòng ngồi → đứng dậy → ra cửa → vắng → khách khác vào → ngồi xuống */
   const POOL: { sprite: string; look: PersonLook }[] = [
@@ -307,7 +308,7 @@ export function createShop(o: ShopOpts): ShopScene {
         sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9), new THREE.Vector2(DOOR_X, 2.4), fwd(sl.st, APPROACH)]; sl.pi = 0; sl.phase = "in";
       } else if (sl.phase === "in" && advance(sl, dt)) { g.position.set(sl.st.x, 0, sl.st.z); g.rotation.y = sl.st.a; sl.actor.mode("sit"); sl.phase = "sitdown"; }
       else if (sl.phase === "sitdown" && sl.actor.done()) { sl.phase = "seated"; sl.next = t + (26 + Math.random() * 30) * TK; }
-      if (walking) { g.visible = exterior || g.position.z < 3.4; if (g.position.z > 2.6 && g.position.z < 4.4 && Math.abs(g.position.x - DOOR_X) < 1.1) nearDoor = true; }
+      if (walking) { g.visible = curFloor === 0 && (exterior || g.position.z < 3.4); if (g.position.z > 2.6 && g.position.z < 4.4 && Math.abs(g.position.x - DOOR_X) < 1.1) nearDoor = true; }
     });
     doorOpen += ((nearDoor ? 1 : 0) - doorOpen) * Math.min(1, dt * 5); doorPivot.rotation.y = -1.45 * doorOpen;   // mở ra phía ngoài
   });
@@ -315,7 +316,7 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* bóng tiếp đất cho đồ vật để không bị "dán" lên sàn */
   const blob = (x: number, z: number, rx: number, rz = rx, a = 1, par: THREE.Object3D = root) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(rx * 2, rz * 2), new THREE.MeshBasicMaterial({ map: blobMap(), transparent: true, opacity: a, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .014, z); par.add(m); };
-  blob(-.8, -1.55, 2.9, .85, .8); SPOTS.slice(0, tbls.length).forEach(([x, z]) => blob(x, z, .95, .95, 1, flG[0])); blob(-3.3, 2.05, .85, 1.1);
+  blob(-.8, -1.55, 2.9, .85, .8); placed0.forEach(t => blob(t.x, t.z, .95, .95, 1, flG[0])); blob(-3.3, 2.05, .85, 1.1);
   tbls.flat().forEach(st => blob(st.x, st.z, .4, .4, 1, flG[0])); [-2.6, -1.2, .2, 1.4].forEach(x => blob(x, -.95, .38, .38, .7));
   /* các lầu trên: cùng vỏ nhà, chỉ có bàn ghế riêng và đèn riêng; xem từng lầu bằng nút chuyển tầng */
   /* cầu thang nối các lầu (góc đông bắc): lầu dưới và lầu giữa có bậc đi lên, lầu trên cùng có miệng cầu thang xuống kèm lan can */
@@ -335,9 +336,9 @@ export function createShop(o: ShopOpts): ShopScene {
   const upLamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
   for (let f = 1; f < floors; f++) {
     const g = flG[f]!, t = buildTables(f);
-    SPOTS.slice(0, t.length).forEach(([x, z]) => blob(x, z, .95, .95, 1, g)); t.flat().forEach(st => blob(st.x, st.z, .4, .4, 1, g));
+    t.forEach(tb => { blob(tb.x, tb.z, .95, .95, 1, g); tb.chairs.forEach(st => blob(st.x, st.z, .4, .4, 1, g)); });
     Array.from({ length: COLS }, (_, c) => SPOTS[2 * c]![0]).forEach(x => {
-      const pl = new THREE.PointLight("#FFD27A", 0, 6.5, 1.5); pl.position.set(x, 2.0, 1.45); g.add(pl);
+      const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, 1.45); g.add(pl);
       upLamps.push({ pl, bulb: new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial()) });
     });
     g.visible = false;
@@ -398,7 +399,7 @@ export function createShop(o: ShopOpts): ShopScene {
     else if (kind === "4") add(lampG, CONE(.22, .2, 16), T("#3F4452"), x, 2.28, z, { ol: "thin", cast: false });
     else if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(lampG, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(lampG, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
     const bulb = add(lampG, SPH(.1, 12, 10), bulbMat, x, 2.1, z, { ol: null, cast: false });
-    const pl = new THREE.PointLight("#FFD27A", 0, 6.5, 1.5); pl.position.set(x, 2.0, z); lampG.add(pl); lamps.push({ pl, bulb });
+    const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, z); lampG.add(pl); lamps.push({ pl, bulb });
   };
   const bulbsStr: THREE.Mesh[] = [];
   const buildLamps = () => {
@@ -542,9 +543,9 @@ export function createShop(o: ShopOpts): ShopScene {
     const t = Math.max(0, Math.min(1, (h - 6) / 12)), ang = t * Math.PI;
     sun.position.set(CX + Math.cos(ang) * -9, Math.sin(ang) * 11 + 3, 7);
     sun.color.copy(n > .55 ? C("#8FA8FF") : lerpC("#FFFFFF", "#FFB070", warm)); sun.intensity = n > .55 ? .5 : 2.4 - n * 1.5;
-    hemi.intensity = .95 - n * .5; hemi.color.copy(lerpC("#fff2e0", "#7C8CD6", n)); hemi.groundColor.copy(lerpC("#c9a37a", "#34406e", n));
+    hemi.intensity = .95 - n * .3; hemi.color.copy(lerpC("#fff2e0", "#7C8CD6", n)); hemi.groundColor.copy(lerpC("#c9a37a", "#34406e", n));
     skyState = { h, n, warm }; drawSky();
-    [...lamps, ...upLamps].forEach(p => { p.pl.intensity = n * 3.4; (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
+    [...lamps, ...upLamps].forEach(p => { p.pl.intensity = n * 4.2; (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
     streetPl.intensity = n * 6; lampBulb.emissiveIntensity = n * 2.2; extGlass.forEach(m => { m.emissiveIntensity = .3 + n * .8; m.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); m.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n)); });
     winGlass.emissiveIntensity = .3 + n * .55; winGlass.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); winGlass.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n));
   }
@@ -605,7 +606,7 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   /* gộp nội thất tĩnh để giảm số lần vẽ; nhóm còn chuyển động hoặc dựng lại thì bỏ qua */
   if (!new URLSearchParams(location.search).has("nomerge")) {
-    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
+    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...flG.slice(1), ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
     const protect = new Set<THREE.Material>([...glowMats, ...Object.values(selAll).flat(), ...wallMains.map(x => x[0]), ...tableTops, ...tableLegs, ...[counterBits.top, counterBits.wood].filter((x): x is THREE.MeshToonMaterial => !!x)]);
     mergeStatic(root, skip, protect);
   }
