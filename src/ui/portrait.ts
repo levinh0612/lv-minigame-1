@@ -3,8 +3,8 @@ import { S } from "../engine/state";
 import type { PersonLook } from "../scene/people";
 
 /** khung ảnh `px` vuông; `fallback` là HTML 2D hiện trong lúc chờ (hoặc khi máy không vẽ được 3D) */
-export function portraitHTML(sprite: string, look: PersonLook, px: number, fallback: string, cls = "") {
-  return `<span class="p3 ${cls}" data-p3="${sprite}" data-p3l='${JSON.stringify(look).replace(/'/g, "&#39;")}' style="display:inline-block;width:${px}px;height:${px}px">${fallback}</span>`;
+export function portraitHTML(sprite: string, look: PersonLook, px: number, fallback: string, cls = "", live = false) {
+  return `<span class="p3 ${cls}" ${live ? 'data-live="1" ' : ""}data-p3="${sprite}" data-p3l='${JSON.stringify(look).replace(/'/g, "&#39;")}' style="display:inline-block;width:${px}px;height:${px}px">${fallback}</span>`;
 }
 
 let mod: Promise<typeof import("../scene/portrait3d")> | null = null;
@@ -16,6 +16,7 @@ export function hydratePortraits(root: ParentNode = document) {
     if (seen.has(el)) return; seen.add(el);
     const sprite = el.dataset.p3!, look = JSON.parse(el.dataset.p3l || "{}");
     mod ??= import("../scene/portrait3d");
+    if (el.dataset.live) { const px = parseInt(el.style.width) || 64; void mod.then(m => m.livePortrait(el, sprite, look, px)).catch(() => 0); return; }
     void mod.then(m => m.portrait3d(sprite, look)).then(url => {
       if (!url || !el.isConnected) return;
       const px = parseInt(el.style.width) || 64;

@@ -3,7 +3,7 @@
    Phần dùng chung nằm ở figure3d.ts. */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { headBind, headInfo, inPlace, makeActor, type Assets, type FigureCfg } from "./figure3d";
+import { GLSL_FACE, headBind, headInfo, inPlace, makeActor, type Assets, type FigureCfg } from "./figure3d";
 import type { Actor, PersonLook, Pose } from "./people";
 
 const DIR = "/models/girl-lo/", H = 1.5;
@@ -31,11 +31,11 @@ const GLSL = `#include <map_fragment>
   o = mix(o, clamp(s*(uS/vec3(.93,.75,.66)),0.,1.), sk);
   float sh = (1.-smoothstep(.11,.15,y))*smoothstep(.5,.62,v)*(1.-smoothstep(.2,.3,sa))*(1.-ac);   // giày kem/trắng
   o = mix(o, uF*clamp(v/.8,.4,1.2), sh);
-  o = mix(o, uE*clamp(v/.32,.3,1.3), eyeMask(h, sa, v));
+  o = mix(o, uE*clamp(v/.32,.3,1.3), eyeMask(h, sa, v));${GLSL_FACE}
   diffuseColor.rgb = pow(clamp(o,0.,1.), vec3(2.2)); }`;
 
 const CFG: FigureCfg = {
-  key: "girl3d", assets: load, glsl: GLSL, sitClip: false, shoesFollowShirt: false, eyeBind: [-.235, .36, .27, 0], eyeRel: [-.17, .46], seatY: .22, seatZ: -.02,
+  key: "girl3d", assets: load, glsl: GLSL, sitClip: false, shoesFollowShirt: false, mouthBind: [-.4, .14, .08], eyeBind: [-.235, .36, .27, 0], eyeRel: [-.17, .46], seatY: .22, seatZ: -.02,
   defaults: { coat: "#5B6F34", hair: "#6B4A3A", pants: "#6B3F22", skin: "#F0C0A8", shirt: "#E8A23B" }
 };
 export const girlActor = (look: PersonLook, fallback: () => Actor, style = ""): Actor => makeActor(CFG, look, fallback, style);

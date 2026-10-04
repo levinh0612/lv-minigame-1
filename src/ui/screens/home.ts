@@ -33,11 +33,13 @@ const PEN = `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke=
 const ENV = `<svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="26" height="18" rx="3" fill="#FFB3C7"/><path d="M2.5 3.5 L15 12 L27.5 3.5" fill="#FF9FB6"/><circle cx="15" cy="12" r="3.2" fill="#E0567A" stroke-width="1.8"/></svg>`;
 const CAKE = `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="13" width="20" height="11" rx="3" fill="#FFB3C7"/><path d="M4 17 C8 19 10 15 14 17 C18 19 20 15 24 17" stroke-width="1.8"/><rect x="12.5" y="6" width="3" height="7" fill="#fff"/><path d="M14 2 C12 4 12 6 14 6 C16 6 16 4 14 2 Z" fill="#FF8F4D" stroke-width="1.6"/></svg>`;
 const CUP = `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#C07A8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 H14 V8 C14 11 12 12.5 10 12.5 C8 12.5 6 11 6 8 Z" fill="#FFE3A0"/><path d="M6 5 H3.5 C3.5 8 5 9 6.5 9 M14 5 H16.5 C16.5 8 15 9 13.5 9 M10 12.5 V15.5 M6.5 17.5 H13.5 L12.5 15.5 H7.5 Z"/></svg>`;
+/* icon thanh dưới: nét đầy, trắng trên nền gradient, cùng một cỡ nét */
+const GL = (body: string) => `<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">${body}</svg>`;
 const NAV_IC = {
-  paw: `<svg width="30" height="30" viewBox="0 0 30 30" fill="#fff" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round"><ellipse cx="15" cy="20" rx="7.5" ry="6.5" fill="#7FD1AE"/><ellipse cx="7" cy="12.5" rx="3" ry="3.8"/><ellipse cx="12" cy="7.5" rx="3" ry="3.8"/><ellipse cx="18" cy="7.5" rx="3" ry="3.8"/><ellipse cx="23" cy="12.5" rx="3" ry="3.8"/></svg>`,
-  goal: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="4" width="20" height="23" rx="4" fill="#fff"/><rect x="10" y="2" width="10" height="5" rx="2" fill="#FFD66B"/><path d="M9 13 L11 15 L14.5 11" stroke-width="2"/><path d="M17 13.5 H21" stroke-width="2"/><path d="M9 20.5 L11 22.5 L14.5 18.5" stroke-width="2"/><path d="M17 21 H21" stroke-width="2"/></svg>`,
-  gift: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="13" width="20" height="14" rx="2.5" fill="#fff"/><rect x="3" y="9" width="24" height="6" rx="2" fill="#FF9FB6"/><path d="M15 9 V27" stroke="#FF6F91" stroke-width="4"/><path d="M15 9 C11 3 6 5 8.5 8.5 C10 9.5 13 9 15 9 C17 9 20 9.5 21.5 8.5 C24 5 19 3 15 9 Z" fill="#FF9FB6"/></svg>`,
-  shop: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="13" width="20" height="14" rx="2" fill="#fff"/><rect x="12" y="18" width="6" height="9" fill="#C9B8F0"/><path d="M3 12 L5.5 4 H24.5 L27 12 C27 14.5 23.5 14.5 23 12 C22.5 14.5 18.5 14.5 18 12 C17.5 14.5 12.5 14.5 12 12 C11.5 14.5 7.5 14.5 7 12 C6.5 14.5 3 14.5 3 12 Z" fill="#B7A3EE"/></svg>`
+  paw: GL('<ellipse cx="6.3" cy="10.2" rx="2" ry="2.6"/><ellipse cx="9.9" cy="6.1" rx="2" ry="2.7"/><ellipse cx="14.1" cy="6.1" rx="2" ry="2.7"/><ellipse cx="17.7" cy="10.2" rx="2" ry="2.6"/><path d="M12 11c-3 0-5.6 2.8-5.6 5 0 1.6 1.3 2.4 2.7 2.4 1 0 1.8-.5 2.9-.5s1.9.5 2.9.5c1.4 0 2.7-.8 2.7-2.4 0-2.2-2.6-5-5.6-5z"/>'),
+  goal: GL('<rect x="4.8" y="4.2" width="14.4" height="17" rx="3.2"/><rect x="8.8" y="2.3" width="6.4" height="4" rx="1.7"/><path d="M8.6 13.4l2.4 2.4 4.4-4.8" fill="none" stroke="var(--dk)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'),
+  gift: GL('<rect x="4.6" y="10.2" width="14.8" height="10.6" rx="2.2"/><rect x="3.4" y="7.2" width="17.2" height="4.6" rx="1.8"/><path d="M12 7.2v13.6" stroke="var(--dk)" stroke-width="2.4"/><path d="M12 7.2C9.4 7.2 7.9 6 7.9 4.7S9.3 3 10.4 3.5 12 5.6 12 7.2zM12 7.2c2.6 0 4.1-1.2 4.1-2.5S14.7 3 13.6 3.5 12 5.6 12 7.2z"/>'),
+  shop: GL('<path d="M3.4 9.6 5 4.4h14l1.6 5.2c0 1.5-1.1 2.5-2.4 2.5s-2.4-1-2.4-2.5c0 1.5-1.1 2.5-2.3 2.5s-2.3-1-2.3-2.5c0 1.5-1.1 2.5-2.4 2.5S3.4 11.1 3.4 9.6z"/><path d="M5.4 13.4v7.2h13.2v-7.2z"/><rect x="10" y="15.4" width="4" height="5.2" rx="1" fill="var(--dk)"/>')
 };
 
 export function homeHTML() {
@@ -47,16 +49,18 @@ export function homeHTML() {
     ? `<button class="hcard ev" data-act="letter"><span class="ic">${CAKE}</span><span class="tx"><b>${esc(te[0].t)} · xu ×2</b><small>${esc(eventNote(te[0]))}</small></span><i class="dot"></i></button>`
     : `<button class="hcard" data-act="letter"><span class="ic">${ENV}</span><span class="tx"><b>${ln ? "Thư hôm nay đã đến" : "Đã đọc thư hôm nay"}</b><small>${ln ? "Chạm để mở thư" : `Chuỗi ${S.streak} ngày · chạm để đọc lại`}</small></span>${ln ? `<i class="dot"></i>` : ""}</button>`;
   const nav = [
-    { n: "Thú cưng", ic: NAV_IC.paw, bg: "#DDF4E8", sh: "#BFE8D3", go: "/cua-hang/thu-cung", dot: "" },
-    { n: "Mục tiêu", ic: NAV_IC.goal, bg: "#FFF0C9", sh: "#F6DB94", go: "/muc-tieu", dot: left ? String(left) : "" },
-    { n: "Quà tặng", ic: NAV_IC.gift, bg: "#FFE3EA", sh: "#F6CBD7", go: "/cua-hang/qua-tang", dot: gift ? "1" : "" },
-    { n: "Cửa hàng", ic: NAV_IC.shop, bg: "#EDE6FF", sh: "#D6CBF6", go: "/cua-hang", dot: "" }
+    { n: "Thú cưng", ic: NAV_IC.paw, c1: "#8EE0BC", c2: "#3FB68A", dk: "#3FB68A", go: "/cua-hang/thu-cung", dot: "" },
+    { n: "Mục tiêu", ic: NAV_IC.goal, c1: "#FFD66B", c2: "#F2A41F", dk: "#F2A41F", go: "/muc-tieu", dot: left ? String(left) : "" },
+    { n: "Quà tặng", ic: NAV_IC.gift, c1: "#FF9DB6", c2: "#EE5A83", dk: "#EE5A83", go: "/cua-hang/qua-tang", dot: gift ? "1" : "" },
+    { n: "Cửa hàng", ic: NAV_IC.shop, c1: "#C2B0FA", c2: "#8B6FE6", dk: "#8B6FE6", go: "/cua-hang", dot: "" }
   ];
-  const nm = S.shop.trim() || account(), nlen = [...nm || "Matcha"].length, fs = nlen <= 8 ? 27 : nlen <= 12 ? 23 : nlen <= 16 ? 19 : 17;
-  const prof = `<div class="prof5">
-      <button class="pf-av5" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${portraitHTML(S.me.sprite, S.me, 62, guestSVG({ ...meLook(), mood: "happy" }, 62))}<span class="pf-ed" aria-hidden="true">✎</span></button>
-      <div class="pf-main5"><small class="pf-sub">${nm ? "Tiệm Bánh của" : "Tiệm Bánh"}</small><b class="pf-name" style="font-size:${fs}px">${esc(nm || "Matcha")}</b>
-        <button class="lvp wide" data-go="/muc-tieu" aria-label="Cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lb">Lv ${L}</span><span class="tr"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button></div>
+  const nm = S.shop.trim() || account(), nlen = [...nm || "Matcha"].length, fs = nlen <= 8 ? 22 : nlen <= 12 ? 19 : nlen <= 16 ? 17 : 15, pct = Math.min(100, cur / need * 100);
+  const prof = `<div class="prof6">
+      <button class="pf-av6" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${portraitHTML(S.me.sprite, S.me, 58, guestSVG({ ...meLook(), mood: "happy" }, 58), "", true)}<span class="pf-lv6">${L}</span></button>
+      <div class="pf-main6">
+        <div class="pf-t6"><small>${nm ? "Tiệm Bánh của" : "Tiệm Bánh"}</small><b style="font-size:${fs}px">${esc(nm || "Matcha")}</b></div>
+        <button class="xp6" data-go="/muc-tieu" aria-label="Cấp ${L}, ${cur}/${need} kinh nghiệm, mở Mục tiêu"><span class="xt"><i style="width:${pct}%"></i></span><em>${cur}/${need}</em></button>
+      </div>
     </div>`;
   /* 3D chiếm cả màn hình; mọi thứ khác (thanh trên, hồ sơ, thư, nút Mở tiệm, 4 nút) là lớp phủ trên và dưới */
   return `<div class="scr home5">
@@ -74,10 +78,13 @@ export function homeHTML() {
       <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
     </div>
     <div class="h5-bottom">
-      ${card}
-      <div class="h5-act"><button class="h5-fix" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}<span>Sửa tiệm</span></button><button class="b3" data-go="/chuan-bi">Mở tiệm</button></div>
-      <small class="openn">Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small>
-      <nav class="nav4">${nav.map(x => `<button data-go="${x.go}"><span class="ic" style="background:${x.bg};box-shadow:0 4px 0 ${x.sh}">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}${x.n}</button>`).join("")}</nav>
+      ${te.length ? card : ""}
+      <div class="h5-row">
+        ${te.length ? "" : `<button class="h5-mail" data-act="letter" aria-label="${ln ? "Thư hôm nay đã đến, chạm để mở" : "Đọc lại thư hôm nay"}">${ENV}${ln ? `<i class="dot"></i>` : ""}</button>`}
+        <button class="b3 h5-open" data-go="/chuan-bi"><span>Mở tiệm</span><small>Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></button>
+        <button class="h5-fix2" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}</button>
+      </div>
+      <nav class="dock">${nav.map(x => `<button data-go="${x.go}" style="--c1:${x.c1};--c2:${x.c2};--dk:${x.dk}"><span class="ic">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}<b>${x.n}</b></button>`).join("")}</nav>
     </div>
   </div>`;
 }

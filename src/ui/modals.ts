@@ -17,6 +17,8 @@ import type { Incident } from "../engine/incident";
 import { account, changePin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
+import { goalsBody } from "./screens/goals";
+import { giftBody } from "./screens/shop";
 
 const paper = (txt: string) => `<div class="paper">${esc(txt)}<span class="sig">${esc(S.names.his)}</span></div>`;
 
@@ -206,3 +208,7 @@ export function incidentModal(i: Incident, cost: number) {
     <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
     <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`);
 }
+
+/* ===== Mục tiêu và Quà tặng: hộp thoại trượt từ dưới lên (thay cho trang riêng) ===== */
+export function goalsSheet() { modal(`<h2>Mục tiêu</h2>${goalsBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }
+export function giftSheet() { modal(`<h2>Quà tặng</h2>${giftBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }

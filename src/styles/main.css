@@ -1156,3 +1156,37 @@ button.cm{position:relative}
 .zoom3d .vw{font-size:inherit}
 .h5-room .rot3d{left:10px;top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column}
 .h5-room .zoom3d{right:10px;top:50%;transform:translateY(-50%)}
+
+/* ===== Màn chính v6: thẻ hồ sơ gọn, hàng nút Mở tiệm, thanh điều hướng icon gradient ===== */
+.prof6{display:flex;gap:12px;align-items:center;margin:8px 12px 0;padding:8px 14px 8px 8px;border-radius:26px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 3px 0 var(--sh),0 10px 22px -12px rgba(120,70,90,.35)}
+.pf-av6{position:relative;flex:none;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#fff 0,var(--pink-l) 75%);box-shadow:0 0 0 3px #fff,0 3px 0 3px var(--sh);display:block}
+.pf-av6 .p3{display:block;border-radius:50%;overflow:hidden}
+.pf-av6 .p3 canvas,.pf-av6 .p3 img{display:block;border-radius:50%}
+.pf-lv6{position:absolute;right:-5px;bottom:-4px;min-width:24px;height:24px;padding:0 5px;border-radius:12px;background:linear-gradient(var(--pink-m),var(--pink));color:#fff;font:900 12px/20px var(--body);text-align:center;border:2.5px solid #fff;box-shadow:0 2px 0 var(--sh)}
+.pf-main6{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.pf-t6{display:flex;flex-direction:column;line-height:1.1}
+.pf-t6 small{font:800 11px var(--body);color:var(--mint-d);letter-spacing:.3px}
+.pf-t6 b{font-family:var(--display);font-weight:900;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.xp6{display:flex;align-items:center;gap:8px;width:100%;text-align:left}
+.xp6 .xt{flex:1;height:10px;border-radius:5px;background:var(--k-ffdce5);overflow:hidden;box-shadow:inset 0 1px 0 rgba(0,0,0,.05)}
+.xp6 .xt i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--pink-m),var(--pink));min-width:8px}
+.xp6 em{font:800 11px var(--body);font-style:normal;color:var(--soft);font-variant-numeric:tabular-nums}
+.h5-bottom{padding:30px 12px calc(8px + env(safe-area-inset-bottom,0px))}
+.h5-bottom .hcard{margin:0 0 10px;width:100%}
+.h5-row{display:flex;gap:10px;align-items:center}
+.h5-mail,.h5-fix2{position:relative;flex:none;width:56px;height:56px;border-radius:50%;background:#fff;box-shadow:0 4px 0 var(--sh),0 10px 18px -10px rgba(120,70,90,.4);display:grid;place-items:center;transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+.h5-mail:active,.h5-fix2:active{transform:translateY(3px) scale(.95)}
+.h5-mail svg{width:28px;height:21px}.h5-fix2 svg{width:22px;height:22px}
+.h5-mail .dot{position:absolute;top:6px;right:6px;width:13px;height:13px;border-radius:50%;background:var(--red);border:2.5px solid #fff}
+.h5-open{flex:1;height:62px;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.1}
+.h5-open span{font:900 24px var(--display)}
+.h5-open small{font:800 11px var(--body);opacity:.92}
+.dock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:12px;padding:9px 6px 8px;border-radius:28px;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 3px 0 var(--sh),0 12px 24px -12px rgba(120,70,90,.4)}
+.dock button{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px}
+.dock .ic{width:48px;height:48px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(160deg,var(--c1),var(--c2));box-shadow:0 3px 0 color-mix(in srgb,var(--c2) 70%,#3a2030),inset 0 2px 0 rgba(255,255,255,.5);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+.dock button:active .ic{transform:translateY(3px) scale(.94)}
+.dock b{font:800 12px var(--body);color:var(--ink2)}
+.dock .nd{position:absolute;top:-3px;right:calc(50% - 31px);min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);border:2.5px solid #fff;color:#fff;font:900 11px/15px var(--body);text-align:center}
+/* thẻ trong hộp thoại Mục tiêu / Quà tặng: nền nhẹ, viền mảnh để không chìm vào nền trắng của hộp */
+.mscroll .list{padding:0;margin:0}
+.mscroll .list .card{background:var(--bg);box-shadow:none;border:2px solid var(--pink-l);margin:0 0 12px}

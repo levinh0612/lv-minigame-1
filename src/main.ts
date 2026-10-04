@@ -12,7 +12,7 @@ import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { accountPanel, claimGoals, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, claimGoals, giftSheet, goalsSheet, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
@@ -29,6 +29,8 @@ document.addEventListener("click", e => {
   if (t.hasAttribute("data-close")) return closeModal();
   if (t.hasAttribute("data-music")) { Sound.setMusic(!S.music); if (!SH) render(); return; }
   const d = t.dataset;
+  if (d.go === "/muc-tieu" && !SH) { sfx("click"); return goalsSheet(); }                    // Mục tiêu, Quà tặng: hộp thoại từ dưới lên
+  if (d.go === "/cua-hang/qua-tang" && !SH) { sfx("click"); return giftSheet(); }
   if (d.go) { sfx("click"); return navigate(d.go, t.hasAttribute("data-replace")); }
   switch (d.act) {
     case "start": dropModal(); return startShift();

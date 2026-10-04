@@ -23,7 +23,7 @@ export function profileSheet() {
   const styles = () => STYLES.map(([id, n]) => `<button type="button" class="pf-sp${id === (d.me.style ?? "") ? " on" : ""}" data-pf="style" data-v="${id}" aria-label="Kiểu ${n}" title="${n}">${portraitHTML(d.me.sprite, { ...d.me, style: id }, 56, fb(56))}</button>`).join("");
   modal(`<h2>Hồ sơ của bạn</h2>
     <form id="pfForm">
-      <div class="pf-prev" id="pfPrev">${portraitHTML(d.me.sprite, d.me, 150, fb(150))}</div>
+      <div class="pf-prev" id="pfPrev">${portraitHTML(d.me.sprite, d.me, 150, fb(150), "", true)}</div>
       <div class="pf-cap" id="pfCap">Kiểu: ${STYLE_NAME[d.me.style ?? ""] ?? "Gốc"}</div>
       <label class="field">Tên tiệm (hiện ở màn chính)<input id="pfShop" value="${esc(d.shop)}" maxlength="16" placeholder="${esc(account() || "Matcha")}"></label>
       <div class="pf-h">Nhân vật</div>
@@ -39,7 +39,7 @@ export function profileSheet() {
   const mark = (sel: string, v: string) => document.querySelectorAll<HTMLElement>(sel).forEach(b => b.classList.toggle("on", b.dataset.v === v));
   const redraw = () => {
     $("#pfCap")!.textContent = "Kiểu: " + (STYLE_NAME[d.me.style ?? ""] ?? "Gốc");
-    $("#pfPrev")!.innerHTML = portraitHTML(d.me.sprite, d.me, 150, fb(150));
+    $("#pfPrev")!.innerHTML = portraitHTML(d.me.sprite, d.me, 150, fb(150), "", true);
     // ảnh nhỏ của từng kiểu vẽ lại theo giới tính và màu đang chọn
     $("#pfGenders")!.innerHTML = genders(); $("#pfSprites")!.innerHTML = styles();
     hydratePortraits($("#pfForm")!);

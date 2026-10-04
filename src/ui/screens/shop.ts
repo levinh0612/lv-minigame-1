@@ -92,7 +92,7 @@ export function petsHTML() {
     <p class="phint">Mỗi ngày thưởng một lần. Cho ăn để bé thân thiết hơn.</p>
   </div>`;
 }
-function giftTab() {
+export function giftBody() {
   const L2 = S.letters.slice().reverse();
   return `<div class="list">
     <div class="card"><h3>Quà hôm nay</h3><div class="gl">${goalsList()}</div>${claimBtn("Xong cả 3 mục tiêu để nhận quà")}</div>
@@ -105,5 +105,5 @@ function giftTab() {
 export function shopHTML(tab: ShopTab) {
   if (tab === "pets") return petsHTML();
   if (tab === "decor") return decorHTML();
-  return `<div class="scr gift4">${pageHead("Quà tặng")}${giftTab()}</div>`;
+  return `<div class="scr gift4">${pageHead("Quà tặng")}${giftBody()}</div>`;
 }
