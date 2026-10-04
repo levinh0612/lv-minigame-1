@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.20", date: "04/10/2026", notes: ["Cảnh tiệm 3D: buổi sáng có trời xanh, mặt trời, tia nắng và mây; chiều tà màu cam; buổi tối có trăng, sao và đèn đường"] },
   { v: "2.19", date: "03/10/2026", notes: ["Màn chính là cảnh tiệm 3D: xoay 4 góc, sáng và tối theo giờ thật, chạm thú cưng, menu, tủ bánh, ảnh, hộp quà như trước", "Đồ trang trí hiện đúng trong cảnh 3D; chủ tiệm là nhân vật bạn chọn trong Hồ sơ", "Xem ngoài tiệm (nút 🏪), phóng to thu nhỏ, thú cưng nhỏ gọn hơn, tủ bánh thấp trong suốt thấy bánh bên trong","Màn chính: thẻ hồ sơ có ảnh chân dung lớn; Tủ bánh cuộn được trên máy tính","Máy yếu thì tắt ở Cài đặt, game dùng lại cảnh 2D"] },
   { v: "2.18", date: "03/10/2026", notes: ["Vẽ lại toàn bộ khách theo phong cách mới: 6 kiểu nữ, 6 kiểu nam, mỗi người một màu tóc, mắt, áo, da riêng; thỉnh thoảng chớp mắt", "Khách chỉ còn nam và nữ: bỏ khách con vật, Milo, Siro, Cacao không còn ghé tiệm làm khách (các bé chỉ làm nhân viên)", "Milo, Siro, Cacao có hình mới, đổi biểu cảm theo tâm trạng", "Hồ sơ của bạn: chọn nhân vật (12 kiểu, đổi màu tóc/mắt/áo/da), sửa tên tiệm, chọn màu giao diện (hồng, xanh dương, xanh lá, tím, cam, xám); tự đồng bộ giữa các máy"] },
   { v: "2.17", date: "03/10/2026", notes: ["Storybook cuộn được lại, có nút xuất file để gửi Claude Design"] },

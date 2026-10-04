@@ -302,6 +302,31 @@ export function createShop(o: ShopOpts): ShopScene {
   const sc = sun.shadow.camera; sc.left = -8; sc.right = 8; sc.top = 8; sc.bottom = -8; sc.near = .5; sc.far = 40; sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
   scene.add(sun, sun.target);
   const C = (c: string) => new THREE.Color(c), lerpC = (a: string, b: string, t: number) => C(a).lerp(C(b), t);
+  /* bầu trời vẽ bằng canvas: ngày có mặt trời + tia nắng + mây, đêm có trăng + sao */
+  const skyCv = document.createElement("canvas"), skyTex = new THREE.CanvasTexture(skyCv); skyTex.colorSpace = THREE.SRGBColorSpace; scene.background = skyTex;
+  let skyState = { h: 12, n: 0, warm: 0 }, skyAsp = 1;
+  const star = (g: CanvasRenderingContext2D, x: number, y: number, rr: number) => { g.beginPath(); g.arc(x, y, rr, 0, 7); g.fill(); };
+  function drawSky() {
+    const { h, n, warm } = skyState, H = 384, W = Math.round(H * skyAsp); skyCv.width = W; skyCv.height = H;
+    const g = skyCv.getContext("2d")!, hex = (c: THREE.Color) => "#" + c.getHexString();
+    const top = C("#8FD0FF").lerp(C("#FFB78A"), Math.min(1, warm * 1.4)).lerp(C("#161E4A"), n), bot = C("#FFF4D6").lerp(C("#FFD9A8"), warm).lerp(C("#3A3F7A"), n);
+    const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, hex(top)); gr.addColorStop(1, hex(bot)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    const night = n > .55, t = Math.max(0, Math.min(1, ((night ? (h < 12 ? h + 24 : h) - 19 : h - 6)) / (night ? 11 : 12)));
+    const bx = W * (.12 + .76 * t), by = H * (.82 - Math.sin(t * Math.PI) * .62), R = H * .075;
+    if (!night) {
+      const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 6); gl.addColorStop(0, "rgba(255,240,170,.85)"); gl.addColorStop(1, "rgba(255,240,170,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+      g.save(); g.translate(bx, by); g.strokeStyle = "rgba(255,226,120,.8)"; g.lineWidth = R * .22; g.lineCap = "round";
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.moveTo(Math.cos(a) * R * 1.4, Math.sin(a) * R * 1.4); g.lineTo(Math.cos(a) * R * (i % 2 ? 1.9 : 2.3), Math.sin(a) * R * (i % 2 ? 1.9 : 2.3)); g.stroke(); }
+      g.restore(); g.fillStyle = warm > .3 ? "#FF9A55" : "#FFD84A"; star(g, bx, by, R);
+      g.fillStyle = `rgba(255,255,255,${.9 - n * .8})`;
+      [[.2, .22, 1], [.62, .14, .8], [.82, .36, 1.1], [.4, .5, .7]].forEach(([cx, cy, k]) => { const x = W * cx, y = H * cy, u = H * .04 * k; [[0, 0, 1.2], [1.2, .3, .9], [-1.2, .3, .9], [.4, -.5, .8]].forEach(([dx, dy, rr]) => star(g, x + dx * u, y + dy * u, rr * u)); });
+    } else {
+      g.fillStyle = "#fff"; for (let i = 0; i < 46; i++) { g.globalAlpha = .4 + ((i * 37) % 6) / 10; star(g, ((i * 97) % 101) / 100 * W, ((i * 53) % 71) / 100 * H, 1 + (i % 3) * .7); } g.globalAlpha = 1;
+      const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 5); gl.addColorStop(0, "rgba(200,215,255,.5)"); gl.addColorStop(1, "rgba(200,215,255,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+      g.fillStyle = "#FFF6D8"; star(g, bx, by, R * 1.1); g.fillStyle = hex(top); star(g, bx + R * .55, by - R * .2, R * .95);
+    }
+    skyTex.needsUpdate = true;
+  }
   function setHour(h: number) {
     const n = (h < 5.5 || h >= 19.5) ? 1 : h < 7 ? 1 - (h - 5.5) / 1.5 : h < 17 ? 0 : (h - 17) / 2.5;
     const warm = Math.max(0, 1 - Math.abs(n - .5) * 2) * (n > 0 && n < 1 ? 1 : 0);
@@ -309,7 +334,7 @@ export function createShop(o: ShopOpts): ShopScene {
     sun.position.set(Math.cos(ang) * -9, Math.sin(ang) * 11 + 3, 7);
     sun.color.copy(n > .55 ? C("#8FA8FF") : lerpC("#FFFFFF", "#FFB070", warm)); sun.intensity = n > .55 ? .5 : 2.4 - n * 1.5;
     hemi.intensity = .95 - n * .5; hemi.color.copy(lerpC("#fff2e0", "#7C8CD6", n)); hemi.groundColor.copy(lerpC("#c9a37a", "#34406e", n));
-    scene.background = n > .6 ? C("#161E4A") : warm > .3 ? lerpC("#FFB78A", "#7C6AA6", n) : lerpC("#FFE3EA", "#FFB78A", n * 1.6);
+    skyState = { h, n, warm }; drawSky();
     lamps.forEach(p => { p.pl.intensity = n * 3.4; (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
     streetPl.intensity = n * 6; lampBulb.emissiveIntensity = n * 2.2; extGlass.forEach(m => { m.emissiveIntensity = .3 + n * .8; m.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); m.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n)); });
     winGlass.emissiveIntensity = .3 + n * .55; winGlass.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); winGlass.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n));
@@ -326,7 +351,7 @@ export function createShop(o: ShopOpts): ShopScene {
     walls.forEach(wl => { const d = wl.nx * cx + wl.nz * cz, op = exterior ? 1 : Math.max(0, Math.min(1, 1 - d * 2.2)); wl.mats.forEach(m => { const mm = m as THREE.MeshToonMaterial; mm.opacity = op; mm.transparent = true; mm.depthWrite = op > .95; }); wl.decor.visible = !exterior && d < .45; });
   }
   const dom = r.domElement;
-  function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); const a = ww / hh; cam.left = -FR * a; cam.right = FR * a; cam.top = FR; cam.bottom = -FR; cam.updateProjectionMatrix(); }
+  function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); if (Math.abs(ww / hh - skyAsp) > .01) { skyAsp = ww / hh; drawSky(); } const a = ww / hh; cam.left = -FR * a; cam.right = FR * a; cam.top = FR; cam.bottom = -FR; cam.updateProjectionMatrix(); }
   const pulse = new Map<string, number>();
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
