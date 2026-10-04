@@ -36,7 +36,7 @@ export default defineConfig({
         importScripts: ["push-sw.js"],
         navigateFallback: "/index.html",
         runtimeCaching: [
-          { urlPattern: /\/models\/.*\.(glb|jpg)$/, handler: "CacheFirst", options: { cacheName: "models-3d", expiration: { maxEntries: 10 }, cacheableResponse: { statuses: [200] } } },
+          { urlPattern: /\/models\/.*\.(glb|jpg)$/, handler: "CacheFirst", options: { cacheName: "models-3d", expiration: { maxEntries: 24 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /^https:\/\/fonts\.googleapis\.com\//, handler: "StaleWhileRevalidate", options: { cacheName: "google-fonts-css" } },
           { urlPattern: /^https:\/\/fonts\.gstatic\.com\//, handler: "CacheFirst",
             options: { cacheName: "google-fonts", expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 }, cacheableResponse: { statuses: [0, 200] } } }

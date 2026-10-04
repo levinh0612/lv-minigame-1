@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { Animated, CAP, CONE, CYL, RB, SPH, T, add, animeFace } from "./kit";
 import { boyActor, boyPerson } from "./boy3d";
-import { animeActor, animePerson } from "./anime3d";
+import { fixedActor, fixedPerson, isFixed } from "./fixed3d";
 import { girlActor, girlPerson } from "./girl3d";
 
 export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt?: string; eye?: string; pants?: string; shoes?: string; style?: string }
@@ -22,14 +22,14 @@ const OUTFIT: Record<string, Outfit> = {
 
 /** Nam và nữ dùng model 3D có sẵn (boy3d.ts, girl3d.ts); khi model lỗi tải thì dựng chibi bằng khối bên dưới */
 export function person(look: PersonLook, sprite = "b1", pose: Pose = "seat"): Animated {
-  if (sprite[0] === "n") return animePerson(look, pose, () => blockActor(look, "g1"));
+  if (isFixed(sprite)) return fixedPerson(sprite, look, pose, () => blockActor(look, sprite[0] === "m" ? "b1" : "g1"));
   if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite), look.style ?? sprite);
   return girlPerson(look, pose, () => blockActor(look, sprite), look.style ?? sprite);
 }
 
 /** Nhân vật có đủ trạng thái cho khách ra vào */
 export function personActor(look: PersonLook, sprite: string): Actor {
-  if (sprite[0] === "n") return animeActor(look, () => blockActor(look, "g1"));
+  if (isFixed(sprite)) return fixedActor(sprite, look, () => blockActor(look, sprite[0] === "m" ? "b1" : "g1"));
   return (sprite[0] === "b" ? boyActor : girlActor)(look, () => blockActor(look, sprite), look.style ?? sprite);
 }
 

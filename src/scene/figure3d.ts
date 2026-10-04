@@ -120,7 +120,7 @@ export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Acto
     group,
     update(t) {
       if (inner) return inner.update(t);
-      if (!rt) return; const dt = last < 0 ? 0 : Math.min(t - last, .1); last = t; rt.mixer.update(dt);
+      if (!rt) return; const dt = last < 0 ? 0 : Math.min(t - last, .2); last = t; rt.mixer.update(dt);
       const U = rt.U;
       if (U) {
         if (blinkAt < 0 && t > nextBlink) blinkAt = t;

@@ -1,6 +1,6 @@
 /* Hồ sơ của bạn: chọn nhân vật (kiểu + màu tóc/mắt/áo/da), tên tiệm, theme màu.
    Lưu vào S.me / S.shop / S.theme nên tự đồng bộ theo tài khoản như phần còn lại của tiến trình. */
-import { BOY_HAIR, COAT, EYES, HAIR, PANTS, SHIRT, SHOES, SKIN, STYLES, STYLE_NAME, styleOf } from "../content/game";
+import { BOY_HAIR, COAT, FIXED_CHARS, isFixedChar, EYES, HAIR, PANTS, SHIRT, SHOES, SKIN, STYLES, STYLE_NAME, styleOf } from "../content/game";
 import { hydratePortraits, portraitHTML } from "./portrait";
 import { THEMES, applyTheme } from "../content/theme";
 import { S, save, type Avatar } from "../engine/state";
@@ -16,11 +16,11 @@ const COLOR_ROWS: [keyof Avatar, string, string[]][] = [
 export function profileSheet() {
   const d = { me: { ...S.me }, shop: S.shop, theme: S.theme };
   d.me.style = styleOf(d.me);                                  // người chơi cũ: đổi mã nhân vật cũ thành kiểu đầu tương ứng
-  const girl = () => d.me.sprite[0] !== "b";                   // nữ thường (g) và nữ anime (n) đều là nữ
-  const anime = () => d.me.sprite[0] === "n";                 // nữ anime: giữ nguyên trang phục, không tuỳ chỉnh
+  const girl = () => d.me.sprite[0] !== "b" && d.me.sprite[0] !== "m";   // g, n là nữ; b, m là nam
+  const anime = () => isFixedChar(d.me.sprite);                // nhân vật làm sẵn: giữ nguyên trang phục, không tuỳ chỉnh
   const look = () => ({ gender: girl() ? "girl" as const : "boy" as const, ...d.me });
   const fb = (px: number) => guestSVG({ ...look(), mood: "happy", ledge: false }, px);
-  const genders = () => ([["g1", "Nữ"], ["n1", "Nữ anime"], ["b1", "Nam"]] as const).map(([id, n]) => `<button type="button" class="pf-gd${id[0] === d.me.sprite[0] ? " on" : ""}" data-pf="gender" data-v="${id}">${portraitHTML(id, { ...d.me, style: d.me.style }, 46, guestSVG({ ...look(), sprite: id, gender: id[0] === "b" ? "boy" : "girl", ledge: false, mood: "happy" }, 46))}<b>${n}</b></button>`).join("");
+  const genders = () => ([["g1", "Nữ"], ["b1", "Nam"], ...FIXED_CHARS] as [string, string][]).map(([id, n]) => `<button type="button" class="pf-gd${id === d.me.sprite || (id.length === 2 && !isFixedChar(id) && id[0] === d.me.sprite[0] && !isFixedChar(d.me.sprite)) ? " on" : ""}" data-pf="gender" data-v="${id}">${portraitHTML(id, { ...d.me, style: d.me.style }, 46, guestSVG({ ...look(), sprite: id, gender: id[0] === "b" || id[0] === "m" ? "boy" : "girl", ledge: false, mood: "happy" }, 46))}<b>${n}</b></button>`).join("");
   const styles = () => STYLES.filter(([id]) => !girl() || !BOY_HAIR.has(id)).map(([id, n]) => `<button type="button" class="pf-sp${id === (d.me.style ?? "") ? " on" : ""}" data-pf="style" data-v="${id}" aria-label="Kiểu ${n}" title="${n}">${portraitHTML(d.me.sprite, { ...d.me, style: id }, 56, fb(56))}</button>`).join("");
   modal(`<h2>Hồ sơ của bạn</h2>
     <form id="pfForm"${anime() ? ' class="pf-anime"' : ""}>
@@ -51,7 +51,7 @@ export function profileSheet() {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-pf]"); if (!b) return;
     const k = b.dataset.pf!, v = b.dataset.v!;
     if (k === "theme") { d.theme = v; applyTheme(v); mark(".pf-th", v); return; }
-    if (k === "gender") { if (v[0] !== d.me.sprite[0]) { d.me.sprite = v; if (v[0] !== "b" && BOY_HAIR.has(d.me.style ?? "")) d.me.style = ""; if (v[0] === "n") d.me.style = ""; } }
+    if (k === "gender") { if (v !== d.me.sprite && !(!isFixedChar(v) && !isFixedChar(d.me.sprite) && v[0] === d.me.sprite[0])) { d.me.sprite = v; if (v[0] !== "b" && BOY_HAIR.has(d.me.style ?? "")) d.me.style = ""; if (isFixedChar(v)) d.me.style = ""; } }
     else if (k === "style") d.me.style = v;
     else { (d.me as Record<string, string>)[k] = v; mark(`[data-row="${k}"] .pf-dot`, v); }
     redraw();

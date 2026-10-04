@@ -25,16 +25,17 @@ export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean };
+  phases(): string[];
   update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
-let renderer: THREE.WebGLRenderer | null = null;
+let renderer: THREE.WebGLRenderer | null = null, quality = 0;   // quality: mức giảm chất lượng khi máy chậm (0 = đầy đủ), nhớ giữa các cảnh
 export const webglOK = () => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } };
 function getRenderer() {
   if (!renderer) {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "low-power" });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;   // bóng tự vẽ lại thưa hơn (xem frame)
   }
   return renderer;
 }
@@ -262,7 +263,7 @@ export function createShop(o: ShopOpts): ShopScene {
     p.x += dx / d * stp; p.z += dz / d * stp; let dr = Math.atan2(dx, dz) - g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); g.rotation.y += dr * Math.min(1, dt * 10); return false;
   };
   ups.push(t => {
-    const dt = lastT < 0 ? 0 : Math.min(t - lastT, .1); lastT = t; let nearDoor = false;
+    const dt = lastT < 0 ? 0 : Math.min(t - lastT, .25); lastT = t; let nearDoor = false;   // máy chậm thì bước dài hơn thay vì đi quay chậm
     slots.forEach(sl => {
       sl.actor.update(t); const g = sl.actor.group, walking = sl.phase === "out" || sl.phase === "in";
       if (sl.phase === "seated" && t > sl.next) { sl.actor.mode("getup"); sl.phase = "getup"; }
@@ -491,9 +492,14 @@ export function createShop(o: ShopOpts): ShopScene {
   function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); if (Math.abs(ww / hh - skyAsp) > .01) { skyAsp = ww / hh; drawSky(); } const a = ww / hh, hw = Math.max(FR * a, FR * 1.06), hv = hw / a;   // khung dọc (điện thoại): giữ vừa bề ngang căn phòng, thừa chiều dọc cho lớp phủ giao diện
     cam.left = -hw; cam.right = hw; cam.top = hv; cam.bottom = -hv; cam.updateProjectionMatrix(); }
   const pulse = new Map<string, number>();
+  let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0;
+  /** máy chậm: hạ độ phân giải để giữ mượt */
+  const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.75)); resize(w, h); };
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
     if (!dom.isConnected || document.hidden || now - last < 33) return;      // ~30 hình/giây
+    const gap = prevFrame ? Math.min(now - prevFrame, 250) : 33; prevFrame = now; avgGap = avgGap * .92 + gap * .08;
+    if (++adaptN % 45 === 0 && avgGap > 44 && quality < 3) { quality++; applyQuality(); avgGap = 33; }   // trung bình dưới ~23 hình/giây: giảm một nấc
     last = now; const t = now / 1000;
     ups.forEach(f => f(t));
     petObjs.forEach((p, id) => { const k = pulse.get(id) ?? -9, dt = t - k; p.g.scale.setScalar(PET_S * (dt < .5 ? 1 + Math.sin(dt / .5 * Math.PI) * .12 : 1)); p.g.position.y = .6 + (dt < .5 ? Math.sin(dt / .5 * Math.PI) * .12 : 0); });
@@ -501,6 +507,7 @@ export function createShop(o: ShopOpts): ShopScene {
     glowMats.forEach(m => { m.emissive.set("#FFD66B"); m.emissiveIntensity = .25 + .2 * Math.sin(t * 4); });
     if (!dragging) az += (azT - az) * .15;
     zoom += (zoomT - zoom) * .2; pan += (panT - pan) * .2;
+    r.shadowMap.needsUpdate = shadowTick++ % (quality >= 1 ? 3 : 2) === 0;     // bóng vẽ lại 1/2 (hoặc 1/3 khi máy chậm) số khung
     layout(); r.render(scene, cam);
   }
   if (new URLSearchParams(location.search).get("ext") === "1") { buildOutside(); exterior = true; outside.visible = true; zoomT = zoom = .78; el = 30 * Math.PI / 180; }   // ?ext=1: thử chế độ xem ngoài tiệm
@@ -525,6 +532,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const v = new THREE.Vector3();
   return {
     update,
+    phases: () => slots.map(sl => `${sl.phase}@${sl.actor.group.position.x.toFixed(1)},${sl.actor.group.position.z.toFixed(1)}${sl.actor.group.visible ? "" : " hidden"}`),
     dom, hotspots, resize,
     rotate(dir) { azT += dir * Math.PI / 2; },
     setHour, bounce(id) { pulse.set(id, performance.now() / 1000); },
