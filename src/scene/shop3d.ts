@@ -1,7 +1,7 @@
 /* Cảnh tiệm 3D của màn chính: phòng dựng bằng code theo đồ trang trí đang dùng, thú cưng, chủ tiệm, khách, bánh.
    Sáng/tối theo giờ, xoay 4 góc. Không đọc trạng thái game: mọi thứ truyền qua ShopOpts. */
 import * as THREE from "three";
-import { CYL, RB, SPH, T, INK, add, CONE } from "./kit";
+import { CYL, RB, SPH, T, INK, add, CONE, CAP } from "./kit";
 import { cake } from "./cake";
 import { pet, type PetKind } from "./pets";
 import { APPROACH } from "./figure3d";
@@ -52,14 +52,19 @@ const WALL: Record<string, () => { color: string; map: THREE.Texture }> = {
   mint: () => ({ color: "#fff", map: stripes("#E4F6EC", "#D8F0E3", [10, 1]) }),
   cream: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#FFF6E3"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFD9A8"; g.beginPath(); g.arc(w / 2, h / 2, 6, 0, 7); g.fill(); }, [12, 4]) }),
   lavender: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#F4F0FF"; g.fillRect(0, 0, w, h); g.fillStyle = "#E4DBFF"; g.fillRect(0, 0, w, 3); g.fillRect(0, 0, 3, h); }, [10, 4]) }),
-  party: () => ({ color: "#fff", map: stripes("#FFF0C9", "#FFE7AE", [10, 1]) })
+  party: () => ({ color: "#fff", map: stripes("#FFF0C9", "#FFE7AE", [10, 1]) }),
+  peach: () => ({ color: "#fff", map: stripes("#FFE4D0", "#FFD9BE", [10, 1]) }),
+  sky: () => ({ color: "#fff", map: stripes("#E2F1FF", "#D3E8FA", [10, 1]) }),
+  brick: () => ({ color: "#fff", map: tex(128, 64, (g, w, h) => { g.fillStyle = "#EBC9B4"; g.fillRect(0, 0, w, h); g.fillStyle = "#D99A82"; for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) { const ox = r % 2 ? w / 4 : 0; g.fillRect(((c * w / 2 + ox) % w) + 2, r * h / 4 + 2, w / 2 - 4, h / 4 - 4); } }, [6, 3]) })
 };
 const FLOOR: Record<string, () => THREE.Texture> = {
   check: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#DDF4E8"; g.fillRect(0, 0, w, h); g.fillStyle = "#CBEDDB"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [8, 6]),
   wood: () => tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? "#E7BD8B" : "#EFCB9E"; g.fillRect(0, i * h / 8, w, h / 8); g.fillStyle = "rgba(150,90,40,.35)"; g.fillRect(0, i * h / 8, w, 3); } }, [4, 3]),
+  dark: () => tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? "#8A5A3C" : "#9A6846"; g.fillRect(0, i * h / 8, w, h / 8); g.fillStyle = "rgba(40,20,10,.4)"; g.fillRect(0, i * h / 8, w, 3); } }, [4, 3]),
+  marble: () => tex(128, 128, (g, w, h) => { g.fillStyle = "#F4F4F6"; g.fillRect(0, 0, w, h); g.fillStyle = "#E3E5EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); g.strokeStyle = "rgba(150,160,175,.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(10, 20); g.lineTo(50, 60); g.moveTo(80, 70); g.lineTo(120, 110); g.stroke(); }, [6, 4]),
   tile: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFE3EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [8, 6])
 };
-const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"] };
+const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"] };
 
 const W = 8, D = 6, HH = 3.2, PET_S = .92;
 const DOOR_X = 1.3, DOOR_W = 1.5, DOOR_H = 2.35;   // lối cửa chính trên tường Nam
@@ -71,6 +76,9 @@ export function createShop(o: ShopOpts): ShopScene {
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 80);
   const ups: ((t: number) => void)[] = [], hotspots: Hotspot[] = [], walls: { group: THREE.Group; decor: THREE.Group; nx: number; nz: number; mats: THREE.Material[] }[] = [];
   const disposables: { dispose(): void }[] = [];
+  /* màu chủ đạo của tiệm theo màu giao diện người chơi chọn (hồng, cam, xanh...) */
+  const css = (n: string, d: string) => (typeof document !== "undefined" && getComputedStyle(document.documentElement).getPropertyValue(n).trim()) || d;
+  const PK = css("--pink", "#FF7FA1"), PKM = css("--pink-m", "#FF8FAB"), PKD = css("--pink-d", "#E0567A");
   const ev = o.event, R = o.room; let curHl = o.hl; const hl = (k: string) => curHl === k;
   const glowMats: THREE.MeshToonMaterial[] = [], selAll: Record<string, THREE.MeshToonMaterial[]> = {};
   const sel = (k: string, m: THREE.MeshToonMaterial) => { (selAll[k] ||= []).push(m); if (hl(k)) glowMats.push(m); return m; };
@@ -111,7 +119,7 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* cửa sổ + rèm */
   const winGlass = T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .3 });
-  const curtainTexOf = (c: string) => c === "1" ? stripes("#FF9FB6", "#fff", [4, 1]) : c === "2" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#8FD9B6"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [2, 3]) : null;
+  const curtainTexOf = (c: string) => c === "1" ? stripes(PKM, "#fff", [4, 1]) : c === "3" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#FFF3C4"; g.fillRect(0, 0, w, h); g.fillStyle = "#F2B84B"; g.beginPath(); g.arc(w / 2, h / 2, 9, 0, 7); g.fill(); }, [3, 4]) : c === "4" ? stripes("#D9CCFF", "#fff", [4, 1]) : c === "2" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#8FD9B6"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [2, 3]) : null;
   const curtainBuilds: [THREE.Group, () => void][] = [];
   function windowOn(w: typeof wN, x: number, y = 1.85, ww = 1.5, wh = 1.3) {
     const f = T("#8A5A3A", { transparent: true }); w.mats.push(f);
@@ -119,14 +127,14 @@ export function createShop(o: ShopOpts): ShopScene {
     fr(ww + .24, .1, 0, y + wh / 2 + .05); fr(ww + .24, .1, 0, y - wh / 2 - .05); fr(.1, wh, -ww / 2 - .05, y); fr(.1, wh, ww / 2 + .05, y); fr(.06, wh, 0, y);
     add(w.decor, new THREE.PlaneGeometry(ww, wh), winGlass, x, y, .02, { ol: null, cast: false });
     add(w.decor, RB(ww + .1, .1, .22, .03), T("#fff"), x, y - wh / 2 - .14, .16, { ol: "thin" });
-    const cg = new THREE.Group(); cg.add(cg);
+    const cg = new THREE.Group(); w.decor.add(cg);
     const bc = () => {
     const curtainTex = curtainTexOf(cur.curtain);
     if (curtainTex) {
       const cm = sel("curtain", T("#fff", { map: curtainTex, side: THREE.DoubleSide }));
       add(cg, CYL(.02, .02, ww + .5, 8), T("#C9905A"), x, y + wh / 2 + .22, .2, { r: [0, 0, Math.PI / 2], ol: null });
       ([-1, 1] as const).forEach(s => add(cg, RB(.45, wh + .45, .05, .02), cm, x + s * (ww / 2 - .1), y - .05, .22, { ol: "thin" }));
-    } else add(cg, RB(ww + .6, .1, .75, .03), T("#FF8FAB"), x, y + wh / 2 + .35, .38, { r: [.38, 0, 0], ol: "thin" });
+    } else add(cg, RB(ww + .6, .1, .75, .03), T(PKM), x, y + wh / 2 + .35, .38, { r: [.38, 0, 0], ol: "thin" });
     }; bc(); curtainBuilds.push([cg, bc]);
   }
   windowOn(wN, -2.0); windowOn(wN, 2.3); windowOn(wW, .3);
@@ -140,6 +148,15 @@ export function createShop(o: ShopOpts): ShopScene {
     add(wallG, CYL(.34, .34, .06, 28), T("#FFF3F6"), .3, 2.0, .1, { r: [Math.PI / 2, 0, 0], ol: "mid" });
     ([-1, 1] as const).forEach(s => add(wallG, CONE(.1, .2, 4), T("#FFE3EA"), .3 + s * .24, 2.38, .1, { r: [0, Math.PI / 4, -s * .3], ol: "thin" }));
     add(wallG, CAPBAR(.02, .22), T(INK), .3, 2.06, .14, { ol: null }); add(wallG, CAPBAR(.02, .16), T(INK), .38, 1.97, .14, { r: [0, 0, 1.2], ol: null });
+  } else if (cur.wallItem === "3") {
+    ([[-.4, "#FFD1DC"], [.15, "#CFE9FF"], [.7, "#FFE9B8"]] as const).forEach(([dx, c], i) => { add(wallG, RB(.42, .52, .06, .02), T("#fff"), dx, 2.0 + (i === 1 ? .1 : 0), .1, { ol: "thin" }); add(wallG, new THREE.PlaneGeometry(.3, .4), new THREE.MeshBasicMaterial({ color: c }), dx, 2.0 + (i === 1 ? .1 : 0), .14, { ol: null, cast: false }); });
+  } else if (cur.wallItem === "4") {
+    add(wallG, new THREE.TorusGeometry(.32, .06, 8, 28), T("#7FBF86"), .3, 2.0, .1, { ol: "thin" });
+    ["#FF8FAB", "#FFD66B", "#fff", "#C9B8F0", "#FF8FAB", "#FFD66B", "#fff", "#C9B8F0"].forEach((c, i) => { const a = i * Math.PI / 4; add(wallG, SPH(.07, 8, 6), T(c), .3 + Math.cos(a) * .32, 2.0 + Math.sin(a) * .32, .15, { ol: "thin" }); });
+  } else if (cur.wallItem === "5") {
+    const st = tex(256, 112, (g, w, h) => { g.fillStyle = "#FFF3E4"; g.fillRect(0, 0, w, h); g.fillStyle = "#E0567A"; g.font = "800 62px Nunito, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("OPEN", w / 2, h / 2 + 4); });
+    add(wallG, RB(.98, .46, .06, .03), T("#E9A27C"), .3, 2.0, .1, { ol: "mid" });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(.88, .38), new THREE.MeshBasicMaterial({ map: st })); pl.position.set(.3, 2.0, .14); wallG.add(pl);
   } else {
     const gold = cur.wallItem === "1";
     add(wallG, RB(.8, .95, .07, .02), T(gold ? "#E9C46A" : "#fff"), .3, 2.0, .1, { ol: "mid" });
@@ -149,7 +166,7 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   }; buildWall();
   const photoHs: Hotspot = { id: "photo", attr: "data-act", value: "photo", label: "Treo ảnh lên tường", obj: frameAnchor, wall: wi(wN), dy: 0 };
-  const syncPhoto = () => { const i = hotspots.indexOf(photoHs); if (i >= 0) hotspots.splice(i, 1); if (cur.wallItem !== "2") hotspots.push(photoHs); }; syncPhoto();
+  const syncPhoto = () => { const i = hotspots.indexOf(photoHs); if (i >= 0) hotspots.splice(i, 1); if (cur.wallItem === "0" || cur.wallItem === "1") hotspots.push(photoHs); }; syncPhoto();
 
 
   /* bảng menu (tường Tây) */
@@ -191,7 +208,7 @@ export function createShop(o: ShopOpts): ShopScene {
   /* hộp quà */
   const gift = new THREE.Group(); gift.position.set(.55, 1.09, -1.55); root.add(gift);
   add(gift, RB(.3, .24, .3, .03), T("#8FD9B6"), 0, .12, 0, { ol: "thin" }); add(gift, RB(.32, .08, .32, .02), T("#8FD9B6"), 0, .26, 0, { ol: "thin" });
-  add(gift, RB(.06, .3, .32, .01), T("#FF8FAB"), 0, .14, 0, { ol: null }); add(gift, RB(.32, .3, .06, .01), T("#FF8FAB"), 0, .14, 0, { ol: null });
+  add(gift, RB(.06, .3, .32, .01), T(PKM), 0, .14, 0, { ol: null }); add(gift, RB(.32, .3, .06, .01), T(PKM), 0, .14, 0, { ol: null });
   if (o.giftDot) add(gift, SPH(.07, 10, 8), T("#FF4F7A", { emissive: new THREE.Color("#FF4F7A"), emissiveIntensity: .5 }), .16, .38, .16, { ol: "thin" });
   ups.push(t => { gift.position.y = 1.09 + Math.sin(t * 2.4) * .02; });
   hotspots.push({ id: "gift", attr: "data-go", value: "/cua-hang/qua-tang", label: "Quà tặng", obj: gift, wall: null, dy: .25 });
@@ -200,7 +217,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const petMeta: [PetKind, number, string][] = [["dog", -2.9, "dog"], ["gold", -1.6, "gold"], ["white", -.3, "white"]];
   const petObjs = new Map<string, { g: THREE.Group; t: number }>();
   petMeta.forEach(([k, x, id]) => {
-    add(root, CYL(.45, .5, .6, 22), T("#FFB3C7"), x, .3, -2.5, { ol: "mid" });
+    add(root, CYL(.45, .5, .6, 22), T(PKM), x, .3, -2.5, { ol: "mid" });
     const m = pet(k); m.group.position.set(x, .6, -2.5); m.group.scale.setScalar(PET_S); root.add(m.group); ups.push(m.update); petObjs.set(id, { g: m.group, t: -9 });
     hotspots.push({ id: "pet-" + id, attr: "data-pet", value: id, label: "Vuốt ve " + id, obj: m.group, wall: null, dy: 1.15 });
   });
@@ -272,8 +289,19 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* thảm */
   const rugG = new THREE.Group(); root.add(rugG);
+  const buildRug2 = () => {
+    const flat2 = (geo: THREE.BufferGeometry, mat: THREE.Material, y: number) => { const m = add(rugG, geo, mat, .3, y, .95, { cast: false, ol: null }); m.rotation.x = -Math.PI / 2; return m; };
+    if (cur.rug === "3") flat2(new THREE.PlaneGeometry(2.6, 1.7), sel("rug", T("#fff", { map: tex(64, 64, (g, w, h) => { g.fillStyle = "#FFF1D6"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFC9A0"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [5, 3]) })), .012);
+    else if (cur.rug === "5") flat2(new THREE.PlaneGeometry(2.6, 1.7), sel("rug", T("#fff", { map: stripes("#CFE9FF", "#fff", [8, 1]) })), .012);
+    else {
+      const sh = new THREE.Shape(); sh.moveTo(0, .35); sh.bezierCurveTo(0, .85, -.85, .95, -.85, .3); sh.bezierCurveTo(-.85, -.2, -.25, -.5, 0, -.95); sh.bezierCurveTo(.25, -.5, .85, -.2, .85, .3); sh.bezierCurveTo(.85, .95, 0, .85, 0, .35);
+      const g1 = new THREE.ShapeGeometry(sh); g1.scale(1.45, 1.2, 1); flat2(g1, sel("rug", T(PKM)), .012);
+      const g2 = new THREE.ShapeGeometry(sh); g2.scale(1.05, .86, 1); flat2(g2, sel("rug", T("#FFE3EA")), .016);
+    }
+  };
   const buildRug = () => {
-  if (cur.rug !== "0") {
+  if (cur.rug === "3" || cur.rug === "4" || cur.rug === "5") buildRug2();
+  else if (cur.rug !== "0") {
     const rt = cur.rug === "2" ? tex(256, 256, (g, w) => { g.fillStyle = "#FF8FAB"; g.beginPath(); g.arc(w / 2, w / 2, w / 2, 0, 7); g.fill(); g.fillStyle = "#FFF1A8"; for (let i = 0; i < 40; i++) { const a = i * 2.4, rr = (i % 7) * 15 + 10; g.beginPath(); g.arc(w / 2 + Math.cos(a) * rr, w / 2 + Math.sin(a) * rr, 3.5, 0, 7); g.fill(); } })
       : tex(256, 256, (g, w) => { const rr = w / 2; ([["#FFD1DC", 1], ["#fff", .86], ["#FFD1DC", .8], ["#fff", .38], ["#FFD1DC", .32]] as const).forEach(([c, k]) => { g.fillStyle = c; g.beginPath(); g.arc(rr, rr, rr * k, 0, 7); g.fill(); }); });
     const rg = add(rugG, new THREE.CircleGeometry(1.5, 48), sel("rug", T("#fff", { map: rt, transparent: true })), .3, .012, .95, { cast: false, ol: null }); rg.rotation.x = -Math.PI / 2; rg.scale.y = .75;
@@ -283,28 +311,43 @@ export function createShop(o: ShopOpts): ShopScene {
   /* cây */
   const plantG = new THREE.Group(); root.add(plantG);
   const plantAt = (x: number, z: number, s: number) => {
-    if (cur.plant === "0") return;
-    add(plantG, CYL(.24 * s, .18 * s, .42 * s, 16), T(cur.plant === "2" ? "#fff" : "#E9A27C"), x, .21 * s, z, { ol: "mid" });
-    if (cur.plant === "1") [[0, .5, 0, .22], [.18, .5, .06, .16], [-.17, .52, -.04, .15], [0, .62, 0, .14]].forEach(([dx, dy, dz, rr]) => add(plantG, SPH(rr * s, 12, 10), T("#9FD18A"), x + dx * s, dy * s, z + dz * s, { s: [1, .7, 1], ol: "thin" }));
-    else [[0, .75, 0, .32], [.2, 1.0, .05, .26], [-.19, .95, -.06, .24], [.02, 1.2, .02, .2]].forEach(([dx, dy, dz, rr]) => add(plantG, SPH(rr * s, 14, 12), T("#6FB27A"), x + dx * s, dy * s, z + dz * s, { s: [1.2, .8, 1], ol: "thin" }));
+    const p = cur.plant; if (p === "0") return;
+    add(plantG, CYL(.24 * s, .18 * s, .42 * s, 16), T(p === "2" ? "#fff" : p === "4" ? "#FFF3F6" : "#E9A27C"), x, .21 * s, z, { ol: "mid" });
+    const ball = (dx: number, dy: number, dz: number, rr: number, c: string, k: [number, number, number]) => add(plantG, SPH(rr * s, 14, 12), T(c), x + dx * s, dy * s, z + dz * s, { s: k, ol: "thin" });
+    if (p === "1") [[0, .5, 0, .22], [.18, .5, .06, .16], [-.17, .52, -.04, .15], [0, .62, 0, .14]].forEach(([dx, dy, dz, rr]) => ball(dx!, dy!, dz!, rr!, "#9FD18A", [1, .7, 1]));
+    else if (p === "2") [[0, .75, 0, .32], [.2, 1.0, .05, .26], [-.19, .95, -.06, .24], [.02, 1.2, .02, .2]].forEach(([dx, dy, dz, rr]) => ball(dx!, dy!, dz!, rr!, "#6FB27A", [1.2, .8, 1]));
+    else if (p === "3") {
+      add(plantG, CAP(.15 * s, .6 * s), T("#7FBF86"), x, .85 * s, z, { ol: "thin" });
+      ([-1, 1] as const).forEach(d => { add(plantG, CAP(.07 * s, .2 * s), T("#7FBF86"), x + d * .22 * s, .88 * s, z, { r: [0, 0, -d * 1.2], ol: "thin" }); add(plantG, CAP(.07 * s, .22 * s), T("#7FBF86"), x + d * .3 * s, 1.02 * s, z, { ol: "thin" }); });
+      ball(0, 1.28, 0, .07, "#FF8FAB", [1, 1, 1]);
+    } else if (p === "4") {
+      [[-.12, .95, "#FF8FAB"], [.1, 1.05, "#FFD66B"], [0, .85, "#C9B8F0"], [.18, .8, "#FF6F9B"], [-.2, .78, "#fff"]].forEach(([dx, hy, c], i) => { const top = (hy as number) * s; add(plantG, CYL(.012 * s, .012 * s, top - .3 * s, 5), T("#6FB27A"), x + (dx as number) * s, (top + .3 * s) / 2, z + (i % 2 ? .05 : -.05) * s, { ol: null }); add(plantG, SPH(.09 * s, 10, 8), T(c as string), x + (dx as number) * s, top, z + (i % 2 ? .05 : -.05) * s, { s: [1, 1.3, 1], ol: "thin" }); });
+      ball(0, .5, 0, .2, "#9FD18A", [1.1, .5, 1.1]);
+    } else {
+      add(plantG, CYL(.04 * s, .06 * s, 1.0 * s, 8), T("#A9784F"), x, .9 * s, z, { ol: "thin" });
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; add(plantG, SPH(.3 * s, 12, 8), T("#6FB27A"), x + Math.cos(a) * .3 * s, 1.45 * s, z + Math.sin(a) * .3 * s, { s: [1, .22, .42], r: [0, -a, -.35], ol: "thin" }); }
+    }
   };
   const buildPlants = () => { plantAt(3.3, 2.3, 1.2); plantAt(-3.5, 2.5, .9); }; buildPlants();
 
   /* đèn */
   const lamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
   const lampG = new THREE.Group(); root.add(lampG);
-  const pendant = (x: number, z: number, cloud: boolean) => {
+  const pendant = (x: number, z: number, kind: string) => {
+    const cloud = kind === "1";
     add(lampG, CYL(.012, .012, .9, 6), T(INK), x, 2.72, z, { ol: null, cast: false });
     const col = cloud ? "#FFFCEC" : "#FFB6C8";
     const bulbMat = new THREE.MeshStandardMaterial({ color: "#FFF1CC", emissive: new THREE.Color("#FFD27A"), emissiveIntensity: 0 });
-    if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(lampG, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(lampG, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
+    if (kind === "3") { add(lampG, SPH(.22, 16, 12), T("#FF7A59"), x, 2.12, z, { s: [1, 1.25, 1], ol: "thin", cast: false }); add(lampG, CYL(.1, .1, .05, 10), T("#E9C46A"), x, 2.42, z, { ol: null, cast: false }); add(lampG, CYL(.1, .1, .05, 10), T("#E9C46A"), x, 1.82, z, { ol: null, cast: false }); }
+    else if (kind === "4") add(lampG, CONE(.22, .2, 16), T("#3F4452"), x, 2.28, z, { ol: "thin", cast: false });
+    else if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(lampG, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(lampG, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
     const bulb = add(lampG, SPH(.1, 12, 10), bulbMat, x, 2.1, z, { ol: null, cast: false });
     const pl = new THREE.PointLight("#FFD27A", 0, 6.5, 1.5); pl.position.set(x, 2.0, z); lampG.add(pl); lamps.push({ pl, bulb });
   };
   const bulbsStr: THREE.Mesh[] = [];
   const buildLamps = () => {
-  if (cur.lamp === "1") { pendant(-1.8, 1.0, true); pendant(2.2, 1.5, true); pendant(-.8, -1.0, true); }
-  else { pendant(-1.8, 1.0, false); pendant(2.2, 1.5, false); pendant(-.8, -1.0, false); }
+  const lk = cur.lamp === "1" || cur.lamp === "3" || cur.lamp === "4" ? cur.lamp : "0";
+  pendant(-1.8, 1.0, lk); pendant(2.2, 1.5, lk); pendant(-.8, -1.0, lk);
   if (cur.lamp === "2" || ev) {
     const pts: THREE.Vector3[] = []; for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector3(-3.8 + t * 7.6, 2.95 - Math.sin(t * Math.PI) * .35, -2.8)); }
     lampG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .008, 4), new THREE.MeshBasicMaterial({ color: INK })));
@@ -346,19 +389,19 @@ export function createShop(o: ShopOpts): ShopScene {
     const rd = add(outside, new THREE.PlaneGeometry(70, 3.4), T("#7E8088"), 0, -.335, road.z, { cast: false, ol: null }); rd.rotation.x = -Math.PI / 2;
     for (let i = -6; i <= 6; i++) { const dsh = add(outside, new THREE.PlaneGeometry(.9, .14), T("#FFF1A8"), i * 2.2, -.33, road.z, { cast: false, ol: null }); dsh.rotation.x = -Math.PI / 2; }
     // mái nhà
-    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : "#FFD1DC"), 0, HH + .14, 0, { ol: "mid" });
+    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : PKM), 0, HH + .14, 0, { ol: "mid" });
     add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), 0, HH + .37, 0, { ol: "thin" });
     add(outside, RB(1.0, .5, .8, .04), T("#DDEBF2"), -2.2, HH + .7, -1.2, { ol: "thin" });                          // máy lạnh trên mái
     // biển hiệu
     const signTex = (() => { const c = document.createElement("canvas"); c.width = 768; c.height = 160; const g = c.getContext("2d")!;
-      g.fillStyle = "#FF8FAB"; g.beginPath(); g.roundRect(6, 6, 756, 148, 40); g.fill(); g.lineWidth = 8; g.strokeStyle = "#fff"; g.stroke();
+      g.fillStyle = PKM; g.beginPath(); g.roundRect(6, 6, 756, 148, 40); g.fill(); g.lineWidth = 8; g.strokeStyle = "#fff"; g.stroke();
       const t = "Tiệm Bánh " + o.shopName; let fs = 76; g.font = `800 ${fs}px Nunito, system-ui, sans-serif`; while (g.measureText(t).width > 680 && fs > 30) { fs -= 4; g.font = `800 ${fs}px Nunito, system-ui, sans-serif`; }
-      g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = 12; g.strokeStyle = "#E0567A"; g.strokeText(t, 384, 84); g.fillStyle = "#fff"; g.fillText(t, 384, 84);
+      g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = 12; g.strokeStyle = PKD; g.strokeText(t, 384, 84); g.fillStyle = "#fff"; g.fillText(t, 384, 84);
       const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx; })();
-    add(outside, RB(3.1, .66, .12, .04), T("#E0567A"), 0, 2.88, z0 + .06, { ol: "thin" });
+    add(outside, RB(3.1, .66, .12, .04), T(PKD), 0, 2.88, z0 + .06, { ol: "thin" });
     { const sm = new THREE.MeshBasicMaterial({ map: signTex, transparent: true }); neon.push(sm); const sp = new THREE.Mesh(new THREE.PlaneGeometry(2.95, .6), sm); sp.position.set(0, 2.88, z0 + .13); outside.add(sp); }
     // mái hiên sọc
-    const awnMat = T("#fff", { map: stripes("#FF7FA1", "#fff", [9, 1]) });
+    const awnMat = T("#fff", { map: stripes(PK, "#fff", [9, 1]) });
     add(outside, RB(7.4, .1, 1.1, .03), awnMat, 0, 2.38, z0 + .55, { r: [.38, 0, 0], ol: "thin" });
     // cửa sổ trưng bày + hộp hoa
     const extWin = (x: number, y: number, z: number, ry: number, w2: number, h2: number, flowers: boolean) => {

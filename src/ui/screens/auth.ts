@@ -2,7 +2,9 @@
    Tên tiệm = username. Chỉ đăng nhập một lần trên mỗi máy, lần sau chỉ hỏi PIN. */
 import { sfx } from "../../audio/sound";
 import { PETS } from "../../content/game";
-import { S } from "../../engine/state";
+import { S, meLook } from "../../engine/state";
+import { hydratePortraits, portraitHTML } from "../portrait";
+import { guestSVG } from "../art";
 import { account, checkName, login, logout, pinTriesLeft, question, register, resetPin, unlock } from "../../net/cloud";
 import { petSVG } from "../art";
 import { $, esc, haptic, toast } from "../dom";
@@ -36,12 +38,13 @@ export function authHTML(v?: View) {
       <button class="b3" id="aGo">Đặt PIN mới</button>`
     : `<label class="field">Tên tiệm${userInput(fUser || account())}</label><button class="b3" id="aQn">Tiếp</button>`}
     <button class="alink" data-av="${account() ? "lock" : "login"}">← Quay lại</button>`;
-  if (view === "lock") body = `${hero()}<h2>Chào ${esc(account())}!</h2><p class="asub">Nhập PIN để mở tiệm</p>
+  if (view === "lock") body = `<div class="lk-av"><i class="lk-ring"></i>${portraitHTML(S.me.sprite, S.me, 112, guestSVG({ ...meLook(), mood: "happy" }, 112), "", true)}</div>
+    <h2>Chào ${esc(account())}!</h2><p class="asub">Nhập PIN để mở tiệm</p>
     <div class="dots" id="aDots">${[0, 1, 2, 3].map(i => `<i class="${i < pin.length ? "on" : ""}"></i>`).join("")}</div>
-    <div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-key="${n}">${n}</button>`).join("")}<button class="alink" data-av="forgot">Quên?</button><button data-key="0">0</button><button data-key="del" aria-label="Xoá">⌫</button></div>
-    <button class="alink" id="aOut">Đăng nhập tiệm khác</button>`;
-  setTimeout(bind, 0);
-  return `<div class="scr auth4" id="auth">${body}</div>`;
+    <div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-key="${n}">${n}</button>`).join("")}<button class="alink" data-av="forgot">Quên PIN?</button><button data-key="0">0</button><button data-key="del" aria-label="Xoá">⌫</button></div>
+    <button class="alink lk-out" id="aOut">Đăng nhập tiệm khác</button>`;
+  setTimeout(() => { bind(); hydratePortraits(); }, 0);
+  return `<div class="scr auth4${view === "lock" ? " lock" : ""}" id="auth">${body}</div>`;
 }
 
 const val = (id: string) => ($<HTMLInputElement>(id)?.value ?? "").trim();

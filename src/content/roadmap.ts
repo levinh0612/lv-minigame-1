@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.31", date: "04/10/2026", notes: ["Màn nhập PIN làm lại: ảnh đại diện 3D trong vòng màu, nền theo màu giao diện, ô số bo tròn mới", "Biển hiệu, mái hiên, mái nhà và rèm theo màu giao diện bạn chọn (cam thì ra cam, không còn hồng)", "Trang trí thêm nhiều món: 3 tường, 2 sàn, 2 quầy, 2 rèm, 2 đèn, 3 đồ treo tường, 3 cây, 3 thảm", "5 kiểu tóc 3D mới trong Hồ sơ: bob, dài, xoăn, dựng, bồng (đổi theo màu tóc)"] },
   { v: "2.30", date: "04/10/2026", notes: ["Trang trí tiệm mượt hơn nữa: đổi rèm, đèn, cây, thảm và đồ treo tường giờ cũng đổi ngay tại chỗ, không còn khựng"] },
   { v: "2.29", date: "04/10/2026", notes: ["Nhân vật sống động hơn: chớp mắt, thỉnh thoảng mở miệng, đầu và thân lắc nhẹ, nhún người; ảnh đại diện ở thẻ hồ sơ và trong Hồ sơ cũng chuyển động", "Màn chính: thẻ hồ sơ gọn hơn (cấp ngay trên ảnh, thanh kinh nghiệm), thư và Sửa tiệm thành hai nút tròn hai bên nút Mở tiệm, thanh 4 nút dưới vẽ lại icon gradient", "Mục tiêu và Quà tặng mở dạng hộp thoại trượt từ dưới lên"] },
   { v: "2.28", date: "04/10/2026", notes: ["Trang trí tiệm hết giật: đổi tường, sàn, quầy là đổi ngay tại chỗ (không dựng lại cảnh); đổi rèm, đèn, cây, thảm thì giữ cảnh cũ rồi mới đổi một lần", "Cảnh tiệm dựng nhanh hơn: mặt tiền, đường, cây phía ngoài chỉ dựng khi bấm xem ngoài tiệm"] },
