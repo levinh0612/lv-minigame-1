@@ -1,7 +1,7 @@
 import { CFG, type PetId } from "../../content/couple";
 import { FOODS, PETS } from "../../content/game";
 import { ROOM_CATS, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
-import { tableLvs, canHire, foodOf, foodDef, mealFor, mealOf, onDuty, staffDef, trainCost } from "../../engine/economy";
+import { tableLvs, canHire, foodOf, foodDef, mealOf, plannedMeal, onDuty, staffDef, trainCost } from "../../engine/economy";
 import { decorCount, unlocked } from "../../engine/progress";
 import { S, petName, save } from "../../engine/state";
 import { spend } from "../../engine/wallet";
@@ -64,7 +64,7 @@ export function pantryHTML() {
 /* một hàng trong Ca làm việc: bậc, lương, độ thân, nút thưởng */
 export function petRowHTML(id: PetId) {
   const d = staffDef(id), st = S.staff[id], on = onDuty(id), fed = S.pets[id].fedDay === S.daily.day;
-  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1], meal = st.hired ? mealFor(id) : null, eat = foodDef(meal ?? mealOf(id));
+  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1], meal = st.hired ? plannedMeal(id) : null, eat = foodDef(meal ?? mealOf(id));
   const act = !canHire(id) ? `<div class="rb lock"><b>Lv ${d.unlock}</b><small>mới mở</small></div>`
     : !st.hired ? `<button class="rb hire" data-hire="${id}"><b>Nhận</b><small>vào làm</small></button>`
     : `<button class="rb ${fed ? "done" : ""}" data-treat="${id}:${food.id}" ${fed || (!foodOf(food.id) && S.coins < food.cost) ? "disabled" : ""}>${foodSVG(food.id, 28)}<small>${fed ? "Đã thưởng" : "Thưởng"}</small></button>`;

@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import type { PetId } from "../../content/couple";
 import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
-import { canHire, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, expectedCustomers, fame, foodDef, mealChoices, mealFor, mealOf, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { canHire, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
@@ -17,7 +17,7 @@ export const pageHead = (title: string, sub = "") =>
 export function bakerTile(id: PetId) {
   const d = staffDef(id), st = S.staff[id], on = onDuty(id);
   const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1];
-  const meal = st.hired ? mealFor(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
+  const meal = st.hired ? plannedMeal(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
   const eat = meal ? foodDef(meal) : need, slow = meal && st.hired ? mealSlow(id, meal) : 1;
   const picks = st.hired && tier > 1 ? `<div class="mpick" role="radiogroup" aria-label="Món ăn của ${esc(petName(id))}">${mealChoices(id).map(f =>
     `<button class="${f.id === need.id ? "on" : ""}" data-meal="${id}:${f.id}" role="radio" aria-checked="${f.id === need.id}" aria-label="${f.n}, còn ${foodOf(f.id)}">${foodSVG(f.id, 16)}<small>${foodOf(f.id)}</small></button>`).join("")}</div>` : "";

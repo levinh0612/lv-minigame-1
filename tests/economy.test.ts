@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RECIPES } from "../src/content/game";
 import {
-  buy, buyFood, buySuggested, buyVenue, seatLevels, spareSeats, venueFame, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
+  buy, buyFood, buySuggested, buyVenue, plannedMeal, seatLevels, spareSeats, venueFame, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
@@ -117,6 +117,15 @@ describe("thú cưng làm nhân viên", () => {
     expect(pay.fed).toEqual([{ id: "dog", meal: "kibble" }]);
     expect(sh.meals.dog).toBe("kibble");
     expect(S.food.chicken).toBe(1);
+  });
+
+  it("kho đồ ăn dùng chung: 1 phần Ức gà chỉ đủ cho 1 bé, hai bé còn lại hiện đói ngay ở màn chuẩn bị", () => {
+    lvUp(4); S.coins = 1000; ["dog", "gold", "white"].forEach(id => { hire(id as never); S.staff[id as "dog"].lv = 3; });
+    buyFood("chicken", 1);
+    expect(crewPlan()).toEqual([{ id: "dog", meal: "chicken" }, { id: "gold", meal: null }, { id: "white", meal: null }]);
+    expect(plannedMeal("dog")).toBe("chicken"); expect(plannedMeal("gold")).toBeNull();
+    const { pay } = beginShift();                                       // kế hoạch khớp lúc mở ca
+    expect(pay.fed.map(x => x.id)).toEqual(["dog"]); expect(pay.hungry).toEqual(["gold", "white"]);
   });
 
   it("hết đồ ăn thì bé đói và nghỉ ca đó", () => {

@@ -100,14 +100,20 @@ export const mealOf = (id: PetId): FoodId => {
   return FOODS[Math.min(top, Math.max(0, pick ? FOODS.findIndex(f => f.id === pick) : top))].id;
 };
 export const setMeal = (id: PetId, food: FoodId) => { S.staff[id].food = food; save(); };
-export const mealFor = (id: PetId): FoodId | null => {
+export const mealFor = (id: PetId, have: (f: FoodId) => number = foodOf): FoodId | null => {
   const want = FOODS.findIndex(f => f.id === mealOf(id));
   const order = [...FOODS.slice(0, want + 1).reverse(), ...FOODS.slice(want + 1)];
-  return order.find(f => foodOf(f.id) > 0)?.id ?? null;
+  return order.find(f => have(f.id) > 0)?.id ?? null;
 };
 /* ăn món kém hơn bậc của mình thì làm chậm thêm 25% mỗi bậc */
 export const mealSlow = (id: PetId, meal: FoodId) => 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
-export const crewPlan = () => STAFF.filter(d => onDuty(d.id)).map(d => ({ id: d.id, meal: mealFor(d.id) }));
+/** bữa ăn dự kiến của các bé đi làm: kho dùng chung nên mỗi bé lấy phần của mình trước khi tới bé sau (giống lúc mở ca) */
+export function crewPlan() {
+  const left: Record<FoodId, number> = { kibble: foodOf("kibble"), pate: foodOf("pate"), chicken: foodOf("chicken") };
+  return STAFF.filter(d => onDuty(d.id)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
+}
+/** bữa của một bé: đi làm thì theo kế hoạch chung, đang nghỉ thì chỉ xem món nào còn trong kho */
+export const plannedMeal = (id: PetId): FoodId | null => (onDuty(id) ? crewPlan().find(x => x.id === id)?.meal ?? null : mealFor(id));
 export const trainCost = (id: PetId) => (S.staff[id].lv < 3 ? staffDef(id).train[S.staff[id].lv - 1] : 0);
 
 export function hire(id: PetId) { if (!canHire(id)) return false; S.staff[id] = { ...S.staff[id], hired: true, onDuty: true }; save(); return true; }
