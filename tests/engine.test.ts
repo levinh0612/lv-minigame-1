@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RECIPES, SPRITES } from "../src/content/game";
+import { FIXED_GUESTS, RECIPES, SPRITES } from "../src/content/game";
 import { coinMult, daysTogether, events, todayEvents } from "../src/engine/dates";
 import { goals, rollDay } from "../src/engine/progress";
 import { closeEarly, createShift, makeCustomer, mineIdx, peek, serve, take, tick, type Customer } from "../src/engine/shift";
@@ -93,7 +93,8 @@ describe("dữ liệu lưu", () => {
       const c = makeCustomer(sh);
       if (c.him) continue;
       expect(c.look.sprite in SPRITES).toBe(true);
-      expect(c.look.sprite[0]).toBe(c.look.gender === "girl" ? "g" : "b");
+      const fixed = FIXED_GUESTS[c.look.gender === "girl" ? "girl" : "boy"];          // khách 3D làm sẵn đúng giới tính, còn lại g1..g6 / b1..b6
+      expect(fixed.includes(c.look.sprite) || c.look.sprite[0] === (c.look.gender === "girl" ? "g" : "b")).toBe(true);
       expect(c.look.coat).toBeTruthy();
     }
   });

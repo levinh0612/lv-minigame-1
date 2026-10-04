@@ -87,7 +87,7 @@ function material(cfg: FigureCfg, tex: THREE.Texture, look: PersonLook, bind: As
 
 /** Nhân vật có nhiều trạng thái. `fallback` dùng khi tải model lỗi (nhân vật khối cũ). */
 export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Actor, style = ""): Actor {
-  interface Rt { model: THREE.Group; mixer: THREE.AnimationMixer; idle: THREE.AnimationAction; walk: THREE.AnimationAction; sit: THREE.AnimationAction; baseY: number; dur: number; cur: ActorMode | null; mats: THREE.Material[]; U: { uBlink: { value: number }; uMo: { value: number } } | null; headB: THREE.Object3D | null; spineB: THREE.Object3D | null }
+  interface Rt { model: THREE.Group; mixer: THREE.AnimationMixer; idle: THREE.AnimationAction; walk: THREE.AnimationAction; sit: THREE.AnimationAction; baseY: number; baseX: number; baseZ: number; dur: number; cur: ActorMode | null; mats: THREE.Material[]; U: { uBlink: { value: number }; uMo: { value: number } } | null; headB: THREE.Object3D | null; spineB: THREE.Object3D | null }
   const group = new THREE.Group(); let rt: Rt | null = null, inner: Actor | null = null, want: ActorMode = "idle", snap = false, last = -1, blend = 0, finish: (ok: boolean) => void = () => 0;
   const ready = new Promise<boolean>(r => { finish = r; });
   /* sống động: chớp mắt, thỉnh thoảng mở miệng, đầu và thân lắc nhẹ, nhún người */
@@ -113,8 +113,9 @@ export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Acto
     if (acc && bone) { const rig = new THREE.Group(); rig.matrixAutoUpdate = false; rig.matrix.copy(bone.matrixWorld).invert().multiply(new THREE.Matrix4().makeTranslation(hb.c.x * k, hb.c.y * k, hb.c.z * k)); rig.add(acc); bone.add(rig); }
     const mixer = new THREE.AnimationMixer(model), idle = mixer.clipAction(a.idle), walk = mixer.clipAction(a.walk), sit = mixer.clipAction(a.sit);
     idle.play(); mixer.update(0); model.updateMatrixWorld(true);
-    rt = { model, mixer, idle, walk, sit, baseY: -new THREE.Box3().setFromObject(model, true).min.y, dur: a.sit.duration, cur: null, mats, U: (mats[0]?.userData.U as Rt["U"]) ?? null, headB: model.getObjectByName(a.headBone) ?? null, spineB: model.getObjectByName("mixamorigSpine1") ?? null };
-    model.position.y = rt.baseY; group.add(model); go(want); finish(true);
+    const bx = new THREE.Box3().setFromObject(model, true), bc = bx.getCenter(new THREE.Vector3());          // căn giữa theo chiều ngang (model làm sẵn có thể lệch gốc)
+    rt = { model, mixer, idle, walk, sit, baseY: -bx.min.y, baseX: cfg.plain ? -bc.x : 0, baseZ: cfg.plain ? -bc.z : 0, dur: a.sit.duration, cur: null, mats, U: (mats[0]?.userData.U as Rt["U"]) ?? null, headB: model.getObjectByName(a.headBone) ?? null, spineB: model.getObjectByName("mixamorigSpine1") ?? null };
+    model.position.set(rt.baseX, rt.baseY, rt.baseZ); group.add(model); go(want); finish(true);
   }).catch(e => { console.warn("Không dựng được nhân vật 3D, dùng nhân vật khối", e); inner = fallback(); inner.mode(want); group.add(inner.group); finish(false); });
   return {
     group,
@@ -135,7 +136,7 @@ export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Acto
       if (cfg.sitClip) f = rt.cur === "sit" || rt.cur === "getup" ? Math.max(0, Math.min(1, rt.sit.time / rt.dur)) : 0;
       else { const target = rt.cur === "sit" ? 1 : 0; blend += Math.sign(target - blend) * Math.min(Math.abs(target - blend), dt / .6); f = blend; }
       const seated = rt.cur === "sit" || rt.cur === "getup";       // nhóm đặt ở tâm ghế: đứng cách ghế APPROACH, ngồi thì tiến dần tới seatZ
-      rt.model.position.set(0, rt.baseY + cfg.seatY * f + Math.sin(t * 2.2 + ph) * .006, seated ? APPROACH + (cfg.seatZ - APPROACH) * f : 0);
+      rt.model.position.set(rt.baseX, rt.baseY + cfg.seatY * f + Math.sin(t * 2.2 + ph) * .006, rt.baseZ + (seated ? APPROACH + (cfg.seatZ - APPROACH) * f : 0));
     },
     mode(m) { want = m; if (inner) inner.mode(m); else go(m); },
     done() {

@@ -9,23 +9,29 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { headBind, headInfo, makeActor, type Assets, type FigureCfg } from "./figure3d";
 import type { Actor, PersonLook, Pose } from "./people";
 
-interface Def { dir: string; head: RegExp; headBone: string; h: number; seatY: number; seatZ: number }
+interface Def { dir: string; file: string; head: RegExp; headBone: string; h: number; seatY: number; seatZ: number }
 const DEFS: Record<string, Def> = {
-  n1: { dir: "anime-girl", head: /^Head_/, headBone: "Head_47", h: 1.5, seatY: .1, seatZ: 0 },
-  n2: { dir: "cyber-girl", head: /^head_/, headBone: "head_08", h: 1.55, seatY: .1, seatZ: 0 },
-  m1: { dir: "real-boy", head: /^Head_/, headBone: "Head_3", h: 1.6, seatY: .1, seatZ: 0 }
+  n1: { dir: "anime-girl", file: "", head: /^Head_/, headBone: "Head_47", h: 1.5, seatY: .1, seatZ: 0 },
+  n2: { dir: "cyber-girl", file: "", head: /^head_/, headBone: "head_08", h: 1.55, seatY: .1, seatZ: 0 },
+  m1: { dir: "real-boy", file: "", head: /^Head_/, headBone: "Head_3", h: 1.6, seatY: .1, seatZ: 0 }
 };
+/** khách trong bộ "customer_all_characters" (low-poly): k4..k11, mỗi người một model + chuyển động riêng. Nam: k5, k6, k7 */
+const GUEST_MALE = new Set(["k5", "k6", "k7"]);
+for (let n = 4; n <= 11; n++) DEFS["k" + n] = { dir: "guests", file: "g" + n, head: /^spine006_/, headBone: "", h: GUEST_MALE.has("k" + n) ? 1.6 : 1.5, seatY: .1, seatZ: 0 };
+/** nhân vật khối dự phòng (khi model 3D lỗi tải): m1 và khách nam dùng nam, còn lại dùng nữ */
+export const fixedFallback = (sprite: string) => sprite[0] === "m" || GUEST_MALE.has(sprite) ? "b1" : "g1";
 export const isFixed = (sprite: string) => sprite in DEFS;
 
+const boneName = (root: THREE.Object3D, re: RegExp) => { let n = ""; root.traverse(o => { if (!n && (o as THREE.Bone).isBone && re.test(o.name)) n = o.name; }); return n; };
 const cache: Record<string, Promise<Assets>> = {};
 function load(id: string): Promise<Assets> {
   const d = DEFS[id]!, dir = `/models/${d.dir}/`;
   return cache[id] ??= (async () => {
-    const [gl, clips] = await Promise.all([new GLTFLoader().loadAsync(dir + "model.glb"), fetch(dir + "clips.json").then(r => r.json())]);
+    const [gl, clips] = await Promise.all([new GLTFLoader().loadAsync(dir + (d.file || "model") + ".glb"), fetch(dir + (d.file || "clips") + ".json").then(r => r.json())]);
     gl.scene.updateMatrixWorld(true);
     const sm = gl.scene.getObjectByProperty("isSkinnedMesh", true) as THREE.SkinnedMesh; sm.skeleton.update();
     const box = new THREE.Box3().setFromObject(gl.scene, true), clip = (k: string) => THREE.AnimationClip.parse(clips[k]);
-    return { scene: gl.scene, idle: clip("idle"), walk: clip("walk"), sit: clip("sit"), tex: new THREE.Texture(), scale: d.h / (box.max.y - box.min.y), head: headInfo(gl.scene, d.head), bind: headBind(gl.scene, d.head), headBone: d.headBone };
+    return { scene: gl.scene, idle: clip("idle"), walk: clip("walk"), sit: clip("sit"), tex: new THREE.Texture(), scale: d.h / (box.max.y - box.min.y), head: headInfo(gl.scene, d.head), bind: headBind(gl.scene, d.head), headBone: d.headBone || boneName(gl.scene, d.head) };
   })().catch(e => { delete cache[id]; throw e; });
 }
 

@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.39", date: "04/10/2026", notes: ["Khách ra vào và ngồi bằng cả nhân vật 3D mới: Nữ anime, Nữ cyber, Nam thật và 8 khách low-poly (nam, nữ nhiều kiểu áo)", "Khoảng 3 trên 10 khách mỗi ca là nhân vật 3D làm sẵn; ảnh đại diện khách cũng dùng các model này"] },
   { v: "2.38", date: "04/10/2026", notes: ["Thêm 2 nhân vật 3D: Nữ cyber và Nam thật (cạnh Nữ anime) trong Hồ sơ, đi/đứng/ngồi như các nhân vật khác", "Khách ngồi tay xuôi tự nhiên trên đùi (trước đây tay duỗi thẳng ra trước)", "Chống giật: bóng đổ vẽ thưa hơn, tự hạ độ phân giải khi máy chậm; khách không còn đi quay chậm khi tụt khung hình"] },
   { v: "2.37", date: "04/10/2026", notes: ["Thêm nhân vật Nữ anime 3D đủ người (tóc hai chùm, sừng, cardigan, boot) trong Hồ sơ: đi, đứng, ngồi như các nhân vật khác; giữ nguyên trang phục nên không đổi màu hay kiểu tóc"] },
   { v: "2.36", date: "04/10/2026", notes: ["Thêm kiểu Tóc dài anime cho nhân vật nam (tóc dài chấm vai, mái dày, đổi theo màu tóc)"] },

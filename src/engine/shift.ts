@@ -2,7 +2,7 @@
 import { CFG, type PetId } from "../content/couple";
 const STAFF_IDS: PetId[] = ["dog", "gold", "white"];
 import {
-  BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
+  BOY_SPRITES, CATS, COAT, EYES, FIXED_GUESTS, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
 import { BAKE_TIME } from "../content/game";
@@ -52,7 +52,7 @@ function makeGuest(): { who: string; look: Look } {
   const girl = Math.random() < 0.5;
   return {
     who: pick(nameList(girl ? S.names.girls : S.names.boys)),
-    look: { gender: girl ? "girl" : "boy", sprite: pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
+    look: { gender: girl ? "girl" : "boy", sprite: Math.random() < 0.3 ? pick(girl ? FIXED_GUESTS.girl : FIXED_GUESTS.boy) : pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
   };
 }
 
