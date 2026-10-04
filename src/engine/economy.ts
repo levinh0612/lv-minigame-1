@@ -137,36 +137,39 @@ export function fameScore() {
 export const fameLevel = () => { const x = fameScore(); return FAME_AT.filter(t => x >= t).length; };
 export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });
 
-/* ===== Sức chứa tiệm: bàn, lầu, mở rộng ngang =====
-   Độ nổi tiếng quyết định số bàn khách muốn ngồi (demand); số bàn có thật là venue.tables.
-   Thiếu bàn thì phải nâng cấp mới mở tiệm được. */
+/* ===== Sức chứa tiệm: bàn (cấp 1..3), lầu, mở rộng ngang =====
+   Độ viral = số khách giờ cao điểm (demand). Sức chứa = tổng số ghế các bàn (cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4).
+   Thiếu chỗ thì phải nâng cấp mới mở tiệm được. */
 export const demand = () => FAME[fameLevel()].seats;
-export const tables = () => {
+/** cấp từng bàn, bàn cấp cao đứng trước. Lần đầu: đặt theo số ghế đang có (người chơi cũ được tặng đủ) */
+export const tableLvs = (): number[] => {
   const v = S.venue;
-  if (!v.tables) { v.tables = Math.max(SHOP.startTables, Math.min(6, demand())); save(); }   // người chơi cũ: tặng đủ số bàn đang có
-  return v.tables;
+  if (!v.tbl.length) {
+    const seats = v.tables || Math.min(6, demand());
+    v.tbl = Array(Math.max(SHOP.startTables, Math.ceil(seats / 2))).fill(1); delete v.tables; save();
+  }
+  return v.tbl;
 };
-export const spaceFor = (floors: number, wide: number) => floors * (SHOP.perFloor + SHOP.perWide * wide);
-export const space = () => spaceFor(S.venue.floors, S.venue.wide);
-export const seatsNow = () => Math.min(demand(), tables());           // số bàn dùng trong ca
-export const needUpgrade = () => demand() > tables();
-export const tableCost = () => SHOP.tableCost(tables() + 1);
-export const floorCost = () => SHOP.floorCost(S.venue.floors - 1);
-export const wideCost = () => SHOP.wideCost(S.venue.wide);
-export const canBuyTable = () => tables() < space();
+export const capacity = () => tableLvs().reduce((a, l) => a + SHOP.seatsOf(l), 0);
+export const spots = () => S.venue.floors * (SHOP.perFloor + SHOP.perWide * S.venue.wide);
+export const seatsNow = () => Math.min(demand(), capacity());           // số khách ngồi cùng lúc trong ca
+export const needUpgrade = () => demand() > capacity();
+const lowest = () => Math.min(...tableLvs());
 export const upgradeOptions = () => [
-  { id: "table" as const, cost: tableCost(), ok: canBuyTable() },
-  { id: "floor" as const, cost: floorCost(), ok: true },
-  { id: "wide" as const, cost: wideCost(), ok: true }
+  { id: "table" as const, cost: SHOP.tableCost(tableLvs().length + 1), ok: tableLvs().length < spots() },
+  { id: "up" as const, cost: SHOP.upCost(lowest()), ok: lowest() < SHOP.maxLv },
+  { id: "floor" as const, cost: SHOP.floorCost(S.venue.floors - 1), ok: true },
+  { id: "wide" as const, cost: SHOP.wideCost(S.venue.wide), ok: true }
 ];
 export const canAffordUpgrade = () => upgradeOptions().some(o => o.ok && S.coins >= o.cost);
-export function buyVenue(id: "table" | "floor" | "wide"): boolean {
+export function buyVenue(id: "table" | "up" | "floor" | "wide"): boolean {
   const o = upgradeOptions().find(x => x.id === id)!;
   if (!o.ok || S.coins < o.cost) return false;
-  if (id === "table") { spend("venue", o.cost, `Mua bàn thứ ${tables() + 1}`); S.venue.tables = tables() + 1; }
+  if (id === "table") { spend("venue", o.cost, `Mua bàn thứ ${tableLvs().length + 1}`); S.venue.tbl.push(1); }
+  else if (id === "up") { const k = S.venue.tbl.indexOf(lowest()); spend("venue", o.cost, `Nâng bàn lên cấp ${lowest() + 1}`); S.venue.tbl[k]!++; }
   else if (id === "floor") { spend("venue", o.cost, `Xây lầu ${S.venue.floors + 1}`); S.venue.floors++; }
   else { spend("venue", o.cost, `Mở rộng ngang lần ${S.venue.wide + 1}`); S.venue.wide++; }
-  save(); return true;
+  S.venue.tbl.sort((a, b) => b - a); save(); return true;
 }
 
 /* ===== Tài sản (bảng xếp hạng): xu + đồ trang trí đã mua + nguyên liệu trong kho + đồ ăn trong tủ ===== */

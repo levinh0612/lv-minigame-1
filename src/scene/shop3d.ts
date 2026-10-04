@@ -11,7 +11,7 @@ export interface ShopOpts {
   room: Record<string, string>;            // wall, floor, counter, curtain, lamp, wallItem, plant, rug
   event: boolean;                          // ngày đặc biệt: tường vàng, cờ và bóng bay
   guests: number;                          // 0..2 khách đang ngồi
-  seats: number;                           // số ghế trong tiệm (3..6 hiện trong cảnh)
+  tables: number[];                        // cấp từng bàn (1..3): bàn cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4. Cảnh vẽ tối đa 6 bàn
   giftDot: boolean;
   photo: string;                           // ảnh treo tường (data URL) hoặc ""
   cakes: [number, number, number][];       // bánh trong tủ kính (đế, kem, topping)
@@ -228,18 +228,22 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* bàn, ghế, khách, bánh trên bàn */
   const tableC = R.floor === "wood" ? "#C98E5A" : "#E9B98A", topC = R.counter === "mint" ? "#E4F6EC" : "#fff";
-  function table(x: number, z: number, seats: [string, number][]) {
+  function table(x: number, z: number, seats: [string, number][], r = 1) {
     const tt = T(topC), tl = T(tableC); tableTops.push(tt); tableLegs.push(tl);
-    add(root, CYL(.64, .64, .09, 36), tt, x, .78, z, { ol: "mid" }); add(root, CYL(.08, .1, .72, 14), tl, x, .38, z, { ol: "thin" }); add(root, CYL(.34, .38, .05, 26), tl, x, .03, z, { ol: "thin" });
-    return seats.map(([c, a]) => { const cx = x + Math.sin(a), cz = z + Math.cos(a), ch = new THREE.Group(); ch.position.set(cx, 0, cz); ch.rotation.y = a + Math.PI; root.add(ch);
+    add(root, CYL(.64 * r, .64 * r, .09, 36), tt, x, .78, z, { ol: "mid" }); add(root, CYL(.08, .1, .72, 14), tl, x, .38, z, { ol: "thin" }); add(root, CYL(.34 * r, .38 * r, .05, 26), tl, x, .03, z, { ol: "thin" });
+    return seats.map(([c, a]) => { const cx = x + Math.sin(a) * (.5 + .5 * r), cz = z + Math.cos(a) * (.5 + .5 * r), ch = new THREE.Group(); ch.position.set(cx, 0, cz); ch.rotation.y = a + Math.PI; root.add(ch);
       add(ch, RB(.46, .09, .46, .04), T(c), 0, .5, 0, { ol: "thin" }); add(ch, RB(.46, .5, .07, .03), T("#B98450"), 0, .8, -.2, { ol: "thin" });
       ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T("#B98450"), dx, .23, dz, { ol: null })); return { x: cx, z: cz, a: a + Math.PI }; });
   }
-  /* số ghế theo số bàn người chơi có (3..6): thêm dần ghế ở hai bàn */
-  const CH1: [string, number][] = [["#7FC8D6", 2.4], ["#E8A0B4", -2.4], ["#7FC8D6", .1]], CH2: [string, number][] = [["#7FC8D6", .2], ["#E8A0B4", 2.6], ["#7FC8D6", -2.3]];
-  const nSeat = Math.max(3, Math.min(6, o.seats)), n1 = Math.min(3, Math.floor(nSeat / 2)), n2 = Math.min(3, nSeat - n1);
-  const s1 = table(-1.8, 1.0, CH1.slice(0, n1)), s2 = table(2.2, 1.5, CH2.slice(0, n2));
-  place(cake(0, 0, 0, 1), -1.8, .83, 1.0); place(cake(1, 2, 1, 1), 2.2, .83, 1.5);
+  /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
+  const SPOTS: [number, number][] = [[-1.9, .7], [2.3, .7], [.2, 2.2], [-1.9, 2.2], [2.3, 2.2], [.2, .7]], CHAIRS = ["#7FC8D6", "#E8A0B4"];
+  const ANG = [2.4, -2.4, .1, 3.14];
+  const tbls = SPOTS.slice(0, Math.max(2, Math.min(6, o.tables.length))).map(([x, z], i) => {
+    const lv = o.tables[i] ?? 1, r = .6 + .1 * lv;
+    const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r);
+    place(cake((i * 2) % 3, (i + 1) % 3, i % 3, 1), x, .83, z); return chairs;
+  });
+  const s1 = tbls[0]!, s2 = tbls[1]!;
   /* khách ra vào: mỗi chỗ ngồi tự chạy vòng ngồi → đứng dậy → ra cửa → vắng → khách khác vào → ngồi xuống */
   const POOL: { sprite: string; look: PersonLook }[] = [
     { sprite: "g4", look: { skin: "#FFE3D0", hair: "#3B2A26", coat: "#2F6F86", shirt: "#F2E6D0", eye: "#5FA6C9" } },

@@ -124,10 +124,13 @@ export const FAME = [
   { n: "Nổi như cồn", seats: 8 }, { n: "Địa điểm check-in", seats: 10 }, { n: "Huyền thoại", seats: 12 }
 ];
 export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13];     // điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi)
-/* Sức chứa tiệm: số bàn mua dần (bàn 1-3 tặng), mỗi lầu chứa 6 bàn, mở rộng ngang thêm 2 bàn mỗi lầu */
+/* Sức chứa tiệm: viral = số khách giờ cao điểm. Mỗi bàn có cấp 1..3 và chứa 2/3/4 người (mỗi người một ghế).
+   Mỗi lầu có 4 chỗ đặt bàn, mở rộng ngang thêm 1 chỗ mỗi lầu. */
 export const SHOP = {
-  perFloor: 6, perWide: 2, startTables: 3,
-  tableCost: (n: number) => (n <= 3 ? 0 : n === 4 ? 300 : n === 5 ? 600 : n === 6 ? 1000 : 1000 + (n - 6) * 500),   // giá bàn thứ n
+  perFloor: 4, perWide: 1, startTables: 2, maxLv: 3,
+  seatsOf: (lv: number) => 1 + lv,
+  tableCost: (n: number) => (n <= 2 ? 0 : n === 3 ? 300 : n === 4 ? 600 : n === 5 ? 1000 : 1000 + (n - 5) * 500),   // giá bàn thứ n
+  upCost: (lv: number) => (lv <= 1 ? 400 : 800),                // nâng bàn từ cấp lv lên cấp lv + 1
   floorCost: (built: number) => 1000 * 2 ** built,      // xây thêm lầu: lần 1 là 1.000, rồi gấp đôi
   wideCost: (built: number) => 2000 * 2 ** built        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
 };
