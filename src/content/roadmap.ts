@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.28", date: "04/10/2026", notes: ["Trang trí tiệm hết giật: đổi tường, sàn, quầy là đổi ngay tại chỗ (không dựng lại cảnh); đổi rèm, đèn, cây, thảm thì giữ cảnh cũ rồi mới đổi một lần", "Cảnh tiệm dựng nhanh hơn: mặt tiền, đường, cây phía ngoài chỉ dựng khi bấm xem ngoài tiệm"] },
   { v: "2.27", date: "04/10/2026", notes: ["Màn chính: cảnh 3D phủ cả màn hình, thanh trên, hồ sơ, thư, nút Mở tiệm và 4 nút dưới là lớp phủ gọn gàng", "Icon điều khiển cảnh (xoay, phóng to thu nhỏ, xem ngoài tiệm) vẽ lại cho đẹp", "Hồ sơ: chọn Nữ hoặc Nam riêng, chọn kiểu tóc riêng (mũ len, băng đô, búi tóc, đuôi ngựa, hai chùm, tai mèo, nơ, hoa cài, kính tròn)", "Mũ len vẽ lại đúng kiểu mũ len; Trang trí tiệm mượt hơn, chạm liên tiếp không còn giật"] },
   { v: "2.26", date: "04/10/2026", notes: ["Cài đặt: ghi công nhân vật nữ 3D (Cute Hiking Girl, CGTrader)"] },
   { v: "2.25", date: "04/10/2026", notes: ["Hồ sơ: chọn thêm màu quần và màu giày; màu mắt giờ đổi được thật trên nhân vật 3D", "12 kiểu nhân vật giờ là 12 kiểu đầu 3D (mũ len, băng đô, búi tóc, kính tròn, tai mèo, nơ, hoa cài...); tên kiểu hiện dưới ảnh", "Ảnh đại diện ở thẻ hồ sơ và bảng chọn là ảnh chụp từ model 3D, đúng với nhân vật trong tiệm"] },

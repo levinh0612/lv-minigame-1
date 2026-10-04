@@ -9,7 +9,7 @@ import { account } from "../net/cloud";
 import type { Hotspot, ShopOpts, ShopScene } from "../scene/shop3d";
 import { roomHTML, type RoomOpts } from "./room";
 
-interface Live { el: HTMLElement; sig: string; scene: ShopScene; btns: [Hotspot, HTMLButtonElement][]; timer: number; raf: number; ro: ResizeObserver }
+interface Live { el: HTMLElement; sig: string; base: string; scene: ShopScene; btns: [Hotspot, HTMLButtonElement][]; timer: number; raf: number; ro: ResizeObserver }
 let live: Live | null = null, kept: Live | null = null, token = 0;
 /** vùng chứa cảnh: bên trong là cảnh 2D cũ làm dự phòng */
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
@@ -50,6 +50,8 @@ function optsOf(el: HTMLElement): ShopOpts {
     ]
   };
 }
+/** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
+const baseOf = (el: HTMLElement) => JSON.stringify([S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
@@ -83,7 +85,12 @@ export async function mountRooms() {
   if (kept && kept.sig === sig) {                      // dữ liệu cảnh không đổi: đặt lại đúng cảnh cũ
     box.replaceWith(kept.el); live = kept; kept = null; live.ro = new ResizeObserver(() => 0); fixObserver(live); run(live); return;
   }
-  if (box.dataset.hs === "0" && kept) {                // màn Trang trí: giữ cảnh cũ hiển thị, dựng cảnh mới sau một nhịp (chạm liên tiếp thì chỉ dựng lần cuối)
+  if (box.dataset.hs === "0" && kept) {
+    // màn Trang trí: đổi tường / sàn / quầy chỉ cần thay vật liệu trong cảnh đang có, không dựng lại
+    if (kept.base === baseOf(box) && box.dataset.room && kept.scene.update(JSON.parse(box.dataset.room), box.dataset.hl || undefined)) {
+      kept.sig = sig; box.replaceWith(kept.el); live = kept; kept = null; live.ro = new ResizeObserver(() => 0); fixObserver(live); run(live); return;
+    }
+    // đổi món khác (rèm, đèn, cây...): giữ cảnh cũ hiển thị, dựng cảnh mới sau một nhịp (chạm liên tiếp thì chỉ dựng lần cuối)
     const old = kept.el; box.replaceWith(old);
     await new Promise(r => setTimeout(r, 110));
     if (my !== token) return;
@@ -119,7 +126,7 @@ export async function mountRooms() {
     const up = (e: PointerEvent) => { ptr.delete(e.pointerId); pinch = 0; if (!ptr.size) scene.dragEnd(); scene.dom.style.touchAction = scene.zoomLevel() > 1.1 ? "none" : "pan-y"; };
     scene.dom.addEventListener("pointerup", up); scene.dom.addEventListener("pointercancel", up);
     scene.dom.addEventListener("wheel", e => { e.preventDefault(); scene.zoomBy(Math.exp(-e.deltaY * .0015)); scene.dom.style.touchAction = scene.zoomLevel() > 1.1 ? "none" : "pan-y"; }, { passive: false });
-    live = { el: box, sig, scene, btns, timer: 0, raf: 0, ro: new ResizeObserver(() => 0) };
+    live = { el: box, sig, base: baseOf(box), scene, btns, timer: 0, raf: 0, ro: new ResizeObserver(() => 0) };
     fixObserver(live); run(live);
   } catch (e) { console.warn("Không dựng được cảnh 3D, dùng cảnh 2D", e); }
 }
