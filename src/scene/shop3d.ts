@@ -25,7 +25,7 @@ export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean };
-  phases(): string[]; breakdown(): Record<string, number>; stats(): { upMs: number; drawMs: number; calls: number; tris: number; q: number };
+  phases(): string[]; breakdown(): Record<string, number>; stats(): { sky: string; upMs: number; drawMs: number; calls: number; tris: number; q: number };
   update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
@@ -450,12 +450,14 @@ export function createShop(o: ShopOpts): ShopScene {
   let skyState = { h: 12, n: 0, warm: 0 }, skyAsp = 1;
   const star = (g: CanvasRenderingContext2D, x: number, y: number, rr: number) => { g.beginPath(); g.arc(x, y, rr, 0, 7); g.fill(); };
   function drawSky() {
-    const { h, n, warm } = skyState, H = 384, W = Math.round(H * skyAsp); skyCv.width = W; skyCv.height = H;
+    const { h, n, warm } = skyState, H = 512, W = Math.round(H * skyAsp); skyCv.width = W; skyCv.height = H;
     const g = skyCv.getContext("2d")!, hex = (c: THREE.Color) => "#" + c.getHexString();
     const top = C("#8FD0FF").lerp(C("#FFB78A"), Math.min(1, warm * 1.4)).lerp(C("#161E4A"), n), bot = C("#FFF4D6").lerp(C("#FFD9A8"), warm).lerp(C("#3A3F7A"), n);
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, hex(top)); gr.addColorStop(1, hex(bot)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     const night = n > .55, t = Math.max(0, Math.min(1, ((night ? (h < 12 ? h + 24 : h) - 19 : h - 6)) / (night ? 11 : 12)));
-    const bx = W * (.12 + .76 * t), by = H * (.82 - Math.sin(t * Math.PI) * .62), R = H * .075;
+    const R = H * .075;
+    // ban ngày: mặt trời đi vòng cung; ban đêm: mặt trăng đậu ở góc trên bên trái (vùng trống, không bị căn phòng che) và trôi nhẹ theo giờ
+    const bx = night ? W * (.06 + .06 * t) + R * 1.7 : W * (.12 + .76 * t), by = night ? H * (.15 - Math.sin(t * Math.PI) * .04) : H * (.82 - Math.sin(t * Math.PI) * .62);
     if (!night) {
       const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 6); gl.addColorStop(0, "rgba(255,240,170,.85)"); gl.addColorStop(1, "rgba(255,240,170,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
       g.save(); g.translate(bx, by); g.strokeStyle = "rgba(255,226,120,.8)"; g.lineWidth = R * .22; g.lineCap = "round";
@@ -464,9 +466,19 @@ export function createShop(o: ShopOpts): ShopScene {
       g.fillStyle = `rgba(255,255,255,${.9 - n * .8})`;
       [[.2, .22, 1], [.62, .14, .8], [.82, .36, 1.1], [.4, .5, .7]].forEach(([cx, cy, k]) => { const x = W * cx, y = H * cy, u = H * .04 * k; [[0, 0, 1.2], [1.2, .3, .9], [-1.2, .3, .9], [.4, -.5, .8]].forEach(([dx, dy, rr]) => star(g, x + dx * u, y + dy * u, rr * u)); });
     } else {
-      g.fillStyle = "#fff"; for (let i = 0; i < 46; i++) { g.globalAlpha = .4 + ((i * 37) % 6) / 10; star(g, ((i * 97) % 101) / 100 * W, ((i * 53) % 71) / 100 * H, 1 + (i % 3) * .7); } g.globalAlpha = 1;
-      const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 5); gl.addColorStop(0, "rgba(200,215,255,.5)"); gl.addColorStop(1, "rgba(200,215,255,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
-      g.fillStyle = "#FFF6D8"; star(g, bx, by, R * 1.1); g.fillStyle = hex(top); star(g, bx + R * .55, by - R * .2, R * .95);
+      // sao nhỏ, sắc nét (một vài ngôi to hơn có tia sáng)
+      for (let i = 0; i < 70; i++) {
+        const x = ((i * 97 + 13) % 101) / 100 * W, y = ((i * 53 + 7) % 83) / 100 * H, big = i % 11 === 0, r = big ? 1.9 : .7 + (i % 3) * .35;
+        g.globalAlpha = .45 + ((i * 37) % 6) / 11; g.fillStyle = "#fff"; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+        if (big) { g.globalAlpha = .5; g.fillRect(x - 5, y - .5, 10, 1); g.fillRect(x - .5, y - 5, 1, 10); }
+      }
+      g.globalAlpha = 1;
+      const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 5); gl.addColorStop(0, "rgba(200,215,255,.45)"); gl.addColorStop(1, "rgba(200,215,255,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+      // trăng lưỡi liềm: khoét một vòng tròn khỏi đĩa trăng (không tô màu nền đè lên nên khớp với dải màu bầu trời)
+      const mc = document.createElement("canvas"); mc.width = mc.height = Math.ceil(R * 4); const mg = mc.getContext("2d")!;
+      mg.fillStyle = "#FFF6D8"; mg.beginPath(); mg.arc(R * 2, R * 2, R * 1.15, 0, 7); mg.fill();
+      mg.globalCompositeOperation = "destination-out"; mg.beginPath(); mg.arc(R * 2 + R * .6, R * 2 - R * .25, R * 1.0, 0, 7); mg.fill();
+      g.drawImage(mc, bx - R * 2, by - R * 2);
     }
     skyTex.needsUpdate = true;
   }
@@ -506,7 +518,7 @@ export function createShop(o: ShopOpts): ShopScene {
     raf = requestAnimationFrame(frame);
     if (!dom.isConnected || document.hidden || now - last < 33) return;      // ~30 hình/giây
     const gap = prevFrame ? Math.min(now - prevFrame, 250) : 33; prevFrame = now; avgGap = avgGap * .92 + gap * .08;
-    if (++adaptN % 45 === 0 && avgGap > 44 && quality < 3) { quality++; applyQuality(); avgGap = 33; }   // trung bình dưới ~23 hình/giây: giảm một nấc
+    if (++adaptN % 45 === 0 && avgGap > 50 && quality < 3) { quality++; applyQuality(); avgGap = 33; }   // trung bình dưới 20 hình/giây: giảm một nấc
     last = now; const t = now / 1000; const u0 = performance.now();
     ups.forEach(f => f(t));
     petObjs.forEach((p, id) => { const k = pulse.get(id) ?? -9, dt = t - k; p.g.scale.setScalar(PET_S * (dt < .5 ? 1 + Math.sin(dt / .5 * Math.PI) * .12 : 1)); p.g.position.y = .6 + (dt < .5 ? Math.sin(dt / .5 * Math.PI) * .12 : 0); });
@@ -553,7 +565,7 @@ export function createShop(o: ShopOpts): ShopScene {
         if ((m as THREE.SkinnedMesh).isSkinnedMesh) { o.skinnedMeshes!++; o.skinnedTris! += t; } if (m.parent && (m.parent as THREE.Mesh).isMesh) { o.outlineMeshes!++; o.outlineTris! += t; } if (m.castShadow) { o.castMeshes!++; o.castTris! += t; } });
       return o;
     },
-    stats: () => ({ upMs: +upMs.toFixed(2), drawMs: +drawMs.toFixed(2), calls: r.info.render.calls, tris: r.info.render.triangles, q: quality }),
+    stats: () => ({ sky: skyCv.width + "x" + skyCv.height + " asp " + skyAsp.toFixed(2), upMs: +upMs.toFixed(2), drawMs: +drawMs.toFixed(2), calls: r.info.render.calls, tris: r.info.render.triangles, q: quality }),
     phases: () => slots.map(sl => `${sl.phase}@${sl.actor.group.position.x.toFixed(1)},${sl.actor.group.position.z.toFixed(1)}${sl.actor.group.visible ? "" : " hidden"}`),
     dom, hotspots, resize,
     rotate(dir) { azT += dir * Math.PI / 2; },
