@@ -1,4 +1,5 @@
 /* Màn Chính (HomeScreen của Claude Design): mái hiên, cảnh tiệm, thư hôm nay, Mở tiệm, 4 nút dưới */
+import { portraitHTML } from "../portrait";
 import { expectedCustomers } from "../../engine/economy";
 import { STAFF } from "../../content/game";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
@@ -14,7 +15,7 @@ import { account, savedAgo } from "../../net/cloud";
 export function profileCard(L: number, cur: number, need: number) {
   const n = S.shop.trim() || account(), len = [...n || "Matcha"].length, fs = len <= 8 ? 38 : len <= 12 ? 31 : len <= 16 ? 25 : 21;
   return `<div class="prof">
-    <button class="pf-av" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${guestSVG({ ...meLook(), mood: "happy" }, 104)}<span class="pf-ed" aria-hidden="true">✎</span></button>
+    <button class="pf-av" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${portraitHTML(S.me.sprite, S.me, 104, guestSVG({ ...meLook(), mood: "happy" }, 104))}<span class="pf-ed" aria-hidden="true">✎</span></button>
     <div class="pf-main">
       <small class="pf-sub">${n ? "Tiệm Bánh của" : "Tiệm Bánh"}</small>
       <b class="pf-name" style="font-size:${fs}px">${esc(n || "Matcha")}</b>

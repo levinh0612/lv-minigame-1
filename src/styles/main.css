@@ -1116,3 +1116,6 @@ button.cm{position:relative}
 .custcnt{display:flex;align-items:center;gap:10px;margin:10px 16px 0;padding:10px 14px;border-radius:16px;background:var(--lav-l,#EFE8FB);box-shadow:0 3px 0 var(--sh)}
 .custcnt .cntico{font-size:26px;line-height:1;flex:none}.custcnt b{display:block;font:900 17px var(--display);color:var(--ink2)}.custcnt small{font:700 12px var(--body);color:var(--soft2)}
 .openn{display:block;text-align:center;margin-top:8px;font:800 12.5px var(--body);color:var(--soft2)}
+/* ảnh đại diện 3D + tên kiểu trong bảng chọn nhân vật */
+.p3 img{border-radius:inherit}
+.pf-cap{text-align:center;font:800 13px var(--body);color:var(--soft2);margin:6px 0 2px}

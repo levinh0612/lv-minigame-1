@@ -3,7 +3,7 @@
    Phần dùng chung nằm ở figure3d.ts. */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { inPlace, makeActor, type Assets, type FigureCfg } from "./figure3d";
+import { headBind, headInfo, inPlace, makeActor, type Assets, type FigureCfg } from "./figure3d";
 import type { Actor, PersonLook, Pose } from "./people";
 
 const DIR = "/models/girl-lo/", H = 1.5;
@@ -15,7 +15,7 @@ function load(): Promise<Assets> {
     gl.scene.updateMatrixWorld(true);
     const sm = gl.scene.getObjectByProperty("isSkinnedMesh", true) as THREE.SkinnedMesh; sm.skeleton.update();
     const box = new THREE.Box3().setFromObject(gl.scene, true), clip = (k: string, keep = false) => inPlace(THREE.AnimationClip.parse(clips[k]), [0, 1], keep);
-    return { scene: gl.scene, idle: clip("idle"), walk: clip("walk"), sit: clip("sit", true), tex, scale: H / (box.max.y - box.min.y) };
+    return { scene: gl.scene, idle: clip("idle"), walk: clip("walk"), sit: clip("sit", true), tex, scale: H / (box.max.y - box.min.y), head: headInfo(gl.scene), bind: headBind(gl.scene), headBone: "mixamorigHead" };
   })().catch(e => { assets = null; throw e; });
 }
 
@@ -29,15 +29,18 @@ const GLSL = `#include <map_fragment>
   float sk = smoothstep(6.,12.,h)*(1.-smoothstep(32.,40.,h))*smoothstep(.1,.18,sa)*(1.-smoothstep(.5,.6,sa))*smoothstep(.6,.7,v)*(1.-ac)*(1.-hr)*(1.-pt);
   vec3 o = mix(s, uJ*(v/.4), jk); o = mix(o, uT*clamp(v/.78,.4,1.2), ac); o = mix(o, uH*(v/.38), hr); o = mix(o, uP*clamp(v/.36,.4,1.3), pt);
   o = mix(o, clamp(s*(uS/vec3(.93,.75,.66)),0.,1.), sk);
+  float sh = (1.-smoothstep(.11,.15,y))*smoothstep(.5,.62,v)*(1.-smoothstep(.2,.3,sa))*(1.-ac);   // giày kem/trắng
+  o = mix(o, uF*clamp(v/.8,.4,1.2), sh);
+  o = mix(o, uE*clamp(v/.32,.3,1.3), eyeMask(h, sa, v));
   diffuseColor.rgb = pow(clamp(o,0.,1.), vec3(2.2)); }`;
 
 const CFG: FigureCfg = {
-  key: "girl3d", assets: load, glsl: GLSL, sitClip: false, seatY: .22, seatZ: -.02,
+  key: "girl3d", assets: load, glsl: GLSL, sitClip: false, shoesFollowShirt: false, eyeBind: [-.235, .36, .27, 0], eyeRel: [-.17, .46], seatY: .22, seatZ: -.02,
   defaults: { coat: "#5B6F34", hair: "#6B4A3A", pants: "#6B3F22", skin: "#F0C0A8", shirt: "#E8A23B" }
 };
-export const girlActor = (look: PersonLook, fallback: () => Actor): Actor => makeActor(CFG, look, fallback);
+export const girlActor = (look: PersonLook, fallback: () => Actor, style = ""): Actor => makeActor(CFG, look, fallback, style);
 
 /** Một nhân vật nữ đứng hoặc ngồi tĩnh */
-export function girlPerson(look: PersonLook, pose: Pose, fallback: () => Actor) {
-  const a = girlActor(look, fallback); a.mode(pose === "seat" ? "sit" : "idle"); if (pose === "seat") a.snap(); return a;
+export function girlPerson(look: PersonLook, pose: Pose, fallback: () => Actor, style = "") {
+  const a = girlActor(look, fallback, style); a.mode(pose === "seat" ? "sit" : "idle"); if (pose === "seat") a.snap(); return a;
 }

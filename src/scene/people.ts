@@ -9,7 +9,7 @@ export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt
 export type Pose = "seat" | "stand";
 /** nhân vật có trạng thái: đứng, đi, ngồi xuống, đứng dậy (khách ra vào tiệm) */
 export type ActorMode = "idle" | "walk" | "sit" | "getup";
-export interface Actor extends Animated { mode(m: ActorMode): void; done(): boolean; snap(): void; dispose(): void }
+export interface Actor extends Animated { mode(m: ActorMode): void; done(): boolean; snap(): void; dispose(): void; ready: Promise<boolean> }   // ready: true khi model 3D đã tải xong (false: đang dùng nhân vật khối)
 const HAIR_KIND: Record<string, string> = { g1: "long", g2: "buns", g3: "pony", g4: "bob", g5: "braid", g6: "wave", b1: "spiky", b2: "curly", b3: "slick", b4: "tie", b5: "buzz", b6: "bowl", boy: "swept" };
 
 /** chi tiết áo theo mã ảnh: mũ, cổ, cúc, túi, nơ, khoá, yếm, váy */
@@ -21,13 +21,13 @@ const OUTFIT: Record<string, Outfit> = {
 
 /** Nam và nữ dùng model 3D có sẵn (boy3d.ts, girl3d.ts); khi model lỗi tải thì dựng chibi bằng khối bên dưới */
 export function person(look: PersonLook, sprite = "b1", pose: Pose = "seat"): Animated {
-  if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite));
-  return girlPerson(look, pose, () => blockActor(look, sprite));
+  if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite), sprite);
+  return girlPerson(look, pose, () => blockActor(look, sprite), sprite);
 }
 
 /** Nhân vật có đủ trạng thái cho khách ra vào */
 export function personActor(look: PersonLook, sprite: string): Actor {
-  return (sprite[0] === "b" ? boyActor : girlActor)(look, () => blockActor(look, sprite));
+  return (sprite[0] === "b" ? boyActor : girlActor)(look, () => blockActor(look, sprite), sprite);
 }
 
 /** Nhân vật khối: hai dáng (đứng / ngồi) hoán đổi theo trạng thái, đi thì nhún nhẹ */
@@ -47,7 +47,8 @@ function blockActor(look: PersonLook, sprite: string): Actor {
     mode(x) { m = x; t0 = now; if (x !== "sit") snapped = false; },
     done: () => m === "sit" ? sitDone() : m === "getup" ? upDone() : true,
     snap() { snapped = true; },
-    dispose() { /* hình học dùng chung nên không giải phóng riêng */ }
+    dispose() { /* hình học dùng chung nên không giải phóng riêng */ },
+    ready: Promise.resolve(false)
   };
 }
 

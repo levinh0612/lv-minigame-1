@@ -31,7 +31,7 @@ export interface State {
 }
 /* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
 /** nhân vật người chơi: id ảnh (content/game.ts SPRITES) và màu tô */
-export interface Avatar { sprite: string; hair: string; eye: string; coat: string; shirt: string; skin: string }
+export interface Avatar { sprite: string; hair: string; eye: string; coat: string; shirt: string; skin: string; pants?: string; shoes?: string }
 export const meLook = (): GuestLook => ({ gender: S.me.sprite[0] === "g" ? "girl" : "boy", ...S.me });
 export const DEFAULT_ME: Avatar = { sprite: "g1", hair: "#3B2A26", eye: "#6C8FC0", coat: "#2F6F86", shirt: "#8A3D55", skin: "#FFE3D0" };
 export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean; rev: number; named: boolean; pair: string }

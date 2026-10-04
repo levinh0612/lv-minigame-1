@@ -8,6 +8,7 @@ import { account, isLocked, loggedIn } from "../net/cloud";
 import { authHTML } from "./screens/auth";
 import { fitRooms } from "./room";
 import { keepRoom, mountRooms } from "./room3d";
+import { hydratePortraits } from "./portrait";
 import { currentPath, resolve } from "./router";
 import { goalsHTML } from "./screens/goals";
 import { homeHTML } from "./screens/home";
@@ -45,7 +46,7 @@ export function render() {
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
     case "rank": $("#app")!.innerHTML = homeHTML(); setTimeout(rankSheet, 0); break;   // link cũ: màn chính + hộp thoại
   }
-  fitRooms(); void mountRooms();
+  fitRooms(); void mountRooms(); hydratePortraits();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu
   window.scrollTo(0, scroll ? y : 0);
 }

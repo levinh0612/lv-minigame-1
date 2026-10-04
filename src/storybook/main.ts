@@ -28,6 +28,7 @@ import { shopHTML, tryDecor } from "../ui/screens/shop";
 import { applyTheme } from "../content/theme";
 import { profileSheet } from "../ui/profile";
 import { mountRooms } from "../ui/room3d";
+import { hydratePortraits } from "../ui/portrait";
 import { loadSprites } from "../ui/sprite";
 import { fitRooms, roomHTML } from "../ui/room";
 import { ROOM_CATS } from "../content/room";
@@ -272,6 +273,7 @@ if (q.has("list")) {
   const s = STORIES.find(x => x.id === one);
   root.innerHTML = `<div class="sbw" id="shot">${s ? wrap(s) : "Không có story này"}</div>`;
   fitRooms();
+  hydratePortraits();
   if (q.has("live")) void mountRooms();   // ?live=1: dựng cảnh 3D thật cho story có cảnh tiệm
   // báo kích thước thật cho script chụp ảnh
   void document.fonts.ready.then(() => setTimeout(() => {

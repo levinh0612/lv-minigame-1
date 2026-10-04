@@ -2,7 +2,7 @@
    Đầu phóng to cho giống chibi của nữ. Phần dùng chung nằm ở figure3d.ts. */
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { inPlace, makeActor, type Assets, type FigureCfg } from "./figure3d";
+import { headBind, headInfo, inPlace, makeActor, type Assets, type FigureCfg } from "./figure3d";
 import type { Actor, PersonLook, Pose } from "./people";
 
 const DIR = "/models/boy-lo/", H = 1.55, HEAD_K = 1.95;   // chiều cao trong cảnh, hệ số phóng đầu
@@ -15,7 +15,7 @@ function load(): Promise<Assets> {
     a.scene.updateMatrixWorld(true);
     const sm = a.scene.getObjectByProperty("isSkinnedMesh", true) as THREE.SkinnedMesh; sm.skeleton.update();
     const box = new THREE.Box3().setFromObject(a.scene, true);
-    return { scene: a.scene, idle: inPlace(a.animations[0], [0, 2]), walk: inPlace(w.animations[0], [0, 2]), sit: inPlace(s.animations[0], [0, 2], true), tex, scale: H / (box.max.y - box.min.y) };
+    return { scene: a.scene, idle: inPlace(a.animations[0], [0, 2]), walk: inPlace(w.animations[0], [0, 2]), sit: inPlace(s.animations[0], [0, 2], true), tex, scale: H / (box.max.y - box.min.y), head: headInfo(a.scene), bind: headBind(a.scene), headBone: "mixamorigHead" };
   })().catch(e => { assets = null; throw e; });
 }
 
@@ -29,15 +29,16 @@ const GLSL = `#include <map_fragment>
   float sh = (1.-smoothstep(-.86,-.8,y))*smoothstep(.22,.34,v)*(1.-sk);
   vec3 o = mix(s, uJ*(v/.5), jk); o = mix(o, uH*(v/.38), hr); o = mix(o, uP*clamp(v/.2,.45,1.4), pt);
   o = mix(o, clamp(s*(uS/vec3(.93,.68,.55)),0.,1.), sk); o = mix(o, uT*clamp(v/.85,.3,1.1), tee); o = mix(o, uF*clamp(v/.7,.35,1.25), sh);
+  o = mix(o, uE*clamp(v/.32,.3,1.3), eyeMask(h, sa, v));
   diffuseColor.rgb = pow(clamp(o,0.,1.), vec3(2.2)); }`;
 
 const CFG: FigureCfg = {
-  key: "boy3d2", assets: load, glsl: GLSL, sitClip: true, seatY: .1, seatZ: .3,
+  key: "boy3d2", assets: load, glsl: GLSL, sitClip: true, shoesFollowShirt: true, eyeBind: [-.15, .28, .14, .064], eyeRel: [-.15, .46], seatY: .1, seatZ: .3,
   defaults: { coat: "#4F86A8", hair: "#8A4A30", pants: "#2A2A33", skin: "#EBAD8C", shirt: "#F4F4F4" }
 };
-export const boyActor = (look: PersonLook, fallback: () => Actor): Actor => makeActor(CFG, look, fallback);
+export const boyActor = (look: PersonLook, fallback: () => Actor, style = ""): Actor => makeActor(CFG, look, fallback, style);
 
 /** Một nhân vật nam đứng hoặc ngồi tĩnh (chủ tiệm, khách ngồi sẵn) */
-export function boyPerson(look: PersonLook, pose: Pose, fallback: () => Actor) {
-  const a = boyActor(look, fallback); a.mode(pose === "seat" ? "sit" : "idle"); if (pose === "seat") a.snap(); return a;
+export function boyPerson(look: PersonLook, pose: Pose, fallback: () => Actor, style = "") {
+  const a = boyActor(look, fallback, style); a.mode(pose === "seat" ? "sit" : "idle"); if (pose === "seat") a.snap(); return a;
 }

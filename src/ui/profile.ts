@@ -1,6 +1,7 @@
 /* Hồ sơ của bạn: chọn nhân vật (kiểu + màu tóc/mắt/áo/da), tên tiệm, theme màu.
    Lưu vào S.me / S.shop / S.theme nên tự đồng bộ theo tài khoản như phần còn lại của tiến trình. */
-import { BOY_SPRITES, COAT, EYES, GIRL_SPRITES, HAIR, SHIRT, SKIN } from "../content/game";
+import { BOY_SPRITES, COAT, EYES, GIRL_SPRITES, HAIR, PANTS, SHIRT, SHOES, SKIN, STYLE_NAMES } from "../content/game";
+import { hydratePortraits, portraitHTML } from "./portrait";
 import { THEMES, applyTheme } from "../content/theme";
 import { S, save, type Avatar } from "../engine/state";
 import { guestSVG } from "./art";
@@ -9,16 +10,16 @@ import { render } from "./app";
 import { account } from "../net/cloud";
 
 const COLOR_ROWS: [keyof Avatar, string, string[]][] = [
-  ["hair", "Màu tóc", HAIR], ["eye", "Màu mắt", EYES], ["coat", "Áo khoác", COAT], ["shirt", "Áo trong", SHIRT], ["skin", "Màu da", SKIN]
+  ["hair", "Màu tóc", HAIR], ["eye", "Màu mắt", EYES], ["coat", "Áo khoác", COAT], ["shirt", "Áo trong", SHIRT], ["pants", "Quần", PANTS], ["shoes", "Giày", SHOES], ["skin", "Màu da", SKIN]
 ];
 
 export function profileSheet() {
   const d = { me: { ...S.me }, shop: S.shop, theme: S.theme };
   const look = () => ({ gender: d.me.sprite[0] === "g" ? "girl" as const : "boy" as const, ...d.me });
-  const sprites = (ids: string[]) => ids.map(id => `<button type="button" class="pf-sp${id === d.me.sprite ? " on" : ""}" data-pf="sprite" data-v="${id}" aria-label="Kiểu ${id}">${guestSVG({ ...look(), sprite: id, gender: id[0] === "g" ? "girl" : "boy", ledge: false, mood: "happy" }, 56)}</button>`).join("");
+  const sprites = (ids: string[]) => ids.map(id => `<button type="button" class="pf-sp${id === d.me.sprite ? " on" : ""}" data-pf="sprite" data-v="${id}" aria-label="Kiểu ${STYLE_NAMES[id] || id}" title="${STYLE_NAMES[id] || id}">${portraitHTML(id, d.me, 56, guestSVG({ ...look(), sprite: id, gender: id[0] === "g" ? "girl" : "boy", ledge: false, mood: "happy" }, 56))}</button>`).join("");
   modal(`<h2>Hồ sơ của bạn</h2>
     <form id="pfForm">
-      <div class="pf-prev" id="pfPrev">${guestSVG({ ...look(), mood: "happy" }, 150)}</div>
+      <div class="pf-prev" id="pfPrev">${portraitHTML(d.me.sprite, d.me, 150, guestSVG({ ...look(), mood: "happy" }, 150))}</div><div class="pf-cap" id="pfCap">Kiểu: ${STYLE_NAMES[d.me.sprite] || ""}</div>
       <label class="field">Tên tiệm (hiện ở màn chính)<input id="pfShop" value="${esc(d.shop)}" maxlength="16" placeholder="${esc(account() || "Matcha")}"></label>
       <div class="pf-h">Nhân vật</div>
       <div class="pf-grid" id="pfSprites">${sprites(GIRL_SPRITES)}${sprites(BOY_SPRITES)}</div>
@@ -30,10 +31,13 @@ export function profileSheet() {
 
   const mark = (sel: string, v: string) => document.querySelectorAll<HTMLElement>(sel).forEach(b => b.classList.toggle("on", b.dataset.v === v));
   const redraw = () => {
-    $("#pfPrev")!.innerHTML = guestSVG({ ...look(), mood: "happy" }, 150);
+    $("#pfCap")!.textContent = "Kiểu: " + (STYLE_NAMES[d.me.sprite] || "");
+    $("#pfPrev")!.innerHTML = portraitHTML(d.me.sprite, d.me, 150, guestSVG({ ...look(), mood: "happy" }, 150));
     // ảnh nhỏ của từng kiểu vẽ lại theo màu đang chọn
     $("#pfSprites")!.innerHTML = sprites(GIRL_SPRITES) + sprites(BOY_SPRITES);
+    hydratePortraits($("#pfForm")!);
   };
+  hydratePortraits($("#pfForm")!);
   $("#pfForm")!.addEventListener("click", e => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-pf]"); if (!b) return;
     const k = b.dataset.pf!, v = b.dataset.v!;
