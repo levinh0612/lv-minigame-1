@@ -1,4 +1,4 @@
-/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 5 phút chơi xét một lần, trúng 50% thì xảy ra một sự cố,
+/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 1 phút chơi xét một lần, trúng 50% thì xảy ra một sự cố,
    tiệm bị trừ khoảng 1/10 số xu đang có. Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện. */
 import type { PetId } from "../content/couple";
 import { S } from "./state";
@@ -17,7 +17,7 @@ export const INCIDENTS: Incident[] = [
   { id: "fridge", title: "Tủ lạnh hỏng", text: "Tủ lạnh kêu \"tách tách\" rồi tắt hẳn. Gọi thợ điện lạnh tới sửa.", emoji: "🧊", bg: "#D6F0F2", pet: "gold" }
 ];
 
-export const MIN_SHIFTS = 3, MIN_COINS = 100, MIN_GAP = 300, MAX_GAP = 300, CHANCE = 0.5, RETRY = 60;   // giây: cứ 5 phút chơi xét một lần, 50% trúng
+export const MIN_SHIFTS = 3, MIN_COINS = 100, MIN_GAP = 60, MAX_GAP = 60, CHANCE = 0.5, RETRY = 30;   // giây: cứ 1 phút chơi xét một lần, 50% trúng
 export interface Hit { inc: Incident; cost: number }
 
 /** số xu bị trừ: 8% đến 12% số xu đang có (khoảng 1/10), ít nhất 10 và không vượt số xu có */

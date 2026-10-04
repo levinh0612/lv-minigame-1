@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.42", date: "04/10/2026", notes: ["Sự cố bất ngờ: cứ 1 phút chơi xét một lần, 50% bị trừ khoảng 1/10 xu", "Chống giật mạnh: đồ nội thất gộp thành ít khối (số lần vẽ giảm hơn một nửa, thời gian vẽ giảm gần một nửa), nhân vật nam và nữ giảm còn khoảng 40% số tam giác"] },
   { v: "2.41", date: "04/10/2026", notes: ["Sự cố bất ngờ: cứ 5 phút chơi xét một lần, 50% bị trừ khoảng 1/10 xu", "Chống giật: cảnh tiệm nhẹ hơn khoảng 25% (bớt tam giác, bỏ bóng và viền cho vật rất nhỏ), khách kế tiếp được dựng sẵn khi chỗ còn vắng nên không khựng lúc khách xuất hiện"] },
   { v: "2.40", date: "04/10/2026", notes: ["Sự cố bất ngờ (bị trừ khoảng 1/10 xu) giờ xảy ra bất cứ lúc nào khi đang mở app, kể cả giữa ca, cứ khoảng 6 đến 12 phút chơi xét một lần; đang trong ca thì ca tự tạm dừng khi hộp thoại hiện, đóng xong chơi tiếp", "Không còn xét sự cố sau khi hết ca"] },
   { v: "2.39", date: "04/10/2026", notes: ["Khách ra vào và ngồi bằng cả nhân vật 3D mới: Nữ anime, Nữ cyber, Nam thật và 8 khách low-poly (nam, nữ nhiều kiểu áo)", "Khoảng 3 trên 10 khách mỗi ca là nhân vật 3D làm sẵn; ảnh đại diện khách cũng dùng các model này"] },

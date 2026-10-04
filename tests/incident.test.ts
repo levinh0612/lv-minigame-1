@@ -16,12 +16,12 @@ describe("sự cố bất ngờ", () => {
     expect(incidentCost(5, () => 0.5)).toBe(5);
   });
 
-  it("đồng hồ: lần xét đầu sau đúng 5 phút chơi, chưa tới giờ thì không có gì", () => {
+  it("đồng hồ: lần xét đầu sau đúng 1 phút chơi, chưa tới giờ thì không có gì", () => {
     expect(tickIncident(0, () => 0)).toBeNull();
     expect(incidentLeft()).toBe(MIN_GAP);
     expect(tickIncident(MIN_GAP - 1, () => 0)).toBeNull();
     resetIncidentClock(); tickIncident(0, () => 0.9999); expect(incidentLeft()).toBe(MAX_GAP);
-    expect(MAX_GAP).toBe(300);
+    expect(MAX_GAP).toBe(60);
   });
 
   it("tới giờ thì xảy ra giữa lúc chơi (không cần hết ca), rồi đặt lại đồng hồ", () => {

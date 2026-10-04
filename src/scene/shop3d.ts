@@ -1,7 +1,7 @@
 /* Cảnh tiệm 3D của màn chính: phòng dựng bằng code theo đồ trang trí đang dùng, thú cưng, chủ tiệm, khách, bánh.
    Sáng/tối theo giờ, xoay 4 góc. Không đọc trạng thái game: mọi thứ truyền qua ShopOpts. */
 import * as THREE from "three";
-import { CYL, RB, SPH, T, INK, add, CONE, CAP } from "./kit";
+import { CYL, RB, SPH, T, INK, add, CONE, CAP, mergeStatic } from "./kit";
 import { cake } from "./cake";
 import { pet, type PetKind } from "./pets";
 import { APPROACH } from "./figure3d";
@@ -25,7 +25,7 @@ export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean };
-  phases(): string[]; breakdown(): Record<string, number>; byType(): Record<string, number[]>; stats(): { upMs: number; drawMs: number; calls: number; tris: number; q: number };
+  phases(): string[]; breakdown(): Record<string, number>; stats(): { upMs: number; drawMs: number; calls: number; tris: number; q: number };
   update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
@@ -537,6 +537,12 @@ export function createShop(o: ShopOpts): ShopScene {
     if (nhl !== undefined && nhl !== curHl) { glowMats.forEach(m => { m.emissive.set("#000000"); m.emissiveIntensity = 0; }); glowMats.length = 0; curHl = nhl; (selAll[nhl] || []).forEach(m => glowMats.push(m)); }
     return true;
   }
+  /* gộp nội thất tĩnh để giảm số lần vẽ; nhóm còn chuyển động hoặc dựng lại thì bỏ qua */
+  if (!new URLSearchParams(location.search).has("nomerge")) {
+    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
+    const protect = new Set<THREE.Material>([...glowMats, ...Object.values(selAll).flat(), ...wallMains.map(x => x[0]), ...tableTops, ...tableLegs, ...[counterBits.top, counterBits.wood].filter((x): x is THREE.MeshToonMaterial => !!x)]);
+    mergeStatic(root, skip, protect);
+  }
   const v = new THREE.Vector3();
   return {
     update,
@@ -547,7 +553,6 @@ export function createShop(o: ShopOpts): ShopScene {
         if ((m as THREE.SkinnedMesh).isSkinnedMesh) { o.skinnedMeshes!++; o.skinnedTris! += t; } if (m.parent && (m.parent as THREE.Mesh).isMesh) { o.outlineMeshes!++; o.outlineTris! += t; } if (m.castShadow) { o.castMeshes!++; o.castTris! += t; } });
       return o;
     },
-    byType: () => { const r2: Record<string, number[]> = {}; scene.traverse(ob => { const m = ob as THREE.Mesh; if (!m.isMesh) return; const g = m.geometry, t = (g.index ? g.index.count : g.attributes.position!.count) / 3, k = g.type + ((m.parent as THREE.Mesh)?.isMesh ? "(outline)" : ""); (r2[k] ||= [0, 0]); r2[k]![0]!++; r2[k]![1]! += t; }); return r2; },
     stats: () => ({ upMs: +upMs.toFixed(2), drawMs: +drawMs.toFixed(2), calls: r.info.render.calls, tris: r.info.render.triangles, q: quality }),
     phases: () => slots.map(sl => `${sl.phase}@${sl.actor.group.position.x.toFixed(1)},${sl.actor.group.position.z.toFixed(1)}${sl.actor.group.visible ? "" : " hidden"}`),
     dom, hotspots, resize,

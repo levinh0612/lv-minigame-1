@@ -1,6 +1,7 @@
 /* Bộ dựng chung cho cảnh 3D: vật liệu hoạt hình (toon) có viền nâu như nhân vật 2D, và hàm add() để ghép khối. */
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 export const INK = "#4A3438";
 /** Mỗi mô hình trả về nhóm khối và hàm cập nhật chuyển động (chớp mắt, vẫy đuôi...) theo giây */
@@ -95,4 +96,45 @@ export function animeFace(head: THREE.Object3D, eyeCol: string, browCol = "#3a2a
   add(head, SPH(.014, 8, 6), T("#E8A98C"), 0, -.085, .339, { ol: null, cast: false });
   add(head, new THREE.TorusGeometry(.04, .0085, 6, 14, Math.PI), T("#B0485E"), 0, -.115, .328, { r: [0, 0, Math.PI], ol: null });
   return t => { const k = (t % 4.2) > 4.05 ? .12 : 1; eyes.forEach(e => { e.scale.y = k; }); };
+}
+
+/** Gộp các khối tĩnh dưới `root` thành rất ít khối lớn (cùng vật liệu và cùng kiểu đổ bóng thì gộp một): từ hàng trăm lần vẽ còn vài chục.
+    `skip`: các nhóm còn chuyển động hoặc được dựng lại (không đụng vào). `protect`: vật liệu mà code khác còn đổi màu/phát sáng (giữ nguyên, không trộn với vật liệu giống). */
+export function mergeStatic(root: THREE.Object3D, skip: Set<THREE.Object3D>, protect: Set<THREE.Material>) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), canon = new Map<string, THREE.Material>();
+  const hex = (c?: THREE.Color) => (c ? c.getHexString() : "-");
+  const canonical = (m: THREE.Material): THREE.Material => {
+    if (protect.has(m) || m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile || m.userData.keep) return m;
+    const a = m as THREE.MeshToonMaterial & THREE.MeshBasicMaterial;
+    const key = [m.type, hex(a.color), hex(a.emissive), a.emissiveIntensity ?? 0, a.map?.uuid ?? "-", a.gradientMap?.uuid ?? "-", m.side, m.transparent, m.opacity, m.depthWrite, m.alphaTest, a.vertexColors].join("|");
+    return canon.get(key) ?? (canon.set(key, m), m);
+  };
+  interface Bucket { mat: THREE.Material; cast: boolean; recv: boolean; geos: THREE.BufferGeometry[]; meshes: THREE.Mesh[] }
+  const buckets = new Map<string, Bucket>(), ids = new Map<THREE.Material, number>(), rel = new THREE.Matrix4();
+  const visit = (o: THREE.Object3D) => {
+    if (skip.has(o)) return;
+    const m = o as THREE.Mesh;
+    if (m.isMesh && !(m as THREE.SkinnedMesh).isSkinnedMesh && !Array.isArray(m.material) && m.visible) {
+      rel.multiplyMatrices(inv, m.matrixWorld);
+      if (rel.determinant() > 0 && m.geometry.attributes.position && m.geometry.attributes.normal) {
+        const mat = canonical(m.material as THREE.Material); if (!ids.has(mat)) ids.set(mat, ids.size);
+        const key = `${ids.get(mat)}|${m.castShadow ? 1 : 0}|${m.receiveShadow ? 1 : 0}`;
+        const b = buckets.get(key) ?? { mat, cast: m.castShadow, recv: m.receiveShadow, geos: [], meshes: [] }; buckets.set(key, b);
+        const g = m.geometry.clone().applyMatrix4(rel);
+        for (const name of Object.keys(g.attributes)) if (name !== "position" && name !== "normal" && name !== "uv") g.deleteAttribute(name);
+        if (!g.attributes.uv) g.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(g.attributes.position!.count * 2), 2));
+        b.geos.push(g); b.meshes.push(m);
+      }
+    }
+    o.children.slice().forEach(visit);
+  };
+  visit(root);
+  buckets.forEach(b => {
+    if (b.geos.length < 2) { b.geos.forEach(g => g.dispose()); return; }               // một khối lẻ: để nguyên
+    const indexed = b.geos.every(g => g.index); if (!indexed) b.geos.forEach((g, i) => { if (g.index) b.geos[i] = g.toNonIndexed(); });
+    const merged = mergeGeometries(b.geos, false); b.geos.forEach(g => g.dispose()); if (!merged) return;
+    b.meshes.forEach(m => { m.removeFromParent(); });
+    const mesh = new THREE.Mesh(merged, b.mat); mesh.castShadow = b.cast; mesh.receiveShadow = b.recv; mesh.matrixAutoUpdate = false; root.add(mesh);
+  });
 }
