@@ -1206,3 +1206,23 @@ button.cm{position:relative}
 
 /* Hồ sơ: nhân vật nữ anime giữ nguyên trang phục nên ẩn kiểu tóc và các hàng màu */
 .pf-anime .pf-opt{display:none}
+
+/* ===== Đồng xu may rủi, mức sự cố, thưởng thụ động ===== */
+.coinwrap{display:grid;place-items:center;height:132px;perspective:600px;margin:4px 0 2px}
+.coin{width:104px;height:104px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;font-size:62px;line-height:1;
+  background:radial-gradient(circle at 35% 30%,#FFF3B0,#FFD66B 55%,#E8AE2E);box-shadow:0 6px 0 #C98E1E,0 14px 22px -8px rgba(201,142,30,.6),inset 0 0 0 5px rgba(255,255,255,.55);transform-style:preserve-3d;animation:coinbob 1.8s ease-in-out infinite}
+.coin:active{transform:scale(.96)}
+.coin .cf{display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.12))}
+.coin.flip{animation:coinflip 1.2s cubic-bezier(.3,.7,.4,1) forwards}
+.coin.safe{cursor:default;background:radial-gradient(circle at 35% 30%,#E9FFF3,#BFE8D3 60%,#7BC47F);box-shadow:0 6px 0 #4E9A63,0 14px 22px -8px rgba(78,154,99,.55),inset 0 0 0 5px rgba(255,255,255,.55);animation:none}
+@keyframes coinbob{50%{transform:translateY(-6px)}}
+@keyframes coinflip{0%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-34px) rotateY(900deg)}100%{transform:translateY(0) rotateY(1800deg)}}
+.coinodds{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:6px 0 10px}
+.coinodds span{font:800 11px var(--body);padding:4px 9px;border-radius:999px;background:var(--pink-l);color:var(--ink2)}
+.inclv{align-self:center;font:800 12px var(--body);padding:4px 12px;border-radius:999px;margin:2px auto 0;text-align:center;width:max-content}
+.inclv.low{background:#FFF1C9;color:#8A6A1F}.inclv.mid{background:#FFD9B8;color:#9A4E12}.inclv.high{background:#FFC9D3;color:#B02A4B}
+.rwbox{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.rwrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:var(--pink-l);font:700 14px var(--body);color:var(--ink2)}
+.rwrow b{font:900 18px var(--display);color:var(--mint-d,#3F9C78);white-space:nowrap}
+.coin .cfa{display:grid;place-items:center;width:74px;height:74px;border-radius:50%;border:4px solid rgba(190,128,20,.55);background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.55),rgba(255,255,255,0) 60%)}
+.coin .cfa i{font:900 30px var(--display);font-style:normal;color:#B5760F;text-shadow:0 2px 0 rgba(255,255,255,.55);letter-spacing:.5px}

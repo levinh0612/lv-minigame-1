@@ -13,7 +13,7 @@ import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom"
 import { render } from "./app";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
-import type { Incident } from "../engine/incident";
+import { LEVELS, applyIncident, tossCoin, type Incident, type Level } from "../engine/incident";
 import { account, changePin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
@@ -203,10 +203,41 @@ export function welcome() {
 export function incidentArt(i: Incident, px = 84) {
   return `<div class="incart" style="--ib:${i.bg}"><span class="ie" aria-hidden="true">${i.emoji}</span><span class="ip">${petSVG({ ...PETS[i.pet], mood: "impatient" }, px)}</span></div>`;
 }
-export function incidentModal(i: Incident, cost: number, onClose?: () => void) {
+export function incidentModal(i: Incident, cost: number, onClose?: () => void, level?: Level) {
   modal(`${incidentArt(i)}<h2>${esc(i.title)}</h2><p class="sub">${esc(i.text)}</p>
+    ${level ? `<div class="inclv ${level}">Mức ${esc(LEVELS[level].name.toLowerCase())} · −${Math.round(LEVELS[level].pct * 100)}% số xu</div>` : ""}
     <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
     <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose);
+}
+
+/** Đồng xu may rủi: người chơi tự bấm. 70% bình an, 30% gặp sự cố (trừ 3%, 6% hoặc 8% số xu đang có). */
+export function coinModal(onClose?: () => void) {
+  modal(`<div class="coinwrap"><button type="button" class="coin" id="coinBtn" aria-label="Tung đồng xu"><span class="cf cfa"><i>xu</i></span></button></div>
+    <h2>Tung đồng xu!</h2><p class="sub">Bấm vào đồng xu. Có 30% gặp sự cố bị trừ xu, 70% bình an.</p>
+    <div class="coinodds"><span>Thấp −3%</span><span>Trung bình −6%</span><span>Cao −8%</span></div>`, onClose);
+  const btn = $<HTMLButtonElement>("#coinBtn"); if (!btn) return;
+  btn.addEventListener("click", () => {
+    btn.disabled = true; btn.classList.add("flip"); sfx("tap");
+    setTimeout(() => {
+      const hit = tossCoin();
+      if (!hit) {
+        sfx("level");
+        modal(`<div class="coinwrap"><span class="coin safe"><span class="cf">🍀</span></span></div><h2>May quá!</h2><p class="sub">Đồng xu mỉm cười, tiệm bình an vô sự. Hẹn bạn ở lần tung sau.</p>
+          <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`, onClose);
+        return;
+      }
+      applyIncident(hit); save(); sfx("untap");
+      incidentModal(hit.inc, hit.cost, onClose, hit.level);
+    }, 1250);
+  });
+}
+
+/** Thông báo thưởng đăng nhập mỗi ngày và khoản đền bù */
+export function rewardModal(c: { daily: number; comp: number }) {
+  const rows = [c.comp ? `<div class="rwrow"><span>🎁 Đền bù vì trừ xu quá tay</span><b>+${fmtN(c.comp)} xu</b></div>` : "", c.daily ? `<div class="rwrow"><span>☀️ Thưởng đăng nhập hôm nay (10% số xu)</span><b>+${fmtN(c.daily)} xu</b></div>` : ""].join("");
+  modal(`<h2>${c.comp ? "Xin lỗi vì trừ hơi ghê!" : "Chào ngày mới!"}</h2><p class="sub">${c.comp ? "Tiệm gửi bạn món quà đền bù và quà đăng nhập." : "Quà cho lần đăng nhập đầu tiên trong ngày."}</p>
+    <div class="rwbox">${rows}</div><div class="inccost"><small>Số xu hiện có ${fmtN(S.coins)} xu · xem ở Ví</small></div>
+    <div class="mbtns"><button class="b3" data-close>Nhận luôn</button></div>`);
 }
 
 /* ===== Mục tiêu và Quà tặng: hộp thoại trượt từ dưới lên (thay cho trang riêng) ===== */

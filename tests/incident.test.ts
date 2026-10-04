@@ -1,58 +1,83 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { INCIDENTS, MAX_GAP, MIN_GAP, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, tickIncident } from "../src/engine/incident";
+import { GAP, INCIDENTS, LEVELS, LOSE_CHANCE, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, tickIncident, tossCoin } from "../src/engine/incident";
+import { COMP_COINS, claimPassive, dayKey } from "../src/engine/passive";
 import { S, resetState } from "../src/engine/state";
 
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 27, 10)); resetState(); resetIncidentClock(); S.shifts = 5; S.coins = 1000; });
 afterEach(() => vi.useRealTimers());
-const always = () => 0;          // rng luôn trúng xác suất
-const never = () => 0.99;
 
-describe("sự cố bất ngờ", () => {
-  it("số xu bị trừ khoảng 1/10, ít nhất 10 và không vượt số xu có", () => {
-    expect(incidentCost(1000, () => 0)).toBe(80);
-    expect(incidentCost(1000, () => 0.999)).toBe(120);
-    expect(incidentCost(100, () => 0.5)).toBe(10);
-    expect(incidentCost(12, () => 0.5)).toBe(10);
-    expect(incidentCost(5, () => 0.5)).toBe(5);
+describe("đồng xu sự cố", () => {
+  it("số xu bị trừ theo mức: thấp 3%, trung bình 6%, cao 8%", () => {
+    expect(incidentCost(1000, "low")).toBe(30);
+    expect(incidentCost(1000, "mid")).toBe(60);
+    expect(incidentCost(1000, "high")).toBe(80);
+    expect(incidentCost(10, "low")).toBe(1);               // ít nhất 1
+    expect(incidentCost(0, "high")).toBe(0);               // không vượt số xu có
+    expect(LEVELS.high.pct).toBeGreaterThan(LEVELS.mid.pct); expect(LEVELS.mid.pct).toBeGreaterThan(LEVELS.low.pct);
   });
 
-  it("đồng hồ: lần xét đầu sau đúng 1 phút chơi, chưa tới giờ thì không có gì", () => {
-    expect(tickIncident(0, () => 0)).toBeNull();
-    expect(incidentLeft()).toBe(MIN_GAP);
-    expect(tickIncident(MIN_GAP - 1, () => 0)).toBeNull();
-    resetIncidentClock(); tickIncident(0, () => 0.9999); expect(incidentLeft()).toBe(MAX_GAP);
-    expect(MAX_GAP).toBe(60);
+  it("đồng hồ: sau đúng 1 phút chơi mới hiện đồng xu, rồi đếm lại", () => {
+    expect(tickIncident(0)).toBe(false); expect(incidentLeft()).toBe(GAP); expect(GAP).toBe(60);
+    expect(tickIncident(GAP - 1)).toBe(false);
+    expect(tickIncident(1)).toBe(true);
+    expect(incidentLeft()).toBe(GAP);
   });
 
-  it("tới giờ thì xảy ra giữa lúc chơi (không cần hết ca), rồi đặt lại đồng hồ", () => {
-    tickIncident(0, always);
-    const hit = tickIncident(MIN_GAP, always);
-    expect(hit).not.toBeNull();
-    expect(incidentLeft()).toBeGreaterThanOrEqual(MIN_GAP - 1);
+  it("không hiện với người mới hoặc ít xu: bỏ qua và xét lại sau ít phút", () => {
+    S.shifts = 2; tickIncident(0); expect(tickIncident(GAP)).toBe(false); expect(incidentLeft()).toBe(RETRY);
+    S.shifts = 5; S.coins = 99; expect(tickIncident(RETRY)).toBe(false);
+    S.coins = 1000; expect(tickIncident(RETRY)).toBe(true);
   });
 
-  it("không xảy ra với người mới hoặc ít xu: bỏ qua và xét lại sau ít phút", () => {
-    S.shifts = 2; tickIncident(0, always); expect(tickIncident(MIN_GAP, always)).toBeNull(); expect(incidentLeft()).toBe(RETRY);
-    S.shifts = 5; S.coins = 99; expect(tickIncident(RETRY, always)).toBeNull();
-    S.coins = 1000; expect(tickIncident(RETRY, always)).not.toBeNull();
+  it("tung đồng xu: 70% bình an, 30% gặp sự cố", () => {
+    expect(LOSE_CHANCE).toBe(0.3);
+    expect(tossCoin(() => 0.3)).toBeNull();                 // đúng ngưỡng 30%: bình an
+    expect(tossCoin(() => 0.99)).toBeNull();
+    expect(tossCoin(() => 0.29)).not.toBeNull();
+    expect(tossCoin(() => 0)).not.toBeNull();
   });
 
-  it("xác suất 50%: rng từ 0.5 trở lên thì tới giờ cũng không xảy ra", () => {
-    tickIncident(0, never); expect(tickIncident(MAX_GAP, never)).toBeNull();
-    resetIncidentClock(); tickIncident(0, () => 0.49); expect(tickIncident(MAX_GAP, () => 0.49)).not.toBeNull();
-    resetIncidentClock(); tickIncident(0, () => 0.5); expect(tickIncident(MAX_GAP, () => 0.5)).toBeNull();
+  it("ba mức gặp đều nhau theo rng, tiền theo mức", () => {
+    const seq = (a: number, b: number, c: number) => { const v = [a, b, c]; let i = 0; return () => v[i++ % 3]!; };
+    expect(tossCoin(seq(0.1, 0.0, 0.0))!.level).toBe("low");
+    expect(tossCoin(seq(0.1, 0.5, 0.0))!.level).toBe("mid");
+    const hi = tossCoin(seq(0.1, 0.99, 0.0))!; expect(hi.level).toBe("high"); expect(hi.cost).toBe(80);
   });
 
-  it("áp dụng: trừ xu, ghi vào sổ chi 'Sự cố bất ngờ'", () => {
-    tickIncident(0, always); const hit = tickIncident(MIN_GAP, always)!, before = S.coins;
+  it("áp dụng: trừ xu, ghi vào sổ chi 'Sự cố bất ngờ' kèm mức", () => {
+    const hit = tossCoin(() => 0)!, before = S.coins;
     applyIncident(hit);
     expect(S.coins).toBe(before - hit.cost);
     expect(S.book.out.incident).toBe(hit.cost);
-    expect(S.book.log[0]).toMatchObject({ n: hit.inc.title, v: -hit.cost });
+    expect(S.book.log[0]!.n).toContain(hit.inc.title); expect(S.book.log[0]!.v).toBe(-hit.cost);
   });
 
   it("mỗi sự cố có đủ tiêu đề, nội dung, hình", () => {
     INCIDENTS.forEach(i => { expect(i.title && i.text && i.emoji && i.bg && i.pet).toBeTruthy(); });
     expect(new Set(INCIDENTS.map(i => i.id)).size).toBe(INCIDENTS.length);
+  });
+});
+
+describe("khoản cộng thụ động", () => {
+  it("lần đầu: thưởng đăng nhập 10% xu (tính trước khi cộng đền bù) và đền bù 3000 xu", () => {
+    S.coins = 1000; S.shifts = 5;
+    const c = claimPassive();
+    expect(c).toEqual({ daily: 100, comp: COMP_COINS });
+    expect(S.coins).toBe(1000 + 100 + 3000);
+    expect(S.loginDay).toBe(dayKey()); expect(S.comp).toBe(1);
+    expect(S.book.in.daily).toBe(100); expect(S.book.in.comp).toBe(3000);
+  });
+
+  it("đền bù chỉ một lần; thưởng ngày chỉ một lần mỗi ngày, qua ngày mới nhận lại", () => {
+    claimPassive();
+    const coins = S.coins;
+    expect(claimPassive()).toEqual({ daily: 0, comp: 0 }); expect(S.coins).toBe(coins);
+    vi.setSystemTime(new Date(2026, 8, 28, 9));
+    const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(Math.floor(coins * 0.1)); expect(S.coins).toBe(coins + c.daily);
+  });
+
+  it("người chơi mới (chưa chơi ca nào) không nhận đền bù nhưng vẫn được đánh dấu để không nhận lẻ sau này", () => {
+    S.shifts = 0; S.coins = 40;
+    const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(4); expect(S.comp).toBe(1);
   });
 });

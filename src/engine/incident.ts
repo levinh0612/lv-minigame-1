@@ -1,5 +1,6 @@
-/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 1 phút chơi xét một lần, trúng 50% thì xảy ra một sự cố,
-   tiệm bị trừ khoảng 1/10 số xu đang có. Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện. */
+/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 1 phút chơi lại có một đồng xu để người chơi tự bấm tung.
+   70% bình an, 30% gặp sự cố và bị trừ xu theo ba mức: thấp 3%, trung bình 6%, cao 8% số xu đang có.
+   Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện. */
 import type { PetId } from "../content/couple";
 import { S } from "./state";
 import { spend } from "./wallet";
@@ -17,25 +18,31 @@ export const INCIDENTS: Incident[] = [
   { id: "fridge", title: "Tủ lạnh hỏng", text: "Tủ lạnh kêu \"tách tách\" rồi tắt hẳn. Gọi thợ điện lạnh tới sửa.", emoji: "🧊", bg: "#D6F0F2", pet: "gold" }
 ];
 
-export const MIN_SHIFTS = 3, MIN_COINS = 100, MIN_GAP = 60, MAX_GAP = 60, CHANCE = 0.5, RETRY = 30;   // giây: cứ 1 phút chơi xét một lần, 50% trúng
-export interface Hit { inc: Incident; cost: number }
+export const MIN_SHIFTS = 3, MIN_COINS = 100, GAP = 60, RETRY = 30, LOSE_CHANCE = 0.3;   // giây: cứ 1 phút có một đồng xu
+export type Level = "low" | "mid" | "high";
+export const LEVELS: Record<Level, { name: string; pct: number }> = { low: { name: "Thấp", pct: 0.03 }, mid: { name: "Trung bình", pct: 0.06 }, high: { name: "Cao", pct: 0.08 } };
+export interface Hit { inc: Incident; cost: number; level: Level }
 
-/** số xu bị trừ: 8% đến 12% số xu đang có (khoảng 1/10), ít nhất 10 và không vượt số xu có */
-export const incidentCost = (coins: number, rng: () => number = Math.random) => Math.min(coins, Math.max(10, Math.round(coins * (0.08 + rng() * 0.04))));
+/** số xu bị trừ theo mức: thấp 3%, trung bình 6%, cao 8% số xu đang có (ít nhất 1, không vượt số xu có) */
+export const incidentCost = (coins: number, level: Level) => Math.min(coins, Math.max(1, Math.round(coins * LEVELS[level].pct)));
 
-let left = -1;                                              // giây chơi còn lại tới lần xét kế tiếp (-1 = chưa đặt)
-const arm = (rng: () => number) => { left = MIN_GAP + rng() * (MAX_GAP - MIN_GAP); };
+let left = -1;                                              // giây chơi còn lại tới đồng xu kế tiếp (-1 = chưa đặt)
 export const resetIncidentClock = () => { left = -1; };
 export const incidentLeft = () => left;
 
-/** gọi mỗi giây khi app đang hiện (không có hộp thoại khác): hết giờ thì có thể trả về một sự cố, chưa trừ xu */
-export function tickIncident(dt: number, rng: () => number = Math.random): Hit | null {
-  if (left < 0) arm(rng);
-  left -= dt; if (left > 0) return null;
-  if (S.shifts < MIN_SHIFTS || S.coins < MIN_COINS) { left = RETRY; return null; }     // chưa đủ điều kiện: xét lại sau ít phút
-  arm(rng);
-  if (rng() >= CHANCE) return null;
-  return { inc: INCIDENTS[Math.floor(rng() * INCIDENTS.length) % INCIDENTS.length]!, cost: incidentCost(S.coins, rng) };
+/** gọi mỗi giây khi app đang hiện (không có hộp thoại khác): trả true khi tới lúc hiện đồng xu để người chơi tung */
+export function tickIncident(dt: number): boolean {
+  if (left < 0) left = GAP;
+  left -= dt; if (left > 0) return false;
+  if (S.shifts < MIN_SHIFTS || S.coins < MIN_COINS) { left = RETRY; return false; }    // chưa đủ điều kiện: xét lại sau ít phút
+  left = GAP; return true;
 }
 
-export function applyIncident(h: Hit) { spend("incident", h.cost, h.inc.title); S.incAt = S.shifts; }
+/** người chơi bấm đồng xu: 30% gặp sự cố (mức thấp, trung bình, cao ngẫu nhiên đều nhau), 70% bình an (null). Chưa trừ xu. */
+export function tossCoin(rng: () => number = Math.random): Hit | null {
+  if (rng() >= LOSE_CHANCE) return null;
+  const level = (["low", "mid", "high"] as const)[Math.min(2, Math.floor(rng() * 3))]!;
+  return { inc: INCIDENTS[Math.floor(rng() * INCIDENTS.length) % INCIDENTS.length]!, level, cost: incidentCost(S.coins, level) };
+}
+
+export function applyIncident(h: Hit) { spend("incident", h.cost, `${h.inc.title} (mức ${LEVELS[h.level].name.toLowerCase()})`); S.incAt = S.shifts; }

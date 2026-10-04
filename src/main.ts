@@ -8,12 +8,13 @@ import type { RoomKey } from "./content/room";
 import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
-import { applyIncident, tickIncident } from "./engine/incident";
+import { tickIncident } from "./engine/incident";
+import { claimPassive } from "./engine/passive";
 import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { accountPanel, claimGoals, giftSheet, goalsSheet, incidentModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
@@ -108,14 +109,21 @@ document.addEventListener("visibilitychange", () => {
 });
 /* đồng bộ giữa các máy: app đang mở (không trong ca) thì 20 giây hỏi server một lần xem có bản mới hơn không */
 setInShift(() => !!SH);
-/* sự cố bất ngờ: đồng hồ chạy khi app đang hiện và không có hộp thoại nào mở; đang trong ca thì tạm dừng ca khi hộp thoại hiện */
+/* sự cố bất ngờ: đồng hồ chạy khi app đang hiện và không có hộp thoại nào mở. Tới giờ thì hiện đồng xu cho người chơi tự bấm;
+   đang trong ca thì tạm dừng ca khi hộp thoại hiện, đóng xong chơi tiếp */
 setInterval(() => {
   if (document.hidden || isLocked() || hasModal()) return;
-  const hit = tickIncident(1); if (!hit) return;
-  applyIncident(hit); save();
+  if (!tickIncident(1)) return;
   const inShift = !!SH; if (inShift) pause();
-  sfx("untap"); incidentModal(hit.inc, hit.cost, () => { if (inShift) resume(); else render(); });
+  sfx("bell"); coinModal(() => { if (inShift) resume(); else render(); });
 }, 1000);
+/* thưởng thụ động: đền bù một lần và 10% số xu cho lần đăng nhập đầu tiên mỗi ngày (qua ngày mới giữa lúc đang mở app cũng nhận) */
+function passive() {
+  if (document.hidden || isLocked() || SH || hasModal() || !S.tut || !S.welcome) return;     // người mới: xem hướng dẫn và quà khai trương trước
+  const c = claimPassive(); if (!c.daily && !c.comp) return;
+  save(); sfx("level"); rewardModal(c); render();
+}
+setInterval(passive, 20000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", render);
@@ -125,7 +133,7 @@ Sound.play("home");
 /* vào tiệm (mở khoá / đăng nhập xong): tải bản mới nhất, rồi hướng dẫn và quà khai trương nếu là lần đầu */
 async function enter() {
   await pull();
-  setTimeout(() => { if (hasModal() || SH) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); }, 300);
+  setTimeout(() => { if (hasModal() || SH) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); else passive(); }, 300);
 }
 addEventListener("auth:in", () => void enter());
 addEventListener("cloud:logout", () => { if (!SH) { toast("Phiên đăng nhập đã hết, đăng nhập lại nha"); render(); } });

@@ -14,7 +14,7 @@ import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
-import { claimGoals, giftSheet, goalsSheet, himNote, incidentModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
+import { claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
 import { cakesSheet, daysSheet, menuSheet } from "../ui/sheets";
@@ -164,8 +164,12 @@ const STORIES: Story[] = [
     html: () => { lvState(3); S.daily.served = 9; S.daily.feat = 3; return modalOver(homeHTML(), claimGoals); } },
   { id: "m-welcome", sec: "modals", title: "Quà khai trương", desc: "Lần đầu chơi: 300 xu + 5 Hạt làm vốn", kind: "modal",
     html: () => { lvState(1, s => { s.welcome = false; }); return modalOver(homeHTML(), welcome); } },
-  ...INCIDENTS.map((inc, n) => ({ id: "m-inc-" + inc.id, sec: "modals", title: "Sự cố: " + inc.title, desc: "Thỉnh thoảng sau khi hết ca, trừ khoảng 1/10 xu; hộp thoại trượt từ dưới lên", kind: "modal" as const,
-    html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => incidentModal(inc, 120 + n * 3)); } })),
+  ...INCIDENTS.map((inc, n) => ({ id: "m-inc-" + inc.id, sec: "modals", title: "Sự cố: " + inc.title, desc: "Sau khi tung đồng xu trúng 30%: trừ 3%, 6% hoặc 8% xu theo mức; hộp thoại trượt từ dưới lên", kind: "modal" as const,
+    html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => incidentModal(inc, 120 + n * 3, undefined, (['low', 'mid', 'high'] as const)[n % 3])); } })),
+  { id: "m-coin", sec: "modals", title: "Đồng xu may rủi", desc: "Mỗi phút chơi có một đồng xu để tự bấm: 70% bình an, 30% gặp sự cố", kind: "modal",
+    html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => coinModal()); } },
+  { id: "m-reward", sec: "modals", title: "Thưởng đăng nhập + đền bù", desc: "Đền bù 3000 xu một lần và 10% số xu cho lần đăng nhập đầu tiên mỗi ngày", kind: "modal",
+    html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => rewardModal({ daily: 120, comp: 3000 })); } },
   { id: "m-goals", sec: "modals", title: "Mục tiêu", desc: "Chạm Mục tiêu ở thanh dưới: hộp thoại trượt từ dưới lên (không còn là trang riêng)", kind: "modal",
     html: () => { lvState(4); return modalOver(homeHTML(), goalsSheet); } },
   { id: "m-gifts", sec: "modals", title: "Quà tặng", desc: "Chạm Quà tặng ở thanh dưới: hộp thoại trượt từ dưới lên", kind: "modal",
