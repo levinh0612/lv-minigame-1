@@ -2,9 +2,13 @@
    Màu tóc, mắt, áo ngoài, áo trong, da lấy từ cùng bộ màu tô ảnh 2D nên khớp phần tuỳ chỉnh cá nhân. */
 import * as THREE from "three";
 import { Animated, CAP, CONE, CYL, RB, SPH, T, add, animeFace } from "./kit";
+import { boyActor, boyPerson } from "./boy3d";
 
-export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt?: string; eye?: string; pants?: string }
+export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt?: string; eye?: string; pants?: string; shoes?: string }
 export type Pose = "seat" | "stand";
+/** nhân vật có trạng thái: đứng, đi, ngồi xuống, đứng dậy (khách ra vào tiệm) */
+export type ActorMode = "idle" | "walk" | "sit" | "getup";
+export interface Actor extends Animated { mode(m: ActorMode): void; done(): boolean; snap(): void; dispose(): void }
 const HAIR_KIND: Record<string, string> = { g1: "long", g2: "buns", g3: "pony", g4: "bob", g5: "braid", g6: "wave", b1: "spiky", b2: "curly", b3: "slick", b4: "tie", b5: "buzz", b6: "bowl", boy: "swept" };
 
 /** chi tiết áo theo mã ảnh: mũ, cổ, cúc, túi, nơ, khoá, yếm, váy */
@@ -14,7 +18,39 @@ const OUTFIT: Record<string, Outfit> = {
   boy: { hood: true }, b1: { hood: true }, b2: { collar: "white" }, b3: { buttons: true, pockets: true, collar: "rib" }, b4: { pinafore: true }, b5: { bow: true, buttons: true }, b6: { zip: true, collar: "rib" }
 };
 
+/** Nam dùng model 3D có sẵn (boy3d.ts); nữ và khi model lỗi tải thì dựng chibi bằng khối bên dưới */
 export function person(look: PersonLook, sprite = "b1", pose: Pose = "seat"): Animated {
+  if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite));
+  return blockPerson(look, sprite, pose);
+}
+
+/** Nhân vật có đủ trạng thái cho khách ra vào */
+export function personActor(look: PersonLook, sprite: string): Actor {
+  return sprite[0] === "b" ? boyActor(look, () => blockActor(look, sprite)) : blockActor(look, sprite);
+}
+
+/** Nhân vật khối: hai dáng (đứng / ngồi) hoán đổi theo trạng thái, đi thì nhún nhẹ */
+function blockActor(look: PersonLook, sprite: string): Actor {
+  const g = new THREE.Group(), stand = blockPerson(look, sprite, "stand"), seat = blockPerson(look, sprite, "seat");
+  g.add(stand.group, seat.group);
+  let m: ActorMode = "idle", t0 = 0, now = 0, snapped = false;
+  const sitDone = () => snapped || now - t0 >= 1, upDone = () => now - t0 >= .6;
+  const sitting = () => (m === "sit" && sitDone()) || (m === "getup" && !upDone());
+  return {
+    group: g,
+    update(t) {
+      now = t; const s = sitting(); seat.group.visible = s; stand.group.visible = !s;
+      stand.group.position.set(0, m === "walk" ? Math.abs(Math.sin(t * 9)) * .05 : 0, m === "sit" || m === "getup" ? .3 : 0);
+      stand.update(t); seat.update(t);
+    },
+    mode(x) { m = x; t0 = now; if (x !== "sit") snapped = false; },
+    done: () => m === "sit" ? sitDone() : m === "getup" ? upDone() : true,
+    snap() { snapped = true; },
+    dispose() { /* hình học dùng chung nên không giải phóng riêng */ }
+  };
+}
+
+function blockPerson(look: PersonLook, sprite: string, pose: Pose): Animated {
   const g = new THREE.Group(), ups: ((t: number) => void)[] = [];
   const skin = look.skin || "#FFE3D0", hair = look.hair || "#3B2A26", coat = look.coat || "#2F6F86", shirt = look.shirt || "#8A3D55", eye = look.eye || "#5FA6C9";
   const o = OUTFIT[sprite] || {}, girl = sprite[0] === "g", pants = look.pants || "#3A3A44";

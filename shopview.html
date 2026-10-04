@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Xem cảnh tiệm 3D</title>
+<style>body{margin:0;background:#FFE3EA;font:700 13px system-ui;color:#4A3438}canvas{width:100vw;height:100vh;display:block}#h{position:fixed;left:10px;top:8px;background:#fff;border-radius:10px;padding:4px 10px}</style></head>
+<body><div id="h">← → xoay · E: xem ngoài tiệm · ?hour=10 · ?me=b3 · ?guests=2</div>
+<script type="module">
+import { createShop } from "/src/scene/shop3d.ts";
+const q = new URLSearchParams(location.search);
+const sc = createShop({
+  room: { wall: "pink", floor: "check", counter: "pink", curtain: "1", lamp: "1", wallItem: "0", plant: "1", rug: "1" }, event: false, guests: +(q.get("guests") ?? 2), giftDot: false, photo: "", menuCount: 4,
+  cakes: [[0, 0, 0], [1, 1, 1], [2, 2, 2]], shopName: "Matcha",
+  me: { sprite: q.get("me") || "b3", look: { skin: "#F3C39A", hair: "#6B4A3A", coat: "#2F6F86", shirt: "#F2E6D0", eye: "#5FA6C9" } },
+  guestLooks: [{ sprite: "g2", look: { skin: "#FFE9DA", hair: "#C98B5A", coat: "#8A3D55", shirt: "#F2E6D0", eye: "#7A5A3E" } }, { sprite: "b3", look: { skin: "#FFE3D0", hair: "#E7B872", coat: "#2E4A7A", shirt: "#C9962E", eye: "#4F9A6B" } }]
+});
+document.body.appendChild(sc.dom); const fit = () => sc.resize(innerWidth, innerHeight); addEventListener("resize", fit); fit(); sc.start();
+addEventListener("keydown", e => { if (e.key === "ArrowLeft") sc.rotate(-1); if (e.key === "ArrowRight") sc.rotate(1); if (e.key.toLowerCase() === "e") sc.setExterior(!sc.isExterior()); });
+window.sc = sc;
+</script></body></html>

@@ -80,6 +80,7 @@ export function settings() {
       <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
       <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)} · build ${__BUILD__.slice(6, 8)}/${__BUILD__.slice(4, 6)} ${__BUILD__.slice(8, 10)}:${__BUILD__.slice(10, 12)} UTC</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button><button type="button" class="mini" data-act="hardreload">Tải lại bản mới nhất</button></div>
       <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button></div>
+      <div class="verrow" style="font-size:11px;opacity:.7"><span>Nhân vật nam 3D: “Basemesh_sd_boy” của phurit2014 (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>; xương và chuyển động từ Mixamo.</span></div>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
     </form>`, render);
   const v = (id: string) => $<HTMLInputElement>(id)!.value.trim();
