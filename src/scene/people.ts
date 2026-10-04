@@ -5,7 +5,7 @@ import { Animated, CAP, CONE, CYL, RB, SPH, T, add, animeFace } from "./kit";
 import { boyActor, boyPerson } from "./boy3d";
 import { girlActor, girlPerson } from "./girl3d";
 
-export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt?: string; eye?: string; pants?: string; shoes?: string }
+export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt?: string; eye?: string; pants?: string; shoes?: string; style?: string }
 export type Pose = "seat" | "stand";
 /** nhân vật có trạng thái: đứng, đi, ngồi xuống, đứng dậy (khách ra vào tiệm) */
 export type ActorMode = "idle" | "walk" | "sit" | "getup";
@@ -21,13 +21,13 @@ const OUTFIT: Record<string, Outfit> = {
 
 /** Nam và nữ dùng model 3D có sẵn (boy3d.ts, girl3d.ts); khi model lỗi tải thì dựng chibi bằng khối bên dưới */
 export function person(look: PersonLook, sprite = "b1", pose: Pose = "seat"): Animated {
-  if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite), sprite);
-  return girlPerson(look, pose, () => blockActor(look, sprite), sprite);
+  if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite), look.style ?? sprite);
+  return girlPerson(look, pose, () => blockActor(look, sprite), look.style ?? sprite);
 }
 
 /** Nhân vật có đủ trạng thái cho khách ra vào */
 export function personActor(look: PersonLook, sprite: string): Actor {
-  return (sprite[0] === "b" ? boyActor : girlActor)(look, () => blockActor(look, sprite), sprite);
+  return (sprite[0] === "b" ? boyActor : girlActor)(look, () => blockActor(look, sprite), look.style ?? sprite);
 }
 
 /** Nhân vật khối: hai dáng (đứng / ngồi) hoán đổi theo trạng thái, đi thì nhún nhẹ */

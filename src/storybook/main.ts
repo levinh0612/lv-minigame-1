@@ -261,6 +261,8 @@ const STORIES: Story[] = [
 
 /* ================= Hiển thị ================= */
 await loadSprites();
+/* ?force=1: tab bị ẩn (thử tự động) thì trình duyệt dừng vẽ; giả lập nhịp vẽ để chụp được */
+if (new URLSearchParams(location.search).has("force")) { Object.defineProperty(document, "hidden", { get: () => false }); window.requestAnimationFrame = cb => window.setTimeout(() => cb(performance.now()), 34); }
 const q = new URLSearchParams(location.search), one = q.get("story"), root = document.getElementById("sb")!;
 applyTheme(q.get("theme") || "pink");   // ?theme=blue|green|purple|orange|slate để xem từng theme
 const wrap = (s: Story) => s.kind === "comp" ? s.html() : `<div class="frame ${s.long ? "long" : ""} ${s.resBg ? "res-bg" : ""}">${s.html()}</div>`;

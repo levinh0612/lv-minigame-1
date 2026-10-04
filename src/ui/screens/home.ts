@@ -52,22 +52,32 @@ export function homeHTML() {
     { n: "Quà tặng", ic: NAV_IC.gift, bg: "#FFE3EA", sh: "#F6CBD7", go: "/cua-hang/qua-tang", dot: gift ? "1" : "" },
     { n: "Cửa hàng", ic: NAV_IC.shop, bg: "#EDE6FF", sh: "#D6CBF6", go: "/cua-hang", dot: "" }
   ];
-  return `<div class="scr home4">
-    <div class="awn4"></div><div class="awn4b"></div>
-    <div class="hrow4">
-      <button class="pill love4" data-act="days" aria-label="Ngày kỷ niệm"><span>${HEART}</span>${fmtN(daysTogether())} ngày<em> yêu</em></button>
-      <div class="sp"></div>
-      <button class="rbtn" data-act="rank" aria-label="Bảng xếp hạng">${CUP}</button>
-      <button class="rbtn" data-act="music" aria-label="Nhạc nền" style="${S.music ? "" : "opacity:.45"}">${MUSIC}</button>
-      <button class="rbtn" data-act="settings" aria-label="Cài đặt">${GEAR}</button>
-      ${coinPill()}
+  const nm = S.shop.trim() || account(), nlen = [...nm || "Matcha"].length, fs = nlen <= 8 ? 27 : nlen <= 12 ? 23 : nlen <= 16 ? 19 : 17;
+  const prof = `<div class="prof5">
+      <button class="pf-av5" data-act="profile" aria-label="Hồ sơ của bạn: nhân vật, tên tiệm, màu giao diện">${portraitHTML(S.me.sprite, S.me, 62, guestSVG({ ...meLook(), mood: "happy" }, 62))}<span class="pf-ed" aria-hidden="true">✎</span></button>
+      <div class="pf-main5"><small class="pf-sub">${nm ? "Tiệm Bánh của" : "Tiệm Bánh"}</small><b class="pf-name" style="font-size:${fs}px">${esc(nm || "Matcha")}</b>
+        <button class="lvp wide" data-go="/muc-tieu" aria-label="Cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lb">Lv ${L}</span><span class="tr"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button></div>
+    </div>`;
+  /* 3D chiếm cả màn hình; mọi thứ khác (thanh trên, hồ sơ, thư, nút Mở tiệm, 4 nút) là lớp phủ trên và dưới */
+  return `<div class="scr home5">
+    <div class="h5-room">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) }, false, true)}</div>
+    <div class="h5-top">
+      <div class="hrow4">
+        <button class="pill love4" data-act="days" aria-label="Ngày kỷ niệm"><span>${HEART}</span>${fmtN(daysTogether())} ngày<em> yêu</em></button>
+        <div class="sp"></div>
+        <button class="rbtn" data-act="rank" aria-label="Bảng xếp hạng">${CUP}</button>
+        <button class="rbtn" data-act="music" aria-label="Nhạc nền" style="${S.music ? "" : "opacity:.45"}">${MUSIC}</button>
+        <button class="rbtn" data-act="settings" aria-label="Cài đặt">${GEAR}</button>
+        ${coinPill()}
+      </div>
+      ${prof}
+      <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
     </div>
-    ${profileCard(L, cur, need)}
-    <div class="pf-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
-    <div class="hroom">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) })}
-      <button class="fix" data-go="/cua-hang">${PEN}Sửa tiệm</button></div>
-    ${card}
-    <div class="openw4"><button class="b3" data-go="/chuan-bi">Mở tiệm</button><small class="openn">Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></div>
-    <nav class="nav4">${nav.map(x => `<button data-go="${x.go}"><span class="ic" style="background:${x.bg};box-shadow:0 4px 0 ${x.sh}">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}${x.n}</button>`).join("")}</nav>
+    <div class="h5-bottom">
+      ${card}
+      <div class="h5-act"><button class="h5-fix" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}<span>Sửa tiệm</span></button><button class="b3" data-go="/chuan-bi">Mở tiệm</button></div>
+      <small class="openn">Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small>
+      <nav class="nav4">${nav.map(x => `<button data-go="${x.go}"><span class="ic" style="background:${x.bg};box-shadow:0 4px 0 ${x.sh}">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}${x.n}</button>`).join("")}</nav>
+    </div>
   </div>`;
 }

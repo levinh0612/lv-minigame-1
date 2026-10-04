@@ -79,8 +79,8 @@ export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Acto
     if (snap && m === "sit") { [rt.idle, rt.walk].forEach(a => a.stop()); act.setEffectiveWeight(1); if (cfg.sitClip) act.time = rt.dur; blend = 1; rt.mixer.update(0); }
   };
   cfg.assets().then(a => {
-    const model = clone(a.scene) as THREE.Group; model.scale.setScalar(a.scale); const mats: THREE.Material[] = [];
-    model.traverse(o => { const sm = o as THREE.SkinnedMesh; if (sm.isSkinnedMesh) { sm.material = material(cfg, a.tex, look, a.bind); mats.push(sm.material); sm.castShadow = true; sm.frustumCulled = false; } });
+    const model = clone(a.scene) as THREE.Group; model.scale.setScalar(a.scale); const mats: THREE.Material[] = []; a.tex.userData.keep = true;
+    model.traverse(o => { const sm = o as THREE.SkinnedMesh; if (sm.isSkinnedMesh) { sm.geometry.userData.keep = true; sm.material = material(cfg, a.tex, look, a.bind); mats.push(sm.material); sm.castShadow = true; sm.frustumCulled = false; } });
     model.updateMatrixWorld(true);                                  // tư thế mặc định: tính vị trí phụ kiện trước khi chạy animation
     // kiểu đầu: phụ kiện gắn vào xương đầu, kích thước theo đầu thật
     const hb = a.head, k = a.scale, bone = model.getObjectByName(a.headBone);

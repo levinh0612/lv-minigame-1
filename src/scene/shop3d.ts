@@ -25,7 +25,7 @@ export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean };
-  setExterior(on: boolean): void; isExterior(): boolean; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
+  setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
 let renderer: THREE.WebGLRenderer | null = null;
@@ -400,15 +400,18 @@ export function createShop(o: ShopOpts): ShopScene {
   setHour(hq !== null ? +hq : new Date().getHours() + new Date().getMinutes() / 60);
 
   /* ---------- camera xoay 4 góc ---------- */
-  const FR = 5.2; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
+  let insTop = 0, insBot = 0; const FR = 5.2; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
   function layout() {
     const r2 = 26; cam.position.set(Math.sin(az) * Math.cos(el) * r2, Math.sin(el) * r2 + .8, Math.cos(az) * Math.cos(el) * r2); cam.lookAt(0, 1.0 + pan, 0);
-    cam.position.y += pan; cam.zoom = zoom; cam.updateProjectionMatrix();
+    cam.position.y += pan; cam.zoom = zoom;
+    if (insTop || insBot) cam.setViewOffset(w, h, 0, (insBot - insTop) / 2, w, h); else cam.clearViewOffset();      // đẩy căn phòng vào giữa vùng không bị lớp phủ che
+    cam.updateProjectionMatrix();
     const cx = Math.sin(az), cz = Math.cos(az);
     walls.forEach(wl => { const d = wl.nx * cx + wl.nz * cz, op = exterior ? 1 : Math.max(0, Math.min(1, 1 - d * 2.2)); wl.mats.forEach(m => { const mm = m as THREE.MeshToonMaterial; mm.opacity = op; mm.transparent = true; mm.depthWrite = op > .95; }); wl.decor.visible = !exterior && d < .45; });
   }
   const dom = r.domElement;
-  function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); if (Math.abs(ww / hh - skyAsp) > .01) { skyAsp = ww / hh; drawSky(); } const a = ww / hh; cam.left = -FR * a; cam.right = FR * a; cam.top = FR; cam.bottom = -FR; cam.updateProjectionMatrix(); }
+  function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); if (Math.abs(ww / hh - skyAsp) > .01) { skyAsp = ww / hh; drawSky(); } const a = ww / hh, hw = Math.max(FR * a, FR * 1.06), hv = hw / a;   // khung dọc (điện thoại): giữ vừa bề ngang căn phòng, thừa chiều dọc cho lớp phủ giao diện
+    cam.left = -hw; cam.right = hw; cam.top = hv; cam.bottom = -hv; cam.updateProjectionMatrix(); }
   const pulse = new Map<string, number>();
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
@@ -430,8 +433,10 @@ export function createShop(o: ShopOpts): ShopScene {
     setHour, bounce(id) { pulse.set(id, performance.now() / 1000); },
     start() { if (running) return; running = true; resize(w, h); last = 0; raf = requestAnimationFrame(frame); },
     stop() { running = false; cancelAnimationFrame(raf); },
-    dispose() { running = false; cancelAnimationFrame(raf); scene.traverse(ob => { const m = ob as THREE.Mesh; if (m.geometry) m.geometry.dispose(); const mt = m.material as THREE.Material | THREE.Material[] | undefined; (Array.isArray(mt) ? mt : mt ? [mt] : []).forEach(x => { (x as THREE.MeshToonMaterial).map?.dispose(); x.dispose(); }); }); disposables.forEach(d => d.dispose()); },
+    /* hình học và ảnh của nhân vật 3D dùng chung giữa các cảnh (userData.keep): giữ lại để khỏi tải lại lên GPU */
+    dispose() { running = false; cancelAnimationFrame(raf); scene.traverse(ob => { const m = ob as THREE.Mesh; if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); const mt = m.material as THREE.Material | THREE.Material[] | undefined; (Array.isArray(mt) ? mt : mt ? [mt] : []).forEach(x => { const mp = (x as THREE.MeshToonMaterial).map; if (mp && !mp.userData.keep) mp.dispose(); x.dispose(); }); }); disposables.forEach(d => d.dispose()); },
     project(hs) { hs.obj.getWorldPosition(v); v.y += hs.dy; v.project(cam); const wl = hs.wall === null ? null : walls[hs.wall]; const show = wl ? (wl.nx * Math.sin(az) + wl.nz * Math.cos(az)) < .45 : true; const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return { x, y, show: show && !exterior && x > 8 && x < w - 8 && y > 8 && y < h - 8 }; },
+    setInsets(top, bottom) { insTop = top; insBot = bottom; },
     setExterior(on) { exterior = on; outside.visible = on; zoomT = on ? .78 : 1; panT = 0; el = (on ? 30 : 38) * Math.PI / 180; },
     isExterior() { return exterior; },
     dragStart() { dragging = true; },

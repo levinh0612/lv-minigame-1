@@ -2,7 +2,7 @@
    - Tải lười: Three.js chỉ tải khi mở màn chính; trong lúc chờ (hoặc khi máy không có WebGL) vẫn hiện cảnh 2D cũ.
    - Giữ cảnh: render() vẽ lại cả trang mỗi lần xu đổi; cảnh 3D được giữ nguyên nếu dữ liệu cảnh không đổi.
    - Chạm: các nút trong suốt đặt đúng chỗ vật thể (thú cưng, menu, tủ bánh, ảnh, hộp quà), dùng lại data-act / data-pet / data-go sẵn có. */
-import { RECIPES } from "../content/game";
+import { RECIPES, STYLE_OF } from "../content/game";
 import type { PetId } from "../content/couple";
 import { S, petName } from "../engine/state";
 import { account } from "../net/cloud";
@@ -12,17 +12,34 @@ import { roomHTML, type RoomOpts } from "./room";
 interface Live { el: HTMLElement; sig: string; scene: ShopScene; btns: [Hotspot, HTMLButtonElement][]; timer: number; raf: number; ro: ResizeObserver }
 let live: Live | null = null, kept: Live | null = null, token = 0;
 /** vùng chứa cảnh: bên trong là cảnh 2D cũ làm dự phòng */
-export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false) {
+export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
-  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "";
-  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}`;
+  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "", fullAttr = full ? ' data-full="1"' : "";
+  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
 
+/* icon điều khiển cảnh 3D: nét tròn, tô nhẹ, cùng bộ với các icon khác của game */
+const IC = (body: string) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const ICON = {
+  left: IC('<path d="M7.2 8.2A6.6 6.6 0 1 1 5.6 14"/><path d="M6.2 3.8l.9 4.9 4.9-.9" fill="currentColor" fill-opacity=".18"/>'),
+  right: IC('<path d="M16.8 8.2A6.6 6.6 0 1 0 18.4 14"/><path d="M17.8 3.8l-.9 4.9-4.9-.9" fill="currentColor" fill-opacity=".18"/>'),
+  plus: IC('<circle cx="10.5" cy="10.5" r="6.2" fill="currentColor" fill-opacity=".12"/><path d="M15.2 15.2l5 5"/><path d="M10.5 7.8v5.4M7.8 10.5h5.4"/>'),
+  minus: IC('<circle cx="10.5" cy="10.5" r="6.2" fill="currentColor" fill-opacity=".12"/><path d="M15.2 15.2l5 5"/><path d="M7.8 10.5h5.4"/>'),
+  shop: IC('<path d="M3.8 9.6 5.4 4.4h13.2l1.6 5.2c0 1.5-1.1 2.4-2.3 2.4s-2.3-.9-2.3-2.4c0 1.5-1.1 2.4-2.3 2.4S9.7 11.1 9.7 9.6c0 1.5-1.1 2.4-2.3 2.4S3.8 11.1 3.8 9.6z" fill="currentColor" fill-opacity=".15"/><path d="M5.6 12.4v7.2h12.8v-7.2"/><path d="M10 19.6v-4.6h4v4.6"/>'),
+  room: IC('<path d="M5 12V9.2A3.2 3.2 0 0 1 8.2 6h7.6A3.2 3.2 0 0 1 19 9.2V12" fill="currentColor" fill-opacity=".12"/><path d="M3 13.6a2 2 0 0 1 4 0V15h10v-1.4a2 2 0 0 1 4 0V18.4H3z" fill="currentColor" fill-opacity=".18"/><path d="M6.4 18.4v2M17.6 18.4v2"/>')
+};
+
+/** màn chính toàn màn hình: phần bị lớp phủ giao diện (trên/dưới) che để camera căn phòng vào vùng còn lại */
+function insets(el: HTMLElement, scene: ShopScene) {
+  if (el.dataset.full !== "1") return;
+  const r = el.getBoundingClientRect(), top = document.querySelector(".h5-top")?.getBoundingClientRect(), bot = document.querySelector(".h5-bottom")?.getBoundingClientRect();
+  scene.setInsets(top ? Math.max(0, top.bottom - r.top) : 0, bot ? Math.max(0, r.bottom - bot.top) : 0);
+}
 const el0hs = (el: HTMLElement) => el.dataset.hs !== "0";      // màn trang trí: không có nút chạm trên cảnh
 const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
 function optsOf(el: HTMLElement): ShopOpts {
-  const n = +(el.dataset.recipes || 4), g = S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes });
+  const n = +(el.dataset.recipes || 4), g = S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {
     room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
@@ -37,7 +54,7 @@ const sigOf = (el: HTMLElement) => JSON.stringify([S.room, el.dataset, S.me, has
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
 function run(l: Live) {
-  const fit = () => { const r = l.el.getBoundingClientRect(); if (r.width) l.scene.resize(Math.round(r.width), Math.round(r.height)); };
+  const fit = () => { const r = l.el.getBoundingClientRect(); if (r.width) { l.scene.resize(Math.round(r.width), Math.round(r.height)); insets(l.el, l.scene); } };
   l.el.prepend(l.scene.dom); fit(); l.scene.start();
   l.ro.observe(l.el);
   l.timer = window.setInterval(() => l.scene.setHour(new Date().getHours() + new Date().getMinutes() / 60), 60000);
@@ -66,6 +83,12 @@ export async function mountRooms() {
   if (kept && kept.sig === sig) {                      // dữ liệu cảnh không đổi: đặt lại đúng cảnh cũ
     box.replaceWith(kept.el); live = kept; kept = null; live.ro = new ResizeObserver(() => 0); fixObserver(live); run(live); return;
   }
+  if (box.dataset.hs === "0" && kept) {                // màn Trang trí: giữ cảnh cũ hiển thị, dựng cảnh mới sau một nhịp (chạm liên tiếp thì chỉ dựng lần cuối)
+    const old = kept.el; box.replaceWith(old);
+    await new Promise(r => setTimeout(r, 110));
+    if (my !== token) return;
+    old.replaceWith(box);
+  }
   drop(kept); kept = null;
   let mod: typeof import("../scene/shop3d");
   try { mod = await import("../scene/shop3d"); if (!mod.webglOK()) return; } catch { return; }
@@ -75,9 +98,9 @@ export async function mountRooms() {
     box.classList.add("live"); box.innerHTML = "";
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
     const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
-    box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">⟲</button><button data-rot="1" aria-label="Xoay sang phải">⟳</button></div>`);
-    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">＋</button><button data-zoom="0.77" aria-label="Thu nhỏ">－</button><button data-view aria-label="Xem ngoài tiệm" class="vw">🏪</button></div>`);
-    box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.textContent = on ? "🛋" : "🏪"; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });
+    box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">${ICON.left}</button><button data-rot="1" aria-label="Xoay sang phải">${ICON.right}</button></div>`);
+    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button></div>`);
+    box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.innerHTML = on ? ICON.room : ICON.shop; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });
     box.querySelectorAll<HTMLElement>("[data-zoom]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.zoomBy(+b.dataset.zoom!); }));
     box.querySelectorAll<HTMLElement>("[data-rot]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.rotate(+b.dataset.rot!); }));
     /* vuốt ngang = xoay; vuốt dọc = di chuyển khi đã phóng to; chụm 2 ngón / lăn chuột = zoom; chạm đúp = về mặc định */
@@ -102,7 +125,7 @@ export async function mountRooms() {
 }
 /** ResizeObserver riêng cho mỗi cảnh: đổi cỡ khung thì đổi cỡ canvas */
 function fixObserver(l: Live) {
-  l.ro = new ResizeObserver(() => { const r = l.el.getBoundingClientRect(); if (r.width) l.scene.resize(Math.round(r.width), Math.round(r.height)); });
+  l.ro = new ResizeObserver(() => { const r = l.el.getBoundingClientRect(); if (r.width) { l.scene.resize(Math.round(r.width), Math.round(r.height)); insets(l.el, l.scene); } });
 }
 function button(layer: HTMLElement, h: Hotspot, scene: ShopScene): [Hotspot, HTMLButtonElement] {
   const b = document.createElement("button"); b.className = "hs"; b.setAttribute(h.attr, h.value);

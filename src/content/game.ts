@@ -61,11 +61,16 @@ export const HAIR = ["#3B2A26", "#6B4A3A", "#C98B5A", "#E7B872", "#8C6BB5", "#F2
 export const SKIN = ["#FFE9DA", "#FFE3D0", "#F7D1B5", "#E8B996", "#C98E6A"];
 export const EYES = ["#5FA6C9", "#7A5A3E", "#4F9A6B", "#8A6BC9", "#3F4A5C", "#C9803F"];
 export const COAT = ["#2F6F86", "#2E4A7A", "#3D7A55", "#8A3D55", "#C9962E", "#6A4C93", "#4A4F5C"];
-/** tên kiểu đầu 3D của từng mã nhân vật (scene/accessories.ts dựng phụ kiện tương ứng) */
-export const STYLE_NAMES: Record<string, string> = {
-  b1: "Gốc", b2: "Mũ len", b3: "Băng đô", b4: "Búi tóc", b5: "Kính tròn", b6: "Tai mèo",
-  g1: "Mũ cam", g2: "Nơ lớn", g3: "Tai mèo", g4: "Hoa cài", g5: "Kính tròn", g6: "Hai nơ"
-};
+/** Kiểu đầu 3D chọn riêng trong Hồ sơ (không phụ thuộc giới tính). id "" = giữ nguyên tóc gốc của model.
+    scene/accessories.ts dựng phụ kiện/tóc giả tương ứng. */
+export const STYLES: [string, string][] = [
+  ["", "Gốc"], ["beanie", "Mũ len"], ["headband", "Băng đô"], ["bun", "Búi tóc"], ["ponytail", "Đuôi ngựa"], ["twintails", "Hai chùm"],
+  ["ears", "Tai mèo"], ["bow", "Nơ lớn"], ["twinbows", "Hai nơ"], ["flower", "Hoa cài"], ["glasses", "Kính tròn"]
+];
+export const STYLE_NAME: Record<string, string> = Object.fromEntries(STYLES);
+/** người chơi cũ chọn theo mã nhân vật (b2, g3...): ánh xạ sang kiểu đầu tương ứng */
+export const STYLE_OF: Record<string, string> = { b2: "beanie", b3: "headband", b4: "bun", b5: "glasses", b6: "ears", g2: "bow", g3: "ears", g4: "flower", g5: "glasses", g6: "twinbows" };
+export const styleOf = (me: { sprite: string; style?: string }) => me.style ?? STYLE_OF[me.sprite] ?? "";
 export const PANTS = ["#2A2A33", "#3A4A6B", "#6B3F22", "#5A6B4A", "#8A3D55", "#E8E1D4"];
 export const SHOES = ["#F2E6D0", "#E7B872", "#2E4A7A", "#8A3D55", "#3D7A55", "#2B1A1A"];
 export const SHIRT = ["#8A3D55", "#F2E6D0", "#C9962E", "#2E4A7A", "#3D7A55"];
