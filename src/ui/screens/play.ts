@@ -14,8 +14,7 @@ import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { cakeSVG, charSVG, petSVG, ingSVG } from "../art";
 import { $, bump, coinPill, esc, floatText, haptic, modal, toast } from "../dom";
-import { himNote, incidentModal } from "../modals";
-import { applyIncident, rollIncident } from "../../engine/incident";
+import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
 
@@ -420,9 +419,7 @@ export function endShift() {
   cancelAnimationFrame(raf); void keepAwake(false);
   const sh = SH, led = finishShift(sh);
   result = { sh, lv: lvl(), led }; SH = null;
-  const hit = rollIncident(); if (hit) { applyIncident(hit); save(); }            // thỉnh thoảng gặp sự cố, bị trừ ~1/10 xu
   navigate("/ket-qua", true);
-  if (hit) setTimeout(() => { sfx("untap"); incidentModal(hit.inc, hit.cost); }, 1600);
   sfx(result.lv > sh.lv0 ? "level" : "end");
   void cloudSave();
   Sound.play("home");

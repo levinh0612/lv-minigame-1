@@ -203,10 +203,10 @@ export function welcome() {
 export function incidentArt(i: Incident, px = 84) {
   return `<div class="incart" style="--ib:${i.bg}"><span class="ie" aria-hidden="true">${i.emoji}</span><span class="ip">${petSVG({ ...PETS[i.pet], mood: "impatient" }, px)}</span></div>`;
 }
-export function incidentModal(i: Incident, cost: number) {
+export function incidentModal(i: Incident, cost: number, onClose?: () => void) {
   modal(`${incidentArt(i)}<h2>${esc(i.title)}</h2><p class="sub">${esc(i.text)}</p>
     <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
-    <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`);
+    <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose);
 }
 
 /* ===== Mục tiêu và Quà tặng: hộp thoại trượt từ dưới lên (thay cho trang riêng) ===== */

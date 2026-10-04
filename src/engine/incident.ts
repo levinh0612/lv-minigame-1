@@ -1,5 +1,5 @@
-/* Sự cố bất ngờ: thỉnh thoảng sau khi hết ca, tiệm gặp chuyện và bị trừ khoảng 1/10 số xu đang có.
-   Không xảy ra với người mới, khi còn quá ít xu, hoặc ngay sau một sự cố khác. */
+/* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ khoảng 6 đến 12 phút chơi thì có thể xảy ra một sự cố,
+   tiệm bị trừ khoảng 1/10 số xu đang có. Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện. */
 import type { PetId } from "../content/couple";
 import { S } from "./state";
 import { spend } from "./wallet";
@@ -17,15 +17,23 @@ export const INCIDENTS: Incident[] = [
   { id: "fridge", title: "Tủ lạnh hỏng", text: "Tủ lạnh kêu \"tách tách\" rồi tắt hẳn. Gọi thợ điện lạnh tới sửa.", emoji: "🧊", bg: "#D6F0F2", pet: "gold" }
 ];
 
-export const MIN_SHIFTS = 3, MIN_COINS = 100, GAP_SHIFTS = 2, CHANCE = 0.3;
+export const MIN_SHIFTS = 3, MIN_COINS = 100, MIN_GAP = 360, MAX_GAP = 720, CHANCE = 0.7, RETRY = 120;   // giây
 export interface Hit { inc: Incident; cost: number }
 
 /** số xu bị trừ: 8% đến 12% số xu đang có (khoảng 1/10), ít nhất 10 và không vượt số xu có */
 export const incidentCost = (coins: number, rng: () => number = Math.random) => Math.min(coins, Math.max(10, Math.round(coins * (0.08 + rng() * 0.04))));
 
-/** gọi sau khi hết ca (S.shifts đã tăng): có thể trả về một sự cố, chưa trừ xu */
-export function rollIncident(rng: () => number = Math.random): Hit | null {
-  if (S.shifts < MIN_SHIFTS || S.coins < MIN_COINS || S.shifts - (S.incAt ?? 0) < GAP_SHIFTS) return null;
+let left = -1;                                              // giây chơi còn lại tới lần xét kế tiếp (-1 = chưa đặt)
+const arm = (rng: () => number) => { left = MIN_GAP + rng() * (MAX_GAP - MIN_GAP); };
+export const resetIncidentClock = () => { left = -1; };
+export const incidentLeft = () => left;
+
+/** gọi mỗi giây khi app đang hiện (không có hộp thoại khác): hết giờ thì có thể trả về một sự cố, chưa trừ xu */
+export function tickIncident(dt: number, rng: () => number = Math.random): Hit | null {
+  if (left < 0) arm(rng);
+  left -= dt; if (left > 0) return null;
+  if (S.shifts < MIN_SHIFTS || S.coins < MIN_COINS) { left = RETRY; return null; }     // chưa đủ điều kiện: xét lại sau ít phút
+  arm(rng);
   if (rng() >= CHANCE) return null;
   return { inc: INCIDENTS[Math.floor(rng() * INCIDENTS.length) % INCIDENTS.length]!, cost: incidentCost(S.coins, rng) };
 }

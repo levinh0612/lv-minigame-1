@@ -8,11 +8,12 @@ import type { RoomKey } from "./content/room";
 import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
+import { applyIncident, tickIncident } from "./engine/incident";
 import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
-import { accountPanel, claimGoals, giftSheet, goalsSheet, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, claimGoals, giftSheet, goalsSheet, incidentModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
@@ -20,7 +21,7 @@ import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
-import { SH, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
+import { SH, pause, resume, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
 
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
@@ -107,6 +108,14 @@ document.addEventListener("visibilitychange", () => {
 });
 /* đồng bộ giữa các máy: app đang mở (không trong ca) thì 20 giây hỏi server một lần xem có bản mới hơn không */
 setInShift(() => !!SH);
+/* sự cố bất ngờ: đồng hồ chạy khi app đang hiện và không có hộp thoại nào mở; đang trong ca thì tạm dừng ca khi hộp thoại hiện */
+setInterval(() => {
+  if (document.hidden || isLocked() || hasModal()) return;
+  const hit = tickIncident(1); if (!hit) return;
+  applyIncident(hit); save();
+  const inShift = !!SH; if (inShift) pause();
+  sfx("untap"); incidentModal(hit.inc, hit.cost, () => { if (inShift) resume(); else render(); });
+}, 1000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", render);

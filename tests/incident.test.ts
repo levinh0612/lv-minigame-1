@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { INCIDENTS, applyIncident, incidentCost, rollIncident } from "../src/engine/incident";
+import { INCIDENTS, MAX_GAP, MIN_GAP, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, tickIncident } from "../src/engine/incident";
 import { S, resetState } from "../src/engine/state";
 
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 27, 10)); resetState(); S.shifts = 5; S.coins = 1000; });
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 27, 10)); resetState(); resetIncidentClock(); S.shifts = 5; S.coins = 1000; });
 afterEach(() => vi.useRealTimers());
 const always = () => 0;          // rng luôn trúng xác suất
 const never = () => 0.99;
@@ -16,26 +16,37 @@ describe("sự cố bất ngờ", () => {
     expect(incidentCost(5, () => 0.5)).toBe(5);
   });
 
-  it("không xảy ra với người mới, ít xu, hoặc ngay sau một sự cố", () => {
-    S.shifts = 2; expect(rollIncident(always)).toBeNull();
-    S.shifts = 5; S.coins = 99; expect(rollIncident(always)).toBeNull();
-    S.coins = 1000; S.incAt = 4; expect(rollIncident(always)).toBeNull();
-    S.incAt = 3; expect(rollIncident(always)).not.toBeNull();
+  it("đồng hồ: đặt lần xét đầu trong khoảng 6 đến 12 phút chơi, chưa tới giờ thì không có gì", () => {
+    expect(tickIncident(0, () => 0)).toBeNull();
+    expect(incidentLeft()).toBe(MIN_GAP);
+    expect(tickIncident(MIN_GAP - 1, () => 0)).toBeNull();
+    resetIncidentClock(); tickIncident(0, () => 0.9999); expect(incidentLeft()).toBeLessThanOrEqual(MAX_GAP);
+    expect(incidentLeft()).toBeGreaterThan(MAX_GAP - 1);
   });
 
-  it("xác suất 30%: rng cao thì không xảy ra", () => {
-    expect(rollIncident(never)).toBeNull();
-    expect(rollIncident(always)).not.toBeNull();
+  it("tới giờ thì xảy ra giữa lúc chơi (không cần hết ca), rồi đặt lại đồng hồ", () => {
+    tickIncident(0, always);
+    const hit = tickIncident(MIN_GAP, always);
+    expect(hit).not.toBeNull();
+    expect(incidentLeft()).toBeGreaterThanOrEqual(MIN_GAP - 1);
   });
 
-  it("áp dụng: trừ xu, ghi vào sổ chi 'Sự cố bất ngờ' và nhớ ca gần nhất", () => {
-    const hit = rollIncident(always)!, before = S.coins;
+  it("không xảy ra với người mới hoặc ít xu: bỏ qua và xét lại sau ít phút", () => {
+    S.shifts = 2; tickIncident(0, always); expect(tickIncident(MIN_GAP, always)).toBeNull(); expect(incidentLeft()).toBe(RETRY);
+    S.shifts = 5; S.coins = 99; expect(tickIncident(RETRY, always)).toBeNull();
+    S.coins = 1000; expect(tickIncident(RETRY, always)).not.toBeNull();
+  });
+
+  it("xác suất 70%: rng cao thì tới giờ cũng không xảy ra", () => {
+    tickIncident(0, never); expect(tickIncident(MAX_GAP, never)).toBeNull();
+  });
+
+  it("áp dụng: trừ xu, ghi vào sổ chi 'Sự cố bất ngờ'", () => {
+    tickIncident(0, always); const hit = tickIncident(MIN_GAP, always)!, before = S.coins;
     applyIncident(hit);
     expect(S.coins).toBe(before - hit.cost);
     expect(S.book.out.incident).toBe(hit.cost);
     expect(S.book.log[0]).toMatchObject({ n: hit.inc.title, v: -hit.cost });
-    expect(S.incAt).toBe(5);
-    expect(rollIncident(always)).toBeNull();           // vừa gặp nên cách vài ca
   });
 
   it("mỗi sự cố có đủ tiêu đề, nội dung, hình", () => {
