@@ -3,6 +3,7 @@ import { Sound, sfx, songName } from "../audio/sound";
 import { CFG } from "../content/couple";
 import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
 import { buyVenue, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, upgradeOptions } from "../engine/economy";
+import { addTickets } from "../engine/gacha";
 import { claimWelcome } from "../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
 import { giftReady } from "../engine/progress";
@@ -38,13 +39,13 @@ export function openLetter() {
 
 export function claimGoals() {
   if (!giftReady()) return;
-  S.daily.claimed = true; earn("gift", 60, "Quà mục tiêu ngày");
+  S.daily.claimed = true; earn("gift", 60, "Quà mục tiêu ngày"); addTickets(1);
   const used = new Set(S.letters.map(l => l.txt));
   const txt = CFG.notes.find(n => !used.has(n)) || pick(CFG.notes);
   S.letters.push({ day: S.daily.day, txt, tag: "Thư bí mật", bonus: true }); save();
   // ở màn kết quả chỉ đổi thẻ quà, không vẽ lại cả màn (giữ confetti)
   const back = location.hash === "#/ket-qua" ? () => { const b = document.querySelector(".unlock"); if (b) b.outerHTML = unlockCard(); } : render;
-  modal(`<h2>Xong hết mục tiêu rồi!</h2><p class="sub">+60 xu và một lá thư bí mật</p>
+  modal(`<h2>Xong hết mục tiêu rồi!</h2><p class="sub">+60 xu, 1 vé triệu hồi và một lá thư bí mật</p>
     ${paper(txt)}<div class="mbtns"><button class="b3" data-close>Nhận nè</button></div>`, back);
   floatHearts(innerWidth / 2, innerHeight / 2, 10); sfx("level");
 }

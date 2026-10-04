@@ -3,7 +3,7 @@
 export type ShopTab = "decor" | "pets" | "gift";
 export type Route =
   | { name: "home" } | { name: "goals" } | { name: "roadmap" } | { name: "prep" }
-  | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" } | { name: "rank" } | { name: "visit"; user: string };
+  | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" } | { name: "rank" } | { name: "visit"; user: string } | { name: "gacha" };
 
 const ROUTES: [string, Route][] = [
   ["/", { name: "home" }],
@@ -13,6 +13,7 @@ const ROUTES: [string, Route][] = [
   ["/cua-hang/qua-tang", { name: "shop", tab: "gift" }],
   ["/sap-ra-mat", { name: "roadmap" }],
   ["/xep-hang", { name: "rank" }],
+  ["/gacha", { name: "gacha" }],
   ["/chuan-bi", { name: "prep" }],
   ["/choi", { name: "play" }],
   ["/ket-qua", { name: "result" }]

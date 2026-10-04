@@ -6,6 +6,9 @@ import {
 import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
 import { fame } from "../src/engine/economy";
+import { GACHA_ITEMS } from "../src/content/gacha";
+import { addTickets, buyTickets, claimFreeTicket, countOf, exchangeDust, gachaFx, mascotItem, packCost, pull, rollRarity, setMascot, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
+import { fx, unlocked } from "../src/engine/progress";
 import { hostGift, seatsOfTables, visitFee } from "../src/engine/visit";
 import { resolve } from "../src/ui/router";
 import { S, loadState, resetState } from "../src/engine/state";
@@ -409,6 +412,64 @@ describe("ví: sổ thu chi", () => {
     it("đường dẫn ghé thăm nhận tên tiệm", () => {
       expect(resolve("/ghe-tham/ban.thu")).toEqual({ name: "visit", user: "ban.thu" });
       expect(resolve("/ghe-tham/")).toEqual({ name: "home" });
+    });
+  });
+
+  describe("gacha", () => {
+    const seq = (...v: number[]) => { let i = 0; return () => v[i++ % v.length]!; };
+
+    it("30 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
+      expect(GACHA_ITEMS.length).toBe(30);
+      ["common", "rare", "ultra"].forEach(r => expect(GACHA_ITEMS.some(i => i.rarity === r)).toBe(true));
+      expect(rollRarity(() => 0.99)).toBe("common"); expect(rollRarity(() => 0.5)).toBe("common");
+      expect(rollRarity(() => 0.1)).toBe("rare"); expect(rollRarity(() => 0.02)).toBe("ultra");
+    });
+
+    it("vé: miễn phí mỗi ngày một lần, mua bằng xu, gói 10 giảm 10%", () => {
+      expect(claimFreeTicket()).toBe(true); expect(claimFreeTicket()).toBe(false); expect(S.gacha.tickets).toBe(1);
+      expect(packCost(1)).toBe(300); expect(packCost(10)).toBe(2700);
+      S.coins = 3000; expect(buyTickets(10)).toBe(true); expect(S.coins).toBe(300); expect(S.gacha.tickets).toBe(11);
+      expect(buyTickets(1)).toBe(true); expect(buyTickets(1)).toBe(false);
+    });
+
+    it("không đủ vé thì không quay", () => {
+      expect(pull(1)).toBeNull(); addTickets(2); expect(pull(3)).toBeNull(); expect(S.gacha.tickets).toBe(2);
+    });
+
+    it("bảo hiểm: lần thứ 10 chắc chắn Hiếm, lần thứ 50 chắc chắn Cực hiếm", () => {
+      addTickets(60);
+      const r = pull(10, () => 0.99)!;                          // toàn Thường nếu không có bảo hiểm
+      expect(r.slice(0, 9).every(x => x.item.rarity === "common")).toBe(true); expect(r[9]!.item.rarity).toBe("rare");
+      expect(untilRare()).toBe(10);
+      S.gacha.sinceUltra = 49; expect(rollRarity(() => 0.99)).toBe("ultra");
+      expect(untilUltra()).toBe(1);
+    });
+
+    it("trùng đồ đổi Bụi sao, 50 Bụi sao đổi 1 vé", () => {
+      addTickets(2);
+      const r = pull(2, seq(0.99, 0))!;                        // hai lần trúng đúng cùng một món Thường đầu tiên
+      expect(r[0]!.isNew).toBe(true); expect(r[1]!.isNew).toBe(false); expect(r[1]!.dust).toBe(5); expect(S.gacha.dust).toBe(5);
+      S.gacha.dust = 50; const t = S.gacha.tickets; expect(exchangeDust()).toBe(true); expect(S.gacha.tickets).toBe(t + 1); expect(S.gacha.dust).toBe(0);
+      expect(exchangeDust()).toBe(false);
+    });
+
+    it("công thức: mở sẵn món đặc biệt, trùng nhiều thì giá bán tăng", () => {
+      const it = GACHA_ITEMS.find(i => i.id === "r_hoang_gia")!;
+      expect(specialRecipes().length).toBe(0); const n0 = unlocked().length;
+      S.gacha.owned[it.id] = 1; expect(specialRecipes()[0]!.price).toBe(56); expect(unlocked().length).toBe(n0 + 1);
+      S.gacha.owned[it.id] = 4; expect(specialRecipes()[0]!.price).toBe(Math.round(56 * 1.24));
+      S.gacha.owned[it.id] = 99; expect(specialRecipes()[0]!.price).toBe(Math.round(56 * 1.4));       // tối đa 5 lần
+    });
+
+    it("trang trí gacha vào kho đồ và không mua được bằng xu; linh vật cộng lợi ích", () => {
+      addTickets(1);
+      pull(1, seq(0.04, 0))!;                                  // Cực hiếm, món đầu của nhóm
+      const owned = GACHA_ITEMS.filter(i => countOf(i.id) > 0)[0]!;
+      expect(owned.rarity).toBe("ultra");
+      const m = GACHA_ITEMS.find(i => i.id === "m_thienthan")!;
+      expect(mascotItem()).toBeNull(); expect(setMascot(m.id)).toBe(false);
+      S.gacha.owned[m.id] = 1; expect(setMascot(m.id)).toBe(true);
+      expect(gachaFx("price")).toBeCloseTo(0.1); expect(fx("cust")).toBeGreaterThanOrEqual(1);
     });
   });
 });

@@ -162,7 +162,17 @@ const SFX: Record<string, (t: number) => void> = {
   open: t => [72, 76, 79, 84].forEach((m, i) => tone(sfxBus, "triangle", hz(m), t + i * 0.08, 0.4, 0.12)),
   level: t => [72, 76, 79, 84, 88, 91].forEach((m, i) => tone(sfxBus, "triangle", hz(m), t + i * 0.07, 0.5, 0.12)),
   letter: t => [65, 69, 72, 77, 81, 84, 89].forEach((m, i) => tone(sfxBus, "sine", hz(m), t + i * 0.06, 1.1, 0.08)),
-  end: t => [79, 76, 72, 74, 72].forEach((m, i) => tone(sfxBus, "triangle", hz(m), t + i * 0.12, 0.5, 0.1))
+  end: t => [79, 76, 72, 74, 72].forEach((m, i) => tone(sfxBus, "triangle", hz(m), t + i * 0.12, 0.5, 0.1)),
+  /* gacha: tích tụ năng lượng (càng hiếm càng dài), nổ, chuông theo độ hiếm */
+  gcharge1: t => { tone(sfxBus, "sine", 260, t, 1.1, 0.1, 0.05, 1200); noise(sfxBus, t, 1.0, 0.04, "highpass", 2500, 8000); },
+  gcharge2: t => { tone(sfxBus, "sine", 200, t, 2.2, 0.12, 0.08, 1500); tone(sfxBus, "triangle", 400, t, 2.2, 0.05, 0.08, 3000); noise(sfxBus, t, 2.1, 0.05, "highpass", 2000, 9000); },
+  gcharge3: t => { tone(sfxBus, "sine", 90, t, 3.6, 0.16, 0.1, 900); tone(sfxBus, "triangle", 180, t, 3.6, 0.08, 0.1, 2400); tone(sfxBus, "sawtooth", 120, t, 3.6, 0.025, 0.1, 1800); noise(sfxBus, t, 3.5, 0.06, "highpass", 1500, 10000); },
+  gboom: t => { tone(sfxBus, "sine", 150, t, 0.7, 0.5, 0.003, 36); noise(sfxBus, t, 0.5, 0.25, "lowpass", 900, 90); },
+  gwhoosh: t => noise(sfxBus, t, 0.5, 0.1, "bandpass", 400, 4000),
+  gshine1: t => { tone(sfxBus, "triangle", hz(84), t, 0.4, 0.12); tone(sfxBus, "sine", hz(91), t + 0.1, 0.6, 0.1); },
+  gshine2: t => { [76, 79, 83, 88, 91].forEach((m, i) => tone(sfxBus, "triangle", hz(m), t + i * 0.07, 0.7, 0.12)); tone(sfxBus, "sine", hz(100), t + 0.4, 1.0, 0.07); noise(sfxBus, t + 0.3, 0.6, 0.04, "highpass", 6000); },
+  gshine3: t => { [67, 72, 76, 79, 84, 88, 91, 96].forEach((m, i) => tone(sfxBus, "triangle", hz(m), t + i * 0.08, 1.3, 0.12)); [72, 79, 84].forEach(m => tone(sfxBus, "sine", hz(m), t + 0.7, 2.2, 0.08)); noise(sfxBus, t + 0.5, 1.2, 0.05, "highpass", 5000); },
+  gflip: t => tone(sfxBus, "triangle", 900, t, 0.07, 0.07, 0.003, 1500)
 };
 export type Sfx = keyof typeof SFX;
 export function sfx(name: string) {

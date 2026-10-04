@@ -2,6 +2,7 @@
 import { CFG } from "../content/couple";
 import { CATS, RECIPES, STOCK_KEYS } from "../content/game";
 import { daysTogether, events } from "../engine/dates";
+import { specialRecipes } from "../engine/gacha";
 import { featured, lvl, unlocked } from "../engine/progress";
 import { S, save } from "../engine/state";
 import { flushSave } from "../net/cloud";
@@ -16,8 +17,8 @@ const ingChips = (r: (typeof RECIPES)[number]) => STOCK_KEYS.map(k => `<span>${i
 /* Bảng Menu: các món đã mở (món nổi bật hôm nay lên đầu) và các món sắp mở */
 export function menuSheet() {
   const L = lvl(), f = featured();
-  const list = [...RECIPES].sort((a, b) => (a.id === f.id ? -1 : b.id === f.id ? 1 : a.lv - b.lv));
-  modal(`<h2>Menu hôm nay</h2><p class="sub">${unlocked().length}/${RECIPES.length} món đã mở · khách chọn độ ngọt riêng</p>
+  const list = [...RECIPES, ...specialRecipes()].sort((a, b) => (a.id === f.id ? -1 : b.id === f.id ? 1 : a.lv - b.lv));
+  modal(`<h2>Menu hôm nay</h2><p class="sub">${unlocked().length}/${RECIPES.length + specialRecipes().length} món đã mở · khách chọn độ ngọt riêng</p>
     <div class="mlist">${list.map(r => {
       const lock = r.lv > L, star = r.id === f.id;
       return `<div class="mrow ${lock ? "lock" : ""} ${star ? "star" : ""}">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 62, still: true })}

@@ -20,7 +20,8 @@ export function profileSheet() {
   const anime = () => isFixedChar(d.me.sprite);                // nhân vật làm sẵn: giữ nguyên trang phục, không tuỳ chỉnh
   const look = () => ({ gender: girl() ? "girl" as const : "boy" as const, ...d.me });
   const fb = (px: number) => guestSVG({ ...look(), mood: "happy", ledge: false }, px);
-  const genders = () => ([["g1", "Nữ"], ["b1", "Nam"], ...FIXED_CHARS] as [string, string][]).map(([id, n]) => `<button type="button" class="pf-gd${id === d.me.sprite || (id.length === 2 && !isFixedChar(id) && id[0] === d.me.sprite[0] && !isFixedChar(d.me.sprite)) ? " on" : ""}" data-pf="gender" data-v="${id}">${portraitHTML(id, { ...d.me, style: d.me.style }, 46, guestSVG({ ...look(), sprite: id, gender: id[0] === "b" || id[0] === "m" ? "boy" : "girl", ledge: false, mood: "happy" }, 46))}<b>${n}</b></button>`).join("");
+  // nhân vật làm sẵn nay chỉ có trong gacha; ai đang dùng thì vẫn thấy để chọn lại
+  const genders = () => ([["g1", "Nữ"], ["b1", "Nam"], ...FIXED_CHARS.filter(([id]) => id === d.me.sprite)] as [string, string][]).map(([id, n]) => `<button type="button" class="pf-gd${id === d.me.sprite || (id.length === 2 && !isFixedChar(id) && id[0] === d.me.sprite[0] && !isFixedChar(d.me.sprite)) ? " on" : ""}" data-pf="gender" data-v="${id}">${portraitHTML(id, { ...d.me, style: d.me.style }, 46, guestSVG({ ...look(), sprite: id, gender: id[0] === "b" || id[0] === "m" ? "boy" : "girl", ledge: false, mood: "happy" }, 46))}<b>${n}</b></button>`).join("");
   const styles = () => STYLES.filter(([id]) => !girl() || !BOY_HAIR.has(id)).map(([id, n]) => `<button type="button" class="pf-sp${id === (d.me.style ?? "") ? " on" : ""}" data-pf="style" data-v="${id}" aria-label="Kiểu ${n}" title="${n}">${portraitHTML(d.me.sprite, { ...d.me, style: id }, 56, fb(56))}</button>`).join("");
   modal(`<h2>Hồ sơ của bạn</h2>
     <form id="pfForm"${anime() ? ' class="pf-anime"' : ""}>

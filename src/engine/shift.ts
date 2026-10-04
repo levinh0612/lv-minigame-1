@@ -2,10 +2,11 @@
 import { CFG, type PetId } from "../content/couple";
 const STAFF_IDS: PetId[] = ["dog", "gold", "white"];
 import {
-  BOY_SPRITES, CATS, COAT, EYES, FIXED_GUESTS, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
+  BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
 import { BAKE_TIME, type FoodId } from "../content/game";
+import { addTickets, regulars } from "./gacha";
 import { comfortPat, comfortTip, dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
@@ -17,6 +18,8 @@ export interface Customer {
   who: string; look: Look; r: Recipe; sweet: number; max: number; pat: number;
   him?: boolean; gone?: boolean; mood?: Mood; note?: string;
   by?: PetId;          // thú cưng đang làm đơn này (người chơi không chọn được)
+  reg?: string;        // khách quen từ gacha (id vật phẩm)
+  perkPrice?: number; perkTip?: number;   // lợi ích riêng của khách quen: giá bánh và tip cộng thêm
   seatLv?: number;     // cấp bàn khách đang ngồi (1..3)
 }
 /* một bé thợ bánh trong ca: đang làm cho ghế nào, được bao nhiêu */
@@ -32,7 +35,7 @@ export interface Shift {
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
-  goals: ShiftGoal[]; goalCoins: number;
+  goals: ShiftGoal[]; goalCoins: number; ticket: boolean;   // ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
 }
 
 export const emptyBuild = (): Build => ({ base: null, cream: null, top: null, sweet: null });
@@ -51,7 +54,7 @@ export function createShift(): Shift {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false
   };
 }
 
@@ -59,7 +62,7 @@ function makeGuest(): { who: string; look: Look } {
   const girl = Math.random() < 0.5;
   return {
     who: pick(nameList(girl ? S.names.girls : S.names.boys)),
-    look: { gender: girl ? "girl" : "boy", sprite: Math.random() < 0.3 ? pick(girl ? FIXED_GUESTS.girl : FIXED_GUESTS.boy) : pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
+    look: { gender: girl ? "girl" : "boy", sprite: pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
   };
 }
 
@@ -73,7 +76,14 @@ export function makeCustomer(sh: Shift): Customer {
   const g = makeGuest();
   const r0 = Math.random() < 0.25 ? featured() : Math.random() < 0.3 ? rs[rs.length - 1] : pick(rs);
   const x = Math.random(), max = Math.max(26, 44 - L * 1.5) * (1 + fx("pat"));
-  return { ...g, r: r0.lv <= L ? r0 : pick(rs), sweet: x < 0.5 ? 0 : x < 0.8 ? 1 : 2, max, pat: max };
+  const base: Customer = { ...g, r: r0.lv <= L ? r0 : pick(rs), sweet: x < 0.5 ? 0 : x < 0.8 ? 1 : 2, max, pat: max };
+  /* khách quen từ gacha: nhân vật đã trúng thỉnh thoảng ghé tiệm, mang lợi ích riêng */
+  const regs = regulars();
+  if (regs.length && Math.random() < Math.min(0.4, 0.12 + regs.length * 0.03)) {
+    const it = regs[Math.floor(Math.random() * regs.length)]!, c = it.char!, pat = max * (1 + c.pat);
+    return { ...base, who: it.n + (it.rarity === "ultra" ? " 👑" : it.rarity === "rare" ? " ★" : ""), look: { gender: c.gender, sprite: c.sprite }, reg: it.id, perkPrice: c.price, perkTip: c.tip, max: pat, pat };
+  }
+  return base;
 }
 
 /* Chạy thời gian. Trả về ghế vừa có khách và các ghế khách vừa bỏ về. */
@@ -195,8 +205,8 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   const quick = 0;
   const c = sh.seats[idx]!; c.gone = true;
   const f = c.pat / c.max, stars = f > 0.55 ? 3 : f > 0.3 ? 2 : 1, mult = coinMult();
-  const price = Math.round(c.r.price * (1 + fx("price"))) * mult;
-  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1)) * mult;
+  const price = Math.round(c.r.price * (1 + fx("price")) * (1 + (c.perkPrice ?? 0))) * mult;
+  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0))) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
   earn("sales", price); earn("tip", tip); earn("memo", bonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
@@ -239,6 +249,7 @@ export function beginShift() {
 export function finishShift(sh: Shift) {
   sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
   earn("goal", sh.goalCoins); S.shifts++;
+  if (sh.goals.every(g => goalDone(sh, g))) { sh.ticket = true; addTickets(1); }
   const led = ledger(sh); S.earned += led.revenue;
   note(`Ca ${S.shifts} · tiền bán bánh`, led.revenue); note(`Ca ${S.shifts} · nhập nhanh giữa ca`, -led.quick);
   save();

@@ -12,6 +12,7 @@ export interface ShopOpts {
   event: boolean;                          // ngày đặc biệt: tường vàng, cờ và bóng bay
   guests: number;                          // 0..2 khách đang ngồi
   floors: number;                          // số lầu (xem từng lầu bằng nút chuyển tầng)
+  regulars: { sprite: string; rarity: "common" | "rare" | "ultra" }[];   // khách quen đã trúng gacha: đi lại trong tiệm, Hiếm và Cực hiếm có hào quang
   wide: number;                            // số lần mở rộng ngang: mỗi lần rộng thêm 2 về phía đông
   tables: number[];                        // cấp từng bàn (1..3): bàn cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4. Cảnh vẽ tối đa 6 bàn
   giftDot: boolean;
@@ -57,6 +58,8 @@ const WALL: Record<string, () => { color: string; map: THREE.Texture }> = {
   cream: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#FFF6E3"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFD9A8"; g.beginPath(); g.arc(w / 2, h / 2, 6, 0, 7); g.fill(); }, [12, 4]) }),
   lavender: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#F4F0FF"; g.fillRect(0, 0, w, h); g.fillStyle = "#E4DBFF"; g.fillRect(0, 0, w, 3); g.fillRect(0, 0, 3, h); }, [10, 4]) }),
   party: () => ({ color: "#fff", map: stripes("#FFF0C9", "#FFE7AE", [10, 1]) }),
+  candy: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#FFD1E8"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.fillRect(w / 4, 0, w / 4, h); g.fillStyle = "#C9F0FF"; g.fillRect(w / 2, 0, w / 4, h); g.fillStyle = "#fff"; g.fillRect(w * .75, 0, w / 4, h); }, [10, 1]) }),
+  starry: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#2B2F6B"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFF6B0"; g.beginPath(); g.arc(16, 18, 2.4, 0, 7); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.arc(46, 40, 1.6, 0, 7); g.arc(30, 54, 1.2, 0, 7); g.arc(54, 10, 1.2, 0, 7); g.fill(); }, [10, 4]) }),
   peach: () => ({ color: "#fff", map: stripes("#FFE4D0", "#FFD9BE", [10, 1]) }),
   sky: () => ({ color: "#fff", map: stripes("#E2F1FF", "#D3E8FA", [10, 1]) }),
   brick: () => ({ color: "#fff", map: tex(128, 64, (g, w, h) => { g.fillStyle = "#EBC9B4"; g.fillRect(0, 0, w, h); g.fillStyle = "#D99A82"; for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) { const ox = r % 2 ? w / 4 : 0; g.fillRect(((c * w / 2 + ox) % w) + 2, r * h / 4 + 2, w / 2 - 4, h / 4 - 4); } }, [6, 3]) })
@@ -66,9 +69,11 @@ const FLOOR: Record<string, () => THREE.Texture> = {
   wood: () => tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? "#E7BD8B" : "#EFCB9E"; g.fillRect(0, i * h / 8, w, h / 8); g.fillStyle = "rgba(150,90,40,.35)"; g.fillRect(0, i * h / 8, w, 3); } }, [4, 3]),
   dark: () => tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? "#8A5A3C" : "#9A6846"; g.fillRect(0, i * h / 8, w, h / 8); g.fillStyle = "rgba(40,20,10,.4)"; g.fillRect(0, i * h / 8, w, 3); } }, [4, 3]),
   marble: () => tex(128, 128, (g, w, h) => { g.fillStyle = "#F4F4F6"; g.fillRect(0, 0, w, h); g.fillStyle = "#E3E5EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); g.strokeStyle = "rgba(150,160,175,.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(10, 20); g.lineTo(50, 60); g.moveTo(80, 70); g.lineTo(120, 110); g.stroke(); }, [6, 4]),
-  tile: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFE3EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [8, 6])
+  tile: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFE3EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [8, 6]),
+  rainbow: () => tex(128, 64, (g, w, h) => { ["#FFB3C7", "#FFE3A0", "#BDF0CF", "#BFE0FF"].forEach((c, i) => { g.fillStyle = c; g.fillRect(i * w / 4, 0, w / 4, h); }); }, [4, 6]),
+  sakura: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#FFEFF3"; g.fillRect(0, 0, w, h); g.fillStyle = "#FF9FB8"; [[16, 16], [48, 44], [44, 12], [14, 50]].forEach(([x, y]) => { g.beginPath(); g.arc(x!, y!, 4, 0, 7); g.fill(); }); }, [8, 6])
 };
-const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"] };
+const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"], candy: ["#FF9FC5", "#FFD1E3"], gold: ["#E9B949", "#F7D675"] };
 
 const W0 = 8, D = 6, HH = 3.2, PET_S = .92;
 const DOOR_X = 1.3, DOOR_W = 1.5, DOOR_H = 2.35;   // lối cửa chính trên tường Nam
@@ -268,7 +273,7 @@ export function createShop(o: ShopOpts): ShopScene {
     { sprite: "b5", look: { skin: "#FFE3D0", hair: "#3B2A26", coat: "#6A4C93", shirt: "#F29AB2", eye: "#4F9A6B" } },
     { sprite: "g1", look: { skin: "#F3C39A", hair: "#C98B5A", coat: "#3D7A55", shirt: "#F2E6D0", eye: "#5FA6C9" } },
     { sprite: "b4", look: { skin: "#FFE9DA", hair: "#E7B872", coat: "#2E4A7A", shirt: "#C9962E", eye: "#7A5A3E" } },
-    ...["n1", "n2", "n3", "n4", "n5", "m1", "m2", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11"].map(sprite => ({ sprite, look: { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" } }))   // khách 3D làm sẵn (giữ nguyên trang phục)
+    ...o.regulars.map(rg => ({ sprite: rg.sprite, look: { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" } }))   // khách quen từ gacha (model 3D làm sẵn)
   ];
   const fwd = (st: { x: number; z: number; a: number }, f: number) => new THREE.Vector2(st.x + Math.sin(st.a) * f, st.z + Math.cos(st.a) * f);
   const STREET = [new THREE.Vector2(DOOR_X, 4.8), new THREE.Vector2(-1.3, 4.95)];           // vỉa hè bên trái cửa (bên phải có cây và biển menu)
@@ -280,9 +285,19 @@ export function createShop(o: ShopOpts): ShopScene {
     return { st, actor, phase: "seated" as const, next: (14 + i * 11 + Math.random() * 10) * TK, path: [], pi: 0, n: i };
   });
   /** dựng sẵn khách kế tiếp (ẩn) trong lúc chỗ này vắng: tải model, dựng xương, biên dịch vật liệu xong rồi mới cho vào, khỏi khựng khi khách xuất hiện */
+  /* hào quang cho khách quen Hiếm / Cực hiếm: vòng sáng dưới chân và vài hạt sao xoay quanh */
+  const auras: { g: THREE.Group; host: THREE.Object3D }[] = [];
+  ups.push(t => { for (let i = auras.length - 1; i >= 0; i--) { const a = auras[i]!; if (!a.host.parent) { auras.splice(i, 1); continue; } a.g.rotation.y = t * 1.4; } });
+  const addAura = (host: THREE.Object3D, rarity: "rare" | "ultra") => {
+    const col = rarity === "ultra" ? "#FFD35A" : "#9FB0FF", g = new THREE.Group(), n = rarity === "ultra" ? 7 : 4;
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.36, .5, 36), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .65, side: THREE.DoubleSide, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = .03; g.add(ring);
+    for (let i = 0; i < n; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: col })), a = i / n * Math.PI * 2; sp.position.set(Math.sin(a) * .46, .15 + i * .2, Math.cos(a) * .46); g.add(sp); }
+    host.add(g); auras.push({ g, host });
+  };
   const prepare = (sl: Slot) => {
     const gl = POOL[((sl.n + 1) * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length]!;
-    const actor = personActor(gl.look, gl.sprite); actor.mode("walk"); const a = actor.group; a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; a.visible = false; root.add(a);
+    const actor = personActor(gl.look, gl.sprite); actor.mode("walk"); const a = actor.group; const rar = o.regulars.find(x => x.sprite === gl.sprite)?.rarity; if (rar && rar !== "common") addAura(a, rar); a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; a.visible = false; root.add(a);
     const p = { actor, ok: false }; sl.pending = p;
     void actor.ready.then(() => { try { r.compile(scene, cam); } catch { /* bỏ qua: sẽ biên dịch lúc hiện */ } p.ok = true; });
   };

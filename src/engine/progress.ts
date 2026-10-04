@@ -2,13 +2,14 @@
 import { RECIPES, type FxKey } from "../content/game";
 import { ROOM_CATS, isDefault, roomItem } from "../content/room";
 import { daysTogether } from "./dates";
+import { gachaFx, specialRecipes } from "./gacha";
 import { S, save } from "./state";
 import { DAY, today, ymd } from "./util";
 
 export const xpFor = (L: number) => 40 * (L - 1) * (L - 1);
 export const lvl = () => Math.min(99, Math.floor(Math.sqrt(S.xp / 40)) + 1);
-export const unlocked = () => RECIPES.filter(r => r.lv <= lvl());
-export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0);
+export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl()), ...specialRecipes()];
+export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k);
 /* số món trang trí đang dùng (không tính kiểu mặc định) */
 export const decorCount = () => ROOM_CATS.filter(c => !isDefault(c.k, S.room[c.k])).length;
 

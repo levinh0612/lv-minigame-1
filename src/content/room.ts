@@ -4,7 +4,7 @@ import type { FxKey } from "./game";
 
 export type RoomKey = "wall" | "floor" | "counter" | "curtain" | "lamp" | "wallItem" | "plant" | "rug";
 export type Room = Record<RoomKey, string>;
-export interface RoomItem { v: string; n: string; cost: number; sw: string; sws?: string; glyph?: string; fx?: Partial<Record<FxKey, number>> }
+export interface RoomItem { v: string; n: string; cost: number; sw: string; sws?: string; glyph?: string; fx?: Partial<Record<FxKey, number>>; gacha?: boolean }   // gacha: chỉ có khi quay trúng, không mua bằng xu
 export interface RoomCat { k: RoomKey; n: string; hl: string; items: RoomItem[] }
 
 const NONE = "#F6F0F2";
@@ -16,19 +16,25 @@ export const ROOM_CATS: RoomCat[] = [
     { v: "sky", n: "Sọc xanh trời", cost: 140, sw: "repeating-linear-gradient(90deg,#E2F1FF 0 8px,#D3E8FA 8px 16px)", fx: { tip: .05 } },
     { v: "brick", n: "Gạch cổ điển", cost: 220, sw: "repeating-linear-gradient(0deg,#D99A82 0 3px,#EBC9B4 3px 12px)", fx: { pat: .05 } },
     { v: "cream", n: "Kem chấm bi", cost: 160, sw: "radial-gradient(#FFD9A8 2.5px,transparent 3px) #FFF6E3", sws: "12px 12px", fx: { tip: .05 } },
-    { v: "lavender", n: "Ô vuông tím", cost: 200, sw: "linear-gradient(90deg,#E4DBFF 1.5px,transparent 1.5px),linear-gradient(#E4DBFF 1.5px,transparent 1.5px),#F4F0FF", sws: "12px 12px", fx: { tip: .05 } }] },
+    { v: "lavender", n: "Ô vuông tím", cost: 200, sw: "linear-gradient(90deg,#E4DBFF 1.5px,transparent 1.5px),linear-gradient(#E4DBFF 1.5px,transparent 1.5px),#F4F0FF", sws: "12px 12px", fx: { tip: .05 } },
+    { v: "candy", n: "Tường kẹo ngọt", cost: 0, gacha: true, sw: "repeating-linear-gradient(135deg,#FFD1E8 0 10px,#FFF 10px 20px,#C9F0FF 20px 30px,#FFF 30px 40px)", fx: { tip: .08 } },
+    { v: "starry", n: "Tường trời sao", cost: 0, gacha: true, sw: "radial-gradient(#FFF6B0 1.6px,transparent 2px) 0 0/16px 16px,radial-gradient(#fff 1px,transparent 1.4px) 8px 8px/16px 16px,#2B2F6B", fx: { tip: .12, price: .05 } }] },
   { k: "floor", n: "Sàn", hl: "rug", items: [
     { v: "check", n: "Caro bạc hà", cost: 0, sw: "repeating-conic-gradient(#DDF4E8 0 25%,#CBEDDB 0 50%)", sws: "20px 20px" },
     { v: "wood", n: "Gỗ ấm", cost: 180, sw: "repeating-linear-gradient(90deg,#EFCB9E 0 18px,#E7BD8B 18px 20px)", fx: { pat: .05 } },
     { v: "dark", n: "Gỗ sẫm", cost: 220, sw: "repeating-linear-gradient(90deg,#9A6846 0 18px,#8A5A3C 18px 20px)", fx: { pat: .05 } },
     { v: "marble", n: "Đá hoa", cost: 260, sw: "repeating-conic-gradient(#F4F4F6 0 25%,#E3E5EA 0 50%)", sws: "20px 20px", fx: { pat: .08 } },
-    { v: "tile", n: "Gạch hồng", cost: 150, sw: "repeating-conic-gradient(#FFE3EA 0 25%,#FFFFFF 0 50%)", sws: "16px 16px", fx: { pat: .05 } }] },
+    { v: "tile", n: "Gạch hồng", cost: 150, sw: "repeating-conic-gradient(#FFE3EA 0 25%,#FFFFFF 0 50%)", sws: "16px 16px", fx: { pat: .05 } },
+    { v: "rainbow", n: "Sàn cầu vồng", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#FFB3C7 0 12px,#FFE3A0 12px 24px,#BDF0CF 24px 36px,#BFE0FF 36px 48px)", fx: { pat: .05 } },
+    { v: "sakura", n: "Sàn hoa anh đào", cost: 0, gacha: true, sw: "radial-gradient(#FF9FB8 3px,transparent 3.5px) 0 0/18px 18px,#FFEFF3", fx: { pat: .08, cust: 1 } }] },
   { k: "counter", n: "Quầy", hl: "counter", items: [
     { v: "pink", n: "Quầy dâu", cost: 0, sw: "repeating-linear-gradient(90deg,#FFB3C7 0 10px,#FFC7D5 10px 20px)" },
     { v: "mint", n: "Quầy matcha", cost: 220, sw: "repeating-linear-gradient(90deg,#9FDCC0 0 10px,#B6E6CF 10px 20px)", fx: { price: .05 } },
     { v: "wood", n: "Quầy gỗ", cost: 200, sw: "repeating-linear-gradient(90deg,#D9A66B 0 10px,#E3B47D 10px 20px)", fx: { price: .05 } },
     { v: "choco", n: "Quầy socola", cost: 260, sw: "repeating-linear-gradient(90deg,#8B5A3C 0 10px,#A06E4B 10px 20px)", fx: { price: .06 } },
-    { v: "white", n: "Quầy kem", cost: 240, sw: "repeating-linear-gradient(90deg,#F1E9DF 0 10px,#FFFFFF 10px 20px)", fx: { price: .05 } }] },
+    { v: "white", n: "Quầy kem", cost: 240, sw: "repeating-linear-gradient(90deg,#F1E9DF 0 10px,#FFFFFF 10px 20px)", fx: { price: .05 } },
+    { v: "candy", n: "Quầy kẹo", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#FF9FC5 0 10px,#FFF 10px 20px)", fx: { price: .05 } },
+    { v: "gold", n: "Quầy vàng", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#E9B949 0 10px,#F7D675 10px 20px)", fx: { price: .12 } }] },
   { k: "curtain", n: "Rèm", hl: "curtain", items: [
     { v: "0", n: "Không rèm", cost: 0, sw: NONE, glyph: "–" },
     { v: "1", n: "Ren hồng", cost: 90, sw: "repeating-linear-gradient(90deg,#FF9FB6 0 8px,#fff 8px 16px)", fx: { pat: .10 } },

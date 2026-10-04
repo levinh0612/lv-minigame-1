@@ -38,6 +38,7 @@ const GL = (body: string) => `<svg width="26" height="26" viewBox="0 0 24 24" fi
 const NAV_IC = {
   paw: GL('<ellipse cx="6.3" cy="10.2" rx="2" ry="2.6"/><ellipse cx="9.9" cy="6.1" rx="2" ry="2.7"/><ellipse cx="14.1" cy="6.1" rx="2" ry="2.7"/><ellipse cx="17.7" cy="10.2" rx="2" ry="2.6"/><path d="M12 11c-3 0-5.6 2.8-5.6 5 0 1.6 1.3 2.4 2.7 2.4 1 0 1.8-.5 2.9-.5s1.9.5 2.9.5c1.4 0 2.7-.8 2.7-2.4 0-2.2-2.6-5-5.6-5z"/>'),
   goal: GL('<rect x="4.8" y="4.2" width="14.4" height="17" rx="3.2"/><rect x="8.8" y="2.3" width="6.4" height="4" rx="1.7"/><path d="M8.6 13.4l2.4 2.4 4.4-4.8" fill="none" stroke="var(--dk)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'),
+  gacha: GL('<path d="M12 2.4l2.3 5.6 6 .5-4.6 3.9 1.4 5.9L12 15l-5.1 3.3 1.4-5.9L3.7 8.5l6-.5z"/><circle cx="19" cy="18.5" r="2.2"/><circle cx="5" cy="19" r="1.5"/>'),
   gift: GL('<rect x="4.6" y="10.2" width="14.8" height="10.6" rx="2.2"/><rect x="3.4" y="7.2" width="17.2" height="4.6" rx="1.8"/><path d="M12 7.2v13.6" stroke="var(--dk)" stroke-width="2.4"/><path d="M12 7.2C9.4 7.2 7.9 6 7.9 4.7S9.3 3 10.4 3.5 12 5.6 12 7.2zM12 7.2c2.6 0 4.1-1.2 4.1-2.5S14.7 3 13.6 3.5 12 5.6 12 7.2z"/>'),
   shop: GL('<path d="M3.4 9.6 5 4.4h14l1.6 5.2c0 1.5-1.1 2.5-2.4 2.5s-2.4-1-2.4-2.5c0 1.5-1.1 2.5-2.3 2.5s-2.3-1-2.3-2.5c0 1.5-1.1 2.5-2.4 2.5S3.4 11.1 3.4 9.6z"/><path d="M5.4 13.4v7.2h13.2v-7.2z"/><rect x="10" y="15.4" width="4" height="5.2" rx="1" fill="var(--dk)"/>')
 };
@@ -52,6 +53,7 @@ export function homeHTML() {
     { n: "Thú cưng", ic: NAV_IC.paw, c1: "#8EE0BC", c2: "#3FB68A", dk: "#3FB68A", go: "/cua-hang/thu-cung", dot: "" },
     { n: "Mục tiêu", ic: NAV_IC.goal, c1: "#FFD66B", c2: "#F2A41F", dk: "#F2A41F", go: "/muc-tieu", dot: left ? String(left) : "" },
     { n: "Quà tặng", ic: NAV_IC.gift, c1: "#FF9DB6", c2: "#EE5A83", dk: "#EE5A83", go: "/cua-hang/qua-tang", dot: gift ? "1" : "" },
+    { n: "Gacha", ic: NAV_IC.gacha, c1: "#8EC5FF", c2: "#4C8DF0", dk: "#4C8DF0", go: "/gacha", dot: "" },
     { n: "Cửa hàng", ic: NAV_IC.shop, c1: "#C2B0FA", c2: "#8B6FE6", dk: "#8B6FE6", go: "/cua-hang", dot: "" }
   ];
   const nm = S.shop.trim() || account(), nlen = [...nm || "Matcha"].length, fs = nlen <= 8 ? 22 : nlen <= 12 ? 19 : nlen <= 16 ? 17 : 15, pct = Math.min(100, cur / need * 100);

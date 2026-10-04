@@ -470,7 +470,7 @@ export function resultHTML(r: Result | null = result) {
         ${row("Nhập nguyên liệu", led.ingUsed + led.quick, false)}${row("Lương các bé", led.wages, false)}
         <div class="lg tot ${led.profit >= 0 ? "" : "neg"}"><span>Lãi</span><b>${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b></div>
       </div>
-      ${note}
+      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${note}
     </div>
     <div class="rbtns"><button class="b3 w" style="flex:1" data-go="/">Về tiệm</button><button class="b3" style="flex:1.6" data-go="/chuan-bi" data-replace>${good ? "Ca tiếp theo" : "Chơi lại ca"}</button></div>
   </div>`;

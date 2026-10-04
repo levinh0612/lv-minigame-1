@@ -23,7 +23,7 @@ export const cancelDecor = () => { trial = null; };
 export function applyDecor(): string {
   if (!trial) return "";
   const { k, v } = trial, it = roomItem(k, v), id = k + ":" + v, own = isDefault(k, v) || S.owned.includes(id);
-  if (!own) { if (S.coins < it.cost) return ""; spend("decor", it.cost, `Mua ${it.n}`); S.owned.push(id); }
+  if (!own) { if (it.gacha || S.coins < it.cost) return ""; spend("decor", it.cost, `Mua ${it.n}`); S.owned.push(id); }
   S.room[k] = v; trial = null; save();
   return own ? `Đã đổi sang ${it.n}` : `Đã mua ${it.n}`;
 }
@@ -34,10 +34,11 @@ export function decorHTML() {
   const items = C.items.map(it => {
     const own = isDefault(C.k, it.v) || S.owned.includes(C.k + ":" + it.v), eq = S.room[C.k] === it.v, sel = tr?.k === C.k && tr.v === it.v;
     return `<button class="ditem ${sel ? "sel" : eq ? "eq" : ""}" data-dtry="${C.k}:${it.v}"><span class="sw" style="background:${it.sw};background-size:${it.sws || "auto"}">${it.glyph || ""}</span>
-      <span class="dn">${esc(it.n)}</span><span class="tg ${eq ? "use" : own ? "own" : "buy"}">${eq ? "Đang dùng" : own ? "Đã có" : `${it.cost} xu`}</span></button>`;
+      <span class="dn">${esc(it.n)}</span><span class="tg ${eq ? "use" : own ? "own" : it.gacha ? "gacha" : "buy"}">${eq ? "Đang dùng" : own ? "Đã có" : it.gacha ? "Gacha" : `${it.cost} xu`}</span></button>`;
   }).join("");
   const act = !tr ? `<button class="b3 off" disabled>Chạm món để thử</button>`
     : trOwn ? `<button class="b3 use" data-act="dbuy">Dùng món này</button>`
+    : trIt!.gacha ? `<button class="b3 off" disabled>Chỉ quay được từ Gacha</button>`
     : S.coins >= trIt!.cost ? `<button class="b3" data-act="dbuy">Mua · ${trIt!.cost} xu</button>` : `<button class="b3 off" disabled>Chưa đủ xu · ${trIt!.cost} xu</button>`;
   const fx = trIt ? fxText(trIt) : "";
   return `<div class="scr decor4">

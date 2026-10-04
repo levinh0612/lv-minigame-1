@@ -7,6 +7,7 @@ import type { PetId } from "../content/couple";
 import { S, petName } from "../engine/state";
 import { account } from "../net/cloud";
 import { visiting } from "../engine/visit";
+import { regulars } from "../engine/gacha";
 import type { Hotspot, ShopOpts, ShopScene } from "../scene/shop3d";
 import { roomHTML, type RoomOpts } from "./room";
 
@@ -43,7 +44,7 @@ const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = 
 function optsOf(el: HTMLElement): ShopOpts {
   const n = +(el.dataset.recipes || 4), vs = el.dataset.user ? visiting() : null, g = vs ? (vs.me as unknown as typeof S.me) : S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {
-    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), wide: +(el.dataset.wide || 0), floors: +(el.dataset.floors || 1), giftDot: el.dataset.gift === "1", photo: vs ? "" : S.photo, menuCount: n, shopName: vs ? vs.shop.trim() || vs.username : S.shop.trim() || account() || "Matcha",
+    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), regulars: vs ? [] : regulars().map(i => ({ sprite: i.char!.sprite, rarity: i.rarity })), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), wide: +(el.dataset.wide || 0), floors: +(el.dataset.floors || 1), giftDot: el.dataset.gift === "1", photo: vs ? "" : S.photo, menuCount: n, shopName: vs ? vs.shop.trim() || vs.username : S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
     me: { sprite: g.sprite, look: look(g as unknown as Record<string, string>) },
     guestLooks: [
@@ -53,8 +54,8 @@ function optsOf(el: HTMLElement): ShopOpts {
   };
 }
 /** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
-const baseOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
-const sigOf = (el: HTMLElement) => JSON.stringify([document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
+const baseOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
+const sigOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
 function run(l: Live) {

@@ -11,17 +11,23 @@ const WALLS: Record<string, [string, string]> = {
   mint: ["repeating-linear-gradient(90deg,#E4F6EC 0 18px,#D8F0E3 18px 36px)", "auto"],
   cream: ["radial-gradient(#FFD9A8 3px,transparent 3.5px) #FFF6E3", "22px 22px"],
   lavender: ["linear-gradient(90deg,#E4DBFF 1.5px,transparent 1.5px) 0 0,linear-gradient(#E4DBFF 1.5px,transparent 1.5px) 0 0,#F4F0FF", "24px 24px"],
-  party: ["repeating-linear-gradient(90deg,#FFF0C9 0 18px,#FFE7AE 18px 36px)", "auto"]
+  party: ["repeating-linear-gradient(90deg,#FFF0C9 0 18px,#FFE7AE 18px 36px)", "auto"],
+  candy: ["repeating-linear-gradient(135deg,#FFD1E8 0 14px,#FFF 14px 28px,#C9F0FF 28px 42px,#FFF 42px 56px)", "auto"],
+  starry: ["radial-gradient(#FFF6B0 2px,transparent 2.5px) 0 0/26px 26px,radial-gradient(#fff 1.2px,transparent 1.6px) 13px 13px/26px 26px,#2B2F6B", "auto"]
 };
 const FLOORS: Record<string, [string, string]> = {
   check: ["repeating-conic-gradient(#DDF4E8 0 25%,#CBEDDB 0 50%)", "34px 34px"],
   wood: ["repeating-linear-gradient(90deg,#EFCB9E 0 38px,#E7BD8B 38px 40px,#F2D2AA 40px 78px,#E7BD8B 78px 80px)", "auto"],
-  tile: ["repeating-conic-gradient(#FFE3EA 0 25%,#FFFFFF 0 50%)", "26px 26px"]
+  tile: ["repeating-conic-gradient(#FFE3EA 0 25%,#FFFFFF 0 50%)", "26px 26px"],
+  rainbow: ["repeating-linear-gradient(90deg,#FFB3C7 0 30px,#FFE3A0 30px 60px,#BDF0CF 60px 90px,#BFE0FF 90px 120px)", "auto"],
+  sakura: ["radial-gradient(#FF9FB8 4px,transparent 4.5px) 0 0/30px 30px,#FFEFF3", "auto"]
 };
 const COUNTERS: Record<string, string> = {
   pink: "repeating-linear-gradient(90deg,#FFB3C7 0 22px,#FFC7D5 22px 44px)",
   mint: "repeating-linear-gradient(90deg,#9FDCC0 0 22px,#B6E6CF 22px 44px)",
-  wood: "repeating-linear-gradient(90deg,#D9A66B 0 22px,#E3B47D 22px 44px)"
+  wood: "repeating-linear-gradient(90deg,#D9A66B 0 22px,#E3B47D 22px 44px)",
+  candy: "repeating-linear-gradient(90deg,#FF9FC5 0 22px,#FFF 22px 44px)",
+  gold: "repeating-linear-gradient(90deg,#E9B949 0 22px,#F7D675 22px 44px)"
 };
 const B = "border:2.5px solid #4A3438";
 const HEART = `<svg width="18" height="16" viewBox="0 0 16 14"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="#FF6F91" stroke="#4A3438" stroke-width="1.4"/></svg>`;
