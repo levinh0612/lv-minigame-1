@@ -69,6 +69,8 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.58", date: "05/10/2026", notes: ["Xây thêm lầu thì có thêm lầu thật: nút T1, T2... trong cảnh 3D để chuyển xem từng lầu", "Bàn nhiều hơn chỗ ở lầu trệt thì tự xếp lên lầu trên", "Nhìn từ ngoài tiệm thấy các lầu chồng lên nhau"] },
+  { v: "2.57", date: "05/10/2026", notes: ["Sửa phần mở rộng của tiệm bị tối: thêm đèn treo cho phần mới, ánh sáng và bóng đổ phủ cả phòng rộng"] },
   { v: "2.56", date: "04/10/2026", notes: ["Mở rộng cửa hàng thì phòng thật sự rộng thêm về phía đông (mỗi lần thêm 2), có thêm chỗ cho bàn", "Mua bàn, nâng bàn, xây lầu, mở rộng: trừ xu và cập nhật cảnh tiệm ngay, không cần tải lại trang", "Thêm nút Nâng cấp tiệm dưới nút vào/ra tiệm trong cảnh 3D", "Sửa cảnh báo bóng PCFSoftShadowMap của Three.js"] },
   { v: "2.55", date: "04/10/2026", notes: ["Sửa lỗi không dựng được cảnh 3D ở màn chính sau khi đổi bố cục bàn (phải dùng cảnh 2D)"] },
   { v: "2.54", date: "04/10/2026", notes: ["Độ viral là số khách giờ cao điểm; sức chứa là tổng ghế của các bàn", "Bàn có cấp 1 đến 3, chứa 2 / 3 / 4 người; nâng cấp bàn 400 và 800 xu", "Mỗi lầu có 4 chỗ đặt bàn, mở rộng ngang thêm 1 chỗ mỗi lầu", "Tiệm mới bắt đầu với 2 bàn; người chơi cũ được tặng đủ ghế đang có", "Cảnh tiệm vẽ đúng số ghế của từng bàn"] },

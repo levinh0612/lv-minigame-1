@@ -1244,3 +1244,5 @@ button.cm{position:relative}
 .vwarn{display:flex;align-items:center;gap:10px;margin:8px 16px 0;width:calc(100% - 32px);padding:10px 12px;border-radius:18px;background:#FFF0C9;box-shadow:0 3px 0 #F0D78A;text-align:left}
 .vwarn>span{font-size:24px}.vwarn b{display:block;font:800 14px var(--display);color:#8A5A00}.vwarn small{font:700 11px var(--body);color:#A77A0E}
 .pchip.warn{background:#FFF0C9;color:#8A5A00;box-shadow:0 2px 0 #F0D78A}
+
+.zoom3d .fl{font:900 14px var(--display)}
