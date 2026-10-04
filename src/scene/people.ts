@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { Animated, CAP, CONE, CYL, RB, SPH, T, add, animeFace } from "./kit";
 import { boyActor, boyPerson } from "./boy3d";
+import { girlActor, girlPerson } from "./girl3d";
 
 export interface PersonLook { skin?: string; hair?: string; coat?: string; shirt?: string; eye?: string; pants?: string; shoes?: string }
 export type Pose = "seat" | "stand";
@@ -18,15 +19,15 @@ const OUTFIT: Record<string, Outfit> = {
   boy: { hood: true }, b1: { hood: true }, b2: { collar: "white" }, b3: { buttons: true, pockets: true, collar: "rib" }, b4: { pinafore: true }, b5: { bow: true, buttons: true }, b6: { zip: true, collar: "rib" }
 };
 
-/** Nam dùng model 3D có sẵn (boy3d.ts); nữ và khi model lỗi tải thì dựng chibi bằng khối bên dưới */
+/** Nam và nữ dùng model 3D có sẵn (boy3d.ts, girl3d.ts); khi model lỗi tải thì dựng chibi bằng khối bên dưới */
 export function person(look: PersonLook, sprite = "b1", pose: Pose = "seat"): Animated {
   if (sprite[0] === "b") return boyPerson(look, pose, () => blockActor(look, sprite));
-  return blockPerson(look, sprite, pose);
+  return girlPerson(look, pose, () => blockActor(look, sprite));
 }
 
 /** Nhân vật có đủ trạng thái cho khách ra vào */
 export function personActor(look: PersonLook, sprite: string): Actor {
-  return sprite[0] === "b" ? boyActor(look, () => blockActor(look, sprite)) : blockActor(look, sprite);
+  return (sprite[0] === "b" ? boyActor : girlActor)(look, () => blockActor(look, sprite));
 }
 
 /** Nhân vật khối: hai dáng (đứng / ngồi) hoán đổi theo trạng thái, đi thì nhún nhẹ */

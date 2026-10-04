@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { CYL, RB, SPH, T, INK, add, CONE } from "./kit";
 import { cake } from "./cake";
 import { pet, type PetKind } from "./pets";
+import { APPROACH } from "./figure3d";
 import { person, personActor, type Actor, type PersonLook } from "./people";
 
 export interface ShopOpts {
@@ -228,13 +229,13 @@ export function createShop(o: ShopOpts): ShopScene {
       sl.actor.update(t); const g = sl.actor.group, walking = sl.phase === "out" || sl.phase === "in";
       if (sl.phase === "seated" && t > sl.next) { sl.actor.mode("getup"); sl.phase = "getup"; }
       else if (sl.phase === "getup" && sl.actor.done()) {
-        const f = fwd(sl.st, .3); g.position.set(f.x, 0, f.y); sl.actor.mode("walk"); sl.phase = "out";
+        const f = fwd(sl.st, APPROACH); g.position.set(f.x, 0, f.y); sl.actor.mode("walk"); sl.phase = "out";
         sl.path = [new THREE.Vector2(DOOR_X, 2.4), new THREE.Vector2(DOOR_X, 3.9), ...STREET]; sl.pi = 0;
       } else if (sl.phase === "out" && advance(sl, dt)) { g.visible = false; sl.phase = "away"; sl.next = t + (6 + Math.random() * 8) * TK; }
       else if (sl.phase === "away" && t > sl.next) {
         root.remove(g); sl.actor.dispose(); sl.n++; const gl = POOL[(sl.n * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length];
         sl.actor = personActor(gl.look, gl.sprite); sl.actor.mode("walk"); const a = sl.actor.group; a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; root.add(a);
-        sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9), new THREE.Vector2(DOOR_X, 2.4), fwd(sl.st, .3)]; sl.pi = 0; sl.phase = "in";
+        sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9), new THREE.Vector2(DOOR_X, 2.4), fwd(sl.st, APPROACH)]; sl.pi = 0; sl.phase = "in";
       } else if (sl.phase === "in" && advance(sl, dt)) { g.position.set(sl.st.x, 0, sl.st.z); g.rotation.y = sl.st.a; sl.actor.mode("sit"); sl.phase = "sitdown"; }
       else if (sl.phase === "sitdown" && sl.actor.done()) { sl.phase = "seated"; sl.next = t + (26 + Math.random() * 30) * TK; }
       if (walking) { g.visible = exterior || g.position.z < 3.4; if (g.position.z > 2.6 && g.position.z < 4.4 && Math.abs(g.position.x - DOOR_X) < 1.1) nearDoor = true; }

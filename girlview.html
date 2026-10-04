@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Xem nhân vật nữ 3D</title>
+<style>body{margin:0;background:#EEE6F0}#c{width:100vw;height:100vh;display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+const q = new URLSearchParams(location.search), dir = "/models/girl-lo/";
+const canvas = document.getElementById("c"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#F4EFE8");
+scene.add(new THREE.HemisphereLight("#fff6ec", "#b9a58c", 1.6)); const sun = new THREE.DirectionalLight("#fff", 1.2); sun.position.set(3, 5, 4); scene.add(sun);
+const tex = await new THREE.TextureLoader().loadAsync(dir + "tex.jpg"); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+const gl = await new GLTFLoader().loadAsync(dir + "mesh.glb"), clips = await (await fetch(dir + "clips.json")).json();
+const model = gl.scene; let sm; model.traverse(o => { if (o.isSkinnedMesh) { sm = o; o.material = new THREE.MeshLambertMaterial({ map: tex }); } });
+const root = new THREE.Group(); root.add(model); scene.add(root); model.updateMatrixWorld(true);
+const bb = new THREE.Box3().setFromObject(model, true); console.log("BOX", JSON.stringify([bb.min, bb.max]));
+const g = sm.geometry, p = g.attributes.position; const b = new THREE.Box3().setFromBufferAttribute(p); console.log("GEO", JSON.stringify([b.min, b.max]));
+const sc = 1.5 / (bb.max.y - bb.min.y); model.scale.setScalar(sc);
+const mixer = new THREE.AnimationMixer(model), which = q.get("anim") || "idle"; const clip = THREE.AnimationClip.parse(clips[which]);
+clip.tracks = clip.tracks.filter(t => !/\.scale$/.test(t.name)); console.log("CLIP", which, clip.duration, clip.tracks.slice(0, 2).map(t => t.name));
+mixer.clipAction(clip).play(); model.position.y = 0; mixer.update(0); model.updateMatrixWorld(true); model.position.y = -new THREE.Box3().setFromObject(model, true).min.y;
+const cam = new THREE.PerspectiveCamera(28, 1, .1, 50);
+function resize() { renderer.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); } addEventListener("resize", resize); resize();
+let az = (+(q.get("az") || 0)) * Math.PI / 180, el = .12, last = performance.now();
+(function loop() { const now = performance.now(); mixer.update((now - last) / 1000); last = now; const D = +(q.get("d") || 6);
+  cam.position.set(Math.sin(az) * Math.cos(el) * D, Math.sin(el) * D + .7, Math.cos(az) * Math.cos(el) * D); cam.lookAt(0, +(q.get("fy") || .75), 0); renderer.render(scene, cam); requestAnimationFrame(loop); })();
+</script></body></html>

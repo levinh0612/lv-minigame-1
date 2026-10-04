@@ -12,16 +12,19 @@ import { roomHTML, type RoomOpts } from "./room";
 interface Live { el: HTMLElement; sig: string; scene: ShopScene; btns: [Hotspot, HTMLButtonElement][]; timer: number; raf: number; ro: ResizeObserver }
 let live: Live | null = null, kept: Live | null = null, token = 0;
 /** vùng chứa cảnh: bên trong là cảnh 2D cũ làm dự phòng */
-export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts) {
-  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"`;
+export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false) {
+  // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
+  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "";
+  const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
 
+const el0hs = (el: HTMLElement) => el.dataset.hs !== "0";      // màn trang trí: không có nút chạm trên cảnh
 const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
 function optsOf(el: HTMLElement): ShopOpts {
   const n = +(el.dataset.recipes || 4), g = S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye });
   return {
-    room: S.room as unknown as Record<string, string>, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
+    room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), giftDot: el.dataset.gift === "1", photo: S.photo, menuCount: n, shopName: S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
     me: { sprite: g.sprite, look: look(g as unknown as Record<string, string>) },
     guestLooks: [
@@ -71,7 +74,7 @@ export async function mountRooms() {
     const scene = mod.createShop(optsOf(box));
     box.classList.add("live"); box.innerHTML = "";
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
-    const btns = scene.hotspots.map(h => button(layer, h, scene));
+    const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
     box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">⟲</button><button data-rot="1" aria-label="Xoay sang phải">⟳</button></div>`);
     box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">＋</button><button data-zoom="0.77" aria-label="Thu nhỏ">－</button><button data-view aria-label="Xem ngoài tiệm" class="vw">🏪</button></div>`);
     box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.textContent = on ? "🛋" : "🏪"; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });
