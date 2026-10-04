@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.59", date: "05/10/2026", notes: ["Lầu mới không còn trống: bàn được chia đều cho các lầu, lầu trên không có cánh cửa chính của lầu trệt", "Mỗi lần mở rộng ngang thêm 2 chỗ đặt bàn mỗi lầu; các bàn trải đều theo chiều rộng phòng", "Đèn treo đặt theo từng cột bàn nên phần mở rộng không còn bị tối"] },
   { v: "2.58", date: "05/10/2026", notes: ["Xây thêm lầu thì có thêm lầu thật: nút T1, T2... trong cảnh 3D để chuyển xem từng lầu", "Bàn nhiều hơn chỗ ở lầu trệt thì tự xếp lên lầu trên", "Nhìn từ ngoài tiệm thấy các lầu chồng lên nhau"] },
   { v: "2.57", date: "05/10/2026", notes: ["Sửa phần mở rộng của tiệm bị tối: thêm đèn treo cho phần mới, ánh sáng và bóng đổ phủ cả phòng rộng"] },
   { v: "2.56", date: "04/10/2026", notes: ["Mở rộng cửa hàng thì phòng thật sự rộng thêm về phía đông (mỗi lần thêm 2), có thêm chỗ cho bàn", "Mua bàn, nâng bàn, xây lầu, mở rộng: trừ xu và cập nhật cảnh tiệm ngay, không cần tải lại trang", "Thêm nút Nâng cấp tiệm dưới nút vào/ra tiệm trong cảnh 3D", "Sửa cảnh báo bóng PCFSoftShadowMap của Three.js"] },

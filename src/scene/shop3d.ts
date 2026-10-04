@@ -121,6 +121,7 @@ export function createShop(o: ShopOpts): ShopScene {
     const w = { group: g, decor, nx, nz, mats }; walls.push(w); return w;
   }
   const wN = wall(W, 0, -1, CX, -D / 2 - .1, 0), wW = wall(D, -1, 0, -W0 / 2 - .1, 0, Math.PI / 2), wS = wall(W, 0, 1, CX, D / 2 + .1, 0, [DX - DOOR_W / 2, DX + DOOR_W / 2]), wE = wall(D, 1, 0, W / 2 + CX + .1, 0, Math.PI / 2);
+  const wS2 = wall(W, 0, 1, CX, D / 2 + .1, 0); wS2.group.visible = false;   // tường Nam không cửa cho các lầu trên
   const wi = (w: typeof wN) => walls.indexOf(w);
 
   /* cửa sổ + rèm */
@@ -242,15 +243,20 @@ export function createShop(o: ShopOpts): ShopScene {
       ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T("#B98450"), dx, .23, dz, { ol: null })); return { x: cx, z: cz, a: a + Math.PI }; });
   }
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
-  const GROUND = 4 + wide;             // chỗ đặt bàn ở tầng trệt (tầng trên chưa vẽ)
-  const SPOTS: [number, number][] = Array.from({ length: 2 * Math.ceil(GROUND / 2) }, (_, i) => [-1.9 + 2.1 * Math.floor(i / 2), i % 2 ? 2.2 : .7]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
+  const GROUND = 4 + 2 * wide;         // chỗ đặt bàn mỗi lầu: 4, mỗi lần mở rộng thêm 2
+  const COLS = Math.ceil(GROUND / 2), STEP = COLS > 1 ? (W - 3.7) / (COLS - 1) : 0;   // các cột bàn trải đều theo chiều rộng phòng
+  const SPOTS: [number, number][] = Array.from({ length: 2 * COLS }, (_, i) => [-1.9 + STEP * Math.floor(i / 2), i % 2 ? 2.2 : .7]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
   const ANG = [2.4, -2.4, .1, 3.14];
   /** dựng các bàn của lầu f vào nhóm lầu đó; lầu trệt luôn có ít nhất 2 bàn (khách ngồi) */
-  const buildTables = (f: number) => SPOTS.slice(0, Math.max(f ? 0 : 2, Math.min(GROUND, o.tables.length - f * GROUND))).map(([x, z], i) => {
-    const lv = o.tables[f * GROUND + i] ?? 1, r = .6 + .1 * lv, par = flG[f]!;
-    const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par);
-    const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return chairs;
-  });
+  const buildTables = (f: number) => {
+    let lvs = o.tables.filter((_, i) => i % floors === f).slice(0, GROUND);          // bàn chia đều cho các lầu
+    if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
+    return lvs.map((lv, i) => {
+      const [x, z] = SPOTS[i]!, r = .6 + .1 * lv, par = flG[f]!;
+      const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par);
+      const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return chairs;
+    });
+  };
   const tbls = buildTables(0);
   const s1 = tbls[0]!, s2 = tbls[1]!;
   /* khách ra vào: mỗi chỗ ngồi tự chạy vòng ngồi → đứng dậy → ra cửa → vắng → khách khác vào → ngồi xuống */
@@ -316,7 +322,7 @@ export function createShop(o: ShopOpts): ShopScene {
   for (let f = 1; f < floors; f++) {
     const g = flG[f]!, t = buildTables(f);
     SPOTS.slice(0, t.length).forEach(([x, z]) => blob(x, z, .95, .95, 1, g)); t.flat().forEach(st => blob(st.x, st.z, .4, .4, 1, g));
-    [SPOTS[0]![0], SPOTS[2]![0]].forEach(x => {
+    Array.from({ length: COLS }, (_, c) => SPOTS[2 * c]![0]).forEach(x => {
       const pl = new THREE.PointLight("#FFD27A", 0, 6.5, 1.5); pl.position.set(x, 2.0, 1.45); g.add(pl);
       upLamps.push({ pl, bulb: new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial()) });
     });
@@ -383,8 +389,8 @@ export function createShop(o: ShopOpts): ShopScene {
   const bulbsStr: THREE.Mesh[] = [];
   const buildLamps = () => {
   const lk = cur.lamp === "1" || cur.lamp === "3" || cur.lamp === "4" ? cur.lamp : "0";
-  pendant(SPOTS[0]![0], 1.45, lk); pendant(SPOTS[2]![0], 1.45, lk); pendant(-.8, -1.0, lk);
-  for (let c = 2; c < SPOTS.length / 2; c++) pendant(SPOTS[2 * c]![0], 1.45, lk);   // phần mở rộng cũng có đèn treo, đêm không bị tối
+  pendant(-.8, -1.0, lk);
+  for (let c = 0; c < COLS; c++) pendant(SPOTS[2 * c]![0], 1.45, lk);
   if (cur.lamp === "2" || ev) {
     const pts: THREE.Vector3[] = []; for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector3(-3.8 + t * 7.6, 2.95 - Math.sin(t * Math.PI) * .35, -2.8)); }
     lampG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .008, 4), new THREE.MeshBasicMaterial({ color: INK })));
@@ -619,6 +625,7 @@ export function createShop(o: ShopOpts): ShopScene {
       curFloor = Math.max(0, Math.min(floors - 1, f)); r.shadowMap.needsUpdate = true;
       flG.forEach((g, i) => { g.visible = i === curFloor; });
       groundObjs.forEach(ob => { ob.visible = curFloor === 0; }); walls.forEach(wl => { wl.decor.visible = curFloor === 0; });
+      wS.group.visible = curFloor === 0; wS2.group.visible = curFloor > 0;
       slots.forEach(sl => { if (curFloor) sl.actor.group.visible = false; else if (sl.phase === "seated") sl.actor.group.visible = true; });
     },
     dragStart() { dragging = true; },

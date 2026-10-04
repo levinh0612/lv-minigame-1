@@ -314,7 +314,7 @@ describe("ví: sổ thu chi", () => {
       const c3 = S.coins; buyVenue("floor"); expect(c3 - S.coins).toBe(2000);
       const c4 = S.coins; buyVenue("wide"); expect(c4 - S.coins).toBe(2000);
       const c5 = S.coins; buyVenue("wide"); expect(c5 - S.coins).toBe(4000);
-      expect(spots()).toBe(3 * (4 + 2));
+      expect(spots()).toBe(3 * (4 + 4));
     });
 
     it("nâng bàn lên cấp 3 là tối đa, sau đó không nâng nữa", () => {

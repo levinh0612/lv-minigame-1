@@ -127,7 +127,7 @@ export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13];     // điểm nổi tiếng c�
 /* Sức chứa tiệm: viral = số khách giờ cao điểm. Mỗi bàn có cấp 1..3 và chứa 2/3/4 người (mỗi người một ghế).
    Mỗi lầu có 4 chỗ đặt bàn, mở rộng ngang thêm 1 chỗ mỗi lầu. */
 export const SHOP = {
-  perFloor: 4, perWide: 1, startTables: 2, maxLv: 3,
+  perFloor: 4, perWide: 2, startTables: 2, maxLv: 3,
   seatsOf: (lv: number) => 1 + lv,
   tableCost: (n: number) => (n <= 2 ? 0 : n === 3 ? 300 : n === 4 ? 600 : n === 5 ? 1000 : 1000 + (n - 5) * 500),   // giá bàn thứ n
   upCost: (lv: number) => (lv <= 1 ? 400 : 800),                // nâng bàn từ cấp lv lên cấp lv + 1

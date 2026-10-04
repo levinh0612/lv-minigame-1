@@ -250,8 +250,8 @@ export function giftSheet() { modal(`<h2>Quà tặng</h2>${giftBody()}<div class
 const VENUE_OPT = {
   table: { ic: "🪑", n: "Mua thêm bàn", d: () => `Bàn cấp 1 chứa 2 người · bàn thứ ${tableLvs().length + 1}, đang có ${tableLvs().length}/${spots()} chỗ đặt` },
   up: { ic: "⭐", n: "Nâng cấp bàn", d: () => `Bàn cấp ${Math.min(...tableLvs())} lên cấp ${Math.min(...tableLvs()) + 1}, thêm 1 ghế` },
-  floor: { ic: "🏢", n: "Xây thêm lầu", d: () => `Thêm ${4 + S.venue.wide} chỗ đặt bàn · lầu ${S.venue.floors + 1}` },
-  wide: { ic: "↔️", n: "Mở rộng cửa hàng", d: () => `Rộng thêm, mỗi lầu +1 chỗ đặt bàn · lần ${S.venue.wide + 1}` }
+  floor: { ic: "🏢", n: "Xây thêm lầu", d: () => `Thêm ${4 + 2 * S.venue.wide} chỗ đặt bàn · lầu ${S.venue.floors + 1}` },
+  wide: { ic: "↔️", n: "Mở rộng cửa hàng", d: () => `Rộng thêm, mỗi lầu +2 chỗ đặt bàn · lần ${S.venue.wide + 1}` }
 } as const;
 const SPOT_FULL = "Hết chỗ đặt bàn, hãy xây lầu hoặc mở rộng";
 export function upgradeModal(forced = false) {
