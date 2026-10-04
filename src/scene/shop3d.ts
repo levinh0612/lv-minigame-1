@@ -206,7 +206,7 @@ export function createShop(o: ShopOpts): ShopScene {
     { sprite: "b4", look: { skin: "#FFE9DA", hair: "#E7B872", coat: "#2E4A7A", shirt: "#C9962E", eye: "#7A5A3E" } }
   ];
   const fwd = (st: { x: number; z: number; a: number }, f: number) => new THREE.Vector2(st.x + Math.sin(st.a) * f, st.z + Math.cos(st.a) * f);
-  const STREET = [new THREE.Vector2(DOOR_X, 4.8), new THREE.Vector2(4.3, 4.95)];            // vỉa hè bên phải cửa
+  const STREET = [new THREE.Vector2(DOOR_X, 4.8), new THREE.Vector2(-1.3, 4.95)];           // vỉa hè bên trái cửa (bên phải có cây và biển menu)
   const TK = new URLSearchParams(location.search).has("fast") ? .12 : 1;   // ?fast=1: rút ngắn thời gian chờ để thử
   interface Slot { st: { x: number; z: number; a: number }; actor: Actor; phase: "seated" | "getup" | "out" | "away" | "in" | "sitdown"; next: number; path: THREE.Vector2[]; pi: number; n: number }
   const slots: Slot[] = ([s1[0], s2[0]] as const).slice(0, o.guests).map((st, i) => {
@@ -233,7 +233,7 @@ export function createShop(o: ShopOpts): ShopScene {
       } else if (sl.phase === "out" && advance(sl, dt)) { g.visible = false; sl.phase = "away"; sl.next = t + (6 + Math.random() * 8) * TK; }
       else if (sl.phase === "away" && t > sl.next) {
         root.remove(g); sl.actor.dispose(); sl.n++; const gl = POOL[(sl.n * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length];
-        sl.actor = personActor(gl.look, gl.sprite); sl.actor.mode("walk"); const a = sl.actor.group; a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = -Math.PI / 2; root.add(a);
+        sl.actor = personActor(gl.look, gl.sprite); sl.actor.mode("walk"); const a = sl.actor.group; a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; root.add(a);
         sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9), new THREE.Vector2(DOOR_X, 2.4), fwd(sl.st, .3)]; sl.pi = 0; sl.phase = "in";
       } else if (sl.phase === "in" && advance(sl, dt)) { g.position.set(sl.st.x, 0, sl.st.z); g.rotation.y = sl.st.a; sl.actor.mode("sit"); sl.phase = "sitdown"; }
       else if (sl.phase === "sitdown" && sl.actor.done()) { sl.phase = "seated"; sl.next = t + (26 + Math.random() * 30) * TK; }

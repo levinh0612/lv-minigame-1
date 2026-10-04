@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.22", date: "04/10/2026", notes: ["Khách ra vào đi về phía bên trái cửa, không còn đụng vào cây bên phải"] },
   { v: "2.21", date: "04/10/2026", notes: ["Nhân vật nam là model 3D thật, đầu to kiểu chibi cho hợp với nữ; tóc, da, áo khoác, áo trong, quần, giày đổi màu theo Hồ sơ", "Tiệm có cửa thật: cửa tự mở khi có khách đi qua rồi đóng lại; khách đứng dậy đi ra, vắng một lúc rồi khách khác đi vào ngồi xuống; xem ngoài tiệm cũng thấy đúng như bên trong", "Biển tên tiệm nâng lên trên mái bạt, không còn bị che", "Máy không tải được model thì tự dùng lại nhân vật cũ"] },
   { v: "2.20", date: "04/10/2026", notes: ["Cảnh tiệm 3D: buổi sáng có trời xanh, mặt trời, tia nắng và mây; chiều tà màu cam; buổi tối có trăng, sao và đèn đường"] },
   { v: "2.19", date: "03/10/2026", notes: ["Màn chính là cảnh tiệm 3D: xoay 4 góc, sáng và tối theo giờ thật, chạm thú cưng, menu, tủ bánh, ảnh, hộp quà như trước", "Đồ trang trí hiện đúng trong cảnh 3D; chủ tiệm là nhân vật bạn chọn trong Hồ sơ", "Xem ngoài tiệm (nút 🏪), phóng to thu nhỏ, thú cưng nhỏ gọn hơn, tủ bánh thấp trong suốt thấy bánh bên trong","Màn chính: thẻ hồ sơ có ảnh chân dung lớn; Tủ bánh cuộn được trên máy tính","Máy yếu thì tắt ở Cài đặt, game dùng lại cảnh 2D"] },
