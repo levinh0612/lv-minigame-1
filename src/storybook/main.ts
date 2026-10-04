@@ -14,7 +14,8 @@ import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
-import { claimGoals, himNote, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
+import { claimGoals, himNote, incidentModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
+import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
 import { cakesSheet, daysSheet, menuSheet } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
@@ -162,6 +163,8 @@ const STORIES: Story[] = [
     html: () => { lvState(3); S.daily.served = 9; S.daily.feat = 3; return modalOver(homeHTML(), claimGoals); } },
   { id: "m-welcome", sec: "modals", title: "Quà khai trương", desc: "Lần đầu chơi: 300 xu + 5 Hạt làm vốn", kind: "modal",
     html: () => { lvState(1, s => { s.welcome = false; }); return modalOver(homeHTML(), welcome); } },
+  ...INCIDENTS.map((inc, n) => ({ id: "m-inc-" + inc.id, sec: "modals", title: "Sự cố: " + inc.title, desc: "Thỉnh thoảng sau khi hết ca, trừ khoảng 1/10 xu; hộp thoại trượt từ dưới lên", kind: "modal" as const,
+    html: () => { lvState(5, s => { s.coins = 1200; }); return modalOver(homeHTML(), () => incidentModal(inc, 120 + n * 3)); } })),
   { id: "m-tut-1", sec: "modals", title: "Hướng dẫn 1/4", desc: "Lần đầu mở game", kind: "modal",
     html: () => { lvState(1); return modalOver(homeHTML(), () => tutorial(0)); } },
   { id: "m-tut-3", sec: "modals", title: "Hướng dẫn 3/4", desc: "Đi chợ và nhân viên", kind: "modal",

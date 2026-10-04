@@ -1,4 +1,5 @@
 /* Màn Chính (HomeScreen của Claude Design): mái hiên, cảnh tiệm, thư hôm nay, Mở tiệm, 4 nút dưới */
+import { expectedCustomers } from "../../engine/economy";
 import { STAFF } from "../../content/game";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { decorCount, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
@@ -65,7 +66,7 @@ export function homeHTML() {
     <div class="hroom">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1) })}
       <button class="fix" data-go="/cua-hang">${PEN}Sửa tiệm</button></div>
     ${card}
-    <div class="openw4"><button class="b3" data-go="/chuan-bi">Mở tiệm</button></div>
+    <div class="openw4"><button class="b3" data-go="/chuan-bi">Mở tiệm</button><small class="openn">Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></div>
     <nav class="nav4">${nav.map(x => `<button data-go="${x.go}"><span class="ic" style="background:${x.bg};box-shadow:0 4px 0 ${x.sh}">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}${x.n}</button>`).join("")}</nav>
   </div>`;
 }

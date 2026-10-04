@@ -41,7 +41,8 @@ export function prepHTML() {
   const hungry = plan.filter(x => !x.meal).map(x => petName(x.id));
   return `<div class="scr prep2">
     ${pageHead("Chuẩn bị mở tiệm", `Ca ${S.shifts + 1}`)}
-    <div class="feat">${ingSVG("cream", feat.cream, 18)}Món nổi bật: <b>${esc(feat.n)}</b><span>~${expectedCustomers()} khách · ✦ ${f.n}</span></div>
+    <div class="feat">${ingSVG("cream", feat.cream, 18)}Món nổi bật: <b>${esc(feat.n)}</b><span>✦ ${f.n}</span></div>
+    <div class="custcnt"><span class="cntico">👥</span><div><b>Hôm nay có ${expectedCustomers()} khách</b><small>Ca ${S.shifts + 1} · ${goals[0]?.n ?? 0} khách vui là đạt mục tiêu</small></div></div>
     <div class="sh2"><b>Ai đi làm hôm nay?</b><span class="lav">${plan.filter(x => x.meal).length}/${STAFF.length} bé</span></div>
     <div class="btiles">${STAFF.map(d => bakerTile(d.id)).join("")}</div>
     <div class="sh2"><b>Mục tiêu ca này</b><span class="gold">thưởng lúc hết ca</span></div>
@@ -50,6 +51,6 @@ export function prepHTML() {
     <div class="stiles">${stock}</div>
     <p class="phint">Chạm một món để nhập thêm 5 phần. ${hungry.length ? `<b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>
     <div class="pfoot"><button class="b3 w" data-act="suggest" ${sug.length && S.coins >= Math.min(...sug.map(x => x.cost)) ? "" : "disabled"}>${sug.length ? `Nhập · ${fmtN(sugCost)} xu` : "Kho đủ"}</button>
-      <button class="b3" data-act="start">Bắt đầu ca</button></div>
+      <button class="b3" data-act="start">Bắt đầu ca · ${expectedCustomers()} khách</button></div>
   </div>`;
 }

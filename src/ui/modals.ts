@@ -13,6 +13,7 @@ import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom"
 import { render } from "./app";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
+import type { Incident } from "../engine/incident";
 import { account, changePin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
@@ -194,4 +195,14 @@ export function welcome() {
     <p class="tdesc">Tặng chủ tiệm ${WELCOME.coins} xu và ${food.map(x => `${x.n} gói ${x.f.n}`).join(", ")} làm vốn. Đi chợ nhập nguyên liệu, và dành đồ ăn làm lương cho các bé nha.</p>
     <div class="mbtns"><button class="b3" data-close>Nhận vốn</button></div>`, render);
   floatHearts(innerWidth / 2, innerHeight / 2, 10); sfx("level");
+}
+
+/* ===== Sự cố bất ngờ: hộp thoại trượt từ dưới lên báo số xu bị trừ ===== */
+export function incidentArt(i: Incident, px = 84) {
+  return `<div class="incart" style="--ib:${i.bg}"><span class="ie" aria-hidden="true">${i.emoji}</span><span class="ip">${petSVG({ ...PETS[i.pet], mood: "impatient" }, px)}</span></div>`;
+}
+export function incidentModal(i: Incident, cost: number) {
+  modal(`${incidentArt(i)}<h2>${esc(i.title)}</h2><p class="sub">${esc(i.text)}</p>
+    <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
+    <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`);
 }

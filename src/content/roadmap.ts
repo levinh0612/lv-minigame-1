@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.23", date: "04/10/2026", notes: ["Sự cố bất ngờ: thỉnh thoảng sau khi hết ca, tiệm gặp chuyện (cúp điện, khách quỵt tiền, nguyên liệu hư, sở y tế kiểm tra...) và bị trừ khoảng 1/10 số xu; hộp thoại có hình trượt từ dưới lên báo rõ lý do", "Sự cố không xảy ra với người mới, khi còn dưới 100 xu, hoặc ngay sau một sự cố khác; xem khoản trừ ở mục Chi trong Ví", "Biết trước số khách: màn Chuẩn bị ca và nút Mở tiệm hiện rõ hôm nay có bao nhiêu khách"] },
   { v: "2.22", date: "04/10/2026", notes: ["Khách ra vào đi về phía bên trái cửa, không còn đụng vào cây bên phải"] },
   { v: "2.21", date: "04/10/2026", notes: ["Nhân vật nam là model 3D thật, đầu to kiểu chibi cho hợp với nữ; tóc, da, áo khoác, áo trong, quần, giày đổi màu theo Hồ sơ", "Tiệm có cửa thật: cửa tự mở khi có khách đi qua rồi đóng lại; khách đứng dậy đi ra, vắng một lúc rồi khách khác đi vào ngồi xuống; xem ngoài tiệm cũng thấy đúng như bên trong", "Biển tên tiệm nâng lên trên mái bạt, không còn bị che", "Máy không tải được model thì tự dùng lại nhân vật cũ"] },
   { v: "2.20", date: "04/10/2026", notes: ["Cảnh tiệm 3D: buổi sáng có trời xanh, mặt trời, tia nắng và mây; chiều tà màu cam; buổi tối có trăng, sao và đèn đường"] },

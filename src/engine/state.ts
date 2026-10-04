@@ -26,6 +26,7 @@ export interface State {
   theme: string;                  // theme màu giao diện (content/theme.ts)
   scene3d: boolean;               // cảnh tiệm 3D ở màn chính (tắt trên máy yếu thì dùng cảnh 2D)
   photo: string;                  // ảnh treo tường tiệm (data URL đã thu nhỏ)
+  incAt?: number;                 // số ca đã chơi lúc gặp sự cố gần nhất (để cách nhau vài ca)
   cloud: Cloud;
 }
 /* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
