@@ -2,6 +2,8 @@
 <style>body{margin:0;background:#FFE3EA;font:700 13px system-ui;color:#4A3438}canvas{width:100vw;height:100vh;display:block}#h{position:fixed;left:10px;top:8px;background:#fff;border-radius:10px;padding:4px 10px}</style></head>
 <body><div id="h">← → xoay · E: xem ngoài tiệm · ?hour=10 · ?me=b3 · ?guests=2</div>
 <script type="module">
+/* tab bị ẩn (khi thử tự động) thì trình duyệt dừng vẽ: giả lập nhịp vẽ để chụp được */
+if (new URLSearchParams(location.search).has("force")) { Object.defineProperty(document, "hidden", { get: () => false }); window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 34); }
 import { createShop } from "/src/scene/shop3d.ts";
 const q = new URLSearchParams(location.search);
 const sc = createShop({
