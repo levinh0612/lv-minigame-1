@@ -66,10 +66,10 @@ export const COAT = ["#2F6F86", "#2E4A7A", "#3D7A55", "#8A3D55", "#C9962E", "#6A
 export const STYLES: [string, string][] = [
   ["", "Gốc"], ["beanie", "Mũ len"], ["headband", "Băng đô"], ["bun", "Búi tóc"], ["ponytail", "Đuôi ngựa"], ["twintails", "Hai chùm"],
   ["ears", "Tai mèo"], ["bow", "Nơ lớn"], ["twinbows", "Hai nơ"], ["flower", "Hoa cài"], ["glasses", "Kính tròn"],
-  ["crop", "Tóc cua"], ["fringe", "Mái ngố"], ["bob", "Tóc bob"], ["long", "Tóc dài"]
+  ["crop", "Tóc cua"], ["fringe", "Mái ngố"], ["bob", "Tóc bob"], ["long", "Tóc dài"], ["anime", "Tóc anime"]
 ];
 /** kiểu tóc 3D dựng riêng, chỉ dành cho nhân vật nam (model nữ đang đội mũ len gốc) */
-export const BOY_HAIR = new Set(["crop", "fringe", "bob", "long"]);
+export const BOY_HAIR = new Set(["crop", "fringe", "bob", "long", "anime"]);
 export const STYLE_NAME: Record<string, string> = Object.fromEntries(STYLES);
 /** người chơi cũ chọn theo mã nhân vật (b2, g3...): ánh xạ sang kiểu đầu tương ứng */
 export const STYLE_OF: Record<string, string> = { b2: "beanie", b3: "headband", b4: "bun", b5: "glasses", b6: "ears", g2: "bow", g3: "ears", g4: "flower", g5: "glasses", g6: "twinbows" };

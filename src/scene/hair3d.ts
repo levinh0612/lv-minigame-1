@@ -1,9 +1,19 @@
 /* Tóc 3D dựng riêng cho model nam (tóc gốc được tách ra khỏi đầu rồi thay bằng tóc này).
    Mỗi kiểu = một "mũ tóc" ôm sọ + nhiều lọn thon (nhọn dần) xếp lớp, giống phong cách tóc cắt khối của model. */
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { HeadCtx } from "./accessories";
 
-export const HAIR_KINDS = new Set(["crop", "fringe", "bob", "long"]);
+export const HAIR_KINDS = new Set(["crop", "fringe", "bob", "long", "anime"]);
+
+/* tóc anime: model có sẵn (white_mesh.glb), đã cắt riêng phần tóc, nạp một lần rồi dùng chung hình học */
+let animeNow: { geo: THREE.BufferGeometry; box: THREE.Box3 } | null = null;
+let animeGeo: Promise<{ geo: THREE.BufferGeometry; box: THREE.Box3 }> | null = null;
+const loadAnime = () => animeGeo ??= new GLTFLoader().loadAsync("/models/hair/anime.glb").then(r => {
+  let geo: THREE.BufferGeometry | null = null; r.scene.traverse(o => { const m = o as THREE.Mesh; if (m.isMesh) geo = m.geometry; });
+  if (!geo) throw new Error("không có hình học tóc"); (geo as THREE.BufferGeometry).computeVertexNormals(); (geo as THREE.BufferGeometry).userData.keep = true;
+  (geo as THREE.BufferGeometry).computeBoundingBox(); return animeNow = { geo: geo as THREE.BufferGeometry, box: (geo as THREE.BufferGeometry).boundingBox! };
+}).catch(e => { animeGeo = null; throw e; });
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
 export function buildHair(kind: string, c: HeadCtx): THREE.Group {
@@ -34,6 +44,14 @@ export function buildHair(kind: string, c: HeadCtx): THREE.Group {
   const crown = (n: number, len: number, up: number) => {                         // lọn phủ đỉnh đầu, xuôi theo sọ ra sau và xuống
     for (let i = 0; i < n; i++) { const az = i / n * Math.PI * 2, p = surf(1.0, az, 1.02), nn = nrm(p); lock(p, nn.clone().multiplyScalar(up * .5).add(V(Math.sin(az) * .9, -.45, Math.cos(az) * .9 - .25)), len, c.R * .21, .5); }
   };
+  if (kind === "anime") {
+    const put = ({ geo, box }: { geo: THREE.BufferGeometry; box: THREE.Box3 }) => {
+      const sz = box.getSize(V()), ctr = box.getCenter(V()), k = c.R * 2 * 1.14 / sz.x, o = new THREE.Mesh(geo, m);
+      o.scale.setScalar(k); o.position.set(-ctr.x * k, c.H * .5 * 1.02 - box.max.y * k, -ctr.z * k - c.D * .02); o.castShadow = true; g.add(o);
+    };
+    if (animeNow) put(animeNow); else void loadAnime().then(put).catch(e => console.warn("Không nạp được tóc anime", e));
+    return g;
+  }
   switch (kind) {
     case "crop":                                   // cua: ngắn gọn, mái ngắn
       cap(1.9); fringe(c.H * .22, 3); crown(7, c.H * .2, .6);
@@ -49,3 +67,6 @@ export function buildHair(kind: string, c: HeadCtx): THREE.Group {
   }
   return g;
 }
+
+/** nạp trước model tóc (nếu kiểu cần) để nhân vật dựng xong là có tóc ngay */
+export const hairPreload = (kind: string): Promise<void> => kind === "anime" ? loadAnime().then(() => undefined).catch(() => undefined) : Promise.resolve();

@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.35", date: "04/10/2026", notes: ["Thêm kiểu Tóc anime cho nhân vật nam: tóc xù nhiều lọn lấy từ model tóc có sẵn, đổi theo màu tóc"] },
   { v: "2.34", date: "04/10/2026", notes: ["Chỉnh lại 4 kiểu tóc 3D của nam: mái rẽ lệch, lọn xuôi theo đầu, tóc tối màu không còn bị đen bệt; bỏ kiểu tóc dựng vì nhìn lạ"] },
   { v: "2.33", date: "04/10/2026", notes: ["Nhân vật nam có 5 kiểu tóc 3D dựng mới thay hẳn tóc gốc: tóc cua, mái ngố, bob, tóc dài, tóc dựng (đổi theo màu tóc)"] },
   { v: "2.32", date: "04/10/2026", notes: ["Gỡ 5 kiểu tóc 3D thử nghiệm (bob, dài, xoăn, dựng, bồng) vì nhìn không đẹp"] },
