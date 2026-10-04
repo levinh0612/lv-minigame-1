@@ -9,6 +9,7 @@ import type { Actor, ActorMode, PersonLook } from "./people";
 
 export interface Assets { scene: THREE.Group; idle: THREE.AnimationClip; walk: THREE.AnimationClip; sit: THREE.AnimationClip; tex: THREE.Texture; bald?: THREE.BufferGeometry; scale: number; head: { c: THREE.Vector3; s: THREE.Vector3 }; bind: { c: THREE.Vector3; s: THREE.Vector3 }; headBone: string }
 export interface FigureCfg {
+  plain?: boolean;                     // giữ nguyên màu/texture của model (không tô lại bằng shader, không phụ kiện)
   key: string;                         // khoá chương trình shader
   assets: () => Promise<Assets>;
   glsl: string;                        // đoạn thay #include <map_fragment>
@@ -48,18 +49,24 @@ export const inPlace = (c: THREE.AnimationClip, rootAxes: [number, number], keep
 };
 
 /** hộp bao đầu (các đỉnh gắn xương đầu nhiều nhất) trong khung của cảnh gốc, tính ở tư thế mặc định */
-export function headInfo(scene: THREE.Object3D) {
+export function headInfo(scene: THREE.Object3D, re = /Head$/) {
   const sm = scene.getObjectByProperty("isSkinnedMesh", true) as THREE.SkinnedMesh; scene.updateMatrixWorld(true); sm.skeleton.update();
   const g = sm.geometry, si = g.attributes.skinIndex!, sw = g.attributes.skinWeight!, bones = sm.skeleton.bones, box = new THREE.Box3(), v = new THREE.Vector3();
-  for (let i = 0; i < g.attributes.position!.count; i++) { let m = 0, mi = 0; for (let k = 0; k < 4; k++) if (sw.getComponent(i, k) > m) { m = sw.getComponent(i, k); mi = si.getComponent(i, k); } if (/Head$/.test(bones[mi]!.name)) { sm.getVertexPosition(i, v); box.expandByPoint(v.applyMatrix4(sm.matrixWorld)); } }
+  for (let i = 0; i < g.attributes.position!.count; i++) { let m = 0, mi = 0; for (let k = 0; k < 4; k++) if (sw.getComponent(i, k) > m) { m = sw.getComponent(i, k); mi = si.getComponent(i, k); } if (re.test(bones[mi]!.name)) { sm.getVertexPosition(i, v); box.expandByPoint(v.applyMatrix4(sm.matrixWorld)); } }
   return { c: box.getCenter(new THREE.Vector3()), s: box.getSize(new THREE.Vector3()) };
 }
 
 /** hộp bao đầu theo toạ độ gốc của mesh (chưa xương, chưa phóng đầu): dùng để định vị mắt trong shader */
-export function headBind(scene: THREE.Object3D) {
+export function headBind(scene: THREE.Object3D, re = /Head$/) {
   const sm = scene.getObjectByProperty("isSkinnedMesh", true) as THREE.SkinnedMesh, g = sm.geometry, si = g.attributes.skinIndex!, sw = g.attributes.skinWeight!, bones = sm.skeleton.bones, box = new THREE.Box3(), v = new THREE.Vector3();
-  for (let i = 0; i < g.attributes.position!.count; i++) { let m = 0, mi = 0; for (let k = 0; k < 4; k++) if (sw.getComponent(i, k) > m) { m = sw.getComponent(i, k); mi = si.getComponent(i, k); } if (/Head$/.test(bones[mi]!.name)) box.expandByPoint(v.fromBufferAttribute(g.attributes.position!, i)); }
+  for (let i = 0; i < g.attributes.position!.count; i++) { let m = 0, mi = 0; for (let k = 0; k < 4; k++) if (sw.getComponent(i, k) > m) { m = sw.getComponent(i, k); mi = si.getComponent(i, k); } if (re.test(bones[mi]!.name)) box.expandByPoint(v.fromBufferAttribute(g.attributes.position!, i)); }
   return { c: box.getCenter(new THREE.Vector3()), s: box.getSize(new THREE.Vector3()) };
+}
+
+/** model xuất từ VRoid dùng vật liệu không đổ sáng: đổi sang Lambert để ăn theo ánh sáng ngày/đêm của cảnh */
+function lit(m: THREE.Material): THREE.Material {
+  const o = m as THREE.MeshBasicMaterial, n = new THREE.MeshLambertMaterial({ map: o.map ?? null, color: o.color ?? new THREE.Color("#fff"), side: o.side, transparent: o.transparent, opacity: o.opacity, alphaTest: o.alphaTest, alphaMap: o.alphaMap ?? null });
+  n.name = o.name; return n;
 }
 
 function material(cfg: FigureCfg, tex: THREE.Texture, look: PersonLook, bind: Assets["bind"]) {
@@ -98,11 +105,11 @@ export function makeActor(cfg: FigureCfg, look: PersonLook, fallback: () => Acto
   };
   Promise.all([cfg.assets(), hairPreload(style)]).then(([a]) => {
     const model = clone(a.scene) as THREE.Group; model.scale.setScalar(a.scale); const mats: THREE.Material[] = []; a.tex.userData.keep = true;
-    model.traverse(o => { const sm = o as THREE.SkinnedMesh; if (sm.isSkinnedMesh) { if (a.bald && HAIR_KINDS.has(style)) sm.geometry = a.bald; sm.geometry.userData.keep = true; sm.material = material(cfg, a.tex, look, a.bind); mats.push(sm.material); sm.castShadow = true; sm.frustumCulled = false; } });
+    model.traverse(o => { const sm = o as THREE.SkinnedMesh; if (sm.isSkinnedMesh) { if (a.bald && HAIR_KINDS.has(style)) sm.geometry = a.bald; sm.geometry.userData.keep = true; sm.material = cfg.plain ? lit(sm.material as THREE.Material) : material(cfg, a.tex, look, a.bind); mats.push(sm.material); sm.castShadow = true; sm.frustumCulled = false; } });
     model.updateMatrixWorld(true);                                  // tư thế mặc định: tính vị trí phụ kiện trước khi chạy animation
     // kiểu đầu: phụ kiện gắn vào xương đầu, kích thước theo đầu thật
     const hb = a.head, k = a.scale, bone = model.getObjectByName(a.headBone);
-    const acc = bone ? buildStyle(style, { R: hb.s.x / 2 * k, H: hb.s.y * k, D: hb.s.z * k, hair: look.hair || cfg.defaults.hair, coat: look.coat || cfg.defaults.coat, shirt: look.shirt || cfg.defaults.shirt, eyeY: hb.s.y * k * cfg.eyeRel[0], eyeZ: hb.s.z * k * cfg.eyeRel[1] }) : null;
+    const acc = bone && !cfg.plain ? buildStyle(style, { R: hb.s.x / 2 * k, H: hb.s.y * k, D: hb.s.z * k, hair: look.hair || cfg.defaults.hair, coat: look.coat || cfg.defaults.coat, shirt: look.shirt || cfg.defaults.shirt, eyeY: hb.s.y * k * cfg.eyeRel[0], eyeZ: hb.s.z * k * cfg.eyeRel[1] }) : null;
     if (acc && bone) { const rig = new THREE.Group(); rig.matrixAutoUpdate = false; rig.matrix.copy(bone.matrixWorld).invert().multiply(new THREE.Matrix4().makeTranslation(hb.c.x * k, hb.c.y * k, hb.c.z * k)); rig.add(acc); bone.add(rig); }
     const mixer = new THREE.AnimationMixer(model), idle = mixer.clipAction(a.idle), walk = mixer.clipAction(a.walk), sit = mixer.clipAction(a.sit);
     idle.play(); mixer.update(0); model.updateMatrixWorld(true);

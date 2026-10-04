@@ -1203,3 +1203,6 @@ button.cm{position:relative}
 .auth4.lock .pad button:active{transform:translateY(4px);box-shadow:0 1px 0 var(--sh)}
 .auth4.lock .pad .alink{background:none;box-shadow:none;font-size:13px}
 .auth4.lock .lk-out{margin-top:18px;font:800 13px var(--body);color:var(--soft)}
+
+/* Hồ sơ: nhân vật nữ anime giữ nguyên trang phục nên ẩn kiểu tóc và các hàng màu */
+.pf-anime .pf-opt{display:none}

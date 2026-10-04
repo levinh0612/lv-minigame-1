@@ -54,6 +54,8 @@ export const SPRITES: Record<string, SpriteDef> = {
   g5: FEMALE(5, 253, [[152, 164, 15, 19], [202, 162, 9, 18]]),   // tóc tết, sơ mi nơ
   g6: FEMALE(6, 295, [[186, 159, 15, 19], [238, 155, 8, 18]])    // tóc gợn sóng, bờm, áo khoác
 };
+/** nữ anime 3D: không có ảnh 2D riêng nên dùng tạm ảnh của g1 khi model 3D chưa tải được */
+SPRITES.n1 = SPRITES.g1!;
 export const GIRL_SPRITES = ["g1", "g2", "g3", "g4", "g5", "g6"];
 export const BOY_SPRITES = ["b1", "b2", "b3", "b4", "b5", "b6"];
 export const HIM: GuestLook = { gender: "boy", sprite: "boy" };
