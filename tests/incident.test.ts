@@ -16,12 +16,12 @@ describe("sự cố bất ngờ", () => {
     expect(incidentCost(5, () => 0.5)).toBe(5);
   });
 
-  it("đồng hồ: đặt lần xét đầu trong khoảng 6 đến 12 phút chơi, chưa tới giờ thì không có gì", () => {
+  it("đồng hồ: lần xét đầu sau đúng 5 phút chơi, chưa tới giờ thì không có gì", () => {
     expect(tickIncident(0, () => 0)).toBeNull();
     expect(incidentLeft()).toBe(MIN_GAP);
     expect(tickIncident(MIN_GAP - 1, () => 0)).toBeNull();
-    resetIncidentClock(); tickIncident(0, () => 0.9999); expect(incidentLeft()).toBeLessThanOrEqual(MAX_GAP);
-    expect(incidentLeft()).toBeGreaterThan(MAX_GAP - 1);
+    resetIncidentClock(); tickIncident(0, () => 0.9999); expect(incidentLeft()).toBe(MAX_GAP);
+    expect(MAX_GAP).toBe(300);
   });
 
   it("tới giờ thì xảy ra giữa lúc chơi (không cần hết ca), rồi đặt lại đồng hồ", () => {
@@ -37,8 +37,10 @@ describe("sự cố bất ngờ", () => {
     S.coins = 1000; expect(tickIncident(RETRY, always)).not.toBeNull();
   });
 
-  it("xác suất 70%: rng cao thì tới giờ cũng không xảy ra", () => {
+  it("xác suất 50%: rng từ 0.5 trở lên thì tới giờ cũng không xảy ra", () => {
     tickIncident(0, never); expect(tickIncident(MAX_GAP, never)).toBeNull();
+    resetIncidentClock(); tickIncident(0, () => 0.49); expect(tickIncident(MAX_GAP, () => 0.49)).not.toBeNull();
+    resetIncidentClock(); tickIncident(0, () => 0.5); expect(tickIncident(MAX_GAP, () => 0.5)).toBeNull();
   });
 
   it("áp dụng: trừ xu, ghi vào sổ chi 'Sự cố bất ngờ'", () => {

@@ -25,7 +25,7 @@ export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean };
-  phases(): string[];
+  phases(): string[]; breakdown(): Record<string, number>; byType(): Record<string, number[]>; stats(): { upMs: number; drawMs: number; calls: number; tris: number; q: number };
   update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
@@ -249,12 +249,19 @@ export function createShop(o: ShopOpts): ShopScene {
   const fwd = (st: { x: number; z: number; a: number }, f: number) => new THREE.Vector2(st.x + Math.sin(st.a) * f, st.z + Math.cos(st.a) * f);
   const STREET = [new THREE.Vector2(DOOR_X, 4.8), new THREE.Vector2(-1.3, 4.95)];           // vỉa hè bên trái cửa (bên phải có cây và biển menu)
   const TK = new URLSearchParams(location.search).has("fast") ? .12 : 1;   // ?fast=1: rút ngắn thời gian chờ để thử
-  interface Slot { st: { x: number; z: number; a: number }; actor: Actor; phase: "seated" | "getup" | "out" | "away" | "in" | "sitdown"; next: number; path: THREE.Vector2[]; pi: number; n: number }
+  interface Slot { st: { x: number; z: number; a: number }; actor: Actor; phase: "seated" | "getup" | "out" | "away" | "in" | "sitdown"; next: number; path: THREE.Vector2[]; pi: number; n: number; pending?: { actor: Actor; ok: boolean } }
   const slots: Slot[] = ([s1[0], s2[0]] as const).slice(0, o.guests).map((st, i) => {
     const gl = o.guestLooks[i % Math.max(1, o.guestLooks.length)];
     const actor = personActor(gl.look, gl.sprite); actor.mode("sit"); actor.snap(); place(actor.group, st.x, 0, st.z, st.a);
     return { st, actor, phase: "seated" as const, next: (14 + i * 11 + Math.random() * 10) * TK, path: [], pi: 0, n: i };
   });
+  /** dựng sẵn khách kế tiếp (ẩn) trong lúc chỗ này vắng: tải model, dựng xương, biên dịch vật liệu xong rồi mới cho vào, khỏi khựng khi khách xuất hiện */
+  const prepare = (sl: Slot) => {
+    const gl = POOL[((sl.n + 1) * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length]!;
+    const actor = personActor(gl.look, gl.sprite); actor.mode("walk"); const a = actor.group; a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; a.visible = false; root.add(a);
+    const p = { actor, ok: false }; sl.pending = p;
+    void actor.ready.then(() => { try { r.compile(scene, cam); } catch { /* bỏ qua: sẽ biên dịch lúc hiện */ } p.ok = true; });
+  };
   const SPEED = 1.25;
   let lastT = -1;
   const advance = (sl: Slot, dt: number): boolean => {                                     // đi dọc đường, trả true khi tới cuối
@@ -271,10 +278,9 @@ export function createShop(o: ShopOpts): ShopScene {
       else if (sl.phase === "getup" && sl.actor.done()) {
         const f = fwd(sl.st, APPROACH); g.position.set(f.x, 0, f.y); sl.actor.mode("walk"); sl.phase = "out";
         sl.path = [new THREE.Vector2(DOOR_X, 2.4), new THREE.Vector2(DOOR_X, 3.9), ...STREET]; sl.pi = 0;
-      } else if (sl.phase === "out" && advance(sl, dt)) { g.visible = false; sl.phase = "away"; sl.next = t + (6 + Math.random() * 8) * TK; }
-      else if (sl.phase === "away" && t > sl.next) {
-        root.remove(g); sl.actor.dispose(); sl.n++; const gl = POOL[(sl.n * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length];
-        sl.actor = personActor(gl.look, gl.sprite); sl.actor.mode("walk"); const a = sl.actor.group; a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; root.add(a);
+      } else if (sl.phase === "out" && advance(sl, dt)) { g.visible = false; sl.phase = "away"; sl.next = t + (6 + Math.random() * 8) * TK; prepare(sl); }
+      else if (sl.phase === "away" && t > sl.next && sl.pending?.ok) {
+        root.remove(g); sl.actor.dispose(); sl.n++; sl.actor = sl.pending.actor; sl.pending = undefined; sl.actor.group.visible = true;
         sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9), new THREE.Vector2(DOOR_X, 2.4), fwd(sl.st, APPROACH)]; sl.pi = 0; sl.phase = "in";
       } else if (sl.phase === "in" && advance(sl, dt)) { g.position.set(sl.st.x, 0, sl.st.z); g.rotation.y = sl.st.a; sl.actor.mode("sit"); sl.phase = "sitdown"; }
       else if (sl.phase === "sitdown" && sl.actor.done()) { sl.phase = "seated"; sl.next = t + (26 + Math.random() * 30) * TK; }
@@ -493,7 +499,7 @@ export function createShop(o: ShopOpts): ShopScene {
   function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); if (Math.abs(ww / hh - skyAsp) > .01) { skyAsp = ww / hh; drawSky(); } const a = ww / hh, hw = Math.max(FR * a, FR * 1.06), hv = hw / a;   // khung dọc (điện thoại): giữ vừa bề ngang căn phòng, thừa chiều dọc cho lớp phủ giao diện
     cam.left = -hw; cam.right = hw; cam.top = hv; cam.bottom = -hv; cam.updateProjectionMatrix(); }
   const pulse = new Map<string, number>();
-  let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0;
+  let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0, upMs = 0, drawMs = 0;
   /** máy chậm: hạ độ phân giải để giữ mượt */
   const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.75)); resize(w, h); };
   function frame(now: number) {
@@ -501,7 +507,7 @@ export function createShop(o: ShopOpts): ShopScene {
     if (!dom.isConnected || document.hidden || now - last < 33) return;      // ~30 hình/giây
     const gap = prevFrame ? Math.min(now - prevFrame, 250) : 33; prevFrame = now; avgGap = avgGap * .92 + gap * .08;
     if (++adaptN % 45 === 0 && avgGap > 44 && quality < 3) { quality++; applyQuality(); avgGap = 33; }   // trung bình dưới ~23 hình/giây: giảm một nấc
-    last = now; const t = now / 1000;
+    last = now; const t = now / 1000; const u0 = performance.now();
     ups.forEach(f => f(t));
     petObjs.forEach((p, id) => { const k = pulse.get(id) ?? -9, dt = t - k; p.g.scale.setScalar(PET_S * (dt < .5 ? 1 + Math.sin(dt / .5 * Math.PI) * .12 : 1)); p.g.position.y = .6 + (dt < .5 ? Math.sin(dt / .5 * Math.PI) * .12 : 0); });
     bulbsStr.forEach((b, i) => (b.scale.setScalar(1 + Math.sin(t * 3 + i) * .12)));
@@ -509,7 +515,8 @@ export function createShop(o: ShopOpts): ShopScene {
     if (!dragging) az += (azT - az) * .15;
     zoom += (zoomT - zoom) * .2; pan += (panT - pan) * .2;
     r.shadowMap.needsUpdate = shadowTick++ % (quality >= 1 ? 3 : 2) === 0;     // bóng vẽ lại 1/2 (hoặc 1/3 khi máy chậm) số khung
-    layout(); r.render(scene, cam);
+    upMs = upMs * .9 + (performance.now() - u0) * .1; const d0 = performance.now();
+    layout(); r.render(scene, cam); drawMs = drawMs * .9 + (performance.now() - d0) * .1;
   }
   if (new URLSearchParams(location.search).get("ext") === "1") { buildOutside(); exterior = true; outside.visible = true; zoomT = zoom = .78; el = 30 * Math.PI / 180; }   // ?ext=1: thử chế độ xem ngoài tiệm
   /* đổi tường / sàn / quầy và nhóm đang nổi bật ngay tại chỗ (màn Trang trí): trả false nếu cần dựng lại cả cảnh */
@@ -533,6 +540,15 @@ export function createShop(o: ShopOpts): ShopScene {
   const v = new THREE.Vector3();
   return {
     update,
+    breakdown: () => {                                                            // thống kê cảnh để tối ưu (gọi khi cần, không chạy mỗi khung)
+      const o: Record<string, number> = { meshes: 0, tris: 0, skinnedMeshes: 0, skinnedTris: 0, outlineMeshes: 0, outlineTris: 0, castMeshes: 0, castTris: 0, lights: 0, invisible: 0 };
+      scene.traverse(ob => { const m = ob as THREE.Mesh; if ((ob as THREE.Light).isLight) o.lights!++; if (!m.isMesh) return; if (!ob.visible) { o.invisible!++; return; }
+        const g = m.geometry, t = (g.index ? g.index.count : g.attributes.position!.count) / 3; o.meshes!++; o.tris! += t;
+        if ((m as THREE.SkinnedMesh).isSkinnedMesh) { o.skinnedMeshes!++; o.skinnedTris! += t; } if (m.parent && (m.parent as THREE.Mesh).isMesh) { o.outlineMeshes!++; o.outlineTris! += t; } if (m.castShadow) { o.castMeshes!++; o.castTris! += t; } });
+      return o;
+    },
+    byType: () => { const r2: Record<string, number[]> = {}; scene.traverse(ob => { const m = ob as THREE.Mesh; if (!m.isMesh) return; const g = m.geometry, t = (g.index ? g.index.count : g.attributes.position!.count) / 3, k = g.type + ((m.parent as THREE.Mesh)?.isMesh ? "(outline)" : ""); (r2[k] ||= [0, 0]); r2[k]![0]!++; r2[k]![1]! += t; }); return r2; },
+    stats: () => ({ upMs: +upMs.toFixed(2), drawMs: +drawMs.toFixed(2), calls: r.info.render.calls, tris: r.info.render.triangles, q: quality }),
     phases: () => slots.map(sl => `${sl.phase}@${sl.actor.group.position.x.toFixed(1)},${sl.actor.group.position.z.toFixed(1)}${sl.actor.group.visible ? "" : " hidden"}`),
     dom, hotspots, resize,
     rotate(dir) { azT += dir * Math.PI / 2; },

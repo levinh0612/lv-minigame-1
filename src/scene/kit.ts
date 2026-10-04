@@ -32,16 +32,19 @@ export function add(parent: THREE.Object3D, geo: THREE.BufferGeometry, mat: THRE
   const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
   if (o.s) m.scale.set(...o.s);
   if (o.r) m.rotation.set(...o.r);
-  m.castShadow = o.cast !== false; m.receiveShadow = o.recv !== false;
+  geo.boundingSphere ?? geo.computeBoundingSphere();
+  const rad = geo.boundingSphere!.radius * Math.max(m.scale.x, m.scale.y, m.scale.z);              // vật quá nhỏ: bỏ bóng đổ và viền (mắt thường không thấy, đỡ nặng máy)
+  m.castShadow = o.cast !== false && rad > .09; m.receiveShadow = o.recv !== false;
   parent.add(m);
-  if (o.ol !== null) { const ol = new THREE.Mesh(geo, outlineMat(o.ol ?? "mid")); ol.castShadow = false; ol.receiveShadow = false; m.add(ol); }
+  if (o.ol !== null && rad > .045) { const ol = new THREE.Mesh(geo, outlineMat(o.ol ?? "mid")); ol.castShadow = false; ol.receiveShadow = false; m.add(ol); }
   return m;
 }
-export const SPH = (r: number, w = 20, h = 14) => new THREE.SphereGeometry(r, w, h);
+/** hình cầu: vật nhỏ dùng ít mặt hơn (giảm số tam giác khi trong cảnh có hàng trăm khối nhỏ) */
+export const SPH = (r: number, w = 20, h = 14) => { const f = r < .08 ? .5 : r < .15 ? .7 : 1; return new THREE.SphereGeometry(r, Math.max(8, Math.round(w * f)), Math.max(6, Math.round(h * f))); };
 export const CAP = (r: number, l: number) => new THREE.CapsuleGeometry(r, l, 6, 14);
 export const CYL = (a: number, b: number, h: number, n = 20) => new THREE.CylinderGeometry(a, b, h, n);
 export const CONE = (r: number, h: number, n = 10) => new THREE.ConeGeometry(r, h, n);
-export const RB = (w: number, h: number, d: number, r = .04) => new RoundedBoxGeometry(w, h, d, 3, r);
+export const RB = (w: number, h: number, d: number, r = .04) => new RoundedBoxGeometry(w, h, d, 2, r);
 export const flat = (c: THREE.ColorRepresentation) => new THREE.MeshBasicMaterial({ color: c });
 
 /** Mắt chibi: tròng tối, lòng màu, điểm sáng; má hồng và miệng nhỏ. `r` = bán kính đầu. Trả về hàm chớp mắt. */
