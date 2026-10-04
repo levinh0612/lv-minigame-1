@@ -248,7 +248,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
       <div class="rows" id="rows">${rowsHTML(sh)}</div>
       <button class="b3 give ${isComplete(sh.build) ? "" : "off"}" id="give" data-act="serve">${giveLabel(sh)}</button>
     </div>
-    <button class="mini" id="mini" data-act="sheet">${miniHTML(sh)}</button>
+    <button class="omini" id="mini" data-act="sheet">${miniHTML(sh)}</button>
     <button class="scrim ${opts.stock ? "on" : ""}" id="scrim" data-act="stock" aria-label="Đóng kho" tabindex="-1"></button>
     <div class="ssheet ${opts.stock ? "on" : ""}" id="ssheet">${opts.stock ? stockHTML() : ""}</div>
   </div>`;
