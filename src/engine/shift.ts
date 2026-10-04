@@ -5,8 +5,8 @@ import {
   BOY_SPRITES, CATS, COAT, EYES, FIXED_GUESTS, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
-import { BAKE_TIME } from "../content/game";
-import { dutyLv, expectedCustomers, fame, payCrew, quickPrice, stockOf, unitCost } from "./economy";
+import { BAKE_TIME, type FoodId } from "../content/game";
+import { dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, save } from "./state";
@@ -27,7 +27,7 @@ export interface Shift {
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
   bonus: number; lack: Partial<Record<PetId, string>>;
-  ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[];
+  ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[]; meals: Partial<Record<PetId, FoodId>>;
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
   goals: ShiftGoal[]; goalCoins: number;
@@ -44,7 +44,7 @@ export function createShift(): Shift {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(fame().seats).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0
   };
 }
 
@@ -128,7 +128,7 @@ function bake(sh: Shift, dt: number, out: TickOut) {
     const c = sh.seats[seat]!;
     c.by = id;
     STOCK_KEYS.forEach(k => { S.stock[k][c.r[k]]--; sh.ingUsed += unitCost(k, c.r[k]); });
-    const b: Baker = { id, seat, done: 0, need: BAKE_TIME[lv - 1] };
+    const b: Baker = { id, seat, done: 0, need: BAKE_TIME[lv - 1] * mealSlow(id, sh.meals[id] ?? mealOf(id)) };
     sh.bakers.push(b); out.claimed.push(b);
   });
 }
@@ -223,7 +223,7 @@ export function addReview(c: Customer, s: number) {
 /* Mở ca: các bé đi làm ăn lương (đồ ăn) trước, giá trị đồ ăn tính vào chi phí ca */
 export function beginShift() {
   const pay = payCrew(), sh = createShift();
-  sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id);
+  sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id); pay.fed.forEach(x => { sh.meals[x.id] = x.meal; });
   return { sh, pay };
 }
 /* Hết ca: tính lãi */

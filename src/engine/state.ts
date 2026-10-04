@@ -9,7 +9,7 @@ export const KEY = "tiem-banh-matcha-v1";
 export interface Review { who: string; look: Look; s: number; txt: string; love: boolean }
 export interface Letter { day: string; txt: string; tag?: string; bonus?: boolean }
 export interface PetState { aff: number; petDay: string; pets: number; fedDay: string }
-export interface StaffState { hired: boolean; lv: number; onDuty: boolean }
+export interface StaffState { hired: boolean; lv: number; onDuty: boolean; food?: FoodId }
 export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
 export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;

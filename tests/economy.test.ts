@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RECIPES } from "../src/content/game";
 import {
-  buy, buyFood, buySuggested, claimWelcome, crewPlan, hire, mealOf, outOfStock, packPrice, quickBuy, snack, suggestion, toggleDuty, train
+  buy, buyFood, buySuggested, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
@@ -100,6 +100,21 @@ describe("thú cưng làm nhân viên", () => {
     expect(pay.fed).toEqual([{ id: "dog", meal: "kibble" }, { id: "gold", meal: "chicken" }]);
     expect(sh.wages).toBe(6 + 15);
     expect(S.food).toEqual({ kibble: 0, pate: 0, chicken: 0 });
+  });
+
+  it("chọn món thấp hơn bậc: ăn món đã chọn, làm chậm hơn; hết thì ăn món kém hơn kế tiếp", () => {
+    lvUp(2); S.coins = 1000; hire("dog"); train("dog"); train("dog");
+    expect(mealOf("dog")).toBe("chicken");
+    setMeal("dog", "pate"); expect(mealOf("dog")).toBe("pate");
+    expect(mealSlow("dog", "chicken")).toBe(1);
+    expect(mealSlow("dog", "pate")).toBe(1.25);
+    expect(mealSlow("dog", "kibble")).toBe(1.5);
+    buyFood("kibble", 1); buyFood("chicken", 1);
+    expect(mealFor("dog")).toBe("kibble");     // hết Pate -> Hạt, chưa đụng tới Ức gà
+    const { sh, pay } = beginShift();
+    expect(pay.fed).toEqual([{ id: "dog", meal: "kibble" }]);
+    expect(sh.meals.dog).toBe("kibble");
+    expect(S.food.chicken).toBe(1);
   });
 
   it("hết đồ ăn thì bé đói và nghỉ ca đó", () => {

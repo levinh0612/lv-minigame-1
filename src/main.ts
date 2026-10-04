@@ -5,7 +5,7 @@ import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
 import { CATS, type PartKey, type StockKey } from "./content/game";
 import type { RoomKey } from "./content/room";
-import { buy, buyFood, buySuggested, foodDef, hire, packPrice, toggleDuty, train, treat } from "./engine/economy";
+import { buy, buyFood, buySuggested, foodDef, hire, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { tickIncident } from "./engine/incident";
@@ -72,6 +72,7 @@ document.addEventListener("click", e => {
     return render();
   }
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } return render(); }
+  if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }
   if (d.train) { if (train(d.train as PetId)) { sfx("level"); toast(`${petName(d.train as PetId)} lên bậc ${S.staff[d.train as PetId].lv}!`); } return render(); }
   if (d.pet) {

@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import type { PetId } from "../../content/couple";
 import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
-import { canHire, crewPlan, expectedCustomers, fame, foodDef, mealFor, mealOf, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { canHire, foodOf, crewPlan, expectedCustomers, fame, foodDef, mealChoices, mealFor, mealOf, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
@@ -18,14 +18,17 @@ export function bakerTile(id: PetId) {
   const d = staffDef(id), st = S.staff[id], on = onDuty(id);
   const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1];
   const meal = st.hired ? mealFor(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
+  const eat = meal ? foodDef(meal) : need, slow = meal && st.hired ? mealSlow(id, meal) : 1;
+  const picks = st.hired && tier > 1 ? `<div class="mpick" role="radiogroup" aria-label="Món ăn của ${esc(petName(id))}">${mealChoices(id).map(f =>
+    `<button class="${f.id === need.id ? "on" : ""}" data-meal="${id}:${f.id}" role="radio" aria-checked="${f.id === need.id}" aria-label="${f.n}, còn ${foodOf(f.id)}">${foodSVG(f.id, 16)}<small>${foodOf(f.id)}</small></button>`).join("")}</div>` : "";
   let btn: string, cls = "";
   if (!canHire(id)) { btn = `<button class="tb3 lock" disabled>Mở ở Lv ${d.unlock}</button>`; cls = "off"; }
   else if (!st.hired) { btn = `<button class="tb3 hire" data-hire="${id}">Nhận vào làm</button>`; cls = "off"; }
   else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
   else { btn = `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`; if (!on) cls = "off"; }
-  const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(food.id, 18)}Bậc ${tier} · ${food.n}`;
+  const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 18)}Bậc ${tier} · ${eat.n}${slow > 1 ? ` <span class="bad">chậm +${Math.round((slow - 1) * 100)}%</span>` : ""}`;
   return `<div class="btile ${cls}"><div class="av">${petSVG({ ...PETS[id], mood: on && !hungry ? "happy" : hungry ? "impatient" : "open" }, 72)}</div>
-    <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${btn}</div>`;
+    <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${picks}${btn}</div>`;
 }
 
 export function prepHTML() {

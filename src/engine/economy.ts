@@ -1,6 +1,6 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
-import { CATS, FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type FoodId, type StockKey } from "../content/game";
+import { CATS, FAME, FOODS, PACKS, QUICK_MULT, RECIPES, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StockKey } from "../content/game";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
 import { S, petName, save } from "./state";
@@ -91,9 +91,22 @@ export const staffDef = (id: PetId) => STAFF.find(s => s.id === id)!;
 export const canHire = (id: PetId) => lvl() >= staffDef(id).unlock;
 export const onDuty = (id: PetId) => S.staff[id].hired && S.staff[id].onDuty;
 export const dutyLv = (id: PetId) => (onDuty(id) ? S.staff[id].lv : 0);
-/* lương mỗi ca = 1 phần ăn theo bậc; thiếu thì bé ăn món ngon hơn nếu có */
-export const mealOf = (id: PetId): FoodId => FOODS[S.staff[id].lv - 1].id;
-export const mealFor = (id: PetId): FoodId | null => FOODS.slice(S.staff[id].lv - 1).find(f => foodOf(f.id) > 0)?.id ?? null;
+/* lương mỗi ca = 1 phần ăn. Món mặc định theo bậc, người chơi chọn được món thấp hơn;
+   hết món đã chọn thì ăn món kém hơn kế tiếp (làm chậm hơn), hết nữa mới lấy món ngon hơn */
+const tierIdx = (id: PetId) => (S.staff[id].hired ? S.staff[id].lv : 1) - 1;
+export const mealChoices = (id: PetId): Food[] => FOODS.slice(0, tierIdx(id) + 1);
+export const mealOf = (id: PetId): FoodId => {
+  const pick = S.staff[id].food, top = tierIdx(id);
+  return FOODS[Math.min(top, Math.max(0, pick ? FOODS.findIndex(f => f.id === pick) : top))].id;
+};
+export const setMeal = (id: PetId, food: FoodId) => { S.staff[id].food = food; save(); };
+export const mealFor = (id: PetId): FoodId | null => {
+  const want = FOODS.findIndex(f => f.id === mealOf(id));
+  const order = [...FOODS.slice(0, want + 1).reverse(), ...FOODS.slice(want + 1)];
+  return order.find(f => foodOf(f.id) > 0)?.id ?? null;
+};
+/* ăn món kém hơn bậc của mình thì làm chậm thêm 25% mỗi bậc */
+export const mealSlow = (id: PetId, meal: FoodId) => 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
 export const crewPlan = () => STAFF.filter(d => onDuty(d.id)).map(d => ({ id: d.id, meal: mealFor(d.id) }));
 export const trainCost = (id: PetId) => (S.staff[id].lv < 3 ? staffDef(id).train[S.staff[id].lv - 1] : 0);
 
@@ -102,13 +115,14 @@ export function toggleDuty(id: PetId) { if (!S.staff[id].hired) return; S.staff[
 export function train(id: PetId) {
   const c = trainCost(id);
   if (!S.staff[id].hired || !c || S.coins < c) return false;
-  spend("train", c, `Huấn luyện ${petName(id)} lên bậc ${S.staff[id].lv + 1}`); S.staff[id].lv++; save(); return true;
+  spend("train", c, `Huấn luyện ${petName(id)} lên bậc ${S.staff[id].lv + 1}`); S.staff[id].lv++; delete S.staff[id].food; save(); return true;
 }
 /* Đầu ca: các bé đi làm ăn lương trước. Bé nào không còn đồ ăn thì nghỉ ca này.
    Trả về giá trị đồ ăn đã dùng (để tính lãi) và các bé phải nghỉ vì đói */
 export function payCrew(): { cost: number; fed: { id: PetId; meal: FoodId }[]; hungry: PetId[] } {
   const out = { cost: 0, fed: [] as { id: PetId; meal: FoodId }[], hungry: [] as PetId[] };
-  crewPlan().forEach(({ id, meal }) => {
+  crewPlan().forEach(({ id }) => {
+    const meal = mealFor(id);                 // tính lại lúc ăn: bé trước đã lấy phần thì bé sau xét kho còn lại
     if (!meal) { S.staff[id].onDuty = false; out.hungry.push(id); return; }
     S.food[meal]--; out.cost += foodDef(meal).cost; out.fed.push({ id, meal });
   });

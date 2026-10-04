@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.50", date: "04/10/2026", notes: ["Chọn món ăn cho từng bé ở màn Chuẩn bị ca (bé bậc 2, 3 chọn được món thấp hơn bậc)", "Hết món đã chọn thì bé ăn món kém hơn kế tiếp thay vì nghỉ đói, nhưng làm bánh chậm hơn 25% mỗi bậc", "Hạt và Pate không còn vô dụng sau khi bé lên bậc 3"] },
   { v: "2.49", date: "04/10/2026", notes: ["Sửa lỗi huy hiệu số xu ở thanh trên cùng bị phóng to và che chữ (do kiểu CSS của đồng xu may rủi trùng tên)"] },
   { v: "2.48", date: "04/10/2026", notes: ["Thưởng đăng nhập mỗi ngày (10% số xu đang có) có trần 2.000 xu"] },
   { v: "2.47", date: "04/10/2026", notes: ["Đồng xu sự cố giờ cách nhau 3 phút chơi (trước đây 1 phút)"] },

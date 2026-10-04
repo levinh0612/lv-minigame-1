@@ -1,7 +1,7 @@
 import { CFG, type PetId } from "../../content/couple";
 import { FOODS, PETS } from "../../content/game";
 import { ROOM_CATS, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
-import { canHire, foodOf, mealFor, onDuty, staffDef, trainCost } from "../../engine/economy";
+import { canHire, foodOf, foodDef, mealFor, mealOf, onDuty, staffDef, trainCost } from "../../engine/economy";
 import { decorCount, unlocked } from "../../engine/progress";
 import { S, petName, save } from "../../engine/state";
 import { spend } from "../../engine/wallet";
@@ -64,14 +64,14 @@ export function pantryHTML() {
 /* một hàng trong Ca làm việc: bậc, lương, độ thân, nút thưởng */
 export function petRowHTML(id: PetId) {
   const d = staffDef(id), st = S.staff[id], on = onDuty(id), fed = S.pets[id].fedDay === S.daily.day;
-  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1], meal = st.hired ? mealFor(id) : null;
+  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1], meal = st.hired ? mealFor(id) : null, eat = foodDef(meal ?? mealOf(id));
   const act = !canHire(id) ? `<div class="rb lock"><b>Lv ${d.unlock}</b><small>mới mở</small></div>`
     : !st.hired ? `<button class="rb hire" data-hire="${id}"><b>Nhận</b><small>vào làm</small></button>`
     : `<button class="rb ${fed ? "done" : ""}" data-treat="${id}:${food.id}" ${fed || (!foodOf(food.id) && S.coins < food.cost) ? "disabled" : ""}>${foodSVG(food.id, 28)}<small>${fed ? "Đã thưởng" : "Thưởng"}</small></button>`;
   const train = st.hired && trainCost(id) ? `<button class="up" data-train="${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${st.lv + 1} · ${fmtN(trainCost(id))} xu</button>` : "";
   return `<div class="prow"><div class="pav ${on ? "on" : ""}">${petSVG({ ...PETS[id], mood: on ? "happy" : "open", ledge: false }, 70)}</div>
     <div class="pin"><div class="pn"><b>${esc(petName(id))}</b><span class="ptg t">Bậc ${tier}</span>${on ? `<span class="ptg w">Đi làm</span>` : st.hired ? `<span class="ptg o">Nghỉ</span>` : ""}</div>
-      <div class="pw">${foodSVG(food.id, 20)}Lương: 1 ${food.n}/ca${st.hired && on && !meal ? ` <em>· hết đồ ăn</em>` : ""}</div>
+      <div class="pw">${foodSVG(eat.id, 20)}Lương: 1 ${eat.n}/ca${st.hired && on && !meal ? ` <em>· hết đồ ăn</em>` : ""}</div>
       <div class="ph2"><span data-hearts="${id}">${heartRow(S.pets[id].aff)}</span><small>thân thiết</small></div>${train}</div>${act}</div>`;
 }
 export function petsHTML() {
