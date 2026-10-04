@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.30", date: "04/10/2026", notes: ["Trang trí tiệm mượt hơn nữa: đổi rèm, đèn, cây, thảm và đồ treo tường giờ cũng đổi ngay tại chỗ, không còn khựng"] },
   { v: "2.29", date: "04/10/2026", notes: ["Nhân vật sống động hơn: chớp mắt, thỉnh thoảng mở miệng, đầu và thân lắc nhẹ, nhún người; ảnh đại diện ở thẻ hồ sơ và trong Hồ sơ cũng chuyển động", "Màn chính: thẻ hồ sơ gọn hơn (cấp ngay trên ảnh, thanh kinh nghiệm), thư và Sửa tiệm thành hai nút tròn hai bên nút Mở tiệm, thanh 4 nút dưới vẽ lại icon gradient", "Mục tiêu và Quà tặng mở dạng hộp thoại trượt từ dưới lên"] },
   { v: "2.28", date: "04/10/2026", notes: ["Trang trí tiệm hết giật: đổi tường, sàn, quầy là đổi ngay tại chỗ (không dựng lại cảnh); đổi rèm, đèn, cây, thảm thì giữ cảnh cũ rồi mới đổi một lần", "Cảnh tiệm dựng nhanh hơn: mặt tiền, đường, cây phía ngoài chỉ dựng khi bấm xem ngoài tiệm"] },
   { v: "2.27", date: "04/10/2026", notes: ["Màn chính: cảnh 3D phủ cả màn hình, thanh trên, hồ sơ, thư, nút Mở tiệm và 4 nút dưới là lớp phủ gọn gàng", "Icon điều khiển cảnh (xoay, phóng to thu nhỏ, xem ngoài tiệm) vẽ lại cho đẹp", "Hồ sơ: chọn Nữ hoặc Nam riêng, chọn kiểu tóc riêng (mũ len, băng đô, búi tóc, đuôi ngựa, hai chùm, tai mèo, nơ, hoa cài, kính tròn)", "Mũ len vẽ lại đúng kiểu mũ len; Trang trí tiệm mượt hơn, chạm liên tiếp không còn giật"] },

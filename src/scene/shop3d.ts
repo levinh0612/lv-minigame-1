@@ -74,6 +74,15 @@ export function createShop(o: ShopOpts): ShopScene {
   const ev = o.event, R = o.room; let curHl = o.hl; const hl = (k: string) => curHl === k;
   const glowMats: THREE.MeshToonMaterial[] = [], selAll: Record<string, THREE.MeshToonMaterial[]> = {};
   const sel = (k: string, m: THREE.MeshToonMaterial) => { (selAll[k] ||= []).push(m); if (hl(k)) glowMats.push(m); return m; };
+  /* gỡ một nhóm đồ trang trí ra khỏi cảnh và giải phóng bộ nhớ (viền dùng chung nên không hủy) */
+  const purge = (g: THREE.Object3D) => {
+    const mats = new Set<THREE.Material>();
+    g.traverse(ob => { const m = ob as THREE.Mesh; if (!m.isMesh) return; m.geometry.dispose(); if ((m.parent as THREE.Mesh).isMesh) return; (Array.isArray(m.material) ? m.material : [m.material]).forEach(x => mats.add(x)); });
+    mats.forEach(x => { const mp = (x as THREE.MeshToonMaterial).map; if (mp && mp !== photoTex) mp.dispose(); x.dispose(); });
+    for (const k in selAll) selAll[k] = selAll[k]!.filter(m => !mats.has(m));
+    for (let i = glowMats.length - 1; i >= 0; i--) if (mats.has(glowMats[i]!)) glowMats.splice(i, 1);
+    g.clear();
+  };
   /* vật liệu phụ thuộc tường / sàn / quầy: gom lại để update() đổi tại chỗ, không dựng lại cảnh */
   const cur: Record<string, string> = { ...R }, wallMains: [THREE.MeshToonMaterial, number][] = [], tableTops: THREE.MeshToonMaterial[] = [], tableLegs: THREE.MeshToonMaterial[] = [], counterBits: { top?: THREE.MeshToonMaterial; wood?: THREE.MeshToonMaterial } = {};
 
@@ -102,37 +111,46 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* cửa sổ + rèm */
   const winGlass = T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .3 });
-  const curtainTex = R.curtain === "1" ? stripes("#FF9FB6", "#fff", [4, 1]) : R.curtain === "2" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#8FD9B6"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [2, 3]) : null;
+  const curtainTexOf = (c: string) => c === "1" ? stripes("#FF9FB6", "#fff", [4, 1]) : c === "2" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#8FD9B6"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [2, 3]) : null;
+  const curtainBuilds: [THREE.Group, () => void][] = [];
   function windowOn(w: typeof wN, x: number, y = 1.85, ww = 1.5, wh = 1.3) {
     const f = T("#8A5A3A", { transparent: true }); w.mats.push(f);
     const fr = (a: number, b: number, c: number, d: number) => add(w.decor, RB(a, b, .14, .02), f, x + c, d, .09, { ol: "thin" });
     fr(ww + .24, .1, 0, y + wh / 2 + .05); fr(ww + .24, .1, 0, y - wh / 2 - .05); fr(.1, wh, -ww / 2 - .05, y); fr(.1, wh, ww / 2 + .05, y); fr(.06, wh, 0, y);
     add(w.decor, new THREE.PlaneGeometry(ww, wh), winGlass, x, y, .02, { ol: null, cast: false });
     add(w.decor, RB(ww + .1, .1, .22, .03), T("#fff"), x, y - wh / 2 - .14, .16, { ol: "thin" });
+    const cg = new THREE.Group(); cg.add(cg);
+    const bc = () => {
+    const curtainTex = curtainTexOf(cur.curtain);
     if (curtainTex) {
       const cm = sel("curtain", T("#fff", { map: curtainTex, side: THREE.DoubleSide }));
-      add(w.decor, CYL(.02, .02, ww + .5, 8), T("#C9905A"), x, y + wh / 2 + .22, .2, { r: [0, 0, Math.PI / 2], ol: null });
-      ([-1, 1] as const).forEach(s => add(w.decor, RB(.45, wh + .45, .05, .02), cm, x + s * (ww / 2 - .1), y - .05, .22, { ol: "thin" }));
-    } else add(w.decor, RB(ww + .6, .1, .75, .03), T("#FF8FAB"), x, y + wh / 2 + .35, .38, { r: [.38, 0, 0], ol: "thin" });
+      add(cg, CYL(.02, .02, ww + .5, 8), T("#C9905A"), x, y + wh / 2 + .22, .2, { r: [0, 0, Math.PI / 2], ol: null });
+      ([-1, 1] as const).forEach(s => add(cg, RB(.45, wh + .45, .05, .02), cm, x + s * (ww / 2 - .1), y - .05, .22, { ol: "thin" }));
+    } else add(cg, RB(ww + .6, .1, .75, .03), T("#FF8FAB"), x, y + wh / 2 + .35, .38, { r: [.38, 0, 0], ol: "thin" });
+    }; bc(); curtainBuilds.push([cg, bc]);
   }
   windowOn(wN, -2.0); windowOn(wN, 2.3); windowOn(wW, .3);
 
   /* đồ treo tường: ảnh / khung đôi / đồng hồ mèo */
   const photoTex = o.photo ? (() => { const t = new THREE.TextureLoader().load(o.photo); t.colorSpace = THREE.SRGBColorSpace; disposables.push(t); return t; })() : null;
   const frameAnchor = new THREE.Object3D(); frameAnchor.position.set(.3, 2.0, .15); wN.decor.add(frameAnchor);
-  if (R.wallItem === "2") {
-    add(wN.decor, CYL(.34, .34, .06, 28), T("#FFF3F6"), .3, 2.0, .1, { r: [Math.PI / 2, 0, 0], ol: "mid" });
-    ([-1, 1] as const).forEach(s => add(wN.decor, CONE(.1, .2, 4), T("#FFE3EA"), .3 + s * .24, 2.38, .1, { r: [0, Math.PI / 4, -s * .3], ol: "thin" }));
-    add(wN.decor, CAPBAR(.02, .22), T(INK), .3, 2.06, .14, { ol: null }); add(wN.decor, CAPBAR(.02, .16), T(INK), .38, 1.97, .14, { r: [0, 0, 1.2], ol: null });
+  const wallG = new THREE.Group(); wN.decor.add(wallG);
+  const buildWall = () => {
+  if (cur.wallItem === "2") {
+    add(wallG, CYL(.34, .34, .06, 28), T("#FFF3F6"), .3, 2.0, .1, { r: [Math.PI / 2, 0, 0], ol: "mid" });
+    ([-1, 1] as const).forEach(s => add(wallG, CONE(.1, .2, 4), T("#FFE3EA"), .3 + s * .24, 2.38, .1, { r: [0, Math.PI / 4, -s * .3], ol: "thin" }));
+    add(wallG, CAPBAR(.02, .22), T(INK), .3, 2.06, .14, { ol: null }); add(wallG, CAPBAR(.02, .16), T(INK), .38, 1.97, .14, { r: [0, 0, 1.2], ol: null });
   } else {
-    const gold = R.wallItem === "1";
-    add(wN.decor, RB(.8, .95, .07, .02), T(gold ? "#E9C46A" : "#fff"), .3, 2.0, .1, { ol: "mid" });
-    const inner = new THREE.Mesh(new THREE.PlaneGeometry(.62, .77), photoTex ? new THREE.MeshBasicMaterial({ map: photoTex }) : new THREE.MeshBasicMaterial({ color: gold ? "#FFD1DC" : "#F2E9EC" })); inner.position.set(.3, 2.0, .15); wN.decor.add(inner);
-    if (!photoTex && !gold) add(wN.decor, new THREE.TorusGeometry(.07, .015, 6, 12), T("#C9B8C0"), .3, 2.0, .16, { ol: null });
-    if (gold && !photoTex) add(wN.decor, SPH(.1, 12, 10), T("#FF6F9B"), .3, 2.0, .17, { s: [1, 1, .3], ol: "thin" });
+    const gold = cur.wallItem === "1";
+    add(wallG, RB(.8, .95, .07, .02), T(gold ? "#E9C46A" : "#fff"), .3, 2.0, .1, { ol: "mid" });
+    const inner = new THREE.Mesh(new THREE.PlaneGeometry(.62, .77), photoTex ? new THREE.MeshBasicMaterial({ map: photoTex }) : new THREE.MeshBasicMaterial({ color: gold ? "#FFD1DC" : "#F2E9EC" })); inner.position.set(.3, 2.0, .15); wallG.add(inner);
+    if (!photoTex && !gold) add(wallG, new THREE.TorusGeometry(.07, .015, 6, 12), T("#C9B8C0"), .3, 2.0, .16, { ol: null });
+    if (gold && !photoTex) add(wallG, SPH(.1, 12, 10), T("#FF6F9B"), .3, 2.0, .17, { s: [1, 1, .3], ol: "thin" });
   }
-  hotspots.push({ id: "photo", attr: "data-act", value: "photo", label: "Treo ảnh lên tường", obj: frameAnchor, wall: wi(wN), dy: 0 });
-  if (R.wallItem === "2") hotspots.pop();
+  }; buildWall();
+  const photoHs: Hotspot = { id: "photo", attr: "data-act", value: "photo", label: "Treo ảnh lên tường", obj: frameAnchor, wall: wi(wN), dy: 0 };
+  const syncPhoto = () => { const i = hotspots.indexOf(photoHs); if (i >= 0) hotspots.splice(i, 1); if (cur.wallItem !== "2") hotspots.push(photoHs); }; syncPhoto();
+
 
   /* bảng menu (tường Tây) */
   const menuTex = tex(256, 192, (g, w, h) => { g.fillStyle = "#5E6F5B"; g.fillRect(0, 0, w, h); g.strokeStyle = "#D9A66B"; g.lineWidth = 14; g.strokeRect(7, 7, w - 14, h - 14);
@@ -253,39 +271,47 @@ export function createShop(o: ShopOpts): ShopScene {
   [s1[0], s1[1], s2[0], s2[1], s2[2]].forEach(st => blob(st.x, st.z, .4)); [-2.6, -1.2, .2, 1.4].forEach(x => blob(x, -.95, .38, .38, .7));
 
   /* thảm */
-  if (R.rug !== "0") {
-    const rt = R.rug === "2" ? tex(256, 256, (g, w) => { g.fillStyle = "#FF8FAB"; g.beginPath(); g.arc(w / 2, w / 2, w / 2, 0, 7); g.fill(); g.fillStyle = "#FFF1A8"; for (let i = 0; i < 40; i++) { const a = i * 2.4, rr = (i % 7) * 15 + 10; g.beginPath(); g.arc(w / 2 + Math.cos(a) * rr, w / 2 + Math.sin(a) * rr, 3.5, 0, 7); g.fill(); } })
+  const rugG = new THREE.Group(); root.add(rugG);
+  const buildRug = () => {
+  if (cur.rug !== "0") {
+    const rt = cur.rug === "2" ? tex(256, 256, (g, w) => { g.fillStyle = "#FF8FAB"; g.beginPath(); g.arc(w / 2, w / 2, w / 2, 0, 7); g.fill(); g.fillStyle = "#FFF1A8"; for (let i = 0; i < 40; i++) { const a = i * 2.4, rr = (i % 7) * 15 + 10; g.beginPath(); g.arc(w / 2 + Math.cos(a) * rr, w / 2 + Math.sin(a) * rr, 3.5, 0, 7); g.fill(); } })
       : tex(256, 256, (g, w) => { const rr = w / 2; ([["#FFD1DC", 1], ["#fff", .86], ["#FFD1DC", .8], ["#fff", .38], ["#FFD1DC", .32]] as const).forEach(([c, k]) => { g.fillStyle = c; g.beginPath(); g.arc(rr, rr, rr * k, 0, 7); g.fill(); }); });
-    const rg = add(root, new THREE.CircleGeometry(1.5, 48), sel("rug", T("#fff", { map: rt, transparent: true })), .3, .012, .95, { cast: false, ol: null }); rg.rotation.x = -Math.PI / 2; rg.scale.y = .75;
-  }
+    const rg = add(rugG, new THREE.CircleGeometry(1.5, 48), sel("rug", T("#fff", { map: rt, transparent: true })), .3, .012, .95, { cast: false, ol: null }); rg.rotation.x = -Math.PI / 2; rg.scale.y = .75;
+  } };
+  buildRug();
 
   /* cây */
+  const plantG = new THREE.Group(); root.add(plantG);
   const plantAt = (x: number, z: number, s: number) => {
-    if (R.plant === "0") return;
-    add(root, CYL(.24 * s, .18 * s, .42 * s, 16), T(R.plant === "2" ? "#fff" : "#E9A27C"), x, .21 * s, z, { ol: "mid" });
-    if (R.plant === "1") [[0, .5, 0, .22], [.18, .5, .06, .16], [-.17, .52, -.04, .15], [0, .62, 0, .14]].forEach(([dx, dy, dz, rr]) => add(root, SPH(rr * s, 12, 10), T("#9FD18A"), x + dx * s, dy * s, z + dz * s, { s: [1, .7, 1], ol: "thin" }));
-    else [[0, .75, 0, .32], [.2, 1.0, .05, .26], [-.19, .95, -.06, .24], [.02, 1.2, .02, .2]].forEach(([dx, dy, dz, rr]) => add(root, SPH(rr * s, 14, 12), T("#6FB27A"), x + dx * s, dy * s, z + dz * s, { s: [1.2, .8, 1], ol: "thin" }));
+    if (cur.plant === "0") return;
+    add(plantG, CYL(.24 * s, .18 * s, .42 * s, 16), T(cur.plant === "2" ? "#fff" : "#E9A27C"), x, .21 * s, z, { ol: "mid" });
+    if (cur.plant === "1") [[0, .5, 0, .22], [.18, .5, .06, .16], [-.17, .52, -.04, .15], [0, .62, 0, .14]].forEach(([dx, dy, dz, rr]) => add(plantG, SPH(rr * s, 12, 10), T("#9FD18A"), x + dx * s, dy * s, z + dz * s, { s: [1, .7, 1], ol: "thin" }));
+    else [[0, .75, 0, .32], [.2, 1.0, .05, .26], [-.19, .95, -.06, .24], [.02, 1.2, .02, .2]].forEach(([dx, dy, dz, rr]) => add(plantG, SPH(rr * s, 14, 12), T("#6FB27A"), x + dx * s, dy * s, z + dz * s, { s: [1.2, .8, 1], ol: "thin" }));
   };
-  plantAt(3.3, 2.3, 1.2); plantAt(-3.5, 2.5, .9);
+  const buildPlants = () => { plantAt(3.3, 2.3, 1.2); plantAt(-3.5, 2.5, .9); }; buildPlants();
 
   /* đèn */
   const lamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
+  const lampG = new THREE.Group(); root.add(lampG);
   const pendant = (x: number, z: number, cloud: boolean) => {
-    add(root, CYL(.012, .012, .9, 6), T(INK), x, 2.72, z, { ol: null, cast: false });
+    add(lampG, CYL(.012, .012, .9, 6), T(INK), x, 2.72, z, { ol: null, cast: false });
     const col = cloud ? "#FFFCEC" : "#FFB6C8";
     const bulbMat = new THREE.MeshStandardMaterial({ color: "#FFF1CC", emissive: new THREE.Color("#FFD27A"), emissiveIntensity: 0 });
-    if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(root, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(root, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
-    const bulb = add(root, SPH(.1, 12, 10), bulbMat, x, 2.1, z, { ol: null, cast: false });
-    const pl = new THREE.PointLight("#FFD27A", 0, 6.5, 1.5); pl.position.set(x, 2.0, z); root.add(pl); lamps.push({ pl, bulb });
+    if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(lampG, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(lampG, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
+    const bulb = add(lampG, SPH(.1, 12, 10), bulbMat, x, 2.1, z, { ol: null, cast: false });
+    const pl = new THREE.PointLight("#FFD27A", 0, 6.5, 1.5); pl.position.set(x, 2.0, z); lampG.add(pl); lamps.push({ pl, bulb });
   };
   const bulbsStr: THREE.Mesh[] = [];
-  if (R.lamp === "1") { pendant(-1.8, 1.0, true); pendant(2.2, 1.5, true); pendant(-.8, -1.0, true); }
+  const buildLamps = () => {
+  if (cur.lamp === "1") { pendant(-1.8, 1.0, true); pendant(2.2, 1.5, true); pendant(-.8, -1.0, true); }
   else { pendant(-1.8, 1.0, false); pendant(2.2, 1.5, false); pendant(-.8, -1.0, false); }
-  if (R.lamp === "2" || ev) {
+  if (cur.lamp === "2" || ev) {
     const pts: THREE.Vector3[] = []; for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector3(-3.8 + t * 7.6, 2.95 - Math.sin(t * Math.PI) * .35, -2.8)); }
-    root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .008, 4), new THREE.MeshBasicMaterial({ color: INK })));
-    pts.filter((_, i) => i % 3 === 1).forEach((p, i) => { const b = new THREE.Mesh(SPH(.06, 10, 8), new THREE.MeshBasicMaterial({ color: ev ? ["#FF8FAB", "#FFD66B", "#8FD9B6", "#C9B8F0"][i % 4] : "#FFE680" })); b.position.copy(p).add(new THREE.Vector3(0, -.06, 0)); root.add(b); bulbsStr.push(b); });
+    lampG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .008, 4), new THREE.MeshBasicMaterial({ color: INK })));
+    pts.filter((_, i) => i % 3 === 1).forEach((p, i) => { const b = new THREE.Mesh(SPH(.06, 10, 8), new THREE.MeshBasicMaterial({ color: ev ? ["#FF8FAB", "#FFD66B", "#8FD9B6", "#C9B8F0"][i % 4] : "#FFE680" })); b.position.copy(p).add(new THREE.Vector3(0, -.06, 0)); lampG.add(b); bulbsStr.push(b); });
   }
+  }; buildLamps();
+  const swapLamps = () => { lamps.length = 0; bulbsStr.length = 0; purge(lampG); buildLamps(); };
   if (ev) {                                                                      // ngày đặc biệt: bóng bay
     [["#FF8FAB", -3.5, -2.3], ["#FFD66B", -3.2, -2.5], ["#8FD9B6", 3.5, -2.4]].forEach(([c, x, z]) => { add(root, CYL(.005, .005, 1, 4), T(INK), x as number, 1.5, z as number, { ol: null }); add(root, SPH(.3, 16, 12), T(c as string), x as number, 2.2, z as number, { s: [1, 1.15, 1], ol: "thin" }); });
   }
@@ -438,12 +464,18 @@ export function createShop(o: ShopOpts): ShopScene {
   /* đổi tường / sàn / quầy và nhóm đang nổi bật ngay tại chỗ (màn Trang trí): trả false nếu cần dựng lại cả cảnh */
   function update(nr: Record<string, string>, nhl?: string): boolean {
     const keys = Object.keys({ ...cur, ...nr }).filter(k => (nr[k] ?? cur[k]) !== cur[k]);
-    if (keys.some(k => k !== "wall" && k !== "floor" && k !== "counter")) return false;
+    const SOFT = ["wall", "floor", "counter", "curtain", "wallItem", "rug", "plant", "lamp"];
+    if (keys.some(k => !SOFT.includes(k))) return false;
     if (keys.includes("wall") && outsideBuilt) return false;
     if (keys.includes("wall") && !ev) { const st = (WALL[nr.wall!] || WALL.pink)(); wallMains.forEach(([m, len]) => { m.map?.dispose(); m.color.set(st.color); m.map = st.map.clone(); m.map.repeat.set(len / W * 10, 1); m.map.needsUpdate = true; m.needsUpdate = true; }); st.map.dispose(); }
     if (keys.includes("floor")) { fm.map?.dispose(); fm.map = (FLOOR[nr.floor!] || FLOOR.check)(); fm.needsUpdate = true; tableLegs.forEach(m => m.color.set(nr.floor === "wood" ? "#C98E5A" : "#E9B98A")); }
     if (keys.includes("counter")) { const [a, b] = COUNTER_C[nr.counter!] || COUNTER_C.pink, mint = nr.counter === "mint"; cm1.color.set(a); cm2.color.set(b); counterBits.top?.color.set(mint ? "#F2FBF6" : "#FFF8F0"); counterBits.wood?.color.set(mint ? "#B6E6CF" : "#E9B98A"); tableTops.forEach(m => m.color.set(mint ? "#E4F6EC" : "#fff")); }
     Object.assign(cur, nr);
+    if (keys.includes("curtain")) curtainBuilds.forEach(([g, b]) => { purge(g); b(); });
+    if (keys.includes("wallItem")) { purge(wallG); buildWall(); syncPhoto(); }
+    if (keys.includes("rug")) { purge(rugG); buildRug(); }
+    if (keys.includes("plant")) { purge(plantG); buildPlants(); }
+    if (keys.includes("lamp")) { swapLamps(); setHour(skyState.h); }
     if (nhl !== undefined && nhl !== curHl) { glowMats.forEach(m => { m.emissive.set("#000000"); m.emissiveIntensity = 0; }); glowMats.length = 0; curHl = nhl; (selAll[nhl] || []).forEach(m => glowMats.push(m)); }
     return true;
   }
