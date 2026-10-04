@@ -6,10 +6,11 @@ export const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.qu
 export const esc = (s: unknown) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 let onClose: (() => void) | null = null;
-/* Hộp thoại kiểu iOS: trượt từ dưới lên, kéo thanh trên cùng xuống để đóng */
-export function modal(html: string, cb?: () => void) {
+/* Hộp thoại kiểu iOS: trượt từ dưới lên, kéo thanh trên cùng xuống để đóng.
+   lock = true: không có nút ✕, không đóng được bằng chạm nền hay kéo xuống, chỉ đóng bằng nút trong hộp thoại */
+export function modal(html: string, cb?: () => void, lock = false) {
   onClose = cb || null;
-  $("#layer")!.innerHTML = `<div class="modal" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="mhead"><div class="grabber" aria-hidden="true"></div><button class="mx" data-close aria-label="Đóng">✕</button></div><div class="mscroll">${html}</div></div></div>`;
+  $("#layer")!.innerHTML = `<div class="modal${lock ? " locked" : ""}" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="mhead"><div class="grabber" aria-hidden="true"></div>${lock ? "" : `<button class="mx" data-close aria-label="Đóng">✕</button>`}</div><div class="mscroll">${html}</div></div></div>`;
   document.documentElement.classList.add("mlock");        // khoá cuộn trang phía sau (iPhone kéo cả app)
   const box = $<HTMLElement>("#modal .mbox")!, head = box.querySelector(".mhead")!, body = box.querySelector(".mscroll")!;
   // tiêu đề (+ dòng mô tả ngay sau) lên phần đầu cố định; hàng nút cuối xuống phần chân cố định
@@ -22,7 +23,7 @@ export function modal(html: string, cb?: () => void) {
     if (form) { form.id ||= "mform"; foot.querySelectorAll<HTMLButtonElement>("button").forEach(b => { if (b.type === "submit") b.setAttribute("form", form.id); }); }
     const f = document.createElement("div"); f.className = "mfoot"; f.appendChild(foot); box.appendChild(f);
   }
-  dragToClose(box, head as HTMLElement);
+  if (!lock) dragToClose(box, head as HTMLElement);
   // vuốt trên nền tối / phần đầu / chân: không để iPhone kéo cả trang phía sau; phần giữa vẫn cuộn được
   $("#modal")!.addEventListener("touchmove", e => {
     const sc = (e.target as HTMLElement).closest<HTMLElement>(".mscroll");
@@ -52,6 +53,7 @@ function dismiss() {
 export function closeModal() { dismiss(); const cb = onClose; onClose = null; cb?.(); }
 /* đóng mà không chạy callback (khi chuyển thẳng sang màn khác) */
 export function dropModal() { onClose = null; dismiss(); }
+export const modalLocked = () => !!$("#modal.locked");
 export const hasModal = () => !!$("#modal");
 
 let toastT = 0;

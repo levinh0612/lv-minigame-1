@@ -13,7 +13,7 @@ import { claimPassive } from "./engine/passive";
 import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
-import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, toast } from "./ui/dom";
+import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
 import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden } from "./net/cloud";
 import { navigate } from "./ui/router";
@@ -27,7 +27,7 @@ import { SH, pause, resume, doPeek, doRefill, doServe, openStock, pickIngredient
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
   const t = (e.target as HTMLElement).closest<HTMLElement>("button, .modal"); if (!t) return;
-  if (t.id === "modal") { if (e.target === t && !SH) closeModal(); return; }
+  if (t.id === "modal") { if (e.target === t && !SH && !modalLocked()) closeModal(); return; }
   if (t.hasAttribute("data-close")) return closeModal();
   if (t.hasAttribute("data-music")) { Sound.setMusic(!S.music); if (!SH) render(); return; }
   const d = t.dataset;

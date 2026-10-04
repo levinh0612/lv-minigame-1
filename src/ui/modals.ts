@@ -207,14 +207,14 @@ export function incidentModal(i: Incident, cost: number, onClose?: () => void, l
   modal(`${incidentArt(i)}<h2>${esc(i.title)}</h2><p class="sub">${esc(i.text)}</p>
     ${level ? `<div class="inclv ${level}">Mức ${esc(LEVELS[level].name.toLowerCase())} · −${Math.round(LEVELS[level].pct * 100)}% số xu</div>` : ""}
     <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
-    <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose);
+    <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose, !!level);
 }
 
 /** Đồng xu may rủi: người chơi tự bấm. 70% bình an, 30% gặp sự cố (trừ 3%, 6% hoặc 8% số xu đang có). */
 export function coinModal(onClose?: () => void) {
   modal(`<div class="coinwrap"><button type="button" class="tosscoin" id="coinBtn" aria-label="Tung đồng xu"><span class="cf cfa"><i>xu</i></span></button></div>
     <h2>Tung đồng xu!</h2><p class="sub">Bấm vào đồng xu. Có 30% gặp sự cố bị trừ xu, 70% bình an.</p>
-    <div class="coinodds"><span>Thấp −3%</span><span>Trung bình −6%</span><span>Cao −8%</span></div>`, onClose);
+    <div class="coinodds"><span>Thấp −3%</span><span>Trung bình −6%</span><span>Cao −8%</span></div>`, onClose, true);
   const btn = $<HTMLButtonElement>("#coinBtn"); if (!btn) return;
   btn.addEventListener("click", () => {
     btn.disabled = true; btn.classList.add("flip"); sfx("tap");
@@ -223,7 +223,7 @@ export function coinModal(onClose?: () => void) {
       if (!hit) {
         sfx("level");
         modal(`<div class="coinwrap"><span class="tosscoin safe"><span class="cf">🍀</span></span></div><h2>May quá!</h2><p class="sub">Đồng xu mỉm cười, tiệm bình an vô sự. Hẹn bạn ở lần tung sau.</p>
-          <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`, onClose);
+          <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`, onClose, true);
         return;
       }
       applyIncident(hit); save(); sfx("untap");
