@@ -6,6 +6,7 @@ import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { decorCount, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
 import { S, meLook } from "../../engine/state";
 import { fmtN } from "../../engine/util";
+import { mouseTitle } from "../../engine/mouse";
 import { coinPill, esc } from "../dom";
 import { guestSVG } from "../art";
 import { room3dHTML } from "../room3d";
@@ -75,7 +76,7 @@ export function homeHTML() {
         <button class="rbtn" data-act="music" aria-label="Nhạc nền" style="${S.music ? "" : "opacity:.45"}">${MUSIC}</button>
         <button class="rbtn" data-act="settings" aria-label="Cài đặt">${GEAR}</button>
         ${coinPill()}
-      </div>
+      </div>${mouseTitle() ? `<div class="mtitle">🐭 ${esc(mouseTitle())}</div>` : ""}
       ${prof}
       <div class="h5-chips"><span class="pchip lav">🛍 ${decorCount()} đồ trang trí</span><span class="pchip lav">🐾 ${hired} nhân viên</span><button class="pchip ${needUpgrade() ? "warn" : "lav"}" data-act="venue">🪑 Sức chứa ${capacity()} · cao điểm ${demand()}${needUpgrade() ? " · cần nâng cấp" : ""}</button><button class="pchip mint" data-act="account" id="cloudAt">${cloudLine()}</button><button class="pchip" data-go="/sap-ra-mat">✦ Sắp ra mắt</button></div>
     </div>

@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import type { PetId } from "../../content/couple";
 import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
-import { canHire, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { canHire, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { S, petName } from "../../engine/state";
@@ -41,6 +41,7 @@ export function prepHTML() {
     return `<button class="stile ${v === 0 ? "out" : v <= 2 ? "low" : ""}" data-ing-buy="${k}:${i}:5" ${S.coins < p ? "disabled" : ""} aria-label="Nhập 5 ${n}, ${p} xu">${ingSVG(k, i, 22)}<span>${n}</span><b>${v === 0 ? "Hết" : v}</b></button>`;
   }).join("")).join("");
   const ic = [["#FFE9EF", "#E0567A"], ["#E3F6EC", "#3F9C78"], ["#FFF0C9", "#A77A0E"]];
+  const est = estProfit(), needPrep = sug.length > 0 || plan.some(x => !x.meal);
   const hungry = plan.filter(x => !x.meal).map(x => petName(x.id));
   return `<div class="scr prep2">
     ${pageHead("Chuẩn bị mở tiệm", `Ca ${S.shifts + 1}`)}
@@ -54,7 +55,8 @@ export function prepHTML() {
     <div class="sh2"><b>Kho trước ca</b><span class="${low.length ? "red" : "lav"}">${low.length ? `${low.length} món sắp hết` : "Đủ hàng"}</span></div>
     <div class="stiles">${stock}</div>
     <p class="phint">Chạm một món để nhập thêm 5 phần. ${hungry.length ? `<b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>
-    <div class="pfoot"><button class="b3 w" data-act="suggest" ${sug.length && S.coins >= Math.min(...sug.map(x => x.cost)) ? "" : "disabled"}>${sug.length ? `Nhập · ${fmtN(sugCost)} xu` : "Kho đủ"}</button>
+    <p class="pest">Lãi ước tính ca này: <b class="${est.profit >= 0 ? "p" : "m"}">${est.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(est.profit))} xu</b> <small>(~${fmtN(est.revenue)} thu, ${fmtN(est.cost)} chi)</small></p>
+    <div class="pfoot"><button class="b3 w" data-act="quickprep" ${needPrep && S.coins > 0 ? "" : "disabled"}>${needPrep ? `Chuẩn bị nhanh${sugCost ? ` · ${fmtN(sugCost)} xu` : ""}` : "Đã sẵn sàng"}</button>
       <button class="b3" data-act="start">Bắt đầu ca · ${expectedCustomers()} khách</button></div>
   </div>`;
 }

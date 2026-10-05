@@ -49,6 +49,26 @@ export function buySuggested(): number {
   note("Nhập hàng theo gợi ý", -spent);
   return spent;
 }
+/* Chuẩn bị nhanh: nhập hàng theo gợi ý + mua đồ ăn cho bé đi làm đang đói (mỗi bé 1 phần), tới đâu hết xu tới đó */
+export function quickPrep(): { stock: number; food: number } {
+  const stock = buySuggested();
+  let food = 0;
+  crewPlan().filter(x => !x.meal).forEach(({ id }) => {
+    const f = foodDef(mealOf(id));
+    if (buyFood(f.id, 1)) food += f.cost;
+  });
+  return { stock, food };
+}
+/* Lãi ước tính của ca: doanh thu trung bình mỗi khách (món nổi bật tính gấp đôi) trừ lương, nhập hàng và đồ ăn còn thiếu */
+export function estProfit(): { revenue: number; cost: number; profit: number } {
+  const rs = unlocked(), feat = featured();
+  const w = rs.reduce((a, r) => a + (r.id === feat.id ? 2 : 1), 0) || 1;
+  const avg = rs.reduce((a, r) => a + r.price * (r.id === feat.id ? 2 : 1), 0) / w;
+  const revenue = Math.round(expectedCustomers() * avg * 0.85);
+  const cost = suggestion().reduce((a, x) => a + x.cost, 0)
+    + crewPlan().reduce((a, x) => a + foodDef(x.meal ?? mealOf(x.id)).cost, 0);
+  return { revenue, cost, profit: revenue - cost };
+}
 /* Nguyên liệu mà công thức đã mở cần nhưng đang hết */
 export const outOfStock = () => {
   const need = new Set<string>();

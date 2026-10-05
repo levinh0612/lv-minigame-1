@@ -5,7 +5,7 @@ import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
 import { CATS, type PartKey, type StockKey } from "./content/game";
 import type { RoomKey } from "./content/room";
-import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, foodDef, hire, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
+import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, quickPrep, foodDef, hire, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { tickIncident } from "./engine/incident";
@@ -43,6 +43,7 @@ document.addEventListener("click", e => {
       dropModal(); return startShift();
     case "start-anyway": dropModal(); return startShift();
     case "venue": sfx("click"); return upgradeModal(false);
+    case "quickprep": { const r = quickPrep(); if (r.stock + r.food) { sfx("coin"); toast(`Đã chuẩn bị · ${r.stock + r.food} xu${r.food ? ` (có đồ ăn cho các bé)` : ""}`); } else toast("Không đủ xu để chuẩn bị"); return render(); }
     case "suggest": { const sp = buySuggested(); if (sp) { sfx("coin"); toast(`Đã nhập hàng · ${sp} xu`); } else toast("Không đủ xu để nhập theo gợi ý"); return render(); }
     case "tutorial": return tutorial();
     case "letter": return openLetter();

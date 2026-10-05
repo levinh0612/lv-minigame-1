@@ -59,3 +59,13 @@ describe("chuột vào tiệm", () => {
     expect(tick(sh, 0.1).mouse.appeared).toBeUndefined();                   // không xuất hiện lại
   });
 });
+
+import { estProfit, quickPrep, suggestion } from "../src/engine/economy";
+describe("chuẩn bị nhanh", () => {
+  it("một chạm nhập đủ hàng gợi ý và không tiêu quá số xu", () => {
+    S.coins = 5000; const before = S.coins; const r = quickPrep();
+    expect(suggestion()).toEqual([]); expect(before - S.coins).toBe(r.stock + r.food);
+    S.coins = 0; expect(quickPrep().stock).toBe(0);
+  });
+  it("lãi ước tính = thu - chi", () => { const e = estProfit(); expect(e.profit).toBe(e.revenue - e.cost); expect(e.revenue).toBeGreaterThan(0); });
+});

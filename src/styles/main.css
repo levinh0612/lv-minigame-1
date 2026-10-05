@@ -1495,3 +1495,9 @@ button.cm{position:relative}
 @keyframes mWarn{50%{box-shadow:0 3px 0 #F4B2C0,0 0 16px rgba(229,66,107,.55)}}
 .mbox .mpay{height:38px;font-size:14px;border-radius:14px}
 .rat{position:absolute;left:0;top:0;z-index:60;width:44px;height:44px;padding:0;border:0;background:none;font-size:34px;line-height:44px;cursor:pointer;filter:drop-shadow(0 3px 2px rgba(0,0,0,.25));touch-action:manipulation;will-change:transform}
+
+.pest{margin:6px 2px 0;font-size:13px;text-align:center;color:var(--ink2,#6b5b73)}
+.pest b.p{color:#2f9a6e}.pest b.m{color:#d9534f}.pest small{opacity:.7}
+.mtitle{align-self:flex-start;margin:6px 0 0 4px;padding:3px 10px;border-radius:999px;background:#fff8e1;border:2px solid #3E3A4A;font-size:12px;font-weight:800;color:#8a5a00;width:max-content}
+.rbanner{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;margin-bottom:8px;border-radius:14px;background:#fff6d6;border:2.5px solid #3E3A4A}
+.rbanner span{font-size:12px;font-weight:700;opacity:.7}.rbanner b{font-size:26px;line-height:1.1}.rbanner b.p{color:#2f9a6e}.rbanner b.m{color:#d9534f}.rbanner small{font-size:12px;opacity:.8}

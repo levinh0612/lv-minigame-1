@@ -556,6 +556,7 @@ export function resultHTML(r: Result | null = result) {
           ${FACE(good)}<b>${sg.t}</b></div>${sparks}</div></div>
     <div class="rcard">
       <div class="pets">${(["dog", "gold", "white"] as PetId[]).map((id, i) => petSVG({ ...PETS[id], mood, ledge: false }, i === 1 ? 80 : 70)).join("")}</div>
+      <div class="rbanner"><span>Lãi ca này</span><b class="${led.profit >= 0 ? "p" : "m"}">${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b><small>${done}/${sh.goals.length} mục tiêu${sh.goalCoins ? ` · +${fmtN(sh.goalCoins)} xu thưởng` : ""}${sh.ticket ? " · 🎟 +1 vé" : ""}${sh.bestCombo >= 3 ? ` · 🔥 ×${sh.bestCombo}` : ""}</small></div>
       <div class="kp"><div class="k1"><b>${sh.served}/${total}</b><small>Khách vui</small></div><div class="k2"><b>${sh.memo}</b><small>Tự nhớ công thức</small></div><div class="k3"><b>${sh.helped}</b><small>Bé làm hộ</small></div></div>
       <div class="ledger"><h4>Sổ lãi hôm nay</h4>
         ${row("Tiền bánh", sh.coins, true)}${row("Tip", sh.tips, true)}${row("Thưởng tự nhớ (+50%)", sh.bonus, true)}${row(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true)}
