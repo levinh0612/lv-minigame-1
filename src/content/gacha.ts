@@ -68,11 +68,11 @@ export const GACHA_ITEMS: GachaItem[] = [
   { id: "m_xiem", kind: "mascot", rarity: "rare", n: "Mèo Xiêm", desc: "Đồng hành 3D trong tiệm: tip +5%, giá bánh +5%", mascot: { img: "siamese", model: "siamese", fx: { tip: 0.05, price: 0.05 } } },
   { id: "m_baizhi", kind: "mascot", rarity: "rare", n: "Bạch Chi", desc: "Hộ vệ 3D trong tiệm: giá bánh +8%, khách chờ lâu hơn 10%", mascot: { img: "baizhi", model: "baizhi", art: true, fx: { price: 0.08, pat: 0.1 } } },
   { id: "m_chisa", kind: "mascot", rarity: "rare", n: "Chisa", desc: "Hộ vệ 3D trong tiệm: tip +10%, khách chờ lâu hơn 15%", mascot: { img: "chisa", model: "chisa", art: true, fx: { tip: 0.1, pat: 0.15 } } },
-  { id: "m_jiyan", kind: "mascot", rarity: "ultra", n: "Jiyan", desc: "Hộ vệ 3D trong tiệm: giá +10%, tip +8%, chờ lâu hơn 10%", mascot: { img: "jiyan", model: "jiyan", fx: { price: 0.1, tip: 0.08, pat: 0.1 } } },
+  { id: "m_jiyan", kind: "mascot", rarity: "ultra", n: "Jiyan", desc: "Hộ vệ 3D trong tiệm: giá +10%, tip +8%, chờ lâu hơn 10%", mascot: { img: "jiyan", model: "jiyan", art: true, fx: { price: 0.1, tip: 0.08, pat: 0.1 } } },
   { id: "m_zhongli", kind: "mascot", rarity: "ultra", n: "Zhongli", desc: "Hộ vệ 3D trong tiệm: giá +12%, tip +8%, thêm 1 khách mỗi ca", mascot: { img: "zhongli", model: "zhongli", art: true, fx: { price: 0.12, tip: 0.08, cust: 1 } } },
-  { id: "m_phuonghoang", kind: "mascot", rarity: "ultra", n: "Phượng Hoàng", desc: "Linh vật bay 3D trong tiệm: giá +10%, tip +10%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "phoenix", model: "phoenix", fx: { price: 0.1, tip: 0.1, pat: 0.1, cust: 1 } } }
+  { id: "m_phuonghoang", kind: "mascot", rarity: "ultra", n: "Phượng Hoàng", desc: "Linh vật bay 3D trong tiệm: giá +10%, tip +10%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "phoenix", model: "phoenix", art: true, fx: { price: 0.1, tip: 0.1, pat: 0.1, cust: 1 } } }
 ];
 /* tranh minh hoạ do người chơi cung cấp */
-for (const [id, full] of Object.entries({ c_n3: "lynae", m_baizhi: "baizhi", m_chisa: "chisa", m_zhongli: "zhongli" })) { const it = GACHA_ITEMS.find(i => i.id === id); if (it) it.full = full; }
+for (const [id, full] of Object.entries({ c_n3: "lynae", m_jiyan: "jiyan", m_phuonghoang: "phoenix", m_baizhi: "baizhi", m_chisa: "chisa", m_zhongli: "zhongli" })) { const it = GACHA_ITEMS.find(i => i.id === id); if (it) it.full = full; }
 export const gachaItem = (id: string) => GACHA_ITEMS.find(i => i.id === id);
 export const itemsOf = (r: Rarity) => GACHA_ITEMS.filter(i => i.rarity === r);
