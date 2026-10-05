@@ -57,21 +57,32 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
 }
 
 /* Bánh nhiều tầng: dựng từ chính các nét của cakeSVG. Mỗi tầng = đế + một lớp kem rộng, tầng sau nhỏ dần (×0,8) và đứng trên mặt kem tầng dưới.
-   Chỉ tầng đáy có mặt cười; tầng trên cùng có đỉnh kem và topping. tiers[0] là tầng dưới cùng, mỗi tầng là [đế, kem]. */
-export function cakeTiersSVG(tiers: [number, number][], top: number, o: { size?: number; still?: boolean } = {}) {
-  const S = o.size || 140, n = Math.max(1, tiers.length), SC = 0.8;
-  const face = `<ellipse cx="50" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><ellipse cx="90" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><circle cx="58" cy="96" r="3.4" fill="${INK}" stroke="none"/><circle cx="59.2" cy="94.8" r="1.2" fill="#fff" stroke="none"/><circle cx="82" cy="96" r="3.4" fill="${INK}" stroke="none"/><circle cx="83.2" cy="94.8" r="1.2" fill="#fff" stroke="none"/><path d="M66 100 Q70 104 74 100" stroke-width="2.2"/>`;
+   Chỉ tầng đáy có mặt cười; tầng trên cùng có đỉnh kem và topping. tiers[0] là tầng dưới cùng, mỗi tầng là [đế, kem].
+   Phần chưa chọn (null) thì bỏ trống (đế chưa chọn hiện nét đứt) để dùng cho bánh đang làm dở. */
+export function cakeTiersSVG(tiers: [number | null, number | null][], top: number | null, o: { size?: number; still?: boolean; done?: boolean; sweet?: number | null } = {}) {
+  const S = o.size || 140, n = Math.max(1, tiers.length), SC = 0.8, sw = o.sweet ?? -1;
+  const eyes = o.done ? `<path d="M54 97 Q58 92 62 97 M78 97 Q82 92 86 97" stroke-width="2.2"/>` : `<circle cx="58" cy="96" r="3.4" fill="${INK}" stroke="none"/><circle cx="59.2" cy="94.8" r="1.2" fill="#fff" stroke="none"/><circle cx="82" cy="96" r="3.4" fill="${INK}" stroke="none"/><circle cx="83.2" cy="94.8" r="1.2" fill="#fff" stroke="none"/>`;
+  const face = `<ellipse cx="50" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><ellipse cx="90" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/>${eyes}<path d="M66 100 Q70 104 74 100" stroke-width="2.2"/>`;
   let g = "", creamTop = 56, minY = 56;
   tiers.forEach(([b, c], i) => {
-    const s = Math.pow(SC, i), last = i === n - 1, bottom = i === 0 ? 108 : creamTop + 3, ty = bottom - 108 * s, cc = CATS.cream[c][1];
+    const s = Math.pow(SC, i), last = i === n - 1, bottom = i === 0 ? 108 : creamTop + 3, ty = bottom - 108 * s, cc = c != null ? CATS.cream[c][1] : "";
     g += `<g transform="translate(${+(70 * (1 - s)).toFixed(2)} ${+ty.toFixed(2)}) scale(${+s.toFixed(3)})" stroke-width="${+(2.6 / s).toFixed(2)}">`
-      + `<g>${BASE_G[b]}</g>${i === 0 ? face : ""}${CREAM_W.replace(/%C/g, cc)}`
-      + (last ? `${CREAM_T.replace(/%C/g, cc)}<g>${TOP_G[top] ?? ""}</g>` : "") + `</g>`;
+      + (b != null ? `<g>${BASE_G[b]}</g>${i === 0 ? face : ""}` : `<path d="M24 108 C22 82 42 66 70 66 C98 66 118 82 116 108 Z" stroke="#D9C4CB" stroke-dasharray="6 6"/>`)
+      + (c != null ? CREAM_W.replace(/%C/g, cc) + (last ? CREAM_T.replace(/%C/g, cc) : "") : "")
+      + (last && c != null && top != null ? `<g>${TOP_G[top] ?? ""}</g>` : "") + `</g>`;
     creamTop = ty + 56 * s;
     if (last) minY = ty + 12 * s;
   });
-  const y0 = Math.floor(minY - 4), h = 120 - y0, body = o.still ? "" : `transform-box:fill-box;transform-origin:50% 100%;animation:cakeIdle 2.8s ease-in-out infinite`;
-  return `<svg width="${S}" height="${Math.round(S * h / 140)}" viewBox="0 ${y0} 140 ${h}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><ellipse cx="70" cy="110" rx="62" ry="8" fill="#FFFFFF"/><g style="${body}">${g}</g></svg>`;
+  const sp = sw >= 0 ? `<g fill="#FFD166" stroke-width="1.6">${sparkle(104, minY + 8, 1)}${sw >= 1 ? sparkle(28, minY + 12, 1, -.9) : ""}${sw >= 2 ? sparkle(44, minY - 8, .78, -.4) + sparkle(94, minY - 12, .78, -1.3) : ""}</g>` : "";
+  const hearts = o.done ? `<g fill="#FF8FAB" stroke-width="1.6">${heartP(110, minY + 4, -.3)}${heartP(24, minY, -1)}</g>` : "";
+  const y0 = Math.floor(minY - (o.done || sw >= 2 ? 20 : 4)), h = 120 - y0, body = o.still ? "" : `transform-box:fill-box;transform-origin:50% 100%;animation:${o.done ? "cakeHop .8s cubic-bezier(.3,1.4,.5,1) infinite" : "cakeIdle 2.8s ease-in-out infinite"}`;
+  return `<svg width="${S}" height="${Math.round(S * h / 140)}" viewBox="0 ${y0} 140 ${h}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><ellipse cx="70" cy="110" rx="62" ry="8" fill="#FFFFFF"/><g style="${body}">${g}</g>${sp}${hearts}</svg>`;
+}
+/** vẽ một bánh bất kỳ: có `up` (các tầng trên) thì vẽ nhiều tầng, không thì dùng cakeSVG */
+export function cakeAnySVG(p: CakeParts & { up?: readonly (readonly [number | null, number | null])[] }, o: CakeOpts = {}) {
+  if (!p.up?.length) return cakeSVG(p, o);
+  const tiers: [number | null, number | null][] = [[p.base ?? null, p.cream ?? null], ...p.up.map(u => [u[0], u[1]] as [number | null, number | null])];
+  return cakeTiersSVG(tiers, p.top ?? null, { size: o.size, still: o.still, done: o.done, sweet: p.sweet });
 }
 
 /* Thú cưng của tiệm: mỗi biểu cảm là một ảnh (vẫy tay là ảnh riêng), nằm sau quầy */

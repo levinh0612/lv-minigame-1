@@ -1,6 +1,6 @@
 /* Các bảng trượt lên từ cảnh tiệm ở màn chính: Menu, Tủ bánh (carousel), Ngày kỷ niệm, Ảnh treo tường */
 import { CFG } from "../content/couple";
-import { CATS, RECIPES, STOCK_KEYS } from "../content/game";
+import { CATS, CUSTOM_LV, MAX_CUSTOM, RECIPES, customRecipe, partsOfRecipe, tiersOf } from "../content/game";
 import { GACHA_ITEMS, MASTERY_MAX, RARITY } from "../content/gacha";
 import { daysTogether, events } from "../engine/dates";
 import { hasItem, masteryOf, specialRecipes } from "../engine/gacha";
@@ -11,22 +11,22 @@ import { flushSave } from "../net/cloud";
 import { fmtD, fmtN, parse } from "../engine/util";
 import { SONGS, Sound } from "../audio/sound";
 import { render } from "./app";
-import { cakeSVG, ingSVG } from "./art";
+import { cakeAnySVG, ingSVG } from "./art";
 import { $, closeModal, esc, modal, toast } from "./dom";
 import { buffSources } from "../engine/progress";
 import { gachaArt } from "./gachafx";
 import { ic } from "./icons";
 import { BUFF_LABEL, buffIcon, buffText } from "./screens/home";
 
-const ingChips = (r: (typeof RECIPES)[number]) => STOCK_KEYS.map(k => `<span>${ingSVG(k, r[k], 18)}${CATS[k][r[k]][0]}</span>`).join("");
+const ingChips = (r: (typeof RECIPES)[number]) => partsOfRecipe(r).map(p => `<span>${ingSVG(p.k, p.i, 18)}${CATS[p.k][p.i][0]}</span>`).join("");
 
 /* Công thức (mở từ Menu hoặc chạm bảng Menu trong tiệm): công thức của tiệm, công thức Gacha (mờ nếu chưa có, chạm để sang Gacha) */
-let rfil: "all" | "shop" | "gacha" = "all";
+let rfil: "all" | "shop" | "gacha" | "custom" = "all";
 const RAR_C: Record<string, string> = { common: "#8FB4D9", rare: "#7A8CFF", ultra: "#F2B84B" };
 function recipeBody() {
   const L = lvl(), f = featured();
-  const tile = (r: { base: number; cream: number; top: number }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "") =>
-    `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
+  const tile = (r: { base: number; cream: number; top: number; up?: [number, number][] }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "") =>
+    `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
   const shop = RECIPES.map(r => r.lv > L
     ? tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim")
     : !recipeReady(r) ? tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`)
@@ -35,10 +35,16 @@ function recipeBody() {
   const gacha = GACHA_ITEMS.filter(i => i.recipe).map(i => hasItem(i.id)
     ? tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`)
     : tile(i.recipe!, i.n, i.recipe!.price, `<span class="st gacha">Gacha ›</span>`, "dim", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`, `data-rgacha="${i.id}"`)).join("");
+  const cus = S.custom.map(c => { const r = customRecipe(c);
+    return tile(r, r.n, r.price, recipeReady(r) ? `<span class="st ok">${tiersOf(r)} tầng</span>` : `<span class="st need">Thiếu nguyên liệu</span>`, "", "", `data-cedit="${c.id}"`); }).join("")
+    + (S.custom.length < MAX_CUSTOM ? (L >= CUSTOM_LV
+      ? `<button class="rc5 add" data-act="custom"><span class="plus">+</span><b>Tạo mẫu mới</b></button>`
+      : `<div class="rc5 add off"><span class="plus">+</span><b>Mở ở Lv ${CUSTOM_LV}</b></div>`) : "");
   const nShop = RECIPES.filter(r => r.lv <= L && recipeReady(r)).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
-  return `<div class="gfil rfil">${([["all", "Tất cả"], ["shop", "Của tiệm"], ["gacha", "Gacha"]] as const).map(([k, n]) => `<button class="${rfil === k ? "on" : ""}" data-rfil="${k}">${n}</button>`).join("")}</div>
-    ${rfil !== "gacha" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} bán được</span></div><div class="rb5">${shop}</div>` : ""}
-    ${rfil !== "shop" ? `<div class="sh2"><b>Công thức Gacha</b><span class="lav">${nG}/${tG} đã có</span></div><div class="rb5">${gacha}</div>` : ""}
+  return `<div class="gfil rfil">${([["all", "Tất cả"], ["shop", "Của tiệm"], ["gacha", "Gacha"], ["custom", "Tuỳ chỉnh"]] as const).map(([k, n]) => `<button class="${rfil === k ? "on" : ""}" data-rfil="${k}">${n}</button>`).join("")}</div>
+    ${rfil === "all" || rfil === "shop" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} bán được</span></div><div class="rb5">${shop}</div>` : ""}
+    ${rfil === "all" || rfil === "gacha" ? `<div class="sh2"><b>Công thức Gacha</b><span class="lav">${nG}/${tG} đã có</span></div><div class="rb5">${gacha}</div>` : ""}
+    ${rfil === "all" || rfil === "custom" ? `<div class="sh2"><b>Bánh tuỳ chỉnh</b><span class="lav">${S.custom.length}/${MAX_CUSTOM} mẫu</span></div><div class="rb5">${cus}</div>` : ""}
     <p class="phint">Món mờ chưa có: chạm để sang Gacha và xem món đó.</p>`;
 }
 export function menuSheet() {
@@ -53,7 +59,7 @@ export function cakesSheet() {
     <div class="carow"><button class="cnav l" data-cn="-1" aria-label="Món trước">‹</button><button class="cnav r" data-cn="1" aria-label="Món sau">›</button>
     <div class="caro" id="caro">${list.map(r => `<div class="cc ${r.id === f.id ? "star" : ""}">
       ${r.id === f.id ? `<span class="tagf">★ Món nổi bật hôm nay</span>` : ""}
-      <div class="ck">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 170 })}</div>
+      <div class="ck">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up, sweet: 1 }, { size: 170 })}</div>
       <b>${esc(r.n)}</b><div class="ichips">${ingChips(r)}</div><span class="cp">${r.price} xu / bánh</span></div>`).join("")}</div></div>
     <div class="cdots" id="cdots">${list.map((_, i) => `<i class="${i ? "" : "on"}" data-i="${i}"></i>`).join("")}</div>
     <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);

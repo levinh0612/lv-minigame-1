@@ -1,6 +1,6 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
-import { CATS, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, SHOP, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StockKey } from "../content/game";
+import { CATS, partsOfRecipe, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, SHOP, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StockKey } from "../content/game";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
 import { S, petName, save } from "./state";
@@ -35,7 +35,7 @@ export function suggestion(): { k: StockKey; i: number; n: number; cost: number 
   const want = Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map(() => 0)])) as Record<StockKey, number[]>;
   const weight = (r: (typeof RECIPES)[number]) => (r.id === feat.id ? 2 : 1);
   const total = rs.reduce((a, r) => a + weight(r), 0);
-  rs.forEach(r => STOCK_KEYS.forEach(k => { want[k][r[k]] += cust * weight(r) / total; }));
+  rs.forEach(r => partsOfRecipe(r).forEach(p => { want[p.k][p.i] += cust * weight(r) / total; }));       // bánh nhiều tầng đếm đủ từng phần
   const out: { k: StockKey; i: number; n: number; cost: number }[] = [];
   STOCK_KEYS.forEach(k => want[k].forEach((w, i) => {
     const n = Math.max(0, Math.ceil(w * 1.2) - stockOf(k, i));
@@ -73,7 +73,7 @@ export function estProfit(): { revenue: number; cost: number; profit: number } {
 /* Nguyên liệu mà công thức đã mở cần nhưng đang hết */
 export const outOfStock = () => {
   const need = new Set<string>();
-  unlocked().forEach(r => STOCK_KEYS.forEach(k => { if (stockOf(k, r[k]) <= 0) need.add(k + ":" + r[k]); }));
+  unlocked().forEach(r => partsOfRecipe(r).forEach(p => { if (stockOf(p.k, p.i) <= 0) need.add(p.k + ":" + p.i); }));
   return [...need].map(s => { const [k, i] = s.split(":"); return { k: k as StockKey, i: +i }; });
 };
 

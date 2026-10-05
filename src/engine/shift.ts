@@ -2,10 +2,10 @@
 import { CFG, type PetId } from "../content/couple";
 const STAFF_IDS: PetId[] = ["dog", "gold", "white"];
 import {
-  BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN, STOCK_KEYS,
+  BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN,
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
-import { BAKE_TIME, type FoodId } from "../content/game";
+import { BAKE_TIME, TIER_BAKE_SLOW, TIER_HAND_BONUS, partsOfRecipe, tiersOf, type FoodId, type StockKey } from "../content/game";
 import { addBond, addTickets, regulars } from "./gacha";
 import { comfortPat, comfortTip, dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
@@ -31,7 +31,7 @@ export interface Shift {
   boyDone: boolean; lv0: number;
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
-  bonus: number; lack: Partial<Record<PetId, string>>;
+  bonus: number; tierBonus: number; lack: Partial<Record<PetId, string>>;
   ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[]; meals: Partial<Record<PetId, FoodId>>;
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
@@ -42,10 +42,33 @@ export interface Shift {
   // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
 }
 
-export const emptyBuild = (): Build => ({ base: null, cream: null, top: null, sweet: null });
+/** tiers: số tầng của bánh đang làm (bánh thường = 1) */
+export const emptyBuild = (tiers = 1): Build => ({ base: null, cream: null, top: null, sweet: null, up: Array.from({ length: tiers - 1 }, () => [null, null] as [number | null, number | null]) });
+/** phiếu trống đúng số tầng của đơn mình đang giữ */
+export const freshBuild = (sh: Shift): Build => { const m = mineIdx(sh); return emptyBuild(m >= 0 ? tiersOf(sh.seats[m]!.r) : 1); };
+/** đế hoặc kem của tầng t (0 = dưới cùng) */
+export const partAt = (b: Build, t: number, k: "base" | "cream"): number | null => t === 0 ? b[k] : b.up?.[t - 1]?.[k === "base" ? 0 : 1] ?? null;
+export function setPartAt(b: Build, t: number, k: "base" | "cream", v: number | null) {
+  if (t === 0) { b[k] = v; return; }
+  const up = (b.up ??= []); while (up.length < t) up.push([null, null]);
+  up[t - 1][k === "base" ? 0 : 1] = v;
+}
+export const needAt = (r: Recipe, t: number, k: "base" | "cream") => t === 0 ? r[k] : r.up![t - 1][k === "base" ? 0 : 1];
+/** các phần nguyên liệu đã chọn trong phiếu (đếm trùng) */
+export const partsOfBuild = (b: Build): { k: StockKey; i: number }[] => ([["base", b.base], ["cream", b.cream], ...(b.up ?? []).flatMap(u => [["base", u[0]], ["cream", u[1]]]), ["top", b.top]] as [StockKey, number | null][])
+  .filter((x): x is [StockKey, number] => x[1] != null).map(([k, i]) => ({ k, i }));
+export const buildTotal = (b: Build) => 4 + 2 * (b.up?.length ?? 0);
+export const buildPicked = (b: Build) => partsOfBuild(b).length + (b.sweet != null ? 1 : 0);
 export const needOf = (c: Customer): Record<PartKey, number> => ({ base: c.r.base, cream: c.r.cream, top: c.r.top, sweet: c.sweet });
-export const matches = (c: Customer | null | undefined, b: Build) => !!c && !c.gone && !c.by && KEYS.every(k => needOf(c)[k] === b[k]);
-export const isComplete = (b: Build) => KEYS.every(k => b[k] != null);
+export const matches = (c: Customer | null | undefined, b: Build) => !!c && !c.gone && !c.by && KEYS.every(k => needOf(c)[k] === b[k])
+  && (c.r.up ?? []).every((u, j) => u[0] === b.up?.[j]?.[0] && u[1] === b.up?.[j]?.[1]);
+export const isComplete = (b: Build) => KEYS.every(k => b[k] != null) && (b.up ?? []).every(u => u[0] != null && u[1] != null);
+/** phần nguyên liệu còn thiếu trong kho cho danh sách phần (đếm trùng: hai tầng cùng đế cần 2 đế) */
+export function shortage(parts: { k: StockKey; i: number }[]) {
+  const need = new Map<string, { k: StockKey; i: number; n: number }>();
+  parts.forEach(p => { const id = p.k + ":" + p.i, e = need.get(id) ?? { k: p.k, i: p.i, n: 0 }; e.n++; need.set(id, e); });
+  return [...need.values()].map(e => ({ ...e, n: Math.max(0, e.n - stockOf(e.k, e.i)) })).filter(e => e.n > 0);
+}
 
 /** giờ vàng: có ghế dư thì giữa ca có một đợt khách đông bất ngờ, thêm 1 đến (số ghế dư) khách */
 function rushPlan() {
@@ -57,7 +80,7 @@ export function createShift(): Shift {
   const sh: Shift = {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
-    boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
+    boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, tierBonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
   };
   sh.mousePlan = planMouse(sh.total);
@@ -139,13 +162,13 @@ function bake(sh: Shift, dt: number, out: TickOut) {
       .sort((a, b) => sh.seats[a]!.pat / sh.seats[a]!.max - sh.seats[b]!.pat / sh.seats[b]!.max);
     let seat = -1, lack = "";
     for (const i of order) {
-      const r = sh.seats[i]!.r, miss = STOCK_KEYS.filter(k => stockOf(k, r[k]) <= 0);
-      const cost = miss.reduce((a, k) => a + quickPrice(k, r[k]), 0);
-      if (miss.length && cost > S.coins) { lack ||= miss.map(k => CATS[k][r[k]][0]).join(", "); continue; }
+      const r = sh.seats[i]!.r, miss = shortage(partsOfRecipe(r));
+      const cost = miss.reduce((a, x) => a + quickPrice(x.k, x.i) * x.n, 0);
+      if (miss.length && cost > S.coins) { lack ||= miss.map(x => CATS[x.k][x.i][0]).join(", "); continue; }
       if (miss.length) {
         spend("quick", cost); sh.quickCost += cost;
-        miss.forEach(k => { S.stock[k][r[k]] = stockOf(k, r[k]) + 1; });
-        out.restock.push({ id, what: miss.map(k => CATS[k][r[k]][0]).join(", ") });
+        miss.forEach(x => { S.stock[x.k][x.i] = stockOf(x.k, x.i) + x.n; });
+        out.restock.push({ id, what: miss.map(x => CATS[x.k][x.i][0]).join(", ") });
       }
       seat = i; break;
     }
@@ -153,8 +176,8 @@ function bake(sh: Shift, dt: number, out: TickOut) {
     delete sh.lack[id];
     const c = sh.seats[seat]!;
     c.by = id;
-    STOCK_KEYS.forEach(k => { S.stock[k][c.r[k]]--; sh.ingUsed += unitCost(k, c.r[k]); });
-    const b: Baker = { id, seat, done: 0, need: BAKE_TIME[lv - 1] * mealSlow(id, sh.meals[id] ?? mealOf(id)) };
+    partsOfRecipe(c.r).forEach(p => { S.stock[p.k][p.i]--; sh.ingUsed += unitCost(p.k, p.i); });
+    const b: Baker = { id, seat, done: 0, need: BAKE_TIME[lv - 1] * mealSlow(id, sh.meals[id] ?? mealOf(id)) * (1 + TIER_BAKE_SLOW * (tiersOf(c.r) - 1)) };
     sh.bakers.push(b); out.claimed.push(b);
   });
 }
@@ -183,28 +206,42 @@ export function release(sh: Shift) { sh.mine = -1; sh.peek = false; }
 export function peek(sh: Shift) { sh.peek = true; }
 
 export type ServeResult =
-  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; perfect: boolean; combo: number; comboAdd: number }
+  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; tierBonus: number; perfect: boolean; combo: number; comboAdd: number }
   | { ok: false; msg: string; broke?: number };
 
+const tiersOfBuild = (b: Build) => 1 + (b.up?.length ?? 0);
+/** phần đầu tiên làm sai so với đơn khách gọi, để báo cho người chơi */
+function firstWrong(c: Customer, b: Build) {
+  const n = tiersOf(c.r), multi = n > 1, nm = (k: StockKey, i: number | null) => (i == null ? "chưa chọn" : CATS[k][i][0]);
+  for (let t = 0; t < n; t++) for (const k of ["base", "cream"] as const) {
+    const need = needAt(c.r, t, k), have = partAt(b, t, k);
+    if (need !== have) return { label: `${LABELS[k].toLowerCase()}${multi ? ` tầng ${t + 1}` : ""}`, need: CATS[k][need][0], have: nm(k, have) };
+  }
+  const bad = (["top", "sweet"] as const).find(k => b[k] !== needOf(c)[k]) ?? "top";
+  return { label: LABELS[bad].toLowerCase(), need: CATS[bad][needOf(c)[bad]][0], have: nm(bad as StockKey, b[bad]) };
+}
 export function serve(sh: Shift): ServeResult {
   const b = sh.build;
-  if (!isComplete(b)) return { ok: false, msg: "Chọn đủ Đế, Kem, Topping và Độ ngọt nha" };
+  if (!isComplete(b)) return { ok: false, msg: tiersOfBuild(b) > 1 ? "Chọn đủ Đế, Kem của từng tầng, Topping và Độ ngọt nha" : "Chọn đủ Đế, Kem, Topping và Độ ngọt nha" };
   const ti = targetIdx(sh);
   let idx = matches(sh.seats[ti], b) ? ti : -1;
   if (idx < 0) sh.seats.forEach((c, i) => { if (matches(c, b) && (idx < 0 || c!.pat / c!.max < sh.seats[idx]!.pat / sh.seats[idx]!.max)) idx = i; });
   if (idx < 0) {
     if (ti < 0) return { ok: false, msg: "Chưa có khách nào gọi món" };
-    const c = sh.seats[ti]!, n = needOf(c), bad = KEYS.find(k => b[k] !== n[k])!;
+    const c = sh.seats[ti]!, w = firstWrong(c, b);
     sh.peek = true;                      // đã được mách nguyên liệu: mất thưởng nhớ bài
     const broke = breakCombo(sh);
-    return { ok: false, ...(broke ? { broke } : {}), msg: `Sai ${LABELS[bad].toLowerCase()} rồi: ${c.who} gọi ${CATS[bad][n[bad]][0]}, không phải ${CATS[bad][b[bad]!][0]}` };
+    return { ok: false, ...(broke ? { broke } : {}), msg: `Sai ${w.label} rồi: ${c.who} gọi ${w.need}, không phải ${w.have}` };
   }
-  // lấy nguyên liệu trong kho; thiếu thì nhập nhanh (đắt hơn)
-  const missing = STOCK_KEYS.filter(k => stockOf(k, b[k]!) <= 0);
-  const quick = missing.reduce((a, k) => a + quickPrice(k, b[k]!), 0);
+  // lấy nguyên liệu trong kho; thiếu thì nhập nhanh (đắt hơn). Đếm trùng: hai tầng cùng đế cần hai đế
+  const left = new Map<string, number>(), use: { k: StockKey; i: number }[] = []; let quick = 0;
+  partsOfBuild(b).forEach(p => {
+    const id = p.k + ":" + p.i, have = left.get(id) ?? stockOf(p.k, p.i);
+    if (have > 0) { left.set(id, have - 1); use.push(p); } else quick += quickPrice(p.k, p.i);
+  });
   if (quick > S.coins) return { ok: false, msg: `Hết nguyên liệu và không đủ ${quick} xu để nhập nhanh` };
   spend("quick", quick); sh.quickCost += quick;
-  STOCK_KEYS.forEach(k => { if (missing.includes(k)) return; S.stock[k][b[k]!]--; sh.ingUsed += unitCost(k, b[k]!); });
+  use.forEach(p => { S.stock[p.k][p.i]--; sh.ingUsed += unitCost(p.k, p.i); });
   return { ...deliver(sh, idx, false), quick };
 }
 
@@ -217,8 +254,10 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0))) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
-  earn("sales", price); earn("tip", tip); earn("memo", bonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
-  sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.served++; sh.stars.push(stars);
+  // Thưởng bánh nhiều tầng: chủ tiệm tự tay làm thì thêm (số tầng − 1) × 20% giá bánh; bé làm hộ thì không có
+  const tierBonus = !byStaff && tiersOf(c.r) > 1 ? Math.round(c.r.price * TIER_HAND_BONUS * (tiersOf(c.r) - 1)) : 0;
+  earn("sales", price); earn("tip", tip); earn("memo", bonus); earn("tier", tierBonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0) + (tierBonus ? 2 : 0); S.served++;
+  sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.tierBonus += tierBonus; sh.served++; sh.stars.push(stars);
   if (bonus) sh.memo++;
   // combo (chỉ tính bánh chủ tiệm tự làm): Hoàn hảo = giao nhanh 3 sao; 1-2 sao không thêm cũng không đứt
   const perfect = !byStaff && stars === 3; let comboAdd = 0;
@@ -227,7 +266,7 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
   addReview(c, stars); save();
-  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, perfect, combo: sh.combo, comboAdd };
+  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, tierBonus, perfect, combo: sh.combo, comboAdd };
 }
 
 export function leaveCustomer(sh: Shift, i: number) {
@@ -279,7 +318,7 @@ export function finishShift(sh: Shift) {
   return led;
 }
 export const ledger = (sh: Shift) => {
-  const revenue = sh.coins + sh.tips + sh.bonus + sh.goalCoins + sh.comboPaid;
+  const revenue = sh.coins + sh.tips + sh.bonus + sh.tierBonus + sh.goalCoins + sh.comboPaid;
   return { revenue, ingUsed: sh.ingUsed, quick: sh.quickCost, wages: sh.wages, profit: revenue - sh.ingUsed - sh.quickCost - sh.wages };
 };
 

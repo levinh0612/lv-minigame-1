@@ -20,6 +20,7 @@ import { gachaAct, openInGacha } from "./ui/screens/gacha";
 import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
+import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { staffAct, staffSheet } from "./ui/staff";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
@@ -27,7 +28,7 @@ import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
-import { SH, pause, resume, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
+import { SH, pause, resume, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
 
 /* Chọn nguyên liệu: xử lý lúc nhả tay (không cần chờ click) để không mất cú bấm khi giao diện vẽ lại hoặc ngón tay trượt nhẹ */
 let ingDown: { id: string; x: number; y: number; t: number } | null = null, ingAt = 0;
@@ -70,6 +71,7 @@ document.addEventListener("click", e => {
     case "buff": return buffSheet();
     case "staff": return staffSheet();
     case "ings": return ingredientSheet();
+    case "custom": return openCustom();
     case "rank": return rankSheet();
     case "music": return musicSheet();
     case "cakes": return cakesSheet();
@@ -103,6 +105,8 @@ document.addEventListener("click", e => {
   if (d.gact) return void gachaAct(d.gact);
   if (d.sact) return staffAct(d.sact);
   if (d.iact) return ingAct(d.iact);
+  if (d.cact) return customAct(d.cact);
+  if (d.cedit) { sfx("click"); return openCustom(d.cedit); }
   if (d.rfil) { sfx("click"); return recipeFilter(d.rfil); }
   if (d.rgacha) { sfx("click"); return openInGacha(d.rgacha); }
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
@@ -131,6 +135,7 @@ document.addEventListener("click", e => {
   }
   if (d.selPet) { selectPet(d.selPet as PetId); sfx("tap"); return render(); }
   if (d.ing) { if (performance.now() - ingAt < 700) return; const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
+  if (d.tier != null) return setTier(+d.tier);
   if (d.seat) return selectSeat(+d.seat);
   if (d.tick) return tickStock(d.tick);
   if (d.watch) return watchBaker(d.watch as PetId);

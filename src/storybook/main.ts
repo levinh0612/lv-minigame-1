@@ -6,7 +6,7 @@ import "../styles/themes.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
 import {
-  CATS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF, STOCK_KEYS,
+  CATS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF, STOCK_KEYS, customRecipe,
   type GuestLook, type Look, type Mood, type PartKey
 } from "../content/game";
 import { rollDay } from "../engine/progress";
@@ -21,7 +21,8 @@ import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
 import { staffSheet } from "../ui/staff";
 import { ingredientSheet } from "../ui/ingredients";
-import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet } from "../ui/sheets";
+import { openCustom } from "../ui/custom";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, recipeFilter } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
@@ -138,6 +139,8 @@ const STORIES: Story[] = [
     html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
   { id: "play-many", sec: "screens", title: "Chơi · nhiều nguyên liệu", desc: "Lv 24, đã ký cả 3 nhà cung cấp: mỗi hàng có tới 5 nguyên liệu", kind: "screen",
     html: () => { lvState(24, s => { staffed(s); s.suppliers = ["alpine", "berry", "cacao"]; STOCK_KEYS.forEach(k => s.stock[k].fill(8)); }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
+  { id: "play-tiers", sec: "screens", title: "Chơi · bánh 3 tầng", desc: "Đơn bánh tuỳ chỉnh 3 tầng: thanh chọn tầng, đã xem công thức; tầng 1 xong, đang chọn tầng 2", kind: "screen",
+    html: () => { lvState(13, s => { staffed(s); s.suppliers = ["alpine"]; s.custom = [{ id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); const sh = busyShift(); sh.seats[2]!.r = customRecipe(S.custom[0]); sh.build = { base: 3, cream: 3, top: null, sweet: null, up: [[null, null], [null, null]] }; sh.peek = true; _setShift(sh); return playHTML(sh, { states: ["", "", "", ""] }); } },
   { id: "play-peek", sec: "screens", title: "Chơi · đã xem công thức", desc: "Bấm Xem công thức: hiện 3 nguyên liệu và dấu ✓/✕ trên nút; mất thưởng nhớ bài", kind: "screen",
     html: () => { lvState(5, s => { staffed(s); }); const sh = busyShift(); sh.peek = true; _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
   { id: "play-idle", sec: "screens", title: "Chơi · rảnh tay", desc: "Tắt Tự nhận đơn: chủ tiệm không giữ đơn nào, các bé nhận hết; Cacao thiếu Matcha", kind: "screen",
@@ -179,6 +182,10 @@ const STORIES: Story[] = [
     html: () => { lvState(5); return modalOver(homeHTML(), moreSheet); } },
   { id: "m-ings", sec: "modals", title: "Nguyên liệu và nhà cung cấp", desc: "Lv 13: đã ký Lò sữa Alpine (Croissant, Cheesecake, Phô mai); Berry đủ cấp nhưng thiếu xu; Cacao chưa đủ cấp", kind: "modal",
     html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.coins = 3000; s.stock.base[3] = 4; s.stock.base[4] = 0; s.stock.cream[3] = 7; }); return modalOver(homeHTML(), ingredientSheet); } },
+  { id: "m-custom", sec: "modals", title: "Tự làm bánh (2 tầng)", desc: "Chọn số tầng, đế + kem từng tầng, topping; giá tính trực tiếp, tự tay làm được thưởng thêm", kind: "modal",
+    html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }]; }); return modalOver(homeHTML(), () => openCustom("c1")); } },
+  { id: "m-menu3", sec: "modals", title: "Công thức · bánh tuỳ chỉnh", desc: "Mục Bánh tuỳ chỉnh: mẫu đã lưu, ô Tạo mẫu mới", kind: "modal",
+    html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }, { id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); return modalOver(homeHTML(), () => { menuSheet(); recipeFilter("custom"); }); } },
   { id: "m-staff", sec: "modals", title: "Quản lý · Nhân vật", desc: "Chọn tầng, chạm để đặt; món chưa có hiện mờ và dẫn sang Gacha", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mgr")); } },
   { id: "m-staff2", sec: "modals", title: "Quản lý · Linh thú", desc: "Cùng bảng, tab Linh thú", kind: "modal",

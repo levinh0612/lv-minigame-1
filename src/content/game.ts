@@ -2,7 +2,8 @@
 import type { PetId } from "./couple";
 
 export type PartKey = "base" | "cream" | "top" | "sweet";
-export type Build = Record<PartKey, number | null>;
+/** `up`: các tầng phía trên của bánh nhiều tầng, mỗi tầng là [đế, kem]; bánh một tầng thì để trống */
+export type Build = Record<PartKey, number | null> & { up?: [number | null, number | null][] };
 export const KEYS: PartKey[] = ["base", "cream", "top", "sweet"];
 export const LABELS: Record<PartKey, string> = { base: "Đế", cream: "Kem", top: "Topping", sweet: "Độ ngọt" };
 export const CATS: Record<PartKey, [string, string][]> = {
@@ -13,7 +14,8 @@ export const CATS: Record<PartKey, [string, string][]> = {
   sweet: [["Ít ngọt", "#FFF7E3"], ["Vừa", "#FFE3A0"], ["Ngọt lịm", "#FFC94D"]]
 };
 
-export interface Recipe { id: string; n: string; base: number; cream: number; top: number; lv: number; price: number }
+/** base/cream là tầng dưới cùng, `up` là các tầng trên (bánh tuỳ chỉnh nhiều tầng), top là topping trên cùng */
+export interface Recipe { id: string; n: string; base: number; cream: number; top: number; lv: number; price: number; up?: [number, number][]; custom?: boolean }
 const BASIC_RECIPES: Recipe[] = ([
   // tên = Đế + Kem + Topping, đọc tên là biết bánh gồm gì
   ["Bông lan Matcha Dâu tây", 0, 0, 0], ["Mochi Kem dâu Dâu tây", 2, 1, 0], ["Tart Vani Hạt dẻ", 1, 2, 2],
@@ -166,3 +168,26 @@ export const STAFF: StaffDef[] = [
   { id: "gold", role: "Thợ bánh", unlock: 3, train: [150, 350], effect: BAKE_TEXT },
   { id: "white", role: "Thợ bánh", unlock: 4, train: [150, 350], effect: BAKE_TEXT }
 ];
+
+/* ===== Bánh tuỳ chỉnh nhiều tầng =====
+   Người chơi tự ghép tối đa MAX_CUSTOM mẫu (đặt tên). Mỗi tầng = một đế + một kem, topping chỉ ở trên cùng.
+   Giá bán = (tổng giá trị các tầng + topping) × (1 + 10% mỗi tầng thêm). Làm tay thì được thưởng thêm, bé thợ bánh làm chậm hơn theo số tầng. */
+export const MAX_CUSTOM = 3;
+export const CUSTOM_LV = 5;                       // mở mục bánh tuỳ chỉnh (1 tầng)
+export const TIER_LV = [CUSTOM_LV, 10, 20];       // cấp mở 1, 2, 3 tầng
+export const TIER_PRICE_BONUS = 0.1;              // giá +10% cho mỗi tầng thêm
+export const TIER_HAND_BONUS = 0.2;               // tự làm tay: thưởng thêm 20% giá cho mỗi tầng thêm
+export const TIER_BAKE_SLOW = 0.5;                // bé thợ bánh: thời gian làm +50% cho mỗi tầng thêm
+export const PART_VALUE_MULT = 3.2;               // giá trị một phần nguyên liệu = giá nhập × hệ số này
+export interface CustomCake { id: string; n: string; tiers: [number, number][]; top: number }
+export const tiersOf = (r: { up?: unknown[] }) => 1 + (r.up?.length ?? 0);
+/** mọi phần nguyên liệu của một công thức (đếm trùng: hai tầng cùng đế thì đế xuất hiện hai lần) */
+export const partsOfRecipe = (r: { base: number; cream: number; top: number; up?: [number, number][] }): { k: StockKey; i: number }[] => [
+  { k: "base", i: r.base }, { k: "cream", i: r.cream }, ...(r.up ?? []).flatMap(([b, c]) => [{ k: "base" as StockKey, i: b }, { k: "cream" as StockKey, i: c }]), { k: "top", i: r.top }
+];
+const partValue = (k: StockKey, i: number) => Math.round(UNIT_COST[k][i] * PART_VALUE_MULT);
+export const customCost = (tiers: [number, number][], top: number) => partsOfRecipe({ base: tiers[0][0], cream: tiers[0][1], top, up: tiers.slice(1) }).reduce((a, p) => a + UNIT_COST[p.k][p.i], 0);
+export const customValue = (tiers: [number, number][], top: number) => partsOfRecipe({ base: tiers[0][0], cream: tiers[0][1], top, up: tiers.slice(1) }).reduce((a, p) => a + partValue(p.k, p.i), 0);
+export const customMult = (n: number) => 1 + TIER_PRICE_BONUS * (n - 1);
+export const customPrice = (tiers: [number, number][], top: number) => Math.round(customValue(tiers, top) * customMult(tiers.length));
+export const customRecipe = (c: CustomCake): Recipe => ({ id: c.id, n: c.n, base: c.tiers[0][0], cream: c.tiers[0][1], top: c.top, up: c.tiers.slice(1), lv: 1, price: customPrice(c.tiers, c.top), custom: true });

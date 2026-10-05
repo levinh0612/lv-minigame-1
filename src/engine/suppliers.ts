@@ -1,6 +1,6 @@
 /* Nhà cung cấp: nguyên liệu mới (Croissant, Socola, Việt quất…) chỉ dùng được sau khi ký hợp đồng với nhà cung cấp của nó.
    Một món bánh chỉ bán được khi ĐỦ HAI điều kiện: có công thức (lên cấp hoặc Gacha) và có đủ nguyên liệu (đã ký nhà cung cấp). */
-import { CATS, HOME_SUPPLIER, ING_SUPPLIER, STOCK_KEYS, SUPPLIERS, type StockKey, type Supplier } from "../content/game";
+import { CATS, HOME_SUPPLIER, ING_SUPPLIER, STOCK_KEYS, SUPPLIERS, partsOfRecipe, type StockKey, type Supplier } from "../content/game";
 import { S, save } from "./state";
 import { spend } from "./wallet";
 
@@ -10,7 +10,7 @@ export const ingAvailable = (k: StockKey, i: number) => isSigned(supplierOf(k, i
 /** các chỉ số nguyên liệu đã dùng được của một loại (đã ký nhà cung cấp) */
 export const availableIdx = (k: StockKey) => CATS[k].map((_, i) => i).filter(i => ingAvailable(k, i));
 /** công thức có đủ nguyên liệu để làm không */
-export const recipeReady = (r: { base: number; cream: number; top: number }) => STOCK_KEYS.every(k => ingAvailable(k, r[k]));
+export const recipeReady = (r: { base: number; cream: number; top: number; up?: [number, number][] }) => partsOfRecipe(r).every(p => ingAvailable(p.k, p.i));
 /** nguyên liệu của một nhà cung cấp, theo chỉ số */
 export const ingsOf = (id: string) => STOCK_KEYS.flatMap(k => CATS[k].map((_, i) => ({ k, i })).filter(x => supplierOf(x.k, x.i) === id));
 /** nhà cung cấp đang thiếu gì để ký: "done" đã ký, "lv" chưa đủ cấp, "coin" chưa đủ xu, "ok" ký được */

@@ -1,5 +1,5 @@
 /* Cấp, mục tiêu ngày, hiệu ứng đồ trang trí */
-import { RECIPES, type FxKey, type StockKey } from "../content/game";
+import { RECIPES, customRecipe, partsOfRecipe, type FxKey, type Recipe, type StockKey } from "../content/game";
 import type { GachaItem } from "../content/gacha";
 import { ROOM_CATS, isDefault, roomItem, type RoomItem } from "../content/room";
 import { daysTogether } from "./dates";
@@ -10,10 +10,12 @@ import { DAY, today, ymd } from "./util";
 
 export const xpFor = (L: number) => 40 * (L - 1) * (L - 1);
 export const lvl = () => Math.min(99, Math.floor(Math.sqrt(S.xp / 40)) + 1);
-/* món đang bán: đủ cấp (hoặc đã có công thức Gacha) VÀ đủ nguyên liệu (đã ký nhà cung cấp) */
-export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeReady(r)), ...specialRecipes()];
+/* bánh tuỳ chỉnh đã lưu của người chơi (đủ nguyên liệu mới bán được) */
+export const customRecipes = (): Recipe[] => S.custom.map(customRecipe);
+/* món đang bán: đủ cấp (hoặc đã có công thức Gacha) VÀ đủ nguyên liệu (đã ký nhà cung cấp); bánh tuỳ chỉnh đứng trước món Gacha */
+export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeReady(r)), ...customRecipes().filter(recipeReady), ...specialRecipes()];
 /** chỉ số nguyên liệu mà các món đang bán dùng tới (màn làm bánh và kho giữa ca chỉ hiện những món này) */
-export const usedIdx = (k: StockKey) => [...new Set(unlocked().map(r => r[k]))].sort((a, b) => a - b);
+export const usedIdx = (k: StockKey) => [...new Set(unlocked().flatMap(r => partsOfRecipe(r).filter(p => p.k === k).map(p => p.i)))].sort((a, b) => a - b);
 export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k);
 /* Buff đang có đến từ đâu: quản lý và linh thú từng tầng, đồ trang trí. Cộng các dòng lại đúng bằng fx(k). */
 export interface BuffRow { src: "mgr" | "mascot" | "decor"; name: string; sub: string; fx: Partial<Record<FxKey, number>>; item?: GachaItem; decor?: RoomItem }

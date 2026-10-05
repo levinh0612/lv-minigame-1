@@ -5,19 +5,19 @@ import { itemImg } from "../../content/gacha";
 import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
-import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, type PartKey, type StockKey } from "../../content/game";
+import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
 import { daysTogether } from "../../engine/dates";
 import { usedIdx } from "../../engine/progress";
 import { REFILL, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
-  beginShift, emptyBuild, finishShift, goalDone, goalProgress, goalText, isComplete, isOver, ledger, matches, mineIdx, needOf, peek, release, remaining, serve, summary, take, tick,
+  beginShift, buildPicked, buildTotal, finishShift, freshBuild, goalDone, goalProgress, goalText, isComplete, isOver, ledger, matches, mineIdx, needAt, needOf, partAt, partsOfBuild, peek, release, remaining, serve, setPartAt, summary, take, tick,
   COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { cakeSVG, charSVG, petSVG, ingSVG } from "../art";
+import { cakeAnySVG, charSVG, petSVG, ingSVG } from "../art";
 import { $, bump, coinPill, dropModal, esc, floatText, haptic, hasModal, modal, toast } from "../dom";
 import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
@@ -166,7 +166,9 @@ function updateBaking() {
 
 /* ================= HTML thuần ================= */
 const faceSize = (sh: Shift) => ({ 3: 70, 4: 60, 5: 52, 6: 46 } as Record<number, number>)[Math.min(6, sh.seats.length)] ?? 46;
-const cakeOf = (c: Customer, size: number) => cakeSVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, sweet: c.sweet }, { size, still: true });
+const cakeOf = (c: Customer, size: number) => cakeAnySVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, up: c.r.up, sweet: c.sweet }, { size, still: true });
+/* tầng đang chọn nguyên liệu (chỉ khác 0 với bánh nhiều tầng) */
+let curTier = 0;
 const LV_BADGE = `<svg width="44" height="44" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 1 L28 5.5 L34.5 4 L36.5 10.5 L42.5 13 L41 19.5 L45 25 L40 29.5 L40.5 36 L34 37 L30.5 43 L24.5 40.5 L18 43 L15 37 L8.5 36 L9 29.5 L4 25 L8 19.5 L6.5 13 L12.5 10.5 L14.5 4 L21 5.5 Z" fill="#FF7FA1" stroke="#E0567A" stroke-width="2" stroke-linejoin="round"/><circle cx="23" cy="23" r="13.5" fill="#FFF3F6"/></svg>`;
 const BOX = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4A3438" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8 L12 3.5 L21 8 V17 L12 21.5 L3 17 Z" fill="#F6D59A"/><path d="M3 8 L12 12.5 L21 8 M12 12.5 V21.5"/><path d="M7.5 5.8 L16.5 10.3" stroke-width="1.8"/></svg>`;
 const CHEV = (up: boolean) => `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="${up ? "M3 9 L7 5 L11 9" : "M3 5 L7 9 L11 5"}" stroke="#C07A8C" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -205,14 +207,22 @@ export function crewHTML(sh: Shift) {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
-    const cake = b && c ? `<span class="cmk">${cakeSVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
+    const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
     return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${petSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}${staffChip()}</div>`;
 }
-/* bánh bé đang làm tới đâu: đế → kem → topping → độ ngọt theo phần trăm */
+/* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
 const bakerBuild = (c: Customer, pct: number) => {
-  const n = needOf(c), step = Math.min(4, Math.floor(pct / 25) + (pct >= 100 ? 0 : 1));
-  return { base: step >= 1 ? n.base : null, cream: step >= 2 ? n.cream : null, top: step >= 3 ? n.top : null, sweet: step >= 4 ? n.sweet : null };
+  const n = tiersOf(c.r), N = 2 * n + 2, step = Math.min(N, Math.floor(pct / (100 / N)) + (pct >= 100 ? 0 : 1));
+  const seq = [c.r.base, c.r.cream, ...(c.r.up ?? []).flat(), c.r.top, c.sweet], get = (j: number) => (step > j ? seq[j] : null);
+  return { base: get(0), cream: get(1), up: (c.r.up ?? []).map((_, t) => [get(2 + 2 * t), get(3 + 2 * t)] as [number | null, number | null]), top: get(2 + 2 * (n - 1)), sweet: get(N - 1) };
+};
+/* các bước bé làm bánh, theo thứ tự (để hiện trong cửa sổ xem bé làm) */
+const bakeSteps = (c: Customer) => {
+  const n = tiersOf(c.r), multi = n > 1, st: { k: PartKey; i: number; label: string }[] = [];
+  for (let t = 0; t < n; t++) { st.push({ k: "base", i: needAt(c.r, t, "base"), label: multi ? `Đế ${t + 1}` : LABELS.base }, { k: "cream", i: needAt(c.r, t, "cream"), label: multi ? `Kem ${t + 1}` : LABELS.cream }); }
+  st.push({ k: "top", i: c.r.top, label: LABELS.top }, { k: "sweet", i: c.sweet, label: LABELS.sweet });
+  return st;
 };
 /* chạm vào thẻ thợ bánh: xem quá trình bé làm bánh (cập nhật trực tiếp) */
 let watchT = 0;
@@ -222,11 +232,11 @@ export function watchBaker(id: PetId) {
     const sh = SH, box = $("#watch"); if (!sh || !box) { clearInterval(watchT); return; }
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null;
     if (!b || !c) { box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: sh.lack[id] ? "impatient" : "open" }, 90)}</div><p class="sub">${sh.lack[id] ? `${esc(petName(id))} đang chờ vì thiếu ${esc(sh.lack[id]!)}. Nhập thêm ở nút hộp trên cùng nha.` : `${esc(petName(id))} đang nghỉ, có khách là bé nhận đơn ngay.`}</p>`; return; }
-    const pct = Math.min(100, Math.round(b.done / b.need * 100)), n = needOf(c), step = Math.min(4, Math.floor(pct / 25));
-    box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: "happy", ledge: false }, 70)}<div class="wcake">${cakeSVG(bakerBuild(c, pct), { size: 130 })}</div></div>
+    const pct = Math.min(100, Math.round(b.done / b.need * 100)), steps = bakeSteps(c), step = Math.min(steps.length, Math.floor(pct / (100 / steps.length)));
+    box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: "happy", ledge: false }, 70)}<div class="wcake">${cakeAnySVG(bakerBuild(c, pct), { size: 130 })}</div></div>
       <p class="sub">Đang làm <b>${esc(c.r.n)}</b> · ${CATS.sweet[c.sweet][0]} cho <b>${esc(c.who)}</b></p>
       <div class="wbar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
-      <div class="wsteps">${KEYS.map((k, i) => `<div class="${i < step ? "ok" : i === step ? "now" : ""}">${ingSVG(k, n[k], 26)}<small>${LABELS[k]}</small><b>${CATS[k][n[k]][0]}</b><em>${i < step ? "✓" : i === step ? "…" : ""}</em></div>`).join("")}</div>`;
+      <div class="wsteps ${steps.length > 4 ? "many" : ""}" style="--n:${steps.length}">${steps.map((x, i) => `<div class="${i < step ? "ok" : i === step ? "now" : ""}">${ingSVG(x.k, x.i, 26)}<small>${x.label}</small><b>${CATS[x.k][x.i][0]}</b><em>${i < step ? "✓" : i === step ? "…" : ""}</em></div>`).join("")}</div>`;
   };
   modal(`<h2>${esc(petName(id))} làm bánh</h2><div id="watch"></div><div class="mbtns"><button class="b3" data-close>Xong</button></div>`, () => clearInterval(watchT));
   draw(); clearInterval(watchT); watchT = window.setInterval(draw, 250);
@@ -250,8 +260,9 @@ function idleHTML(sh: Shift) {
 
 /* nút nguyên liệu: icon + tên + số trong kho; đúng/sai chỉ hiện khi đã xem công thức */
 function ingState(sh: Shift, k: PartKey, i: number) {
-  const b = sh.build, m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null, n = c && sh.peek ? needOf(c) : null;
-  const on = b[k] === i, st = !on ? "" : !n ? "on" : n[k] === i ? "ok" : "bad";
+  const b = sh.build, m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null, tp = k === "base" || k === "cream";
+  const have = tp ? partAt(b, curTier, k) : b[k], need = c && sh.peek ? (tp ? needAt(c.r, Math.min(curTier, tiersOf(c.r) - 1), k) : needOf(c)[k]) : null;
+  const on = have === i, st = !on ? "" : need == null ? "on" : need === i ? "ok" : "bad";
   const q = k === "sweet" ? -1 : stockOf(k as StockKey, i), out = q === 0 && !on;
   return { cls: "ing" + (st ? " " + st : "") + (out ? " out" : ""), q, out, low: q >= 0 && q <= 2 };
 }
@@ -260,7 +271,13 @@ const ingHTML = (sh: Shift, k: PartKey, i: number) => {
   return `<button class="${s.cls}" data-ing="${k}:${i}">${ingSVG(k, i, 24, s.out)}<span class="cn">${CATS[k][i][0]}</span>${
     s.out ? `<em class="tag">+${quickPrice(k as StockKey, i)} xu</em>` : s.q > 0 ? `<b class="q ${s.low ? "low" : ""}">${s.q}</b>` : ""}${s.cls.includes(" ok") ? `<em class="ck">${TICK}</em>` : ""}</button>`;
 };
-export const rowsHTML = (sh: Shift) => KEYS.map(k => {
+/* thanh chọn tầng (chỉ hiện khi đơn là bánh nhiều tầng): mỗi tầng chọn Đế và Kem, tầng nào đủ thì có dấu ✓ */
+const tiersHTML = (sh: Shift) => {
+  const n = 1 + (sh.build.up?.length ?? 0); if (n < 2) return "";
+  return `<div class="tiers5" role="tablist">${Array.from({ length: n }, (_, t) => { const done = partAt(sh.build, t, "base") != null && partAt(sh.build, t, "cream") != null;
+    return `<button class="${t === curTier ? "on" : ""} ${done ? "done" : ""}" data-tier="${t}" role="tab" aria-selected="${t === curTier}">Tầng ${t + 1}${done ? " ✓" : ""}</button>`; }).join("")}</div>`;
+};
+export const rowsHTML = (sh: Shift) => tiersHTML(sh) + KEYS.map(k => {
   const list = k === "sweet" ? [0, 1, 2] : usedIdx(k);        // chỉ hiện nguyên liệu mà các món đang bán dùng; hơn 3 món thì xếp gọn thành 4-5 cột
   return `<div class="irow"><span>${LABELS[k]}</span><div class="g3${list.length > 3 ? " many" : ""}" style="--n:${list.length}">${list.map(i => ingHTML(sh, k, i)).join("")}</div></div>`;
 }).join("");
@@ -268,18 +285,21 @@ export const rowsHTML = (sh: Shift) => KEYS.map(k => {
 /* phần đầu phiếu: Đơn của ai, tên bánh, Xem công thức hoặc các nguyên liệu */
 function oinfoHTML(sh: Shift) {
   const m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null; if (!c) return "";
-  const n = needOf(c), b = sh.build;
-  const chips = KEYS.map(k => `<span class="${b[k] === n[k] ? "ok" : ""}">${ingSVG(k, n[k], 18)}${CATS[k][n[k]][0]}</span>`).join("");
+  const n = needOf(c), b = sh.build, nt = tiersOf(c.r);
+  // bánh nhiều tầng có nhiều món nên chỉ hiện biểu tượng cho gọn (tên nằm ở nút chọn bên dưới)
+  const chip = (k: PartKey, need: number, have: number | null) => `<span class="${have === need ? "ok" : ""}" title="${CATS[k][need][0]}">${ingSVG(k, need, 18)}${nt > 1 ? "" : CATS[k][need][0]}</span>`;
+  const tierChips = Array.from({ length: nt }, (_, t) => `${nt > 1 ? `<em class="tl">T${t + 1}</em>` : ""}${chip("base", needAt(c.r, t, "base"), partAt(b, t, "base"))}${chip("cream", needAt(c.r, t, "cream"), partAt(b, t, "cream"))}`).join("");
+  const chips = `${tierChips}${chip("top", n.top, b.top)}${chip("sweet", n.sweet, b.sweet)}`;
   return `<div class="or1"><small>Đơn của ${esc(c.who)}</small>${toggleHTML()}<button class="x" data-act="sheet" aria-label="Thu phiếu xuống">${CHEV(false)}</button></div>
     <b class="rn">${esc(c.r.n)}</b>
     <span class="swl">${ingSVG("sweet", c.sweet, 18)}${CATS.sweet[c.sweet][0]}</span>
     ${sh.peek ? `<div class="chips">${chips}</div>` : `<div class="peekrow"><button class="peek" data-act="peek">Xem công thức</button><span class="bonus">Tự nhớ<br>+50% thưởng</span></div>`}`;
 }
-const picked = (sh: Shift) => KEYS.filter(k => sh.build[k] != null).length;
-const giveLabel = (sh: Shift) => isComplete(sh.build) ? (sh.peek ? "Giao bánh" : "Giao bánh · +50%") : `Chọn đủ 4 món (${picked(sh)}/4)`;
+const picked = (sh: Shift) => buildPicked(sh.build);
+const giveLabel = (sh: Shift) => isComplete(sh.build) ? (sh.peek ? "Giao bánh" : "Giao bánh · +50%") : `Chọn đủ ${buildTotal(sh.build)} món (${picked(sh)}/${buildTotal(sh.build)})`;
 function miniHTML(sh: Shift) {
   const m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null; if (!c) return "";
-  return `<span class="mc">${cakeSVG(sh.build, { size: 46, still: true })}</span><span class="mt"><b>Đang làm cho ${esc(c.who)}</b><small>${picked(sh)}/4 món · chạm để mở</small></span>${CHEV(true)}`;
+  return `<span class="mc">${cakeAnySVG(sh.build, { size: 46, still: true })}</span><span class="mt"><b>Đang làm cho ${esc(c.who)}</b><small>${picked(sh)}/${buildTotal(sh.build)} món · chạm để mở</small></span>${CHEV(true)}`;
 }
 
 /* thanh combo: số bánh Hoàn hảo liên tiếp và thưởng đã dồn (trả lúc hết ca) */
@@ -293,7 +313,7 @@ const renderCombo = () => { const b = $("#comboBox"); if (b && SH) b.innerHTML =
 /* khi phiếu mở: bàn làm bánh lớn lấp phần trống giữa hàng bé và phiếu (không lộ đơn khách để giữ thưởng Tự nhớ) */
 function stageBig(sh: Shift) {
   const size = Math.max(64, Math.min(150, stageFree - 26));
-  return `<div class="plate big">${cakeSVG(sh.build, { size, drop: stageDrop })}<small>${picked(sh) === 4 ? "Đủ rồi, giao bánh nào!" : `Bánh đang làm · ${picked(sh)}/4 món`}</small></div>`;
+  return `<div class="plate big">${cakeAnySVG(sh.build, { size, drop: stageDrop })}<small>${picked(sh) === buildTotal(sh.build) ? "Đủ rồi, giao bánh nào!" : `Bánh đang làm · ${picked(sh)}/${buildTotal(sh.build)} món`}</small></div>`;
 }
 function fitStage() {
   const root = $("#play"), st = $("#stage"), sheet = $("#osheet"), crew = $("#crewBox"); if (!root || !st || !sheet || !crew || !SH) return;
@@ -307,7 +327,7 @@ function fitStage() {
 /* thu gọn phiếu: quầy hiện bánh đang ghép cạnh đơn khách gọi (không để trống) */
 function stageHTML(sh: Shift) {
   const m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null; if (!c) return "";
-  return `<div class="plate">${cakeSVG(sh.build, { size: 140 })}<small>Bánh đang làm · ${picked(sh)}/4 món</small></div>
+  return `<div class="plate">${cakeAnySVG(sh.build, { size: 140 })}<small>Bánh đang làm · ${picked(sh)}/${buildTotal(sh.build)} món</small></div>
     <div class="want"><small>${esc(c.who)} gọi</small>${cakeOf(c, 78)}<span class="swl">${ingSVG("sweet", c.sweet, 18)}${CATS.sweet[c.sweet][0]}</span></div>
     <button class="b3 w" data-act="sheet">Chọn nguyên liệu</button>`;
 }
@@ -347,7 +367,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     <div class="queue" style="--n:${Math.min(6, sh.seats.length)}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
-      <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeSVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
+      <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeAnySVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
       <div class="rows" id="rows">${rowsHTML(sh)}</div>
       <button class="b3 give ${isComplete(sh.build) ? "" : "off"}" id="give" data-act="serve">${giveLabel(sh)}</button>
     </div>
@@ -380,6 +400,7 @@ const renderCrew = () => { const b = $("#crewBox"); if (b && SH) b.innerHTML = c
 /* phiếu order + đánh dấu khách của mình + nút nguyên liệu */
 export function renderTicket() {
   const root = $("#play"); if (!SH || !root) return;
+  syncBuild();
   const m = mineIdx(SH);
   root.classList.toggle("has", m >= 0); root.classList.toggle("free", m < 0); root.classList.toggle("up", m >= 0 && sheetOpen);
   /* chỉ vẽ lại khi nội dung đổi: thay DOM giữa lúc ngón tay đang chạm làm mất cú bấm */
@@ -397,7 +418,7 @@ export function renderTicket() {
 }
 function renderBuild(done = false) {
   if (!SH) return;
-  $("#cake")!.innerHTML = cakeSVG(SH.build, { size: 82, done, drop });
+  $("#cake")!.innerHTML = cakeAnySVG(SH.build, { size: 82, done, drop });
   stageDrop = drop; drop = null;
   renderTicket(); stageDrop = null;
 }
@@ -456,38 +477,57 @@ export function doRefill() {
 export function pickIngredient(k: PartKey, i: number) {
   if (!SH) return;
   if (mineIdx(SH) < 0) { sfx("untap"); return toast("Chạm vào một khách để nhận đơn trước nha"); }
-  const add = SH.build[k] !== i;
-  if (add && k !== "sweet" && stockOf(k, i) <= 0) {
+  syncBuild();
+  const tp = k === "base" || k === "cream", cur = tp ? partAt(SH.build, curTier, k) : SH.build[k], add = cur !== i;
+  // hết hàng thì nhập nhanh; bánh nhiều tầng có thể dùng cùng một nguyên liệu nhiều lần nên trừ phần đã chọn
+  const used = k === "sweet" ? 0 : partsOfBuild(SH.build).filter(p => p.k === k && p.i === i).length;
+  if (add && k !== "sweet" && stockOf(k, i) - used <= 0) {
     const p = quickPrice(k, i);
     if (!quickBuy(k, i)) { sfx("wrong"); haptic(40); return toast(`Hết ${CATS[k][i][0]} và không đủ ${p} xu để nhập nhanh`); }
     SH.quickCost += p; refreshCoins(); toast(`Nhập nhanh 1 ${CATS[k][i][0]} · ${p} xu`);
   }
-  SH.build[k] = add ? i : null; drop = add && k !== "sweet" ? k : null;
+  if (tp) setPartAt(SH.build, curTier, k, add ? i : null); else SH.build[k] = add ? i : null;
+  drop = add && k !== "sweet" ? k : null;
+  // chọn đủ Đế và Kem của tầng này mà còn tầng sau chưa đủ thì tự sang tầng kế
+  const nt = 1 + (SH.build.up?.length ?? 0);
+  if (add && tp && curTier < nt - 1 && partAt(SH.build, curTier, "base") != null && partAt(SH.build, curTier, "cream") != null) curTier++;
   renderBuild(); sfx(add ? "tap" : "untap"); haptic(8);
-  // chọn đúng đủ 4 món thì tự giao, khỏi bấm nút
+  // chọn đúng đủ các món thì tự giao, khỏi bấm nút
   const m = mineIdx(SH);
   if (m >= 0 && matches(SH.seats[m], SH.build)) { const sh = SH; setTimeout(() => { if (SH === sh && mineIdx(sh) === m && matches(sh.seats[m], sh.build)) doServe(); }, 350); }
 }
+/* đổi tầng đang chọn nguyên liệu */
+export function setTier(t: number) { if (!SH) return; syncBuild(); curTier = Math.max(0, Math.min(t, (SH.build.up?.length ?? 0))); renderTicket(); sfx("tap"); }
+/* phiếu luôn có đúng số tầng của đơn đang giữ (đơn mới được tự gán giữa chừng có thể khác số tầng) */
+function syncBuild() {
+  if (!SH) return;
+  const m = mineIdx(SH); if (m < 0) return;
+  const want = tiersOf(SH.seats[m]!.r) - 1, up = (SH.build.up ??= []);
+  while (up.length < want) up.push([null, null]);
+  if (up.length > want) up.length = want;
+  curTier = Math.min(curTier, want);
+}
+const resetBuild = () => { if (!SH) return; SH.build = freshBuild(SH); curTier = 0; };
 /* chạm vào khách: nhận đơn đó (đơn các bé đã nhận thì không được) */
 export function selectSeat(i: number) {
   if (!SH) return;
   const c = SH.seats[i];
   if (c?.by) { sfx("untap"); return toast(`${petName(c.by)} đang làm đơn này rồi`); }
   if (mineIdx(SH) === i) return setSheet(true);
-  if (take(SH, i)) { SH.build = emptyBuild(); sheetOpen = true; renderBuild(); sfx("click"); }
+  if (take(SH, i)) { resetBuild(); sheetOpen = true; renderBuild(); sfx("click"); }
 }
 export function doPeek() { if (!SH || mineIdx(SH) < 0) return; peek(SH); renderTicket(); sfx("tap"); }
 export function toggleAuto() {
   S.autoTake = !S.autoTake; save();
   // tắt tự nhận đơn: trả đơn đang giữ để các bé làm luôn
-  if (SH && !S.autoTake && mineIdx(SH) >= 0) { release(SH); SH.build = emptyBuild(); renderBuild(); }
+  if (SH && !S.autoTake && mineIdx(SH) >= 0) { release(SH); resetBuild(); renderBuild(); }
   if (SH) renderTicket();
   toast(S.autoTake ? "Tự nhận đơn: bật. Làm xong sẽ được gán đơn mới" : "Rảnh tay: các bé nhận hết, chạm vào khách để tự làm");
 }
 
 export function doServe() {
   if (!SH) return;
-  if (!isComplete(SH.build)) { sfx("untap"); return toast(`Chọn đủ Đế, Kem, Topping và Độ ngọt nha (${picked(SH)}/4)`); }
+  if (!isComplete(SH.build)) { sfx("untap"); return toast(`Chọn đủ ${buildTotal(SH.build)} món nha (${picked(SH)}/${buildTotal(SH.build)})`); }
   const res = serve(SH);
   if (!res.ok) { sfx("wrong"); haptic([60, 40, 60]); renderTicket(); bump($("#cake"), "shake"); return toast(res.broke !== undefined ? `${res.msg} · đứt combo, mất ${fmtN(res.broke)} xu thưởng dồn` : res.msg); }
   showServed(res);
@@ -495,22 +535,23 @@ export function doServe() {
   renderCombo();
   renderBuild(true);
   if (res.bonus) toast(`Nhớ công thức giỏi quá! +${res.bonus} xu thưởng`);
+  if (res.tierBonus) toast(`Bánh ${tiersOf(res.c.r)} tầng tự tay làm! +${res.tierBonus} xu thưởng`);
   const sh = SH;
-  setTimeout(() => { if (SH !== sh) return; sh.build = emptyBuild(); if (mineIdx(sh) >= 0) sheetOpen = true; renderBuild(); }, 900);
+  setTimeout(() => { if (SH !== sh) return; resetBuild(); if (mineIdx(sh) >= 0) sheetOpen = true; renderBuild(); }, 900);
 }
 
 /* hiệu ứng giao bánh (chủ tiệm hoặc bé thợ bánh): bong bóng thành xu, khách thả tim, bắn tim */
 function showServed(res: Extract<ServeResult, { ok: true }>, by?: PetId) {
-  const { idx, c, price, tip, bonus } = res, v = views[idx];
+  const { idx, c, price, tip, bonus, tierBonus } = res, v = views[idx];
   if (!v || !SH) return;
-  v.el.querySelector(".bub")!.outerHTML = `<div class="bub ok">+${price + tip + bonus}<small>${by ? esc(petName(by)) : "xu"}</small></div>`;
+  v.el.querySelector(".bub")!.outerHTML = `<div class="bub ok">+${price + tip + bonus + tierBonus}<small>${by ? esc(petName(by)) : "xu"}</small></div>`;
   v.art.innerHTML = charSVG(c.look, "love", faceSize(SH));
   v.el.classList.remove("low", "taken", "mine");
   v.el.querySelector(".burst")!.innerHTML = Array.from({ length: 14 }, (_, i) => {
     const a = i / 14 * Math.PI * 2, d = 45 + (i % 3) * 18;
     return `<i style="font-size:${13 + (i % 3) * 6}px;color:${["#FF8FAB", "#FFC94D", "#8FD9B6"][i % 3]};--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px">${i % 2 ? "♥︎" : "✦"}</i>`;
   }).join("");
-  const r = v.el.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + 40, "+" + (price + tip + bonus));
+  const r = v.el.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + 40, "+" + (price + tip + bonus + tierBonus));
   sfx("coin"); haptic(by ? 10 : 25); refreshCoins();
   if (by) { renderCrew(); bump($(`[data-crew="${by}"]`), "squish"); }
   const L = lvl(); $("#xpBar")!.style.width = Math.min(100, (S.xp - xpFor(L)) / (xpFor(L + 1) - xpFor(L)) * 100) + "%";
@@ -583,7 +624,7 @@ export function resultHTML(r: Result | null = result) {
       <div class="rbanner"><span>Lãi ca này</span><b class="${led.profit >= 0 ? "p" : "m"}">${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b><small>${done}/${sh.goals.length} mục tiêu${sh.goalCoins ? ` · +${fmtN(sh.goalCoins)} xu thưởng` : ""}${sh.ticket ? " · 🎟 +1 vé" : ""}${sh.bestCombo >= 3 ? ` · 🔥 ×${sh.bestCombo}` : ""}</small></div>
       <div class="kp"><div class="k1"><b>${sh.served}/${total}</b><small>Khách vui</small></div><div class="k2"><b>${sh.memo}</b><small>Tự nhớ công thức</small></div><div class="k3"><b>${sh.helped}</b><small>Bé làm hộ</small></div></div>
       <div class="ledger"><h4>Sổ lãi hôm nay</h4>
-        ${row("Tiền bánh", sh.coins, true)}${row("Tip", sh.tips, true)}${row("Thưởng tự nhớ (+50%)", sh.bonus, true)}${row(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true)}
+        ${row("Tiền bánh", sh.coins, true)}${row("Tip", sh.tips, true)}${row("Thưởng tự nhớ (+50%)", sh.bonus, true)}${sh.tierBonus ? row("Thưởng bánh nhiều tầng", sh.tierBonus, true) : ""}${row(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true)}
         ${row("Nhập nguyên liệu", led.ingUsed + led.quick, false)}${row("Lương các bé", led.wages, false)}
         <div class="lg tot ${led.profit >= 0 ? "" : "neg"}"><span>Lãi</span><b>${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b></div>
       </div>
