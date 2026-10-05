@@ -6,7 +6,7 @@ import { charSVG } from "../art";
 import { backBtn, coinPill, esc } from "../dom";
 
 export const goalsList = () => goals().map(g => { const done = g.cur >= g.need;
-  return `<div class="g3 ${done ? "done" : ""}"><span class="ck">${done ? "✓" : ""}</span><span class="tx">${esc(g.t)}</span><span class="nv">${
+  return `<div class="goal5 ${done ? "done" : ""}"><span class="ck">${done ? "✓" : ""}</span><span class="tx">${esc(g.t)}</span><span class="nv">${
     g.bool ? (g.fail ? '<span style="color:var(--red)">có khách giận</span>' : done ? "✓" : "") : `${Math.min(g.cur, g.need)}/${g.need}`}</span>${
     g.bool ? "" : `<span class="pb"><i style="width:${Math.min(100, g.cur / g.need * 100)}%"></i></span>`}</div>`; }).join("");
 

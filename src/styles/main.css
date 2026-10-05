@@ -1610,17 +1610,17 @@ button.cm{position:relative}
 .lvrow5 .tr{flex:1;height:10px;border-radius:5px;background:var(--bg);overflow:hidden}
 .lvrow5 .tr i{display:block;height:100%;background:var(--pink);border-radius:5px}
 .lvrow5 small{font:800 12px var(--body);color:var(--soft);font-variant-numeric:tabular-nums}
-.g3{display:grid;grid-template-columns:26px 1fr auto;gap:5px 10px;align-items:center;padding:11px 0;border-top:2px solid var(--bg)}
-.g3:first-child{border-top:0;padding-top:2px}
-.g3 .ck{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--pink-b);display:grid;place-items:center;font:900 14px Arial,sans-serif;color:#fff}
-.g3.done .ck{background:var(--mint);border-color:var(--mint)}
-.g3 .tx{font:800 14px/1.25 var(--body);color:var(--ink2);text-align:left}
-.g3 .nv{font:800 13px var(--body);color:var(--soft);font-variant-numeric:tabular-nums}
-.g3.done .nv{color:var(--mint-d)}
-.g3 .pb{grid-column:2/4;height:6px;border-radius:3px;background:var(--bg);overflow:hidden}
-.g3 .pb i{display:block;height:100%;background:var(--mint-d);border-radius:3px}
+.goal5{display:grid;grid-template-columns:26px 1fr auto;gap:5px 10px;align-items:center;padding:11px 0;border-top:2px solid var(--bg)}
+.goal5:first-child{border-top:0;padding-top:2px}
+.goal5 .ck{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--pink-b);display:grid;place-items:center;font:900 14px Arial,sans-serif;color:#fff}
+.goal5.done .ck{background:var(--mint);border-color:var(--mint)}
+.goal5 .tx{font:800 14px/1.25 var(--body);color:var(--ink2);text-align:left}
+.goal5 .nv{font:800 13px var(--body);color:var(--soft);font-variant-numeric:tabular-nums}
+.goal5.done .nv{color:var(--mint-d)}
+.goal5 .pb{grid-column:2/4;height:6px;border-radius:3px;background:var(--bg);overflow:hidden}
+.goal5 .pb i{display:block;height:100%;background:var(--mint-d);border-radius:3px}
 .card h3 .tg3{font:800 12px var(--body);color:var(--mint-d);background:var(--mint-bg);border-radius:10px;padding:2px 9px}
-.lvrow5 .tr,.g3 .pb{background:color-mix(in srgb,var(--pink) 16%,#fff)}
+.lvrow5 .tr,.goal5 .pb{background:color-mix(in srgb,var(--pink) 16%,#fff)}
 .pf-sw5s{grid-template-columns:repeat(6,1fr)}
 .pf-sw5 i{width:42px;height:42px}
 .pf-sw5 span{font-size:11px}
@@ -1659,3 +1659,27 @@ button.cm{position:relative}
 .rc5.star{border-color:var(--gold)}
 .rc5 .rstar{position:absolute;top:6px;left:7px;font:900 9.5px var(--body);font-style:normal;color:#8A5A00;background:#FFF0C9;border-radius:8px;padding:1px 6px}
 .rc5 .rar{position:absolute;top:6px;left:7px;font:900 9.5px var(--body);font-style:normal;border-radius:8px;padding:1px 6px;color:#fff}
+
+/* ===== Nguyên liệu và nhà cung cấp (2.89) ===== */
+.steps5{display:flex;gap:8px;margin-top:12px}
+.steps5>div{flex:1;background:var(--bg);border-radius:16px;padding:8px 10px;font:700 12px/1.3 var(--body);color:var(--soft2);text-align:left}
+.steps5 b{display:block;font:900 11px var(--body);color:var(--lav-d);margin-bottom:2px}
+.ing-stiles{margin:8px 0 0}
+.sup5{background:#fff;border-radius:22px;padding:12px 14px;box-shadow:0 4px 0 var(--sh);margin-top:10px;text-align:left}
+.sup5 .hd{display:flex;align-items:center;gap:10px}
+.sup5 .hd .av{flex:none;width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:var(--bg)}
+.sup5 .hd>div{flex:1;min-width:0}
+.sup5 .hd b{display:block;font:800 15px/1.15 var(--display);color:var(--ink2)}
+.sup5 .hd small{display:block;margin-top:2px;font:700 12px var(--body);color:var(--soft)}
+.sup5 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sup5 .c{display:flex;align-items:center;gap:5px;border-radius:12px;background:var(--bg);padding:4px 10px 4px 6px;font:800 12px var(--body);color:var(--ink2)}
+.sup5 .c.new{background:#fff;border:2px dashed var(--pink-b);padding:2px 9px;color:var(--soft)}
+.sup5 .c.new em{font:900 9px var(--body);font-style:normal;color:#fff;background:var(--pink);border-radius:6px;padding:1px 4px}
+.sup5.lock{background:rgba(255,255,255,.7)}
+.sup5.lock .av,.sup5.lock .hd b{opacity:.5}
+.sup5 .mini{line-height:1.2;text-align:center}
+.sup5 .mini.lk{background:var(--k-d9cdd1);box-shadow:0 3px 0 var(--k-c4b5ba);color:#fff}
+.sup5 .mini.gold{background:#F2A41F;box-shadow:0 3px 0 #C07A0A}
+.sup5 .mini.gold.short{background:#E6C98A;box-shadow:0 3px 0 #C9AC6B}
+.sup5 .tag.use{white-space:nowrap}
+.ing-stiles .stile span{font-size:11px;letter-spacing:-.2px}

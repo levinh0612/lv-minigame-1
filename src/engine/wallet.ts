@@ -2,12 +2,12 @@
 import { S } from "./state";
 
 export type InCat = "sales" | "tip" | "memo" | "goal" | "gift" | "welcome" | "daily" | "comp" | "visit" | "combo" | "mouse";
-export type OutCat = "stock" | "quick" | "decor" | "food" | "train" | "incident" | "venue" | "visit" | "gacha";
+export type OutCat = "stock" | "quick" | "decor" | "food" | "train" | "incident" | "venue" | "visit" | "gacha" | "supplier";
 export const IN_LABEL: Record<InCat, string> = {
   sales: "Tiền bánh", tip: "Tip", memo: "Thưởng tự nhớ công thức", goal: "Thưởng mục tiêu ca", gift: "Quà mục tiêu ngày", welcome: "Quà khai trương", daily: "Thưởng đăng nhập mỗi ngày", comp: "Đền bù", visit: "Tiền mừng khách ghé thăm", combo: "Thưởng combo phục vụ", mouse: "Thưởng diệt chuột"
 };
 export const OUT_LABEL: Record<OutCat, string> = {
-  stock: "Nhập nguyên liệu", quick: "Nhập nhanh giữa ca", decor: "Đồ trang trí", food: "Đồ ăn thú cưng", train: "Huấn luyện các bé", incident: "Sự cố bất ngờ", venue: "Bàn, lầu, mở rộng tiệm", visit: "Phí ghé thăm tiệm hàng xóm", gacha: "Vé triệu hồi"
+  stock: "Nhập nguyên liệu", quick: "Nhập nhanh giữa ca", decor: "Đồ trang trí", food: "Đồ ăn thú cưng", train: "Huấn luyện các bé", incident: "Sự cố bất ngờ", venue: "Bàn, lầu, mở rộng tiệm", visit: "Phí ghé thăm tiệm hàng xóm", gacha: "Vé triệu hồi", supplier: "Hợp đồng nhà cung cấp"
 };
 export interface Entry { t: number; n: string; v: number }
 export interface Book {

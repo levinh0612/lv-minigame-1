@@ -20,6 +20,7 @@ import { claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, r
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
 import { staffSheet } from "../ui/staff";
+import { ingredientSheet } from "../ui/ingredients";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
@@ -174,6 +175,8 @@ const STORIES: Story[] = [
   /* ---------- Hộp thoại ---------- */
   { id: "m-more", sec: "modals", title: "Menu (nút ☰)", desc: "Công thức, Thú cưng, Hồ sơ, Xếp hạng, Sự kiện", kind: "modal",
     html: () => { lvState(5); return modalOver(homeHTML(), moreSheet); } },
+  { id: "m-ings", sec: "modals", title: "Nguyên liệu và nhà cung cấp", desc: "Lv 13: đã ký Lò sữa Alpine (Croissant, Cheesecake, Phô mai); Berry đủ cấp nhưng thiếu xu; Cacao chưa đủ cấp", kind: "modal",
+    html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.coins = 3000; s.stock.base[3] = 4; s.stock.base[4] = 0; s.stock.cream[3] = 7; }); return modalOver(homeHTML(), ingredientSheet); } },
   { id: "m-staff", sec: "modals", title: "Quản lý · Nhân vật", desc: "Chọn tầng, chạm để đặt; món chưa có hiện mờ và dẫn sang Gacha", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mgr")); } },
   { id: "m-staff2", sec: "modals", title: "Quản lý · Linh thú", desc: "Cùng bảng, tab Linh thú", kind: "modal",

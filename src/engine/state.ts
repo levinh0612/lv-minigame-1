@@ -1,6 +1,6 @@
 /* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
 import { CFG, type PetId } from "../content/couple";
-import { BOY_SPRITES, GIRL_SPRITES, SPRITES, STARTER_STOCK, isFixedChar, type FoodId, type GuestLook, type Look, type StockKey } from "../content/game";
+import { BOY_SPRITES, CATS, GIRL_SPRITES, SPRITES, STARTER_STOCK, STOCK_KEYS, SUPPLIERS, isFixedChar, type FoodId, type GuestLook, type Look, type StockKey } from "../content/game";
 import { DEFAULT_ROOM, OLD_TO_ROOM, type Room } from "../content/room";
 import { freshBook, type Book } from "./wallet";
 
@@ -18,7 +18,8 @@ export interface State {
   names: { her: string; his: string; girls: string; boys: string; pets: Record<PetId, string> };
   pets: Record<PetId, PetState>;
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
-  stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
+  stock: Record<StockKey, number[]>; suppliers: string[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
+  staff: Record<PetId, StaffState>; tut: boolean;
   food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
   gacha: GachaState;
   mouse?: { king: number; last: number };   // king: số lần diệt chuột kịp trong 10 giây (hạng Vua diệt chuột); last: ca gần nhất có chuột
@@ -51,7 +52,7 @@ export function fresh(): State {
     names: { her: CFG.herName, his: CFG.hisName, girls: CFG.girlNames, boys: CFG.boyNames, pets: petMap((_, i) => CFG.pets[i].name) },
     pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
-    stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
+    stock: Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map((_, i) => i < 3 ? STARTER_STOCK : 0)])) as Record<StockKey, number[]>, suppliers: [],
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
     room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
@@ -120,6 +121,8 @@ export function loadState(raw: string | null): State {
   s.pets = Object.assign(fresh().pets, s.pets || {});
   s.staff = Object.assign(fresh().staff, s.staff || {});
   s.stock = Object.assign(fresh().stock, s.stock || {});
+  STOCK_KEYS.forEach(k => { while (s.stock[k].length < CATS[k].length) s.stock[k].push(0); });       // nguyên liệu mới thêm: kho bắt đầu từ 0
+  s.suppliers = Array.isArray(s.suppliers) ? s.suppliers.filter(id => SUPPLIERS.some(x => x.id === id)) : [];
   s.food = Object.assign(fresh().food, s.food || {});
   s.venue = Object.assign(fresh().venue, s.venue || {});
   s.mouse = { ...fresh().mouse!, ...(s.mouse || {}) };

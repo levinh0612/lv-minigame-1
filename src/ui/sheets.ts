@@ -144,6 +144,7 @@ export function moreSheet() {
   const T = (n: string, icon: string, c1: string, c2: string, attr: string) => `<button ${attr} style="--c1:${c1};--c2:${c2};--dk:${c2}"><span class="ic">${icon}</span><b>${n}</b></button>`;
   modal(`<h2>Menu</h2><p class="sub">Những thứ khác của tiệm</p><div class="more5">
     ${T("Công thức", ic.book(28, 2.2), "#FFB27A", "#EE7A2E", 'data-act="menu"')}
+    ${T("Nguyên liệu", ic.basket(28, 2.2), "#8EE0BC", "#3FB68A", 'data-act="ings"')}
     ${T("Quản lý", ic.users(28, 2.2), "#C2B0FA", "#8B6FE6", 'data-act="staff"')}
     ${T("Thú cưng", ic.paw(28, 2.2), "#FF9DB6", "#EE5A83", 'data-go="/cua-hang/thu-cung"')}
     ${T("Hồ sơ", ic.user(28, 2.2), "#8EC5FF", "#4C8DF0", 'data-act="profile"')}

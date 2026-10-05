@@ -4,6 +4,7 @@ import { CATS, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, SHOP, STAFF, ST
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
 import { S, petName, save } from "./state";
+import { ingAvailable } from "./suppliers";
 import { earn, note, spend } from "./wallet";
 
 export const unitCost = (k: StockKey, i: number) => UNIT_COST[k][i];
@@ -13,7 +14,7 @@ export const stockOf = (k: StockKey, i: number) => S.stock[k][i] ?? 0;
 export const expectedCustomers = () => Math.min(30, 6 + lvl() + fx("cust") + fameLevel() * 2);
 
 export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n), cat: "stock" | "quick" = "stock", log = true): boolean {
-  if (S.coins < price) return false;
+  if (S.coins < price || !ingAvailable(k, i)) return false;
   spend(cat, price, log ? `Nhập ${n} ${CATS[k][i][0]}` : undefined); S.stock[k][i] = stockOf(k, i) + n; save();
   return true;
 }
@@ -31,7 +32,7 @@ export function refill(items: { k: StockKey; i: number }[]): number {
 /* Gợi ý nhập hàng: đủ cho số khách dự kiến, theo tỉ lệ các công thức đã mở (món nổi bật được ưu tiên) */
 export function suggestion(): { k: StockKey; i: number; n: number; cost: number }[] {
   const rs = unlocked(), feat = featured(), cust = expectedCustomers();
-  const want: Record<StockKey, number[]> = { base: [0, 0, 0], cream: [0, 0, 0], top: [0, 0, 0] };
+  const want = Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map(() => 0)])) as Record<StockKey, number[]>;
   const weight = (r: (typeof RECIPES)[number]) => (r.id === feat.id ? 2 : 1);
   const total = rs.reduce((a, r) => a + weight(r), 0);
   rs.forEach(r => STOCK_KEYS.forEach(k => { want[k][r[k]] += cust * weight(r) / total; }));

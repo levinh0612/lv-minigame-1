@@ -4,6 +4,7 @@ import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
 import { canHire, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
+import { availableIdx } from "../../engine/suppliers";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { petSVG, foodSVG, ingSVG } from "../art";
@@ -35,9 +36,9 @@ export function prepHTML() {
   const feat = featured(), plan = crewPlan(), f = fame();
   const goals = shiftGoals(expectedCustomers());
   const sug = suggestion(), sugCost = sug.reduce((a, x) => a + x.cost, 0);
-  const low = STOCK_KEYS.flatMap(k => CATS[k].map((_, i) => ({ k, i }))).filter(x => stockOf(x.k, x.i) <= 2);
-  const stock = STOCK_KEYS.map(k => CATS[k].map(([n], i) => {
-    const v = stockOf(k, i), p = packPrice(k, i, 5);
+  const low = STOCK_KEYS.flatMap(k => availableIdx(k).map(i => ({ k, i }))).filter(x => stockOf(x.k, x.i) <= 2);
+  const stock = STOCK_KEYS.map(k => availableIdx(k).map(i => {
+    const n = CATS[k][i][0], v = stockOf(k, i), p = packPrice(k, i, 5);
     return `<button class="stile ${v === 0 ? "out" : v <= 2 ? "low" : ""}" data-ing-buy="${k}:${i}:5" ${S.coins < p ? "disabled" : ""} aria-label="Nhập 5 ${n}, ${p} xu">${ingSVG(k, i, 22)}<span>${n}</span><b>${v === 0 ? "Hết" : v}</b></button>`;
   }).join("")).join("");
   const ic = [["#FFE9EF", "#E0567A"], ["#E3F6EC", "#3F9C78"], ["#FFF0C9", "#A77A0E"]];

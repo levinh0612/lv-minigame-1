@@ -7,6 +7,7 @@ import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
 import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, type PartKey, type StockKey } from "../../content/game";
 import { daysTogether } from "../../engine/dates";
+import { usedIdx } from "../../engine/progress";
 import { REFILL, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
@@ -170,7 +171,7 @@ const LV_BADGE = `<svg width="44" height="44" viewBox="0 0 46 46" aria-hidden="t
 const BOX = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4A3438" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8 L12 3.5 L21 8 V17 L12 21.5 L3 17 Z" fill="#F6D59A"/><path d="M3 8 L12 12.5 L21 8 M12 12.5 V21.5"/><path d="M7.5 5.8 L16.5 10.3" stroke-width="1.8"/></svg>`;
 const CHEV = (up: boolean) => `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="${up ? "M3 9 L7 5 L11 9" : "M3 5 L7 9 L11 5"}" stroke="#C07A8C" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const TICK = `<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 L5 9 L10 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const lowCount = () => STOCK_KEYS.reduce((a, k) => a + CATS[k].filter((_, i) => stockOf(k, i) <= 2).length, 0);
+const lowCount = () => STOCK_KEYS.reduce((a, k) => a + usedIdx(k).filter(i => stockOf(k, i) <= 2).length, 0);
 
 /* một khách trong hàng đợi: hình bánh đã gọi (không ghi nguyên liệu), mặt, kiên nhẫn, ai đang làm */
 export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
@@ -259,7 +260,7 @@ const ingHTML = (sh: Shift, k: PartKey, i: number) => {
   return `<button class="${s.cls}" data-ing="${k}:${i}">${ingSVG(k, i, 24, s.out)}<span class="cn">${CATS[k][i][0]}</span>${
     s.out ? `<em class="tag">+${quickPrice(k as StockKey, i)} xu</em>` : s.q > 0 ? `<b class="q ${s.low ? "low" : ""}">${s.q}</b>` : ""}${s.cls.includes(" ok") ? `<em class="ck">${TICK}</em>` : ""}</button>`;
 };
-export const rowsHTML = (sh: Shift) => KEYS.map(k => `<div class="irow"><span>${LABELS[k]}</span><div class="g3">${CATS[k].map((_, i) => ingHTML(sh, k, i)).join("")}</div></div>`).join("");
+export const rowsHTML = (sh: Shift) => KEYS.map(k => `<div class="irow"><span>${LABELS[k]}</span><div class="g3">${(k === "sweet" ? [0, 1, 2] : usedIdx(k)).map(i => ingHTML(sh, k, i)).join("")}</div></div>`).join("");
 
 /* phần đầu phiếu: Đơn của ai, tên bánh, Xem công thức hoặc các nguyên liệu */
 function oinfoHTML(sh: Shift) {
@@ -310,16 +311,16 @@ function stageHTML(sh: Shift) {
 
 /* kho giữa ca: chọn món để nhập đầy, món sắp hết được chọn sẵn */
 let ticks = new Set<string>();
-const autoTicks = () => new Set(STOCK_KEYS.flatMap(k => CATS[k].map((_, i) => k + ":" + i).filter((_, i) => stockOf(k, i) <= 2)));
+const autoTicks = () => new Set(STOCK_KEYS.flatMap(k => usedIdx(k).filter(i => stockOf(k, i) <= 2).map(i => k + ":" + i)));
 export function stockHTML() {
   let cost = 0, n = 0;
-  const groups = STOCK_KEYS.map(k => `<div class="sg"><small>${LABELS[k]}</small><div class="g3">${CATS[k].map((x, i) => {
-    const id = k + ":" + i, v = stockOf(k, i), on = ticks.has(id), low = v <= 2;
+  const groups = STOCK_KEYS.map(k => `<div class="sg"><small>${LABELS[k]}</small><div class="g3">${usedIdx(k).map(i => {
+    const x = CATS[k][i], id = k + ":" + i, v = stockOf(k, i), on = ticks.has(id), low = v <= 2;
     if (on) { cost += refillCost(k, i); n++; }
     return `<button class="sk ${on ? "on" : ""}" data-tick="${id}" aria-pressed="${on}"><span class="box">${on ? TICK : ""}</span>${ingSVG(k, i, 34)}<span class="sn">${x[0]}</span>
       <span class="bar"><i style="width:${Math.min(100, v / REFILL * 100)}%;background:${v === 0 ? "#FF6F91" : low ? "#FFC94D" : "#8FD9B6"}"></i></span><span class="cnt ${v === 0 ? "out" : low ? "low" : ""}">${v === 0 ? "Hết hàng" : `${v}/${REFILL}`}</span></button>`;
   }).join("")}</div></div>`).join("");
-  const all = STOCK_KEYS.every(k => CATS[k].every((_, i) => ticks.has(k + ":" + i)));
+  const all = STOCK_KEYS.every(k => usedIdx(k).every(i => ticks.has(k + ":" + i)));
   return `<div class="grab"></div><div class="shd"><div><b>Kho nguyên liệu</b><small>Đã chọn sẵn món sắp hết (còn 2 trở xuống)</small></div><button class="x" data-act="stock" aria-label="Đóng kho">✕</button></div>
     <div class="sgs">${groups}</div>
     <div class="sft"><button class="b3 w" data-act="tickall">${all ? "Bỏ chọn" : "Chọn hết"}</button><button class="b3" data-act="refill" ${n && cost <= S.coins ? "" : "disabled"}>${!n ? "Chưa chọn món nào" : cost > S.coins ? `Thiếu xu · ${cost} xu` : `Nhập hàng · ${cost} xu`}</button></div>`;
@@ -438,7 +439,7 @@ export function openStock(on: boolean) {
 }
 export function tickStock(id: string) { ticks.has(id) ? ticks.delete(id) : ticks.add(id); $("#ssheet")!.innerHTML = stockHTML(); sfx("tap"); }
 export function tickAll() {
-  const all = STOCK_KEYS.flatMap(k => CATS[k].map((_, i) => k + ":" + i));
+  const all = STOCK_KEYS.flatMap(k => usedIdx(k).map(i => k + ":" + i));
   ticks = all.every(id => ticks.has(id)) ? new Set() : new Set(all);
   $("#ssheet")!.innerHTML = stockHTML(); sfx("tap");
 }

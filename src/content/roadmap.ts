@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.89", date: "05/10/2026", notes: ["Mục Nguyên liệu trong Menu: kho hôm nay (chạm để nhập thêm 5 phần) và nhà cung cấp", "Thêm 6 nguyên liệu mới: Croissant, Cheesecake, Phô mai, Socola, Việt quất, Mâm xôi; chỉ dùng được sau khi ký hợp đồng với Lò sữa Alpine (Lv 8, 2.000 xu), Vườn Berry Hồng (Lv 14, 4.500 xu) hoặc Cacao Đà Lạt (Lv 20, 8.000 xu)", "Một món bánh chỉ bán được khi đủ hai điều kiện: có công thức và có nguyên liệu; save cũ được tự thêm kho cho nguyên liệu mới (bắt đầu từ 0)"] },
   { v: "2.88", date: "05/10/2026", notes: ["Công thức thành hộp thoại riêng (Menu → Công thức, hoặc chạm bảng Menu trong tiệm): món của tiệm theo cấp, món Gacha và độ thành thạo, có bộ lọc", "Công thức Gacha chưa có hiện mờ, chạm để sang Gacha đúng món đó"] },
   { v: "2.87", date: "05/10/2026", notes: ["Mục Quản lý trong Menu: gom Nhân vật (quản lý) và Linh thú, hiện tất cả; chọn tầng rồi chạm để đặt, chạm lại để cất", "Món chưa có hiện mờ, chạm sẽ sang Gacha, đúng bộ sưu tập và đúng món đó"] },
   { v: "2.86", date: "05/10/2026", notes: ["Hồ sơ gọn lại: chỉ còn tên tiệm, chọn Nam hoặc Nữ và Màu chính (11 màu, đổi cả giao diện); kiểu tóc, màu tóc, áo… bạn đã chọn trước đây vẫn giữ nguyên", "Mục tiêu đổi bố cục: mỗi mục một hàng có thanh tiến độ, thẻ cấp và kinh nghiệm tách riêng; phần Công thức chuyển sang Menu"] },

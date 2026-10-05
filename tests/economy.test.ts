@@ -24,7 +24,7 @@ afterEach(() => vi.useRealTimers());
 describe("nguyên liệu", () => {
   it("người chơi cũ được tặng kho khởi đầu", () => {
     const s = loadState(JSON.stringify({ v: 3, coins: 5 }));
-    expect(s.stock.base).toEqual([8, 8, 8]);
+    expect(s.stock.base).toEqual([8, 8, 8, 0, 0]);
   });
 
   it("gói 10 rẻ hơn 10%, mua xong tăng kho và trừ xu", () => {

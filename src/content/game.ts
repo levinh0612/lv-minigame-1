@@ -1,4 +1,4 @@
-/* Dữ liệu game theo thiết kế Claude Design (hướng 1a). Chỉ số 0..2 khớp với hình vẽ trong ui/art.ts */
+/* Dữ liệu game theo thiết kế Claude Design (hướng 1a). Chỉ số khớp với hình vẽ trong ui/art.ts (và bánh 3D trong scene/cake.ts) */
 import type { PetId } from "./couple";
 
 export type PartKey = "base" | "cream" | "top" | "sweet";
@@ -6,9 +6,10 @@ export type Build = Record<PartKey, number | null>;
 export const KEYS: PartKey[] = ["base", "cream", "top", "sweet"];
 export const LABELS: Record<PartKey, string> = { base: "Đế", cream: "Kem", top: "Topping", sweet: "Độ ngọt" };
 export const CATS: Record<PartKey, [string, string][]> = {
-  base:  [["Bông lan", "#F6D59A"], ["Tart", "#D9A66B"], ["Mochi", "#FFF4EE"]],
-  cream: [["Matcha", "#9CCB86"], ["Kem dâu", "#FFB3C7"], ["Vani", "#FFF0C2"]],
-  top:   [["Dâu tây", "#F0506E"], ["Đậu đỏ", "#8E3B46"], ["Hạt dẻ", "#B07A4A"]],
+  // 3 món đầu có từ đầu game (nhà cung cấp "home"); các món sau phải ký hợp đồng nhà cung cấp mới dùng được (xem SUPPLIERS)
+  base:  [["Bông lan", "#F6D59A"], ["Tart", "#D9A66B"], ["Mochi", "#FFF4EE"], ["Croissant", "#E8A857"], ["Cheesecake", "#FFF1CF"]],
+  cream: [["Matcha", "#9CCB86"], ["Kem dâu", "#FFB3C7"], ["Vani", "#FFF0C2"], ["Phô mai", "#FFF6D6"], ["Socola", "#8A5A44"]],
+  top:   [["Dâu tây", "#F0506E"], ["Đậu đỏ", "#8E3B46"], ["Hạt dẻ", "#B07A4A"], ["Việt quất", "#4B5FB0"], ["Mâm xôi", "#D6456A"]],
   sweet: [["Ít ngọt", "#FFF7E3"], ["Vừa", "#FFE3A0"], ["Ngọt lịm", "#FFC94D"]]
 };
 
@@ -99,7 +100,22 @@ export const GUEST_LINES: Record<number, string[]> = {
 export type StockKey = "base" | "cream" | "top";
 export const STOCK_KEYS: StockKey[] = ["base", "cream", "top"];
 // giá 1 phần nguyên liệu, theo chỉ số trong CATS (đường thì miễn phí)
-export const UNIT_COST: Record<StockKey, number[]> = { base: [2, 3, 3], cream: [3, 2, 2], top: [3, 2, 3] };
+export const UNIT_COST: Record<StockKey, number[]> = { base: [2, 3, 3, 5, 6], cream: [3, 2, 2, 5, 5], top: [3, 2, 3, 6, 6] };
+
+/* Nhà cung cấp: nguyên liệu mới chỉ dùng được sau khi ký hợp đồng (trả xu và đủ cấp). "home" là đối tác từ đầu, luôn có. */
+export interface Supplier { id: string; n: string; desc: string; cost: number; lv: number }
+export const HOME_SUPPLIER = { id: "home", n: "Xưởng bột Matcha Home", desc: "Đối tác từ đầu: đế, kem và topping quen thuộc" };
+export const SUPPLIERS: Supplier[] = [
+  { id: "alpine", n: "Lò sữa Alpine", desc: "Bơ, sữa và bột nướng cao cấp", cost: 2000, lv: 8 },
+  { id: "berry", n: "Vườn Berry Hồng", desc: "Quả mọng tươi theo mùa", cost: 4500, lv: 14 },
+  { id: "cacao", n: "Cacao Đà Lạt", desc: "Socola nguyên chất", cost: 8000, lv: 20 }
+];
+/** nhà cung cấp của từng nguyên liệu, theo chỉ số trong CATS */
+export const ING_SUPPLIER: Record<StockKey, string[]> = {
+  base: ["home", "home", "home", "alpine", "alpine"],
+  cream: ["home", "home", "home", "alpine", "cacao"],
+  top: ["home", "home", "home", "berry", "berry"]
+};
 export const PACKS = [{ n: 5, disc: 0 }, { n: 10, disc: 0.1 }];
 export const QUICK_MULT = 1.5;    // nhập nhanh giữa ca: đắt hơn 50%
 export const STARTER_STOCK = 8;   // kho tặng lúc đầu

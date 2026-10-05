@@ -20,6 +20,7 @@ import { gachaAct, openInGacha } from "./ui/screens/gacha";
 import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
+import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { staffAct, staffSheet } from "./ui/staff";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
 import { rankSheet } from "./ui/screens/rank";
@@ -68,6 +69,7 @@ document.addEventListener("click", e => {
     case "more": return moreSheet();
     case "buff": return buffSheet();
     case "staff": return staffSheet();
+    case "ings": return ingredientSheet();
     case "rank": return rankSheet();
     case "music": return musicSheet();
     case "cakes": return cakesSheet();
@@ -100,6 +102,7 @@ document.addEventListener("click", e => {
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } return render(); }
   if (d.gact) return void gachaAct(d.gact);
   if (d.sact) return staffAct(d.sact);
+  if (d.iact) return ingAct(d.iact);
   if (d.rfil) { sfx("click"); return recipeFilter(d.rfil); }
   if (d.rgacha) { sfx("click"); return openInGacha(d.rgacha); }
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
