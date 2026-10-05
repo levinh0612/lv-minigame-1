@@ -16,12 +16,12 @@ import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
 import { askVisit } from "./ui/screens/visit";
-import { gachaAct } from "./ui/screens/gacha";
+import { gachaAct, openInGacha } from "./ui/screens/gacha";
 import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { staffAct, staffSheet } from "./ui/staff";
-import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet } from "./ui/sheets";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
@@ -100,6 +100,8 @@ document.addEventListener("click", e => {
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } return render(); }
   if (d.gact) return void gachaAct(d.gact);
   if (d.sact) return staffAct(d.sact);
+  if (d.rfil) { sfx("click"); return recipeFilter(d.rfil); }
+  if (d.rgacha) { sfx("click"); return openInGacha(d.rgacha); }
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
   if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }

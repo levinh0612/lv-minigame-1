@@ -1,8 +1,9 @@
 /* Các bảng trượt lên từ cảnh tiệm ở màn chính: Menu, Tủ bánh (carousel), Ngày kỷ niệm, Ảnh treo tường */
 import { CFG } from "../content/couple";
 import { CATS, RECIPES, STOCK_KEYS } from "../content/game";
+import { GACHA_ITEMS, MASTERY_MAX, RARITY } from "../content/gacha";
 import { daysTogether, events } from "../engine/dates";
-import { specialRecipes } from "../engine/gacha";
+import { hasItem, masteryOf, specialRecipes } from "../engine/gacha";
 import { featured, lvl, unlocked } from "../engine/progress";
 import { S, save } from "../engine/state";
 import { flushSave } from "../net/cloud";
@@ -18,19 +19,30 @@ import { BUFF_LABEL, buffIcon, buffText } from "./screens/home";
 
 const ingChips = (r: (typeof RECIPES)[number]) => STOCK_KEYS.map(k => `<span>${ingSVG(k, r[k], 18)}${CATS[k][r[k]][0]}</span>`).join("");
 
-/* Bảng Menu: các món đã mở (món nổi bật hôm nay lên đầu) và các món sắp mở */
-export function menuSheet() {
+/* Công thức (mở từ Menu hoặc chạm bảng Menu trong tiệm): công thức của tiệm, công thức Gacha (mờ nếu chưa có, chạm để sang Gacha) */
+let rfil: "all" | "shop" | "gacha" = "all";
+const RAR_C: Record<string, string> = { common: "#8FB4D9", rare: "#7A8CFF", ultra: "#F2B84B" };
+function recipeBody() {
   const L = lvl(), f = featured();
-  const list = [...RECIPES, ...specialRecipes()].sort((a, b) => (a.id === f.id ? -1 : b.id === f.id ? 1 : a.lv - b.lv));
-  modal(`<h2>Menu hôm nay</h2><p class="sub">${unlocked().length}/${RECIPES.length + specialRecipes().length} món đã mở · khách chọn độ ngọt riêng</p>
-    <div class="mlist">${list.map(r => {
-      const lock = r.lv > L, star = r.id === f.id;
-      return `<div class="mrow ${lock ? "lock" : ""} ${star ? "star" : ""}">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 62, still: true })}
-        <div class="mi"><b>${esc(r.n)}${star ? ` <em>★ nổi bật</em>` : ""}</b><div class="ichips">${ingChips(r)}</div></div>
-        <span class="mp">${lock ? `Lv ${r.lv}` : `${r.price} xu`}</span></div>`;
-    }).join("")}</div>
-    <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
+  const tile = (r: { base: number; cream: number; top: number }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "") =>
+    `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
+  const shop = RECIPES.map(r => r.lv > L
+    ? tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim")
+    : tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", r.id === f.id ? `<em class="rstar">★ nổi bật</em>` : "")).join("");
+  const sp = new Map(specialRecipes().map(r => [r.id, r]));
+  const gacha = GACHA_ITEMS.filter(i => i.recipe).map(i => hasItem(i.id)
+    ? tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`)
+    : tile(i.recipe!, i.n, i.recipe!.price, `<span class="st gacha">Gacha ›</span>`, "dim", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`, `data-rgacha="${i.id}"`)).join("");
+  const nShop = RECIPES.filter(r => r.lv <= L).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
+  return `<div class="gfil rfil">${([["all", "Tất cả"], ["shop", "Của tiệm"], ["gacha", "Gacha"]] as const).map(([k, n]) => `<button class="${rfil === k ? "on" : ""}" data-rfil="${k}">${n}</button>`).join("")}</div>
+    ${rfil !== "gacha" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} đã mở</span></div><div class="rb5">${shop}</div>` : ""}
+    ${rfil !== "shop" ? `<div class="sh2"><b>Công thức Gacha</b><span class="lav">${nG}/${tG} đã có</span></div><div class="rb5">${gacha}</div>` : ""}
+    <p class="phint">Món mờ chưa có: chạm để sang Gacha và xem món đó.</p>`;
 }
+export function menuSheet() {
+  modal(`<h2>Công thức</h2><p class="sub">${unlocked().length} món đang bán · khách chọn độ ngọt riêng</p><div id="rcpBody">${recipeBody()}</div><div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
+}
+export function recipeFilter(k: string) { rfil = k as typeof rfil; const h = $("#rcpBody"); if (h) h.innerHTML = recipeBody(); }
 
 /* Tủ bánh: carousel các bánh đang bán, vuốt ngang */
 export function cakesSheet() {
