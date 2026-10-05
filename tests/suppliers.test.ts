@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { CATS, RECIPES, SUPPLIERS, STOCK_KEYS } from "../src/content/game";
 import { buy } from "../src/engine/economy";
-import { rollDay, unlocked } from "../src/engine/progress";
+import { lvl, rollDay, unlocked, usedIdx } from "../src/engine/progress";
 import { S, fresh, loadState, resetState } from "../src/engine/state";
 import { availableIdx, ingAvailable, ingsOf, recipeReady, signState, signSupplier } from "../src/engine/suppliers";
 
@@ -11,7 +11,8 @@ describe("nhà cung cấp", () => {
   it("đồ có từ đầu luôn dùng được, đồ mới thì chưa", () => {
     expect(availableIdx("base")).toEqual([0, 1, 2]);
     expect(ingAvailable("base", 3)).toBe(false);
-    RECIPES.forEach(r => expect(recipeReady(r)).toBe(true));
+    RECIPES.slice(0, 9).forEach(r => expect(recipeReady(r)).toBe(true));          // 9 món gốc dùng đồ có từ đầu
+    RECIPES.slice(9).forEach(r => expect(recipeReady(r)).toBe(false));           // món mới cần ký nhà cung cấp
   });
 
   it("kho mới: 3 món đầu có 8 phần, món mới từ 0", () => {
@@ -50,5 +51,21 @@ describe("nhà cung cấp", () => {
     STOCK_KEYS.forEach(k => expect(s.stock[k]).toHaveLength(CATS[k].length));
     expect(s.stock.base.slice(0, 3)).toEqual([4, 5, 6]); expect(s.stock.base[3]).toBe(0);
     expect(s.suppliers).toEqual([]);
+  });
+
+  it("món mới chỉ mở khi đủ cấp VÀ đã ký nhà cung cấp", () => {
+    const croissant = RECIPES.find(r => r.n === "Croissant Vani Dâu tây")!;
+    const has = () => unlocked().some(r => r.id === croissant.id);
+    S.xp = 40 * (croissant.lv - 1) * (croissant.lv - 1); expect(lvl()).toBe(croissant.lv);
+    expect(has()).toBe(false);                                                // đủ cấp, chưa ký
+    S.suppliers.push("alpine"); expect(has()).toBe(true);                     // đủ cả hai
+    S.xp = 0; expect(has()).toBe(false);                                      // ký rồi nhưng chưa đủ cấp
+  });
+
+  it("màn làm bánh chỉ hiện nguyên liệu mà các món đang bán dùng", () => {
+    expect(usedIdx("base")).toEqual(expect.not.arrayContaining([3, 4]));
+    S.xp = 40 * 9 * 9; S.suppliers.push("alpine");                              // Lv 10: Croissant và Cheesecake đã mở
+    expect(usedIdx("base")).toEqual(expect.arrayContaining([3, 4]));
+    expect(usedIdx("cream")).toContain(3);
   });
 });

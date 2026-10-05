@@ -14,12 +14,16 @@ const NUT = `<path d="M70 16 C62 24 57 31 57 38 C57 45 83 45 83 38 C83 31 78 24 
 const BASE_G = [
   `<rect x="22" y="74" width="96" height="34" rx="10" fill="#F6D59A"/><g fill="#E6B870" stroke="none"><circle cx="34" cy="100" r="2.4"/><circle cx="106" cy="99" r="2"/><circle cx="40" cy="86" r="1.8"/><circle cx="100" cy="86" r="2.2"/></g>`,
   `<path d="M16 76 H124 L114 108 H26 Z" fill="#D9A66B"/><path d="M30 80 L33 104 M44 80 L46 104 M96 80 L94 104 M110 80 L107 104" stroke="#B98246" stroke-width="2.2"/>`,
-  `<path d="M22 108 C20 82 40 70 70 70 C100 70 120 82 118 108 Z" fill="#FFF4EE"/><g fill="#F1DDD5" stroke="none"><circle cx="36" cy="96" r="1.8"/><circle cx="104" cy="94" r="1.8"/><circle cx="44" cy="84" r="1.4"/><circle cx="98" cy="84" r="1.4"/></g>`
+  `<path d="M22 108 C20 82 40 70 70 70 C100 70 120 82 118 108 Z" fill="#FFF4EE"/><g fill="#F1DDD5" stroke="none"><circle cx="36" cy="96" r="1.8"/><circle cx="104" cy="94" r="1.8"/><circle cx="44" cy="84" r="1.4"/><circle cx="98" cy="84" r="1.4"/></g>`,
+  `<path d="M14 108 C12 86 30 72 70 72 C110 72 128 86 126 108 C120 110 116 104 108 104 C100 104 98 110 90 110 C82 110 80 104 70 104 C60 104 58 110 50 110 C42 110 40 104 32 104 C24 104 20 110 14 108 Z" fill="#E8A857"/><path d="M34 80 L40 102 M52 74 L56 103 M70 72 V104 M88 74 L84 103 M106 80 L100 102" stroke="#C57F36" stroke-width="2.2"/><g fill="#F6CE8A" stroke="none"><ellipse cx="44" cy="82" rx="4" ry="1.8"/><ellipse cx="96" cy="82" rx="4" ry="1.8"/><ellipse cx="70" cy="78" rx="4" ry="1.8"/></g>`,
+  `<rect x="22" y="74" width="96" height="34" rx="8" fill="#FFF1CF"/><path d="M22 98 H118 V100 C118 106 115 108 109 108 H31 C25 108 22 106 22 100 Z" fill="#C98E55"/><g fill="#E9D3A4" stroke="none"><circle cx="36" cy="88" r="2"/><circle cx="104" cy="86" r="2.2"/><circle cx="44" cy="80" r="1.5"/><circle cx="98" cy="80" r="1.5"/></g><g fill="#A8733F" stroke="none"><circle cx="40" cy="103" r="1.6"/><circle cx="70" cy="104" r="1.4"/><circle cx="100" cy="103" r="1.6"/></g>`
 ];
 const TOP_G = [
   `${STRAW}<g fill="#FFE08A" stroke="none"><ellipse cx="65" cy="28" rx="1.2" ry="1.8"/><ellipse cx="75" cy="28" rx="1.2" ry="1.8"/><ellipse cx="70" cy="34" rx="1.2" ry="1.8"/></g><g transform="translate(34 62) scale(.55) translate(-70 -30)" stroke-width="4.4">${STRAW}</g><g transform="translate(106 62) scale(.55) translate(-70 -30)" stroke-width="4.4">${STRAW}</g>`,
   `<g fill="#8E3B46" stroke-width="2"><ellipse cx="60" cy="38" rx="5.5" ry="4.2"/><ellipse cx="72" cy="32" rx="5.5" ry="4.2" transform="rotate(-15 72 32)"/><ellipse cx="81" cy="40" rx="5.5" ry="4.2" transform="rotate(20 81 40)"/><ellipse cx="68" cy="42" rx="5.5" ry="4.2"/><ellipse cx="34" cy="64" rx="4.5" ry="3.4"/><ellipse cx="44" cy="60" rx="4.5" ry="3.4"/><ellipse cx="96" cy="60" rx="4.5" ry="3.4"/><ellipse cx="106" cy="64" rx="4.5" ry="3.4"/><g fill="#fff" stroke="none" opacity=".8"><circle cx="58.5" cy="36.5" r="1.2"/><circle cx="70.5" cy="30.5" r="1.2"/><circle cx="79.5" cy="38.5" r="1.2"/></g></g>`,
-  `${NUT}<path d="M58.5 37 C60 43 80 43 81.5 37 C76 40.5 64 40.5 58.5 37 Z" fill="#E8C9A0" stroke-width="2"/><path d="M66 24 C64 27 63 30 63 32" stroke="#D4A472" stroke-width="2.2"/><g transform="translate(36 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g><g transform="translate(104 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g>`
+  `${NUT}<path d="M58.5 37 C60 43 80 43 81.5 37 C76 40.5 64 40.5 58.5 37 Z" fill="#E8C9A0" stroke-width="2"/><path d="M66 24 C64 27 63 30 63 32" stroke="#D4A472" stroke-width="2.2"/><g transform="translate(36 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g><g transform="translate(104 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g>`,
+  `<g fill="#4B5FB0" stroke-width="2.2"><circle cx="62" cy="33" r="8.5"/><circle cx="79" cy="33" r="8.5"/><circle cx="70.5" cy="22" r="8.5"/></g><g stroke="#2E3A7A" stroke-width="1.5"><path d="M59.500 31 l2.500 2.500 l2.500 -2.500 M76.500 31 l2.500 2.500 l2.500 -2.500 M68 20 l2.500 2.500 l2.500 -2.500"/></g><g fill="#fff" stroke="none" opacity=".7"><circle cx="58" cy="36" r="1.3"/><circle cx="75" cy="36" r="1.3"/><circle cx="66" cy="25" r="1.3"/></g><g transform="translate(34 62) scale(.55) translate(-70 -30)" stroke-width="4.4"><circle cx="70" cy="30" r="9" fill="#4B5FB0"/></g><g transform="translate(106 62) scale(.55) translate(-70 -30)" stroke-width="4.4"><circle cx="70" cy="30" r="9" fill="#4B5FB0"/></g>`,
+  `<g fill="#D6456A" stroke-width="2"><circle cx="70" cy="22" r="6"/><circle cx="62" cy="29" r="6"/><circle cx="78" cy="29" r="6"/><circle cx="66" cy="38" r="6"/><circle cx="74" cy="38" r="6"/><circle cx="70" cy="30" r="6"/></g><g fill="#F7A3B8" stroke="none"><circle cx="68" cy="20" r="1.4"/><circle cx="60" cy="27" r="1.4"/><circle cx="76" cy="27" r="1.4"/><circle cx="64" cy="36" r="1.4"/><circle cx="72" cy="36" r="1.4"/></g><path d="M70 17 C66 10 59 11 59 11 C60 16 66 18 70 17 Z" fill="#7FB77E" stroke-width="2"/><g transform="translate(34 62) scale(.55) translate(-70 -30)" stroke-width="4.4"><circle cx="64" cy="30" r="6" fill="#D6456A"/><circle cx="76" cy="30" r="6" fill="#D6456A"/><circle cx="70" cy="38" r="6" fill="#D6456A"/></g><g transform="translate(106 62) scale(.55) translate(-70 -30)" stroke-width="4.4"><circle cx="64" cy="30" r="6" fill="#D6456A"/><circle cx="76" cy="30" r="6" fill="#D6456A"/><circle cx="70" cy="38" r="6" fill="#D6456A"/></g>`
 ];
 export interface CakeParts { base?: number | null; cream?: number | null; top?: number | null; sweet?: number | null }
 export interface CakeOpts { size?: number; done?: boolean; drop?: PartKey | null; still?: boolean }
@@ -29,9 +33,7 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
   const drop = (k: PartKey) => o.drop === k ? ` style="transform-box:fill-box;transform-origin:50% 100%;animation:cakeDrop .55s cubic-bezier(.3,1.4,.5,1) both"` : "";
   const body = o.still ? "" : `transform-box:fill-box;transform-origin:50% 100%;animation:${done ? "cakeHop .8s cubic-bezier(.3,1.4,.5,1) infinite" : "cakeIdle 2.8s ease-in-out infinite"}`;
   let g = "";
-  if (b===0) g += `<g${drop("base")}>${BASE_G[0]}</g>`;
-  if (b===1) g += `<g${drop("base")}>${BASE_G[1]}</g>`;
-  if (b===2) g += `<g${drop("base")}>${BASE_G[2]}</g>`;
+  if (b >= 0 && BASE_G[b]) g += `<g${drop("base")}>${BASE_G[b]}</g>`;
   if (b>=0){
     g += `<ellipse cx="50" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><ellipse cx="90" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/>`;
     g += done ? `<path d="M54 97 Q58 92 62 97 M78 97 Q82 92 86 97" stroke-width="2.2"/>`
@@ -39,9 +41,7 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
     g += `<path d="M66 100 Q70 104 74 100" stroke-width="2.2"/>`;
   }
   if (c>=0) g += `<g${drop("cream")}>${CREAM_P.replace(/%C/g, CATS.cream[c][1])}</g>`;
-  if (t===0) g += `<g${drop("top")}>${TOP_G[0]}</g>`;
-  if (t===1) g += `<g${drop("top")}>${TOP_G[1]}</g>`;
-  if (t===2) g += `<g${drop("top")}>${TOP_G[2]}</g>`;
+  if (t >= 0 && TOP_G[t]) g += `<g${drop("top")}>${TOP_G[t]}</g>`;
   if (s===2) g += `<path d="M26 72 C38 67 46 76 56 71 C66 66 76 76 86 71 C96 66 104 74 114 69" stroke="#E8A92A" stroke-width="3.6" style="animation:cakeDrop .5s ease-out both"/>`;
   let out = `<ellipse cx="70" cy="110" rx="62" ry="8" fill="#FFFFFF"/>`;
   if (b<0) out += `<path d="M24 108 C22 82 42 66 70 66 C98 66 118 82 116 108 Z" stroke="#D9C4CB" stroke-dasharray="6 6"/>`;

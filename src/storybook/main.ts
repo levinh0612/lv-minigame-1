@@ -6,7 +6,7 @@ import "../styles/themes.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
 import {
-  CATS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF,
+  CATS, FOODS, HIM, KEYS, PETS, RECIPES, STAFF, STOCK_KEYS,
   type GuestLook, type Look, type Mood, type PartKey
 } from "../content/game";
 import { rollDay } from "../engine/progress";
@@ -136,6 +136,8 @@ const STORIES: Story[] = [
     html: () => { lvState(1); const sh = createShift(); _setShift(sh); return playHTML(sh); } },
   { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "4 bàn trong một hàng; Milo làm cho Chị Mai 60%, Siro làm cho Anh Tùng 20%; chủ tiệm nhận đơn của Anh (sắp giận), chưa xem công thức; Hạt dẻ hết hàng", kind: "screen",
     html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
+  { id: "play-many", sec: "screens", title: "Chơi · nhiều nguyên liệu", desc: "Lv 24, đã ký cả 3 nhà cung cấp: mỗi hàng có tới 5 nguyên liệu", kind: "screen",
+    html: () => { lvState(24, s => { staffed(s); s.suppliers = ["alpine", "berry", "cacao"]; STOCK_KEYS.forEach(k => s.stock[k].fill(8)); }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
   { id: "play-peek", sec: "screens", title: "Chơi · đã xem công thức", desc: "Bấm Xem công thức: hiện 3 nguyên liệu và dấu ✓/✕ trên nút; mất thưởng nhớ bài", kind: "screen",
     html: () => { lvState(5, s => { staffed(s); }); const sh = busyShift(); sh.peek = true; _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
   { id: "play-idle", sec: "screens", title: "Chơi · rảnh tay", desc: "Tắt Tự nhận đơn: chủ tiệm không giữ đơn nào, các bé nhận hết; Cacao thiếu Matcha", kind: "screen",
@@ -215,6 +217,7 @@ const STORIES: Story[] = [
       note("Ca 12 · tiền bán bánh", 468); spend("quick", 9); note("Ca 12 · nhập nhanh giữa ca", -9); spend("decor", 90, "Mua Ren hồng"); spend("food", 30, "Mua 5 Hạt"); earn("gift", 60, "Quà mục tiêu ngày");
       return modalOver(homeHTML(), wallet); } },
   { id: "m-profile", sec: "modals", title: "Hồ sơ của bạn", desc: "Tên tiệm, Nam/Nữ và Màu chính (11 màu); màu giao diện", kind: "modal", html: () => { lvState(4, s => { s.shop = "Vinh"; s.me = { sprite: "b2", hair: "#6B4A3A", eye: "#7A5A3E", coat: "#2E4A7A", shirt: "#F2E6D0", skin: "#F7D1B5" }; }); return modalOver(homeHTML(), profileSheet); } },
+  { id: "m-menu2", sec: "modals", title: "Công thức · Lv 13 chưa ký nhà cung cấp", desc: "Croissant/Cheesecake đủ cấp nhưng Thiếu nguyên liệu (chạm để mở Nguyên liệu); món cấp cao hơn hiện Mở ở Lv", kind: "modal", html: () => { lvState(13); return modalOver(homeHTML(), menuSheet); } },
   { id: "m-menu", sec: "modals", title: "Công thức", desc: "Menu → Công thức hoặc chạm bảng Menu ở cảnh tiệm: món của tiệm, món Gacha (mờ nếu chưa có)", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), menuSheet); } },
   { id: "m-cakes", sec: "modals", title: "Tủ bánh", desc: "Carousel các bánh đang bán", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), cakesSheet); } },
   { id: "m-days", sec: "modals", title: "Ngày kỷ niệm", desc: "Chạm số ngày yêu", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), daysSheet); } },
@@ -223,6 +226,8 @@ const STORIES: Story[] = [
   { id: "auth-lock", sec: "screens", title: "Tài khoản · nhập PIN", desc: "Các lần mở app sau chỉ hỏi PIN", kind: "screen", html: () => authHTML("lock") },
 
   /* ---------- Bánh ---------- */
+  { id: "c-cakes-new", sec: "cakes", title: "12 món mới", desc: "Croissant, Cheesecake, Phô mai, Socola, Việt quất, Mâm xôi (cần ký nhà cung cấp)", kind: "comp",
+    html: () => `<div class="board"><div class="sbrow">${RECIPES.slice(9).map(r => `<div class="sbcell" style="width:118px">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 104, still: true })}<b>${esc(r.n)}</b>Lv ${r.lv} · ${r.price} xu</div>`).join("")}</div></div>` },
   { id: "c-cakes", sec: "cakes", title: "27 tổ hợp bánh", desc: "Đế × Kem × Topping (độ ngọt Vừa)", kind: "comp",
     html: () => `<div class="board">${[0, 1, 2].map(b => `<div class="sblabel">Đế ${CATS.base[b][0]}</div><div class="sbrow">${[0, 1, 2].flatMap(c => [0, 1, 2].map(t => {
       const r = RECIPES.find(x => x.base === b && x.cream === c && x.top === t);

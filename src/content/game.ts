@@ -14,12 +14,22 @@ export const CATS: Record<PartKey, [string, string][]> = {
 };
 
 export interface Recipe { id: string; n: string; base: number; cream: number; top: number; lv: number; price: number }
-export const RECIPES: Recipe[] = ([
+const BASIC_RECIPES: Recipe[] = ([
   // tên = Đế + Kem + Topping, đọc tên là biết bánh gồm gì
   ["Bông lan Matcha Dâu tây", 0, 0, 0], ["Mochi Kem dâu Dâu tây", 2, 1, 0], ["Tart Vani Hạt dẻ", 1, 2, 2],
   ["Bông lan Matcha Đậu đỏ", 0, 0, 1], ["Mochi Matcha Đậu đỏ", 2, 0, 1], ["Tart Kem dâu Dâu tây", 1, 1, 0],
   ["Bông lan Vani Hạt dẻ", 0, 2, 2], ["Mochi Vani Dâu tây", 2, 2, 0], ["Tart Matcha Hạt dẻ", 1, 0, 2]
 ] as [string, number, number, number][]).map(([n, base, cream, top], i) => ({ id: "r" + (i + 1), n, base, cream, top, lv: Math.max(1, i - 2), price: 16 + i * 2 }));
+/* Món dùng nguyên liệu mới: cần đủ cấp VÀ đã ký nhà cung cấp (xem SUPPLIERS). Cột: tên, đế, kem, topping, cấp mở, giá bán */
+const MORE_RECIPES: Recipe[] = ([
+  ["Croissant Vani Dâu tây", 3, 2, 0, 8, 34], ["Croissant Phô mai Hạt dẻ", 3, 3, 2, 9, 36],
+  ["Cheesecake Kem dâu Dâu tây", 4, 1, 0, 10, 38], ["Cheesecake Phô mai Đậu đỏ", 4, 3, 1, 11, 40],
+  ["Bông lan Vani Việt quất", 0, 2, 3, 14, 40], ["Tart Matcha Mâm xôi", 1, 0, 4, 15, 42],
+  ["Croissant Phô mai Việt quất", 3, 3, 3, 16, 46], ["Cheesecake Vani Mâm xôi", 4, 2, 4, 17, 48],
+  ["Bông lan Socola Dâu tây", 0, 4, 0, 20, 48], ["Tart Socola Hạt dẻ", 1, 4, 2, 21, 50],
+  ["Mochi Socola Mâm xôi", 2, 4, 4, 22, 52], ["Croissant Socola Việt quất", 3, 4, 3, 24, 56]
+] as [string, number, number, number, number, number][]).map(([n, base, cream, top, lv, price], i) => ({ id: "r" + (BASIC_RECIPES.length + i + 1), n, base, cream, top, lv, price }));
+export const RECIPES: Recipe[] = [...BASIC_RECIPES, ...MORE_RECIPES];
 // Lv 1 mở sẵn 4 công thức, sau đó mỗi cấp mở thêm 1 (tới Lv 6)
 export const recipeOf = (b: Build) => RECIPES.find(r => r.base === b.base && r.cream === b.cream && r.top === b.top);
 export const partsText = (r: Recipe) => `${CATS.base[r.base][0]} · ${CATS.cream[r.cream][0]} · ${CATS.top[r.top][0]}`;

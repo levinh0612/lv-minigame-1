@@ -1683,3 +1683,10 @@ button.cm{position:relative}
 .sup5 .mini.gold.short{background:#E6C98A;box-shadow:0 3px 0 #C9AC6B}
 .sup5 .tag.use{white-space:nowrap}
 .ing-stiles .stile span{font-size:11px;letter-spacing:-.2px}
+
+/* ===== Phiếu làm bánh khi có hơn 3 nguyên liệu mỗi hàng: 4-5 cột, biểu tượng trên, tên dưới ===== */
+.irow .g3.many{grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px}
+.irow .g3.many .ing{flex-direction:column;justify-content:center;height:60px;padding:4px 2px;gap:2px;text-align:center}
+.irow .g3.many .ing .cn{flex:none;font-size:10px;line-height:1.1;letter-spacing:-.3px}
+.irow .g3.many .ing .q{right:3px;top:2px}
+.irow .g3.many .ing .tag{right:2px}

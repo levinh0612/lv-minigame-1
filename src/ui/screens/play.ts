@@ -260,7 +260,10 @@ const ingHTML = (sh: Shift, k: PartKey, i: number) => {
   return `<button class="${s.cls}" data-ing="${k}:${i}">${ingSVG(k, i, 24, s.out)}<span class="cn">${CATS[k][i][0]}</span>${
     s.out ? `<em class="tag">+${quickPrice(k as StockKey, i)} xu</em>` : s.q > 0 ? `<b class="q ${s.low ? "low" : ""}">${s.q}</b>` : ""}${s.cls.includes(" ok") ? `<em class="ck">${TICK}</em>` : ""}</button>`;
 };
-export const rowsHTML = (sh: Shift) => KEYS.map(k => `<div class="irow"><span>${LABELS[k]}</span><div class="g3">${(k === "sweet" ? [0, 1, 2] : usedIdx(k)).map(i => ingHTML(sh, k, i)).join("")}</div></div>`).join("");
+export const rowsHTML = (sh: Shift) => KEYS.map(k => {
+  const list = k === "sweet" ? [0, 1, 2] : usedIdx(k);        // chỉ hiện nguyên liệu mà các món đang bán dùng; hơn 3 món thì xếp gọn thành 4-5 cột
+  return `<div class="irow"><span>${LABELS[k]}</span><div class="g3${list.length > 3 ? " many" : ""}" style="--n:${list.length}">${list.map(i => ingHTML(sh, k, i)).join("")}</div></div>`;
+}).join("");
 
 /* phần đầu phiếu: Đơn của ai, tên bánh, Xem công thức hoặc các nguyên liệu */
 function oinfoHTML(sh: Shift) {

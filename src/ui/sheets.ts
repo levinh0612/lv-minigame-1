@@ -4,6 +4,7 @@ import { CATS, RECIPES, STOCK_KEYS } from "../content/game";
 import { GACHA_ITEMS, MASTERY_MAX, RARITY } from "../content/gacha";
 import { daysTogether, events } from "../engine/dates";
 import { hasItem, masteryOf, specialRecipes } from "../engine/gacha";
+import { recipeReady } from "../engine/suppliers";
 import { featured, lvl, unlocked } from "../engine/progress";
 import { S, save } from "../engine/state";
 import { flushSave } from "../net/cloud";
@@ -28,14 +29,15 @@ function recipeBody() {
     `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeSVG({ base: r.base, cream: r.cream, top: r.top, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
   const shop = RECIPES.map(r => r.lv > L
     ? tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim")
+    : !recipeReady(r) ? tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`)
     : tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", r.id === f.id ? `<em class="rstar">★ nổi bật</em>` : "")).join("");
   const sp = new Map(specialRecipes().map(r => [r.id, r]));
   const gacha = GACHA_ITEMS.filter(i => i.recipe).map(i => hasItem(i.id)
     ? tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`)
     : tile(i.recipe!, i.n, i.recipe!.price, `<span class="st gacha">Gacha ›</span>`, "dim", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`, `data-rgacha="${i.id}"`)).join("");
-  const nShop = RECIPES.filter(r => r.lv <= L).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
+  const nShop = RECIPES.filter(r => r.lv <= L && recipeReady(r)).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
   return `<div class="gfil rfil">${([["all", "Tất cả"], ["shop", "Của tiệm"], ["gacha", "Gacha"]] as const).map(([k, n]) => `<button class="${rfil === k ? "on" : ""}" data-rfil="${k}">${n}</button>`).join("")}</div>
-    ${rfil !== "gacha" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} đã mở</span></div><div class="rb5">${shop}</div>` : ""}
+    ${rfil !== "gacha" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} bán được</span></div><div class="rb5">${shop}</div>` : ""}
     ${rfil !== "shop" ? `<div class="sh2"><b>Công thức Gacha</b><span class="lav">${nG}/${tG} đã có</span></div><div class="rb5">${gacha}</div>` : ""}
     <p class="phint">Món mờ chưa có: chạm để sang Gacha và xem món đó.</p>`;
 }
