@@ -19,6 +19,7 @@ import { coinPill, esc, levelChip } from "../ui/dom";
 import { claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
+import { staffSheet } from "../ui/staff";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
@@ -173,6 +174,10 @@ const STORIES: Story[] = [
   /* ---------- Hộp thoại ---------- */
   { id: "m-more", sec: "modals", title: "Menu (nút ☰)", desc: "Công thức, Thú cưng, Hồ sơ, Xếp hạng, Sự kiện", kind: "modal",
     html: () => { lvState(5); return modalOver(homeHTML(), moreSheet); } },
+  { id: "m-staff", sec: "modals", title: "Quản lý · Nhân vật", desc: "Chọn tầng, chạm để đặt; món chưa có hiện mờ và dẫn sang Gacha", kind: "modal",
+    html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mgr")); } },
+  { id: "m-staff2", sec: "modals", title: "Quản lý · Linh thú", desc: "Cùng bảng, tab Linh thú", kind: "modal",
+    html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mascot")); } },
   { id: "m-buff", sec: "modals", title: "Buff đang có", desc: "Tổng 4 loại buff và nguồn của từng buff", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), buffSheet); } },
   { id: "m-letter", sec: "modals", title: "Thư hôm nay", desc: "Mở từ thẻ thư ở màn Bắt đầu", kind: "modal",

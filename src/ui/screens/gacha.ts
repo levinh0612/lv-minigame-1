@@ -5,6 +5,7 @@ import { BOND_AT, BOND_STEP, bondLevel, bondOf, buyTickets, claimFreeTicket, cou
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { render } from "../app";
+import { navigate } from "../router";
 import { coinPill, esc, modal, toast } from "../dom";
 import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
@@ -90,6 +91,14 @@ function poolSheet() {
     <p class="phint">Chạm vào một món để xem trước (tranh/3D, chỉ số). Bảo hiểm: ${PITY_RARE} lần chắc chắn có Hiếm trở lên, ${PITY_ULTRA} lần chắc chắn có Cực hiếm.</p>
     <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
   hydratePortraits();
+}
+
+/** mở màn Gacha ở bộ sưu tập, đúng nhóm của món rồi hiện chi tiết món đó (dùng từ Quản lý, Công thức khi món chưa có) */
+export function openInGacha(id: string) {
+  const it = gachaItem(id); if (!it) return;
+  tab = "bag"; filter = it.kind; fromPool = false;
+  navigate("/gacha");
+  setTimeout(() => detail(id), 60);
 }
 
 /** xử lý mọi nút trên màn Gacha (data-gact) */
