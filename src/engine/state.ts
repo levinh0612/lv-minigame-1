@@ -21,6 +21,7 @@ export interface State {
   stock: Record<StockKey, number[]>; staff: Record<PetId, StaffState>; tut: boolean;
   food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
   gacha: GachaState;
+  mouse?: { king: number; last: number };   // king: số lần diệt chuột kịp trong 10 giây (hạng Vua diệt chuột); last: ca gần nhất có chuột
   venue: { tbl: number[]; floors: number; wide: number; tables?: number };   // cấp từng bàn ([] = chưa đặt: người chơi cũ được tặng theo độ nổi tiếng), số lầu, số lần mở rộng ngang; tables = số ghế của bản 2.52
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
   earned: number;                 // tổng xu kiếm được từ bán bánh (bảng xếp hạng)
@@ -52,7 +53,7 @@ export function fresh(): State {
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: { base: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], cream: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK], top: [STARTER_STOCK, STARTER_STOCK, STARTER_STOCK] },
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
-    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
+    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
     room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
@@ -110,6 +111,7 @@ export function loadState(raw: string | null): State {
   s.stock = Object.assign(fresh().stock, s.stock || {});
   s.food = Object.assign(fresh().food, s.food || {});
   s.venue = Object.assign(fresh().venue, s.venue || {});
+  s.mouse = { ...fresh().mouse!, ...(s.mouse || {}) };
   s.gacha = Object.assign(fresh().gacha, s.gacha || {}); s.gacha.owned = { ...(s.gacha.owned || {}) };
   if (s.me && isFixedChar(s.me.sprite)) s.gacha.owned["c_" + s.me.sprite] ||= 1;        // người đang dùng nhân vật làm sẵn: tặng luôn làm khách quen
   s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});

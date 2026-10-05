@@ -1,6 +1,7 @@
 /* Màn Chơi và màn Kết quả: phần hiển thị. Luật chơi nằm ở engine/shift.ts.
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
 import { bondMul, mascotItem } from "../../engine/gacha";
+import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
 import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, type PartKey, type StockKey } from "../../content/game";
@@ -49,12 +50,66 @@ export const hasResult = () => !!result;
 export function resume() { if (SH) { SH.paused = false; lastT = performance.now(); } }
 export function pause() { if (SH) SH.paused = true; }
 
+/* ===== Chuột vào tiệm (luật ở engine/mouse.ts) ===== */
+interface Rat { el: HTMLElement; x: number; y: number; a: number; turn: number }
+let rat: Rat | null = null, mouseUiAt = 0;
+function removeRat() { rat?.el.remove(); rat = null; $("#mouseBox") && ($("#mouseBox")!.innerHTML = ""); }
+/* chuột chạy nhanh lúc mới vào rồi chậm dần theo thời gian */
+function moveRat(dt: number) {
+  const root = $("#play"); if (!root || !SH?.mouse) { if (rat) removeRat(); return; }
+  const box = root.getBoundingClientRect();
+  if (!rat || !rat.el.isConnected) {
+    const el = document.createElement("button"); el.id = "rat"; el.className = "rat"; el.setAttribute("aria-label", "Bắt chuột"); el.textContent = "🐭"; root.appendChild(el);
+    el.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); doCatchMouse(); });
+    rat = { el, x: -40, y: box.height * (.25 + Math.random() * .4), a: -.2 + Math.random() * .4, turn: 0 };
+  }
+  const age = SH.mouse.age, speed = Math.max(55, 420 - age * 12);
+  rat.turn -= dt; if (rat.turn <= 0) { rat.a += (Math.random() - .5) * 2.2; rat.turn = .35 + Math.random() * .8; }
+  rat.x += Math.cos(rat.a) * speed * dt; rat.y += Math.sin(rat.a) * speed * dt;
+  const W = box.width - 44, H = box.height - 60;
+  if (rat.x < 0 && rat.x > -39) { rat.x = 0; rat.a = Math.PI - rat.a; } else if (rat.x > W) { rat.x = W; rat.a = Math.PI - rat.a; }
+  if (rat.y < 80) { rat.y = 80; rat.a = -rat.a; } else if (rat.y > H) { rat.y = H; rat.a = -rat.a; }
+  rat.el.style.transform = `translate(${rat.x.toFixed(1)}px,${rat.y.toFixed(1)}px) scaleX(${Math.cos(rat.a) < 0 ? -1 : 1})`;
+}
+function mouseHTML(sh: Shift) {
+  const m = sh.mouse; if (!m) return "";
+  const st = mouseStage(m), r = mouseRank(), pay = mousePay(), fine = mouseFine();
+  const btn = m.age >= T_PERFECT ? `<button class="b3 mpay" data-act="mousepay" ${S.coins >= pay ? "" : "disabled"}>Xử lý nhanh · ${fmtN(pay)} xu</button>` : "";
+  const left = (t: number) => Math.max(0, Math.ceil(t - m.age));
+  const text = st === "fast" ? `🐭 Chuột chạy vào tiệm! Chạm bắt trong ${left(T_PERFECT)}s để ${r.name ? "lên hạng" : "được hạng Vua diệt chuột"}`
+    : st === "ok" ? `🐭 Chuột còn chạy quanh. Bắt nó hoặc trả tiền xử lý nhanh`
+    : st === "faint" ? `${m.fainted ? `😵 ${esc(petName(m.fainted))} ngất xỉu, nghỉ hết ca.` : "😟 Khách sốt ruột hơn."} Còn ${left(T_WARN)}s tới cảnh báo`
+    : `⚠ Khách bắt đầu nghi ngờ! Còn ${left(T_FINE)}s là bị báo sở y tế, đóng ca và phạt ${fmtN(fine)} xu`;
+  const bar = Math.min(100, m.age / T_FINE * 100);
+  return `<div class="mbox s-${st}"><div class="mt">${text}</div><div class="mb"><i style="width:${bar}%"></i></div>${btn}</div>`;
+}
+function renderMouse() { const b = $("#mouseBox"); if (b && SH) b.innerHTML = mouseHTML(SH); }
+function doCatchMouse() {
+  if (!SH?.mouse) return;
+  const r = rat?.el.getBoundingClientRect(), res = catchMouse(SH); removeRat(); if (!res) return;
+  if (res.kind === "perfect") {
+    sfx("level"); haptic([30, 30, 60]); if (r) floatText(r.left, r.top - 6, `+${res.reward}`);
+    toast(`Bắt kịp chuột! Vua diệt chuột hạng ${res.rank}${res.rankUp ? " (vừa lên hạng!)" : ""} · +${res.reward} xu`); refreshCoins();
+  } else { sfx("coin"); toast("Bắt được chuột rồi, may mà chưa ai thấy"); }
+}
+export function doMousePay() {
+  if (!SH?.mouse) return; const c = payMouse(SH);
+  if (c == null) return toast(SH.mouse.age < T_PERFECT ? "Cố bắt chuột trước đã nha" : "Không đủ xu để xử lý nhanh");
+  removeRat(); sfx("coin"); refreshCoins(); toast(`Đã gọi người xử lý chuột nhanh: −${fmtN(c)} xu`);
+}
+
 function loop(now: number) {
   if (!SH) return;
   const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
   if (!SH.paused) {
     const ev = tick(SH, dt);
     if (ev.rush) { sfx("level"); toast(`Giờ vàng! Khách đông bất ngờ, thêm ${ev.rush} khách`); }
+    if (ev.mouse.appeared) { sfx("bell"); haptic([40, 30, 40]); toast("🐭 Có chuột trong tiệm! Chạm vào chuột để bắt"); }
+    if (ev.mouse.fainted) { renderCrew(); sfx("wrong"); }
+    if (ev.mouse.warn) { sfx("wrong"); haptic([60, 40, 60]); toast("⚠ Khách bắt đầu nghi ngờ có chuột!"); }
+    if (ev.mouse.shutdown) { removeRat(); sfx("wrong"); haptic([80, 50, 80]); toast(`Sở y tế đóng cửa tiệm vì có chuột. Phạt ${fmtN(SH.mouseFine)} xu`); }
+    moveRat(dt);
+    if (SH.mouse && now - mouseUiAt > 250) { mouseUiAt = now; renderMouse(); }
     if (ev.spawned >= 0) { renderSlot(ev.spawned, true); sfx("bell"); }
     ev.left.forEach(onLeave);
     ev.claimed.forEach(b => renderSlot(b.seat));
@@ -137,7 +192,7 @@ export function crewHTML(sh: Shift) {
   return `<div class="crew" style="--n:${ids.length + (mascotItem() ? 1 : 0)}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
-      : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
+      : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeSVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
     return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${petSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}${mascotChip()}</div>`;
@@ -273,6 +328,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     </div>
     <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
     <div id="comboBox">${comboHTML(sh)}</div>
+    <div id="mouseBox">${mouseHTML(sh)}</div>
     <div class="queue" style="--n:${Math.min(6, sh.seats.length)}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
@@ -506,7 +562,7 @@ export function resultHTML(r: Result | null = result) {
         ${row("Nhập nguyên liệu", led.ingUsed + led.quick, false)}${row("Lương các bé", led.wages, false)}
         <div class="lg tot ${led.profit >= 0 ? "" : "neg"}"><span>Lãi</span><b>${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b></div>
       </div>
-      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.comboPaid ? `<p class="rticket">🔥 Combo dài nhất ×${sh.bestCombo}: +${fmtN(sh.comboPaid)} xu thưởng${sh.comboLost ? ` (mất ${fmtN(sh.comboLost)} xu vì đứt chuỗi)` : ""}</p>` : sh.comboLost ? `<p class="rticket">Đứt combo: mất ${fmtN(sh.comboLost)} xu thưởng dồn, ca sau giữ chuỗi nha</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 ${esc(mascotItem()?.n ?? "Linh vật")} thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
+      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.shutdown ? `<p class="rticket bad">🚨 Sở y tế đóng cửa tiệm vì có chuột: phạt ${fmtN(sh.mouseFine)} xu. Lần sau nhớ bắt chuột sớm nha</p>` : ""}${sh.mouseKills ? `<p class="rticket">🐭 Vua diệt chuột hạng ${mouseRank().name}: +${sh.mouseReward} xu${mouseRank().next ? ` · cần ${mouseRank().next} lần để lên hạng` : ""}</p>` : ""}${sh.mousePaid ? `<p class="rticket">Đã chi ${fmtN(sh.mousePaid)} xu xử lý chuột nhanh</p>` : ""}${sh.comboPaid ? `<p class="rticket">🔥 Combo dài nhất ×${sh.bestCombo}: +${fmtN(sh.comboPaid)} xu thưởng${sh.comboLost ? ` (mất ${fmtN(sh.comboLost)} xu vì đứt chuỗi)` : ""}</p>` : sh.comboLost ? `<p class="rticket">Đứt combo: mất ${fmtN(sh.comboLost)} xu thưởng dồn, ca sau giữ chuỗi nha</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 ${esc(mascotItem()?.n ?? "Linh vật")} thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
     </div>
     <div class="rbtns"><button class="b3 w" style="flex:1" data-go="/">Về tiệm</button><button class="b3" style="flex:1.6" data-go="/chuan-bi" data-replace>${good ? "Ca tiếp theo" : "Chơi lại ca"}</button></div>
   </div>`;

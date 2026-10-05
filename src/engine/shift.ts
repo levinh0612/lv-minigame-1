@@ -9,6 +9,7 @@ import { BAKE_TIME, type FoodId } from "../content/game";
 import { addBond, addTickets, regulars } from "./gacha";
 import { comfortPat, comfortTip, dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
+import { planMouse, tickMouse, type MouseEvt, type MouseOut } from "./mouse";
 import { featured, fx, lvl, unlocked } from "./progress";
 import { S, save } from "./state";
 import { earn, note, spend } from "./wallet";
@@ -36,7 +37,8 @@ export interface Shift {
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
   goals: ShiftGoal[]; goalCoins: number; ticket: boolean; bondUp: number;
-  combo: number; bestCombo: number; comboBank: number; comboLost: number; comboPaid: number;   // combo: số bánh Hoàn hảo liên tiếp; comboBank: thưởng dồn chờ cuối ca (đứt chuỗi thì mất nửa)
+  combo: number; bestCombo: number; comboBank: number; comboLost: number; comboPaid: number;
+  mouse: MouseEvt | null; mousePlan: number; mouseDone: boolean; fainted: PetId[]; patMul: number; shutdown: boolean; mouseFine: number; mouseReward: number; mouseKills: number; mousePaid: number;   // chuột vào tiệm (xem mouse.ts)   // combo: số bánh Hoàn hảo liên tiếp; comboBank: thưởng dồn chờ cuối ca (đứt chuỗi thì mất nửa)
   // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
 }
 
@@ -52,12 +54,14 @@ function rushPlan() {
 }
 export function createShift(): Shift {
   const L = lvl();
-  return {
+  const sh: Shift = {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
   };
+  sh.mousePlan = planMouse(sh.total);
+  return sh;
 }
 
 function makeGuest(): { who: string; look: Look } {
@@ -90,11 +94,12 @@ export function makeCustomer(sh: Shift): Customer {
 
 /* Chạy thời gian. Trả về ghế vừa có khách và các ghế khách vừa bỏ về. */
 export type StaffDone = { baker: Baker; res: Extract<ServeResult, { ok: true }> };
-export interface TickOut { rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: PetId; what: string }[] }
+export interface TickOut { rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: PetId; what: string }[]; mouse: MouseOut }
 export function tick(sh: Shift, dt: number): TickOut {
-  const out: TickOut = { rush: 0, spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [] };
+  const out: TickOut = { rush: 0, spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [], mouse: {} };
   if (sh.paused) return out;
   sh.t += dt;
+  out.mouse = tickMouse(sh, dt, closeEarly); if (out.mouse.shutdown) return out;
   if (!sh.rushDone && sh.rushExtra > 0 && sh.spawned >= sh.rushAt) { sh.rushDone = true; sh.total += sh.rushExtra; sh.rushUntil = sh.t + 25; out.rush = sh.rushExtra; }
   const free = sh.seats.findIndex(s => !s);
   if (sh.spawned < sh.total && sh.t >= sh.next && free >= 0) {
@@ -104,7 +109,7 @@ export function tick(sh: Shift, dt: number): TickOut {
   }
   sh.seats.forEach((c, i) => {
     if (!c || c.gone) return;
-    c.pat -= c.by ? dt / 2 : dt;          // có bé nhận đơn thì khách bớt sốt ruột
+    c.pat -= (c.by ? dt / 2 : dt) * sh.patMul;          // có bé nhận đơn thì khách bớt sốt ruột
     if (c.pat <= 0) { leaveCustomer(sh, i); out.left.push(i); }
   });
   // Tự nhận đơn: đang rảnh tay thì chủ tiệm được gán đơn chờ lâu nhất
@@ -127,7 +132,7 @@ function bake(sh: Shift, dt: number, out: TickOut) {
   sh.bakers = sh.bakers.filter(b => b.done < b.need);
   STAFF_IDS.forEach(id => {
     const lv = dutyLv(id);
-    if (!lv || sh.bakers.some(b => b.id === id) || !sh.working.includes(id)) return;
+    if (!lv || sh.bakers.some(b => b.id === id) || !sh.working.includes(id) || sh.fainted.includes(id)) return;
     const mine = mineIdx(sh);
     // khách chờ lâu nhất trước; thiếu nguyên liệu thì bé tự nhập nhanh, hết xu thì bỏ qua và báo thiếu gì
     const order = sh.seats.map((_, i) => i).filter(i => { const c = sh.seats[i]; return c && !c.gone && !c.by && i !== mine; })
