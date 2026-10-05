@@ -206,7 +206,7 @@ const STORIES: Story[] = [
       earn("welcome", 300, "Quà khai trương"); spend("stock", 72, "Nhập hàng theo gợi ý"); earn("sales", 286); earn("tip", 64); earn("memo", 48); earn("goal", 70);
       note("Ca 12 · tiền bán bánh", 468); spend("quick", 9); note("Ca 12 · nhập nhanh giữa ca", -9); spend("decor", 90, "Mua Ren hồng"); spend("food", 30, "Mua 5 Hạt"); earn("gift", 60, "Quà mục tiêu ngày");
       return modalOver(homeHTML(), wallet); } },
-  { id: "m-profile", sec: "modals", title: "Hồ sơ của bạn", desc: "Chọn nhân vật, màu tóc/mắt/áo/da, tên tiệm, màu giao diện", kind: "modal", html: () => { lvState(4, s => { s.shop = "Vinh"; s.me = { sprite: "b2", hair: "#6B4A3A", eye: "#7A5A3E", coat: "#2E4A7A", shirt: "#F2E6D0", skin: "#F7D1B5" }; }); return modalOver(homeHTML(), profileSheet); } },
+  { id: "m-profile", sec: "modals", title: "Hồ sơ của bạn", desc: "Tên tiệm, Nam/Nữ và Màu chính (11 màu); màu giao diện", kind: "modal", html: () => { lvState(4, s => { s.shop = "Vinh"; s.me = { sprite: "b2", hair: "#6B4A3A", eye: "#7A5A3E", coat: "#2E4A7A", shirt: "#F2E6D0", skin: "#F7D1B5" }; }); return modalOver(homeHTML(), profileSheet); } },
   { id: "m-menu", sec: "modals", title: "Menu", desc: "Chạm bảng Menu ở cảnh tiệm", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), menuSheet); } },
   { id: "m-cakes", sec: "modals", title: "Tủ bánh", desc: "Carousel các bánh đang bán", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), cakesSheet); } },
   { id: "m-days", sec: "modals", title: "Ngày kỷ niệm", desc: "Chạm số ngày yêu", kind: "modal", html: () => { lvState(4); return modalOver(homeHTML(), daysSheet); } },

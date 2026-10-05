@@ -1593,3 +1593,34 @@ button.cm{position:relative}
 .bfrow .gart.mas{background:none;border-radius:0}
 .bfrow .gart.mas img{-webkit-mask-image:radial-gradient(ellipse 52% 54% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 52% 54% at 50% 50%,#000 62%,transparent 100%)}
 .mbox .sh2{padding:14px 2px 0}.mbox .sh2 b{text-align:left}
+
+/* ===== Hồ sơ: bảng Màu chính (chấm tròn) ===== */
+.pf-h small{font:700 11px var(--body);color:var(--soft)}
+.pf-sw5s{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 4px;padding:4px 0 2px}
+.pf-sw5{display:flex;flex-direction:column;align-items:center;gap:5px}
+.pf-sw5 i{position:relative;width:46px;height:46px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--pink-b),0 3px 0 2px var(--sh);display:grid;place-items:center;color:#fff;font:900 20px Arial,sans-serif;transition:transform .15s}
+.pf-sw5.on i{box-shadow:0 0 0 3px var(--ink),0 3px 0 3px var(--sh);transform:scale(1.06)}
+.pf-sw5.on i::after{content:"✓"}
+.pf-sw5 span{font:800 11.5px var(--body);color:var(--soft2);white-space:nowrap}
+.pf-sw5.on span{color:var(--ink);font-weight:900}
+
+/* ===== Mục tiêu: mỗi mục một hàng có thanh tiến độ ===== */
+.lvrow5{display:flex;align-items:center;gap:10px}
+.lvrow5 .lb{flex:none;font:800 15px var(--display);color:#fff;background:var(--pink);border-radius:12px;padding:3px 10px;box-shadow:0 3px 0 var(--pink-d)}
+.lvrow5 .tr{flex:1;height:10px;border-radius:5px;background:var(--bg);overflow:hidden}
+.lvrow5 .tr i{display:block;height:100%;background:var(--pink);border-radius:5px}
+.lvrow5 small{font:800 12px var(--body);color:var(--soft);font-variant-numeric:tabular-nums}
+.g3{display:grid;grid-template-columns:26px 1fr auto;gap:5px 10px;align-items:center;padding:11px 0;border-top:2px solid var(--bg)}
+.g3:first-child{border-top:0;padding-top:2px}
+.g3 .ck{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--pink-b);display:grid;place-items:center;font:900 14px Arial,sans-serif;color:#fff}
+.g3.done .ck{background:var(--mint);border-color:var(--mint)}
+.g3 .tx{font:800 14px/1.25 var(--body);color:var(--ink2);text-align:left}
+.g3 .nv{font:800 13px var(--body);color:var(--soft);font-variant-numeric:tabular-nums}
+.g3.done .nv{color:var(--mint-d)}
+.g3 .pb{grid-column:2/4;height:6px;border-radius:3px;background:var(--bg);overflow:hidden}
+.g3 .pb i{display:block;height:100%;background:var(--mint-d);border-radius:3px}
+.card h3 .tg3{font:800 12px var(--body);color:var(--mint-d);background:var(--mint-bg);border-radius:10px;padding:2px 9px}
+.lvrow5 .tr,.g3 .pb{background:color-mix(in srgb,var(--pink) 16%,#fff)}
+.pf-sw5s{grid-template-columns:repeat(6,1fr)}
+.pf-sw5 i{width:42px;height:42px}
+.pf-sw5 span{font-size:11px}
