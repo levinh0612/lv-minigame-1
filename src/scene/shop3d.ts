@@ -592,7 +592,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const pulse = new Map<string, number>();
   let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0, upMs = 0, drawMs = 0;
   /** máy chậm: hạ độ phân giải để giữ mượt */
-  const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.75)); resize(w, h); };
+  const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.75)); resize(w, h); layout(); r.render(scene, cam); };   // vẽ ngay sau khi đổi cỡ để canvas không trắng chớp
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
     if (!dom.isConnected || document.hidden || now - last < 33) return;      // ~30 hình/giây

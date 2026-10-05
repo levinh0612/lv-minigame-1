@@ -29,7 +29,7 @@ export function glbProp(id: string): Animated {
   return {
     group: g,
     update: t => {
-      if (mixer) { mixer.update(last < 0 ? 0 : Math.min(.1, t - last)); } last = t;
+      if (mixer) { if (last < 0) { mixer.update(0); last = t; } else if (t - last >= .066) { mixer.update(Math.min(.15, t - last)); last = t; } } else last = t;   // chuyển động xương cập nhật ~15 lần/giây cho nhẹ máy
       if (cfg.fly) holder.position.y = Math.sin(t * 2) * .08; else holder.position.y = Math.sin(t * 1.6) * .008;
     }
   };
