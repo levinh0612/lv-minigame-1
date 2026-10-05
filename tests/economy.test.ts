@@ -418,8 +418,8 @@ describe("ví: sổ thu chi", () => {
   describe("gacha", () => {
     const seq = (...v: number[]) => { let i = 0; return () => v[i++ % v.length]!; };
 
-    it("30 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
-      expect(GACHA_ITEMS.length).toBe(30);
+    it("37 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
+      expect(GACHA_ITEMS.length).toBe(37);
       ["common", "rare", "ultra"].forEach(r => expect(GACHA_ITEMS.some(i => i.rarity === r)).toBe(true));
       expect(rollRarity(() => 0.99)).toBe("common"); expect(rollRarity(() => 0.5)).toBe("common");
       expect(rollRarity(() => 0.1)).toBe("rare"); expect(rollRarity(() => 0.02)).toBe("ultra");

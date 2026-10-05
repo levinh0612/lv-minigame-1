@@ -6,7 +6,7 @@ import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { render } from "../app";
 import { coinPill, esc, modal, toast } from "../dom";
-import { gachaArt, playReveal, preloadGachaFx } from "../gachafx";
+import { gachaArt, playReveal } from "../gachafx";
 import { hydratePortraits } from "../portrait";
 
 let tab: "summon" | "bag" = "summon", filter: GachaKind | "all" = "all", busy = false, poolR: Rarity = "common";
@@ -44,7 +44,6 @@ function bagHTML() {
     }).join("")}</div></div>`;
 }
 export function gachaHTML() {
-  preloadGachaFx();
   return `<div class="scr gacha6"><div class="phead">${BACK}<div class="pt"><small>Gacha Summon</small><h2>Triệu hồi</h2></div><span class="pill tk" aria-label="${S.gacha.tickets} vé">🎟 ${fmtN(S.gacha.tickets)}</span>${coinPill()}</div>
     <div class="ghero" role="img" aria-label="Gacha Summon"></div>
     <div class="gtabs"><button class="${tab === "summon" ? "on" : ""}" data-gact="tab:summon">Triệu hồi</button><button class="${tab === "bag" ? "on" : ""}" data-gact="tab:bag">Bộ sưu tập · ${ownedCount()}/${GACHA_ITEMS.length}</button></div>

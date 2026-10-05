@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { CYL, RB, SPH, T, INK, add, CONE, CAP, mergeStatic } from "./kit";
 import { cake } from "./cake";
 import { pet, type PetKind } from "./pets";
+import { glbProp } from "./glbprop";
 import { APPROACH } from "./figure3d";
 import { person, personActor, type Actor, type PersonLook } from "./people";
 
@@ -22,6 +23,8 @@ export interface ShopOpts {
   guestLooks: { sprite: string; look: PersonLook }[];
   menuCount: number;
   shopName: string;                        // tên tiệm trên biển hiệu
+  companionRarity?: "common" | "rare" | "ultra";
+  companion?: string;                      // linh vật/hộ vệ gacha đang đồng hành (id model GLB): đứng cạnh chủ tiệm
   hl?: string;                             // nhóm đồ đang được chọn ở màn trang trí: làm nổi bật
 }
 export interface Hotspot { id: string; attr: string; value: string; label: string; obj: THREE.Object3D; wall: number | null; dy: number }
@@ -230,10 +233,15 @@ export function createShop(o: ShopOpts): ShopScene {
   const petObjs = new Map<string, { g: THREE.Group; t: number }>();
   petMeta.forEach(([k, x, id]) => {
     add(root, CYL(.45, .5, .6, 22), T(PKM), x, .3, -2.5, { ol: "mid" });
-    const m = pet(k); m.group.position.set(x, .6, -2.5); m.group.scale.setScalar(PET_S); root.add(m.group); ups.push(m.update); petObjs.set(id, { g: m.group, t: -9 });
+    const m = k === "dog" ? pet(k) : glbProp(k === "gold" ? "siro" : "cacao"); m.group.position.set(x, .6, -2.5); m.group.scale.setScalar(PET_S); root.add(m.group); ups.push(m.update); petObjs.set(id, { g: m.group, t: -9 });
     hotspots.push({ id: "pet-" + id, attr: "data-pet", value: id, label: "Vuốt ve " + id, obj: m.group, wall: null, dy: 1.15 });
   });
   const me = person(o.me.look, o.me.sprite, "stand"); me.group.position.set(1.0, .5, -2.55); me.group.scale.setScalar(1.2); root.add(me.group); ups.push(me.update);
+  const compSkip: THREE.Object3D[] = [], compHost = new THREE.Group(); root.add(compHost);
+  if (o.companion) {
+    const cm = glbProp(o.companion), fly = o.companion === "phoenix"; cm.group.position.set(2.5, .5, -2.45); compHost.position.set(2.5, .5, -2.45); cm.group.rotation.y = -.25; root.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, compHost);
+    if (!fly) add(root, CYL(.4, .45, .5, 22), T(PKM), 2.5, .25, -2.45, { ol: "mid" });
+  }
   add(root, CYL(.4, .44, .5, 22), T("#B98450"), 1.0, .25, -2.65, { ol: "mid" });
 
   /* bàn, ghế, khách, bánh trên bàn */
@@ -295,6 +303,7 @@ export function createShop(o: ShopOpts): ShopScene {
     for (let i = 0; i < n; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: col })), a = i / n * Math.PI * 2; sp.position.set(Math.sin(a) * .46, .15 + i * .2, Math.cos(a) * .46); g.add(sp); }
     host.add(g); auras.push({ g, host });
   };
+  if (o.companion && o.companionRarity && o.companionRarity !== "common") addAura(compHost, o.companionRarity);
   const prepare = (sl: Slot) => {
     const gl = POOL[((sl.n + 1) * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length]!;
     const actor = personActor(gl.look, gl.sprite); actor.mode("walk"); const a = actor.group; const rar = o.regulars.find(x => x.sprite === gl.sprite)?.rarity; if (rar && rar !== "common") addAura(a, rar); a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; a.visible = false; root.add(a);
@@ -621,7 +630,7 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   /* gộp nội thất tĩnh để giảm số lần vẽ; nhóm còn chuyển động hoặc dựng lại thì bỏ qua */
   if (!new URLSearchParams(location.search).has("nomerge")) {
-    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...flG.slice(1), ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
+    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...flG.slice(1), ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...compSkip, ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
     const protect = new Set<THREE.Material>([...glowMats, ...Object.values(selAll).flat(), ...wallMains.map(x => x[0]), ...tableTops, ...tableLegs, ...[counterBits.top, counterBits.wood].filter((x): x is THREE.MeshToonMaterial => !!x)]);
     mergeStatic(root, skip, protect);
   }

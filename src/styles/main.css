@@ -1369,7 +1369,8 @@ button.cm{position:relative}
 /* ---- phim gacha v2 ---- */
 .gfx-world{inset:0;position:absolute}.gfx-world>*{position:absolute}
 .gfx-cv{inset:0;width:100%;height:100%;pointer-events:none}
-.gfx-stage{z-index:1}.gfx-cv{z-index:2}.gfx-banner{z-index:3}
+.gfx-vid{inset:0;width:100%;height:100%;object-fit:contain;background:#05040f;z-index:1}@media (min-aspect-ratio:1/1){.gfx-vid{object-fit:cover}}
+.gfx-warp{inset:0;width:100%;height:100%;z-index:1}.gfx-cv{z-index:2}.gfx-banner{z-index:3}
 .gfx-flash{opacity:0;pointer-events:none}
 .gfx-flash.soft{animation:gflash .7s ease-out forwards}
 .gfx-flash.hard{background:radial-gradient(circle at 50% 44%,#fff,var(--rc2) 45%,transparent 75%);animation:gflash .9s ease-out forwards}
@@ -1419,6 +1420,8 @@ button.cm{position:relative}
 .ghx{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;animation:gin .3s}
 .ghx.leave{animation:ghleave .3s ease-in forwards}
 @keyframes ghleave{to{opacity:0;transform:scale(1.18);filter:blur(6px)}}
+.ghx:has(.gh-full) .gh-wrap{width:min(92vw,520px);height:min(60vh,540px)}
+.gh-full{display:grid;place-items:center;max-width:100%;max-height:100%}.gh-full img{display:block;max-width:100%;max-height:min(60vh,540px);border-radius:16px;box-shadow:0 0 0 3px var(--rc2),0 0 36px color-mix(in srgb,var(--rc) 75%,transparent)}
 .gh-wrap{position:relative;width:min(86vw,380px);height:min(52vh,420px);display:grid;place-items:center}
 .gh-wrap .gsun{top:50%;margin:-280px 0 0 -280px}
 .gh-pillar{position:absolute;left:50%;bottom:6%;width:62%;height:130%;transform:translateX(-50%);background:linear-gradient(transparent,color-mix(in srgb,var(--rc) 60%,transparent) 65%,transparent);filter:blur(12px);opacity:0;animation:ghpillar 1.2s .05s ease-out forwards;pointer-events:none}
@@ -1452,4 +1455,5 @@ button.cm{position:relative}
 .gh-hint{font:700 12px var(--body);color:#fff;opacity:0;animation:ghhint .6s 1.3s forwards}
 @keyframes ghhint{to{opacity:.6}}
 .gh-item .gart.mas{background:none;border-radius:0}
+.gh-item .gart.mas.art img{-webkit-mask-image:none;mask-image:none;border-radius:22px;object-fit:cover;box-shadow:0 0 0 3px var(--rc2),0 0 30px color-mix(in srgb,var(--rc) 70%,transparent)}
 .gh-item .gart.mas img{-webkit-mask-image:radial-gradient(ellipse 52% 54% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 52% 54% at 50% 50%,#000 62%,transparent 100%)}
