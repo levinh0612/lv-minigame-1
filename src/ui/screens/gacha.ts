@@ -6,7 +6,7 @@ import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { render } from "../app";
 import { coinPill, esc, modal, toast } from "../dom";
-import { gachaArt, playReveal } from "../gachafx";
+import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
 import { mountTurntable } from "../../scene/glbview";
 
@@ -59,7 +59,7 @@ function detail(id: string) {
   modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
     <p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
-    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
+    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
   hydratePortraits();
   let host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
   if (both) { const d = document.createElement("div"); d.style.cssText = "position:relative;width:180px;height:180px;margin:8px auto 0"; document.querySelector(".gdet")?.appendChild(d); host = d; }
@@ -86,6 +86,12 @@ export async function gachaAct(act: string) {
   if (a === "filter") { filter = v as typeof filter; sfx("click"); return render(); }
   if (a === "pool") { poolR = (v as Rarity) || poolR; sfx("click"); return poolSheet(); }
   if (a === "try") { const it = gachaItem(v!); if (!it) return; unmount(); document.querySelector<HTMLElement>("[data-close]")?.click(); sfx("click"); return void playReveal([{ item: it, isNew: !hasItem(it.id), dust: 0, count: 1 }], () => detail(it.id), true); }
+  if (a === "view3d") {
+    const it = gachaItem(v!); const host = document.querySelector<HTMLElement>(".gdet .gimg.big"); if (!it?.char || !host) return;
+    sfx("click"); host.style.cssText = "width:100%;height:auto;margin:auto"; host.classList.remove("dim");
+    void import("../../scene/portrait3d").then(m => m.liveFullBody(host, it.char!.sprite, LOOK, Math.min(300, Math.round(innerWidth * .7))));
+    return;
+  }
   if (a === "card") { sfx("click"); fromPool = !!document.querySelector(".gpl .gpr[data-gact=\"card:" + v + "\"]"); return detail(v!); }
   if (a === "mascot") { if (setMascot(v!)) { sfx("level"); toast("Đã cho đồng hành"); } render(); return detail(v!); }
   if (a === "free") { if (claimFreeTicket()) { sfx("coin"); toast("+1 vé triệu hồi"); } return render(); }

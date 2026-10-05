@@ -14,7 +14,7 @@ import { runWarp, WARP_MS } from "./gachawarp";
 import { mountTurntable } from "../scene/glbview";
 import { hydratePortraits, portraitHTML } from "./portrait";
 
-const LOOK = { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" };
+export const LOOK = { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" };
 const PAL: Record<Rarity, string[]> = {
   common: ["#BFE0FF", "#FFFFFF", "#9ED0FF"],
   rare: ["#9FB0FF", "#D8B8FF", "#7A8CFF", "#FFFFFF"],
@@ -40,11 +40,15 @@ const STARS: Record<Rarity, string> = { common: "★", rare: "★★", ultra: "�
 /** màn "vật phẩm hiện to" trước khi ra thẻ: mỗi loại có chuyển động riêng (nhân vật bước vào, thú nảy, bánh xoay, trang trí lật) */
 function heroHTML(r: PullResult, px: number) {
   const it = r.item, R = RARITY[it.rarity];
+  const stamp = previewMode ? `<em class="gh-stamp dup">XEM TRƯỚC</em>` : r.isNew ? `<em class="gh-stamp">MỚI!</em>` : `<em class="gh-stamp dup">Trùng · +${r.dust} Bụi sao</em>`;
+  const info = `<div class="gh-name"><i>${STARS[it.rarity]}</i><b>${esc(it.n)}</b><span>${R.n} · ${KIND_NAME[it.kind]}</span></div>${stamp}<small class="gh-hint">Chạm để tiếp tục</small>`;
+  if (it.full) {            // có tranh minh hoạ: tranh phủ kín màn hình (nền mờ cùng tranh lấp phần thừa), thông tin nằm dải dưới
+    const url = `/gacha/full-${it.full}.webp`;
+    return `<div class="ghx ghx-fs r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><div class="gh-fsbg" style="background-image:url(${url})"></div><img class="gh-fsimg" src="${url}" alt="" draggable="false"><div class="gh-fsinfo">${info}</div></div>`;
+  }
   return `<div class="ghx k-${it.kind} r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}">
     <div class="gh-wrap"><div class="gsun"></div><div class="gh-pillar"></div><div class="gh-aura"></div>${it.mascot ? `<i class="gh-heart">♥</i><i class="gh-heart b">♥</i><i class="gh-heart c">✦</i>` : ""}
-      ${it.full ? `<div class="gh-item gh-full"><img src="/gacha/full-${it.full}.webp" alt="" draggable="false"></div>` : `<div class="gh-item" style="--px:${px}px">${gachaArt(it, px, true)}</div>`}</div>
-    <div class="gh-name"><i>${STARS[it.rarity]}</i><b>${esc(it.n)}</b><span>${R.n} · ${KIND_NAME[it.kind]}</span></div>
-    ${previewMode ? `<em class="gh-stamp dup">XEM TRƯỚC</em>` : r.isNew ? `<em class="gh-stamp">MỚI!</em>` : `<em class="gh-stamp dup">Trùng · +${r.dust} Bụi sao</em>`}<small class="gh-hint">Chạm để tiếp tục</small></div>`;
+      <div class="gh-item" style="--px:${px}px">${gachaArt(it, px, true)}</div></div>${info}</div>`;
 }
 const SHINE: Record<Rarity, string> = { common: "gshine1", rare: "gshine2", ultra: "gshine3" };
 const BANNER: Partial<Record<Rarity, string>> = { rare: "✦ HIẾM ✦", ultra: "★ CỰC HIẾM ★" };
@@ -105,6 +109,8 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
     const mdl = star.item.mascot?.art ? undefined : star.item.mascot?.model, hostEl = out.querySelector<HTMLElement>(".gh-item");
     if (mdl && hostEl) { unmount = mountTurntable(hostEl, mdl, heroPx); window.setTimeout(() => { const im = hostEl.querySelector<HTMLElement>(".gart"); if (im && hostEl.querySelector(".gh-3d")) im.style.visibility = "hidden"; }, 900); }
     hydratePortraits(out); sfx(SHINE[star.item.rarity]);
+    const fsImg = out.querySelector<HTMLImageElement>(".gh-fsimg");
+    if (fsImg) { const fit = () => { const ra = fsImg.naturalWidth / fsImg.naturalHeight, rv = innerWidth / innerHeight; if (ra && Math.abs(Math.log(ra / rv)) < .5) fsImg.style.objectFit = "cover"; }; if (fsImg.complete) fit(); else fsImg.onload = fit; }
     const ctr = vfx.center();
     vfx.burstAt(ctr.x, ctr.y, star.item.rarity === "ultra" ? 70 : star.item.rarity === "rare" ? 40 : 18, 340); vfx.ring(cols[0]!, star.item.rarity === "ultra" ? 280 : 200, 1, 7);
     let went = false;
@@ -116,6 +122,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
 
   /* ---- phương án dự phòng (video lỗi/không phát được): phim vẽ bằng canvas theo mốc tỷ lệ thời gian (WARP_MS) ---- */
   const fallback = () => {
+  if (shown) return;
   vid.remove(); warp = runWarp(wcv, best);
   const wob = (amp: number, ms: number) => shake(world, amp, ms), D = WARP_MS[best], T = (f: number) => Math.round(D * f);
   const burstEnd = () => { cls("p3", "s4"); vfx.setCharge(0); sfx("gboom"); wob(best === "ultra" ? 16 : best === "rare" ? 9 : 4, 600); };

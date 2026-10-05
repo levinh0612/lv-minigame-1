@@ -7,6 +7,7 @@ import type { Animated } from "./kit";
 export interface PropCfg { h: number; ry?: number; fly?: number; still?: boolean }   // h: chiều cao (đơn vị cảnh), ry: xoay cho mặt về +z, fly: độ cao bay lơ lửng
 export const PROPS: Record<string, PropCfg> = {
   siro: { h: .75, still: true }, cacao: { h: 1.1 }, cacao_cat: { h: .95 }, siamese: { h: .95, ry: Math.PI },
+  baizhi: { h: 1.6 },
   phoenix: { h: .9, ry: -Math.PI / 2, fly: 1.1 }
 };
 type Loaded = { scene: THREE.Object3D; clips: THREE.AnimationClip[] };

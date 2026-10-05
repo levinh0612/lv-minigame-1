@@ -23,7 +23,6 @@ export interface ShopOpts {
   guestLooks: { sprite: string; look: PersonLook }[];
   menuCount: number;
   shopName: string;                        // tên tiệm trên biển hiệu
-  companionStand?: string;                 // linh vật dạng standee (id ảnh /gacha/mascot-<id>.webp): tấm tranh đứng trên bục
   companionRarity?: "common" | "rare" | "ultra";
   companion?: string;                      // linh vật/hộ vệ gacha đang đồng hành (id model GLB): đứng cạnh chủ tiệm
   hl?: string;                             // nhóm đồ đang được chọn ở màn trang trí: làm nổi bật
@@ -239,13 +238,6 @@ export function createShop(o: ShopOpts): ShopScene {
   });
   const me = person(o.me.look, o.me.sprite, "stand"); me.group.position.set(1.0, .5, -2.55); me.group.scale.setScalar(1.2); root.add(me.group); ups.push(me.update);
   const compSkip: THREE.Object3D[] = [], compHost = new THREE.Group(); root.add(compHost);
-  if (o.companionStand) {                                                   // nhân vật gacha đứng dạng standee: tranh tách nền, luôn quay mặt về phía camera
-    const st = new THREE.Group(), SH = 2.1, face = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ transparent: true, alphaTest: .35, side: THREE.DoubleSide }));
-    new THREE.TextureLoader().load(`/gacha/stand-${o.companionStand}.webp`, tex => { tex.colorSpace = THREE.SRGBColorSpace; (face.material as THREE.MeshBasicMaterial).map = tex; (face.material as THREE.MeshBasicMaterial).needsUpdate = true; const im = tex.image as HTMLImageElement; face.scale.set(SH * im.width / im.height, SH, 1); });
-    add(root, CYL(.42, .46, .5, 22), T(PKM), 2.5, .25, -2.45, { ol: "mid" });
-    face.position.y = SH / 2 + .02; st.add(face); st.position.set(2.5, .5, -2.45); root.add(st); compSkip.push(st, compHost); compHost.position.set(2.5, .5, -2.45);
-    ups.push(t => { st.position.y = .5 + Math.sin(t * 1.3) * .012; st.rotation.y = Math.atan2(cam.position.x - st.position.x, cam.position.z - st.position.z); });
-  }
   if (o.companion) {
     const cm = glbProp(o.companion), fly = o.companion === "phoenix"; cm.group.position.set(2.5, .5, -2.45); compHost.position.set(2.5, .5, -2.45); cm.group.rotation.y = -.25; root.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, compHost);
     if (!fly) add(root, CYL(.4, .45, .5, 22), T(PKM), 2.5, .25, -2.45, { ol: "mid" });
@@ -311,7 +303,7 @@ export function createShop(o: ShopOpts): ShopScene {
     for (let i = 0; i < n; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: col })), a = i / n * Math.PI * 2; sp.position.set(Math.sin(a) * .46, .15 + i * .2, Math.cos(a) * .46); g.add(sp); }
     host.add(g); auras.push({ g, host });
   };
-  if ((o.companion || o.companionStand) && o.companionRarity && o.companionRarity !== "common") addAura(compHost, o.companionRarity);
+  if (o.companion && o.companionRarity && o.companionRarity !== "common") addAura(compHost, o.companionRarity);
   const prepare = (sl: Slot) => {
     const gl = POOL[((sl.n + 1) * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length]!;
     const actor = personActor(gl.look, gl.sprite); actor.mode("walk"); const a = actor.group; const rar = o.regulars.find(x => x.sprite === gl.sprite)?.rarity; if (rar && rar !== "common") addAura(a, rar); a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; a.visible = false; root.add(a);

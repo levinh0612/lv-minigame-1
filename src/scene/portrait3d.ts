@@ -57,3 +57,24 @@ export function livePortrait(el: HTMLElement, sprite: string, look: PersonLook, 
     }, 45);
   });
 }
+
+/** xem cả người bằng model 3D: khung `px` x `px`, nhân vật xoay lắc nhẹ trái phải để thấy mọi góc */
+export function liveFullBody(el: HTMLElement, sprite: string, look: PersonLook, px: number): void {
+  const r = renderer(); if (!r) return;
+  const actor = personActor(look, sprite);
+  void actor.ready.then(ok => {
+    if (!ok || !el.isConnected) { actor.dispose(); return; }
+    actor.update(0); actor.group.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(actor.group, true), hb = box.max.y - box.min.y, cy = (box.max.y + box.min.y) / 2, hh = hb * .56;
+    const scene = new THREE.Scene(); const pivot = new THREE.Group(); pivot.add(actor.group); scene.add(pivot);
+    scene.add(new THREE.HemisphereLight("#fff6ec", "#b9a58c", 1.7)); const sun = new THREE.DirectionalLight("#fff", 1.2); sun.position.set(2, 4, 5); scene.add(sun);
+    const cam = new THREE.OrthographicCamera(-hh, hh, hh, -hh, .1, 20); cam.position.set(0, cy, 6); cam.lookAt(0, cy, 0);
+    const cv = document.createElement("canvas"), k = Math.min(window.devicePixelRatio || 1, 2); cv.width = cv.height = Math.round(px * k); cv.style.cssText = `display:block;width:${px}px;height:${px}px;margin:auto`;
+    const g = cv.getContext("2d")!; el.replaceChildren(cv);
+    const t0 = performance.now(), id = window.setInterval(() => {
+      if (!cv.isConnected) { clearInterval(id); actor.dispose(); return; }
+      const t = (performance.now() - t0) / 1000; actor.update(t); pivot.rotation.y = Math.sin(t * .8) * .9;
+      r.setClearColor(0x000000, 0); r.render(scene, cam); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(r.domElement, 0, 0, cv.width, cv.height);
+    }, 45);
+  });
+}

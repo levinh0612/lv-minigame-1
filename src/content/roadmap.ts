@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.75", date: "05/10/2026", notes: ["Bạch Chi có model 3D thật (đã rig bằng Mixamo, dáng đứng thở) đứng trong tiệm khi cho đồng hành", "Tranh minh hoạ full hiện tràn màn hình lúc triệu hồi rồi mới thu nhỏ vào thẻ", "Khách quen có nút Xem model 3D (cả người, xoay nhẹ) trong bảng chi tiết", "Gỡ standee 2D; Chisa, Zhongli, Jiyan chưa có model dùng được (tư thế chữ T, Mixamo không rig được) nên chưa hiện trong tiệm nhưng vẫn cộng chỉ số"] },
   { v: "2.74", date: "05/10/2026", notes: ["Xem trước vật phẩm: nút Xem hiệu ứng triệu hồi chạy đúng phim summon theo độ hiếm rồi ra thẻ (ghi Xem trước, không đổi dữ liệu); món có model 3D thì hiện 3D xoay ngay trong bảng chi tiết"] },
   { v: "2.73", date: "05/10/2026", notes: ["Bảng Có thể trúng gì?: chạm vào món để xem trước (tranh full hoặc 3D xoay, chỉ số, mô tả) trước khi quay, có nút quay lại danh sách", "Tách nền lại 4 standee nhân vật cho viền sạch hơn"] },
   { v: "2.72", date: "05/10/2026", notes: ["Jiyan, Bạch Chi, Chisa, Zhongli đứng trong tiệm dạng standee theo đúng dáng đứng bạn đưa (tách nền), luôn quay mặt về phía camera, thay cho model 3D dang tay chữ T", "Bỏ 4 model 3D dang tay khỏi game (nhẹ hơn khoảng 12MB)"] },
