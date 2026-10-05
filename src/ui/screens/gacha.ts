@@ -1,7 +1,7 @@
 /* Màn Gacha: triệu hồi (1 hoặc 10 lần), vé, bảo hiểm, bộ sưu tập. Lợi ích của từng loại đồ nằm ở engine/gacha.ts */
 import { sfx } from "../../audio/sound";
 import { DUST_PER_TICKET, GACHA_ITEMS, itemsOf, KIND_NAME, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, gachaItem, type GachaKind, type Rarity } from "../../content/gacha";
-import { buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, setMascot, untilRare, untilUltra } from "../../engine/gacha";
+import { BOND_AT, BOND_STEP, bondLevel, bondOf, buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, setMascot, untilRare, untilUltra } from "../../engine/gacha";
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { render } from "../app";
@@ -52,17 +52,24 @@ export function gachaHTML() {
     ${tab === "summon" ? summonHTML() : bagHTML()}</div>`;
 }
 
+/** thanh thân thiết của linh vật: cấp hiện tại, tiến độ tới cấp sau và phần chỉ số tăng thêm */
+function bondHTML(id: string) {
+  const lv = bondLevel(id), n = bondOf(id), next = BOND_AT[lv + 1], from = BOND_AT[lv]!;
+  const pct = next === undefined ? 100 : Math.round((n - from) / (next - from) * 100);
+  return `<div class="gbond"><div><b>💞 Thân thiết cấp ${lv}/${BOND_AT.length - 1}</b><small>${lv ? `chỉ số +${Math.round(lv * BOND_STEP * 100)}%` : "hoàn thành ca cùng bé để tăng"}</small></div>
+    <div class="gbar"><i style="width:${pct}%"></i></div><small>${next === undefined ? "Đã đạt cấp tối đa" : `${n}/${next} ca để lên cấp ${lv + 1}`}</small></div>`;
+}
 function detail(id: string) {
   const it = gachaItem(id); if (!it) return;
   unmount();
   const own = hasItem(id), R = RARITY[it.rarity], live = it.mascot?.model && !it.mascot.art, both = !!(it.full && it.mascot?.model);       // có tranh full thì hiện tranh, không thì model 3D xoay
   modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
-    <p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
+    ${own && it.mascot ? bondHTML(it.id) : ""}<p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
     <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
   hydratePortraits();
   let host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
-  if (both) { const d = document.createElement("div"); d.style.cssText = "position:relative;width:180px;height:180px;margin:8px auto 0"; document.querySelector(".gdet")?.appendChild(d); host = d; }
+  if (both) { const row = document.createElement("div"); row.style.cssText = "flex:0 0 100%;width:100%;display:flex;justify-content:center;margin-top:8px"; const d = document.createElement("div"); d.style.cssText = "position:relative;width:180px;height:180px"; row.appendChild(d); document.querySelector(".gdet")?.appendChild(row); host = d; }
   if (host && it.mascot?.model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, it.mascot.model, live ? 200 : 180); }
 }
 

@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.77", date: "05/10/2026", notes: ["Phim triệu hồi quay dọc: màn hình dọc phát bản phim xoay dọc phủ kín màn hình, màn ngang vẫn phát bản ngang", "Ảnh linh vật (mèo...) nét hơn khi hiện to: ảnh 768px, các ảnh cũ nâng lên 512px", "Thân thiết: mỗi ca hoàn thành cùng linh vật thì thân thiết hơn (5 cấp: 0, 3, 8, 15, 25 ca), mỗi cấp +12% chỉ số linh vật; xem ở bảng chi tiết và báo ở màn tổng kết ca", "Tối ưu đồ hoạ tiệm: giảm một nửa đèn điểm (tiệm lớn từ 19 xuống 10), độ phân giải tối đa 1,5x thay vì 1,75x"] },
   { v: "2.76", date: "05/10/2026", notes: ["Giảm giật khi xoay tiệm: đổi mức chất lượng thì vẽ lại ngay (không còn chớp trắng), model 3D đồng hành cập nhật chuyển động nhẹ hơn"] },
   { v: "2.75", date: "05/10/2026", notes: ["Bạch Chi có model 3D thật (đã rig bằng Mixamo, dáng đứng thở) đứng trong tiệm khi cho đồng hành", "Tranh minh hoạ full hiện tràn màn hình lúc triệu hồi rồi mới thu nhỏ vào thẻ", "Khách quen có nút Xem model 3D (cả người, xoay nhẹ) trong bảng chi tiết", "Gỡ standee 2D; Chisa, Zhongli, Jiyan chưa có model dùng được (tư thế chữ T, Mixamo không rig được) nên chưa hiện trong tiệm nhưng vẫn cộng chỉ số"] },
   { v: "2.74", date: "05/10/2026", notes: ["Xem trước vật phẩm: nút Xem hiệu ứng triệu hồi chạy đúng phim summon theo độ hiếm rồi ra thẻ (ghi Xem trước, không đổi dữ liệu); món có model 3D thì hiện 3D xoay ngay trong bảng chi tiết"] },

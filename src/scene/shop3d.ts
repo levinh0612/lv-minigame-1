@@ -41,7 +41,7 @@ export const webglOK = () => { try { const c = document.createElement("canvas");
 function getRenderer() {
   if (!renderer) {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "low-power" });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false;   // bóng tự vẽ lại thưa hơn (xem frame)
   }
   return renderer;
@@ -362,7 +362,7 @@ export function createShop(o: ShopOpts): ShopScene {
     const g = flG[f]!, t = buildTables(f);
     t.forEach(tb => { blob(tb.x, tb.z, .95, .95, 1, g); tb.chairs.forEach(st => blob(st.x, st.z, .4, .4, 1, g)); });
     Array.from({ length: COLS }, (_, c) => SPOTS[2 * c]![0]).forEach(x => {
-      const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, 1.45); g.add(pl);
+      const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, 1.45); if (upLamps.length % 2 === f % 2) g.add(pl);       // chỉ nửa số đèn là nguồn sáng thật (đèn điểm rất tốn trên điện thoại)
       upLamps.push({ pl, bulb: new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial()) });
     });
     g.visible = false;
@@ -423,7 +423,7 @@ export function createShop(o: ShopOpts): ShopScene {
     else if (kind === "4") add(lampG, CONE(.22, .2, 16), T("#3F4452"), x, 2.28, z, { ol: "thin", cast: false });
     else if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(lampG, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(lampG, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
     const bulb = add(lampG, SPH(.1, 12, 10), bulbMat, x, 2.1, z, { ol: null, cast: false });
-    const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, z); lampG.add(pl); lamps.push({ pl, bulb });
+    const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, z); if (lamps.length % 2 === 0) lampG.add(pl); lamps.push({ pl, bulb });      // đèn lẻ chỉ có bóng phát sáng, ánh sáng do đèn bên cạnh (mạnh hơn) lo
   };
   const bulbsStr: THREE.Mesh[] = [];
   const buildLamps = () => {
@@ -569,7 +569,7 @@ export function createShop(o: ShopOpts): ShopScene {
     sun.color.copy(n > .55 ? C("#8FA8FF") : lerpC("#FFFFFF", "#FFB070", warm)); sun.intensity = n > .55 ? .5 : 2.4 - n * 1.5;
     hemi.intensity = .95 - n * .3; hemi.color.copy(lerpC("#fff2e0", "#7C8CD6", n)); hemi.groundColor.copy(lerpC("#c9a37a", "#34406e", n));
     skyState = { h, n, warm }; drawSky();
-    [...lamps, ...upLamps].forEach(p => { p.pl.intensity = n * 4.2; (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
+    [...lamps, ...upLamps].forEach(p => { p.pl.intensity = n * 4.2 * (p.pl.parent ? 1.7 : 1); (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
     streetPl.intensity = n * 6; lampBulb.emissiveIntensity = n * 2.2; extGlass.forEach(m => { m.emissiveIntensity = .3 + n * .8; m.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); m.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n)); });
     winGlass.emissiveIntensity = .3 + n * .55; winGlass.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); winGlass.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n));
   }
@@ -592,7 +592,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const pulse = new Map<string, number>();
   let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0, upMs = 0, drawMs = 0;
   /** máy chậm: hạ độ phân giải để giữ mượt */
-  const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.75)); resize(w, h); layout(); r.render(scene, cam); };   // vẽ ngay sau khi đổi cỡ để canvas không trắng chớp
+  const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.5)); resize(w, h); layout(); r.render(scene, cam); };   // vẽ ngay sau khi đổi cỡ để canvas không trắng chớp
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
     if (!dom.isConnected || document.hidden || now - last < 33) return;      // ~30 hình/giây

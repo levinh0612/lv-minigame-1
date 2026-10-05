@@ -61,7 +61,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
   root.className = `gfx r-${best}`; root.style.cssText = `--rc:${R.c};--rc2:${R.c2};--d:${WARP_MS[best]}ms`;
   root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "Kết quả triệu hồi");
   root.innerHTML = `<div class="gfx-world"><div class="gfx-bg"></div><div class="gfx-rays"></div><canvas class="gfx-cv"></canvas>
-      <video class="gfx-vid" src="/gacha/summon-${best}.mp4" playsinline preload="auto"></video><canvas class="gfx-warp"></canvas>${BANNER[best] ? `<div class="gfx-banner"><span>${BANNER[best]}</span></div>` : ""}</div>
+      <video class="gfx-vid" src="/gacha/summon-${best}${innerHeight > innerWidth ? "-v" : ""}.mp4" playsinline preload="auto"></video><canvas class="gfx-warp"></canvas>${BANNER[best] ? `<div class="gfx-banner"><span>${BANNER[best]}</span></div>` : ""}</div>
     <div class="gfx-flash"></div><div class="gfx-hint">Chạm để bỏ qua</div><div class="gfx-out"></div>`;
   document.body.appendChild(root);
   const world = root.querySelector<HTMLElement>(".gfx-world")!, out = root.querySelector<HTMLElement>(".gfx-out")!;

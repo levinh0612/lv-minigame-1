@@ -10,7 +10,7 @@ export interface Review { who: string; look: Look; s: number; txt: string; love:
 export interface Letter { day: string; txt: string; tag?: string; bonus?: boolean }
 export interface PetState { aff: number; petDay: string; pets: number; fedDay: string }
 /** gacha: vé, Bụi sao, bộ đếm bảo hiểm, đồ đã có (id → số lần trúng), linh vật đang đồng hành, ngày đã nhận vé miễn phí */
-export interface GachaState { tickets: number; dust: number; pulls: number; sinceRare: number; sinceUltra: number; owned: Record<string, number>; mascot: string; freeDay: string }
+export interface GachaState { tickets: number; dust: number; pulls: number; sinceRare: number; sinceUltra: number; owned: Record<string, number>; mascot: string; freeDay: string; bond?: Record<string, number> }   // bond: số ca đã đồng hành của từng linh vật (tăng độ thân thiết)
 export interface StaffState { hired: boolean; lv: number; onDuty: boolean; food?: FoodId; prio?: number }   // prio: lúc bấm mua đồ ăn cho bé này, bé mua sau cùng được chia phần trước
 export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
 export interface State {

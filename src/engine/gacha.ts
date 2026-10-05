@@ -79,7 +79,18 @@ export function specialRecipes(): Recipe[] {
 }
 /** linh vật đang đồng hành cộng lợi ích */
 export const mascotItem = () => { const m = gachaItem(S.gacha.mascot); return m?.mascot && hasItem(m.id) ? m : null; };
-export const gachaFx = (k: FxKey) => mascotItem()?.mascot!.fx[k] ?? 0;
+/* Thân thiết: mỗi ca hoàn thành cùng linh vật thì thân thiết hơn; mỗi cấp tăng 12% các chỉ số của linh vật (trừ số khách thêm) */
+export const BOND_AT = [0, 3, 8, 15, 25], BOND_STEP = 0.12;
+export const bondOf = (id: string) => S.gacha.bond?.[id] ?? 0;
+export const bondLevel = (id: string) => BOND_AT.reduce((lv, n, i) => bondOf(id) >= n ? i : lv, 0);
+export const bondMul = (id: string) => 1 + BOND_STEP * bondLevel(id);
+/** hết ca: linh vật đang đồng hành thân thiết thêm một bậc; trả về cấp mới nếu vừa lên cấp */
+export function addBond(): number {
+  const m = mascotItem(); if (!m) return 0;
+  const before = bondLevel(m.id); (S.gacha.bond ??= {})[m.id] = bondOf(m.id) + 1;
+  return bondLevel(m.id) > before ? bondLevel(m.id) : 0;
+}
+export const gachaFx = (k: FxKey) => { const m = mascotItem(); if (!m) return 0; const v = m.mascot!.fx[k] ?? 0; return k === "cust" ? v : v * bondMul(m.id); };
 export function setMascot(id: string): boolean {
   const it = gachaItem(id); if (!it?.mascot || !hasItem(id)) return false;
   S.gacha.mascot = id; save(); return true;

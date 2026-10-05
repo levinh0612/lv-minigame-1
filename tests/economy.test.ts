@@ -7,7 +7,7 @@ import { rollDay } from "../src/engine/progress";
 import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
 import { fame } from "../src/engine/economy";
 import { GACHA_ITEMS } from "../src/content/gacha";
-import { addTickets, buyTickets, claimFreeTicket, countOf, exchangeDust, gachaFx, mascotItem, packCost, pull, rollRarity, setMascot, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
+import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, gachaFx, mascotItem, packCost, pull, rollRarity, setMascot, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
 import { fx, unlocked } from "../src/engine/progress";
 import { hostGift, seatsOfTables, visitFee } from "../src/engine/visit";
 import { resolve } from "../src/ui/router";
@@ -470,6 +470,15 @@ describe("ví: sổ thu chi", () => {
       expect(mascotItem()).toBeNull(); expect(setMascot(m.id)).toBe(false);
       S.gacha.owned[m.id] = 1; expect(setMascot(m.id)).toBe(true);
       expect(gachaFx("price")).toBeCloseTo(0.1); expect(fx("cust")).toBeGreaterThanOrEqual(1);
+    });
+
+    it("thân thiết: mỗi cấp +12% chỉ số linh vật, số khách thêm giữ nguyên, lên cấp báo đúng", () => {
+      const m = GACHA_ITEMS.find(i => i.id === "m_thienthan")!; S.gacha.owned[m.id] = 1; setMascot(m.id);
+      expect(bondLevel(m.id)).toBe(0); expect(addBond()).toBe(0); expect(addBond()).toBe(0);
+      expect(addBond()).toBe(1);                                // ca thứ 3: lên cấp 1
+      expect(gachaFx("price")).toBeCloseTo(0.1 * 1.12); expect(gachaFx("cust")).toBe(1);
+      for (let i = 0; i < 40; i++) addBond();
+      expect(bondLevel(m.id)).toBe(4); expect(gachaFx("tip")).toBeCloseTo(0.08 * 1.48);
     });
   });
 });

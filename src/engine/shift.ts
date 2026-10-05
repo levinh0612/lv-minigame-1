@@ -6,7 +6,7 @@ import {
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
 import { BAKE_TIME, type FoodId } from "../content/game";
-import { addTickets, regulars } from "./gacha";
+import { addBond, addTickets, regulars } from "./gacha";
 import { comfortPat, comfortTip, dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { featured, fx, lvl, unlocked } from "./progress";
@@ -35,7 +35,7 @@ export interface Shift {
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
-  goals: ShiftGoal[]; goalCoins: number; ticket: boolean;   // ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
+  goals: ShiftGoal[]; goalCoins: number; ticket: boolean; bondUp: number;   // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
 }
 
 export const emptyBuild = (): Build => ({ base: null, cream: null, top: null, sweet: null });
@@ -54,7 +54,7 @@ export function createShift(): Shift {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0
   };
 }
 
@@ -250,6 +250,7 @@ export function finishShift(sh: Shift) {
   sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
   earn("goal", sh.goalCoins); S.shifts++;
   if (sh.goals.every(g => goalDone(sh, g))) { sh.ticket = true; addTickets(1); }
+  sh.bondUp = addBond();
   const led = ledger(sh); S.earned += led.revenue;
   note(`Ca ${S.shifts} · tiền bán bánh`, led.revenue); note(`Ca ${S.shifts} · nhập nhanh giữa ca`, -led.quick);
   save();

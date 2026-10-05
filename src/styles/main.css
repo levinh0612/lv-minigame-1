@@ -1309,7 +1309,7 @@ button.cm{position:relative}
 .gq{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#EEE9F6;color:#B5A9D3;font:900 24px var(--display)}.gq.big{width:96px;height:96px;font-size:48px}
 .gart.sw{display:grid;place-items:center;border-radius:16px;border:2px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.12)}.gart.sw b{font-size:22px;filter:drop-shadow(0 1px 0 #fff)}
 .gart.mas{display:inline-flex}
-.gdet{position:relative;display:flex;justify-content:center;padding:18px 0 8px;border-radius:24px;background:radial-gradient(circle,var(--rc2),#fff 75%)}.gdet .gimg{height:150px}
+.gdet{position:relative;display:flex;flex-wrap:wrap;justify-content:center;padding:18px 0 8px;border-radius:24px;background:radial-gradient(circle,var(--rc2),#fff 75%)}.gdet .gimg{height:150px}
 .gdesc{margin:6px 4px 0;text-align:center;font:700 14px/1.4 var(--body);color:var(--ink2)}
 .gtag{position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:10px;background:var(--rc);color:#fff;font:900 11px var(--body)}
 .rticket{margin:8px 0 0}
@@ -1370,6 +1370,7 @@ button.cm{position:relative}
 .gfx-world{inset:0;position:absolute}.gfx-world>*{position:absolute}
 .gfx-cv{inset:0;width:100%;height:100%;pointer-events:none}
 .gfx-vid{inset:0;width:100%;height:100%;object-fit:contain;background:#05040f;z-index:1}@media (min-aspect-ratio:1/1){.gfx-vid{object-fit:cover}}
+@media (max-aspect-ratio:1/1){.gfx-vid{object-fit:cover}}
 .gfx-warp{inset:0;width:100%;height:100%;z-index:1}.gfx-cv{z-index:2}.gfx-banner{z-index:3}
 .gfx-flash{opacity:0;pointer-events:none}
 .gfx-flash.soft{animation:gflash .7s ease-out forwards}
@@ -1466,3 +1467,7 @@ button.cm{position:relative}
 .gh-fsimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;animation:gin .5s}
 .gh-fsinfo{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:90px 16px calc(34px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(6,5,18,.82) 60%)}
 .ghx-fs .gh-stamp{margin-top:2px}
+
+.gbond{margin:6px 0 8px;padding:9px 12px;border-radius:14px;background:#FFF1F6;display:grid;gap:5px;text-align:left}
+.gbond>div:first-child{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.gbond b{font:800 13px var(--body);color:#C44A6C}.gbond small{font:700 11px var(--body);color:#8a6a76}
+.gbar{height:8px;border-radius:99px;background:#F6D7E2;overflow:hidden}.gbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#FF8FB1,#FF5C8A);transition:width .4s}

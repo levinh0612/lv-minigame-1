@@ -131,6 +131,7 @@ export async function mountRooms() {
     scene.dom.addEventListener("pointerup", up); scene.dom.addEventListener("pointercancel", up);
     scene.dom.addEventListener("wheel", e => { e.preventDefault(); scene.zoomBy(Math.exp(-e.deltaY * .0015)); scene.dom.style.touchAction = scene.zoomLevel() > 1.1 ? "none" : "pan-y"; }, { passive: false });
     live = { el: box, sig, base: baseOf(box), scene, btns, timer: 0, raf: 0, ro: new ResizeObserver(() => 0) };
+    if (import.meta.env.DEV) (window as unknown as { __live?: Live }).__live = live;     // chỉ để đo hiệu năng khi dev
     fixObserver(live); run(live);
   } catch (e) { console.warn("Không dựng được cảnh 3D, dùng cảnh 2D", e); }
 }
