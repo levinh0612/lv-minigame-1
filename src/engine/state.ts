@@ -41,7 +41,7 @@ export interface State {
 export interface Avatar { sprite: string; hair: string; eye: string; coat: string; shirt: string; skin: string; pants?: string; shoes?: string; style?: string }
 export const meLook = (): GuestLook => ({ gender: S.me.sprite[0] === "b" || S.me.sprite[0] === "m" ? "boy" : "girl", ...S.me });
 export const DEFAULT_ME: Avatar = { sprite: "g1", hair: "#3B2A26", eye: "#6C8FC0", coat: "#2F6F86", shirt: "#8A3D55", skin: "#FFE3D0" };
-export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean; rev: number; named: boolean; pair: string }
+export interface Cloud { code: string; name: string; show: boolean; at: string; morning: boolean; night: boolean; push: boolean; rev: number; named: boolean; pair: string; rank?: number; rankAt?: number }
 
 const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pets.map((p, i) => [p.id, f(p.id, i)])) as Record<PetId, T>;
 

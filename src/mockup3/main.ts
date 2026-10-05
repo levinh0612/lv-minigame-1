@@ -12,7 +12,7 @@ import { stockOf } from "../engine/economy";
 import { fx, rollDay, xpFor } from "../engine/progress";
 import { ROOM_CATS, roomItem } from "../content/room";
 import { S, resetState, setPersist } from "../engine/state";
-import { cakeSVG, guestSVG, ingSVG } from "../ui/art";
+import { cakeSVG, cakeTiersSVG, guestSVG, ingSVG } from "../ui/art";
 import { esc, coinPill } from "../ui/dom";
 import { modal } from "../ui/dom";
 import { gachaArt } from "../ui/gachafx";
@@ -201,23 +201,7 @@ function recipesScreen() {
     <div class="rb3" style="padding-bottom:24px">${custom}</div></div>`;
 }
 
-/* bánh nhiều tầng (chỉ để xem thử: bản thật sẽ vẽ trong scene/cake.ts) */
-function tierCake(L: number[][], top: number, px = 150) {
-  const INK = "#4A3438", n = L.length, h = 30, W0 = 112, step = 24, H = n * h + 56;
-  let g = `<ellipse cx="70" cy="${H - 6}" rx="62" ry="8" fill="#fff" stroke="none"/>`;
-  for (let i = 0; i < n; i++) {
-    const w = W0 - i * step, x = 70 - w / 2, y = H - 12 - (i + 1) * h, [b, c] = L[i], bc = CATS.base[b][1], cc = CATS.cream[c][1];
-    g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9" fill="${bc}"/>`;
-    g += `<path d="M${x} ${y + 8} q${w / 8} -12 ${w / 4} 0 t${w / 4} 0 t${w / 4} 0 t${w / 4} 0 V${y + 3} q0 -3 -3 -3 H${x + 3} q-3 0 -3 3 Z" fill="${cc}"/>`;
-    if (i === 0) g += `<ellipse cx="${x + w * .28}" cy="${y + h * .72}" rx="4.400" ry="2.500" fill="#FF9FB6" stroke="none" opacity=".8"/><ellipse cx="${x + w * .72}" cy="${y + h * .72}" rx="4.400" ry="2.500" fill="#FF9FB6" stroke="none" opacity=".8"/>
-      <circle cx="${x + w * .38}" cy="${y + h * .62}" r="3" fill="${INK}" stroke="none"/><circle cx="${x + w * .62}" cy="${y + h * .62}" r="3" fill="${INK}" stroke="none"/><path d="M${70 - 4} ${y + h * .7} Q70 ${y + h * .86} ${74} ${y + h * .7}" stroke-width="2.200"/>`;
-  }
-  const ty = H - 12 - n * h - 2, tw = W0 - (n - 1) * step;
-  if (top === 0) g += `<path d="M70 ${ty + 2} C54 ${ty - 4} 58 ${ty - 20} 70 ${ty - 20} C82 ${ty - 20} 86 ${ty - 4} 70 ${ty + 2} Z" fill="#F0506E"/><path d="M62 ${ty - 20} l8 -6 l8 6 l-8 -2 z" fill="#7BC47F"/>`;
-  if (top === 1) g += `<g fill="#8E3B46"><ellipse cx="${70 - tw * .18}" cy="${ty - 3}" rx="6" ry="4.500"/><ellipse cx="70" cy="${ty - 9}" rx="6" ry="4.500"/><ellipse cx="${70 + tw * .18}" cy="${ty - 3}" rx="6" ry="4.500"/></g>`;
-  if (top === 2) g += `<path d="M58 ${ty + 2} C56 ${ty - 14} 84 ${ty - 14} 82 ${ty + 2} Z" fill="#B07A4A"/>`;
-  return `<svg width="${px}" height="${Math.round(px * (H + 2) / 140)}" viewBox="0 0 140 ${H + 2}" style="display:block;overflow:visible" fill="none" stroke="${INK}" stroke-width="2.600" stroke-linejoin="round" stroke-linecap="round">${g}</svg>`;
-}
+const tierCake = (L: number[][], top: number, px = 150) => cakeTiersSVG(L as [number, number][], top, { size: px, still: true });
 
 /* ================= 5. Tự làm bánh (bấm được) ================= */
 const bd = { n: 2, b: [0, 2, 1], c: [0, 1, 2], t: 0 };

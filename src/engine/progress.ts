@@ -1,8 +1,9 @@
 /* Cấp, mục tiêu ngày, hiệu ứng đồ trang trí */
 import { RECIPES, type FxKey } from "../content/game";
-import { ROOM_CATS, isDefault, roomItem } from "../content/room";
+import type { GachaItem } from "../content/gacha";
+import { ROOM_CATS, isDefault, roomItem, type RoomItem } from "../content/room";
 import { daysTogether } from "./dates";
-import { gachaFx, specialRecipes } from "./gacha";
+import { bondMul, floorCount, gachaFx, specialRecipes, staffAt } from "./gacha";
 import { S, save } from "./state";
 import { DAY, today, ymd } from "./util";
 
@@ -10,6 +11,19 @@ export const xpFor = (L: number) => 40 * (L - 1) * (L - 1);
 export const lvl = () => Math.min(99, Math.floor(Math.sqrt(S.xp / 40)) + 1);
 export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl()), ...specialRecipes()];
 export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k);
+/* Buff đang có đến từ đâu: quản lý và linh thú từng tầng, đồ trang trí. Cộng các dòng lại đúng bằng fx(k). */
+export interface BuffRow { src: "mgr" | "mascot" | "decor"; name: string; sub: string; fx: Partial<Record<FxKey, number>>; item?: GachaItem; decor?: RoomItem }
+export function buffSources(): BuffRow[] {
+  const rows: BuffRow[] = [];
+  for (let f = 0; f < floorCount(); f++) {
+    const m = staffAt("mgr", f), a = staffAt("mascot", f);
+    if (m) rows.push({ src: "mgr", name: m.n, sub: `Quản lý · Tầng ${f + 1}`, fx: { ...m.mgr!.fx }, item: m });
+    if (a) rows.push({ src: "mascot", name: a.n, sub: `Linh thú · Tầng ${f + 1}`, item: a,
+      fx: Object.fromEntries(Object.entries(a.mascot!.fx).map(([k, v]) => [k, k === "cust" ? v : v! * bondMul(a.id)])) });
+  }
+  ROOM_CATS.forEach(c => { const it = roomItem(c.k, S.room[c.k]); if (it.fx && Object.keys(it.fx).length) rows.push({ src: "decor", name: it.n, sub: c.n, fx: { ...it.fx }, decor: it }); });
+  return rows;
+}
 /* số món trang trí đang dùng (không tính kiểu mặc định) */
 export const decorCount = () => ROOM_CATS.filter(c => !isDefault(c.k, S.room[c.k])).length;
 

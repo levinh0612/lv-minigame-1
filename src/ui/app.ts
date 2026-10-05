@@ -4,7 +4,7 @@ import { rollDay } from "../engine/progress";
 import { S } from "../engine/state";
 import { $, dropModal, hasModal } from "./dom";
 import { pauseMenu } from "./modals";
-import { account, isLocked, loggedIn } from "../net/cloud";
+import { account, isLocked, loggedIn, refreshRank } from "../net/cloud";
 import { authHTML } from "./screens/auth";
 import { fitRooms } from "./room";
 import { keepRoom, mountRooms } from "./room3d";
@@ -42,7 +42,7 @@ export function render(keepModal?: boolean) {
   switch (r.name) {
     case "play": renderPlay(); break;
     case "result": $("#app")!.innerHTML = resultHTML(); break;
-    case "home": $("#app")!.innerHTML = homeHTML(); break;
+    case "home": $("#app")!.innerHTML = homeHTML(); void refreshRank(); break;
     case "goals": $("#app")!.innerHTML = goalsHTML(); break;
     case "prep": $("#app")!.innerHTML = prepHTML(); break;
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;

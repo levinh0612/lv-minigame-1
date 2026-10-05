@@ -20,7 +20,7 @@ import { gachaAct } from "./ui/screens/gacha";
 import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
-import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet } from "./ui/sheets";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
@@ -64,6 +64,8 @@ document.addEventListener("click", e => {
     case "profile": return profileSheet();
     case "account": return accountPanel();
     case "menu": return menuSheet();
+    case "more": return moreSheet();
+    case "buff": return buffSheet();
     case "rank": return rankSheet();
     case "music": return musicSheet();
     case "cakes": return cakesSheet();

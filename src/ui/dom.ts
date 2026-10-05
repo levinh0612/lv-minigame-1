@@ -1,4 +1,5 @@
 /* Tiện ích DOM dùng chung: hộp thoại, thông báo, hiệu ứng tim bay */
+import { ic } from "./icons";
 import { S } from "../engine/state";
 import { fmtN, pick, rnd } from "../engine/util";
 
@@ -84,7 +85,7 @@ export function bump(el: Element | null, cls: string) {
   if (!el) return; el.classList.remove(cls); void (el as HTMLElement).offsetWidth; el.classList.add(cls);
 }
 
-export const coinPill = (sm = false, id = "") => `<button class="pill coin ${sm ? "sm" : ""}" ${id ? `id="${id}"` : ""} data-act="wallet" aria-label="Ví: ${fmtN(S.coins)} xu"><span class="coin-i"></span><span>${fmtN(S.coins)}</span></button>`;
+export const coinPill = (sm = false, id = "", plus = false) => `<button class="pill coin ${sm ? "sm" : ""}" ${id ? `id="${id}"` : ""} data-act="wallet" aria-label="Ví: ${fmtN(S.coins)} xu"><span class="coin-i"></span><span>${fmtN(S.coins)}</span>${plus ? `<i class="plus5">${ic.plus(13, 3.2)}</i>` : ""}</button>`;
 export const backBtn = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">←</button>`;
 /* huy hiệu cấp tiệm + thanh kinh nghiệm */
 export const levelChip = (L: number, cur: number, need: number) =>

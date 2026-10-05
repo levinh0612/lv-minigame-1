@@ -11,6 +11,10 @@ import { SONGS, Sound } from "../audio/sound";
 import { render } from "./app";
 import { cakeSVG, ingSVG } from "./art";
 import { $, closeModal, esc, modal, toast } from "./dom";
+import { buffSources } from "../engine/progress";
+import { gachaArt } from "./gachafx";
+import { ic } from "./icons";
+import { BUFF_LABEL, buffIcon, buffText } from "./screens/home";
 
 const ingChips = (r: (typeof RECIPES)[number]) => STOCK_KEYS.map(k => `<span>${ingSVG(k, r[k], 18)}${CATS[k][r[k]][0]}</span>`).join("");
 
@@ -121,4 +125,31 @@ export function musicSheet() {
   const mark = () => { const c = S.song && SONGS[S.song] ? S.song : "auto"; on.checked = S.music; btns.forEach(b => { const me = b.dataset.song === c; b.classList.toggle("on", me); b.querySelector(".sc")!.textContent = me ? (S.music ? "Đang phát" : "Đã chọn") : ""; }); };
   on.addEventListener("change", () => { Sound.setMusic(on.checked); mark(); });
   btns.forEach(b => b.addEventListener("click", () => { Sound.setSong(b.dataset.song!); mark(); }));
+}
+
+/* Nút Menu ở thanh dưới: những thứ không cần luôn hiện ở màn chính */
+export function moreSheet() {
+  const T = (n: string, icon: string, c1: string, c2: string, attr: string) => `<button ${attr} style="--c1:${c1};--c2:${c2};--dk:${c2}"><span class="ic">${icon}</span><b>${n}</b></button>`;
+  modal(`<h2>Menu</h2><p class="sub">Những thứ khác của tiệm</p><div class="more5">
+    ${T("Công thức", ic.book(28, 2.2), "#FFB27A", "#EE7A2E", 'data-act="menu"')}
+    ${T("Thú cưng", ic.paw(28, 2.2), "#FF9DB6", "#EE5A83", 'data-go="/cua-hang/thu-cung"')}
+    ${T("Hồ sơ", ic.user(28, 2.2), "#8EC5FF", "#4C8DF0", 'data-act="profile"')}
+    ${T("Xếp hạng", ic.trophy(28, 2.2), "#FFD66B", "#F2A41F", 'data-act="rank"')}
+    ${T("Sự kiện", ic.cal(28, 2.2), "#8EE0BC", "#2FA67C", 'data-act="days"')}
+  </div>`);
+}
+
+/* Buff đang có: tổng ở trên, nguồn của từng buff ở dưới (quản lý, linh thú, trang trí) */
+const BUFF_SHORT = { price: "Giá", tip: "Tip", pat: "Chờ", cust: "" } as const;
+export function buffSheet() {
+  const rows = buffSources(), line = (f: Partial<Record<keyof typeof BUFF_SHORT, number>>) => (Object.entries(f) as [keyof typeof BUFF_SHORT, number][]).filter(([, v]) => v)
+    .map(([k, v]) => k === "cust" ? `+${v} khách` : `${BUFF_SHORT[k]} +${Math.round(v * 100)}%`).join(" · ");
+  const art = (r: (typeof rows)[number]) => r.item ? gachaArt(r.item, 40) : `<span class="sw" style="background:${r.decor!.sw};background-size:${r.decor!.sws || "auto"}"></span>`;
+  const group = (src: "mgr" | "mascot" | "decor", title: string) => { const g = rows.filter(r => r.src === src);
+    return g.length ? `<div class="sh2"><b>${title}</b><span class="lav">${g.length} nguồn</span></div>${g.map(r => `<div class="bfrow"><span class="a">${art(r)}</span><div><b>${esc(r.name)}</b><small>${esc(r.sub)}</small></div><em>${esc(line(r.fx))}</em></div>`).join("")}` : ""; };
+  modal(`<h2>Buff đang có</h2><p class="sub">Tổng hợp từ quản lý, linh thú và trang trí</p>
+    <div class="bftot">${(["price", "tip", "pat", "cust"] as const).map(k => `<div class="${k}">${buffIcon(k, 24)}<b>${buffText(k)}</b><small>${BUFF_LABEL[k]}</small></div>`).join("")}</div>
+    ${group("mgr", "Quản lý")}${group("mascot", "Linh thú")}${group("decor", "Trang trí")}
+    ${rows.length ? "" : `<p class="phint">Chưa có buff nào. Đặt quản lý, linh thú hoặc dùng đồ trang trí có buff để tăng.</p>`}
+    <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
 }

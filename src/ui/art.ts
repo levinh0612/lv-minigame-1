@@ -5,9 +5,22 @@ import { CATS, PET_SIZE, SPRITES, type GuestLook, type Look, type Mood, type Par
 const INK = "#4A3438";
 const sparkle = (x: number, y: number, s: number, delay = 0, dur = 1.8) => `<path d="M${x} ${y} l${1.8*s} ${-4.6*s} l${1.8*s} ${4.6*s} l${4.6*s} ${1.8*s} l${-4.6*s} ${1.8*s} l${-1.8*s} ${4.6*s} l${-1.8*s} ${-4.6*s} l${-4.6*s} ${-1.8*s} Z" style="transform-box:fill-box;transform-origin:center;animation:cakeTw ${dur}s ease-in-out ${delay}s infinite"/>`;
 const heartP = (x: number, y: number, delay: number) => `<path d="M${x+6} ${y} C${x+6} ${y-4} ${x+1} ${y-5} ${x} ${y-1} C${x-1} ${y-5} ${x-6} ${y-4} ${x-6} ${y} C${x-6} ${y+4} ${x} ${y+7} ${x} ${y+9} C${x} ${y+7} ${x+6} ${y+4} ${x+6} ${y} Z" style="transform-box:fill-box;transform-origin:center;animation:cakeTw 1.4s ease-in-out ${delay}s infinite"/>`;
-const CREAM_P = `<path d="M18 80 C18 64 40 56 70 56 C100 56 122 64 122 80 C116 80 116 86 110 86 C104 86 104 80 98 80 C92 80 94 88 86 88 C80 88 80 80 74 80 H66 C60 80 60 86 54 86 C48 86 48 80 42 80 C36 80 36 86 30 86 C24 86 24 80 18 80 Z" fill="%C"/><path d="M50 60 C48 46 58 38 70 38 C82 38 92 46 90 60 Z" fill="%C"/><path d="M57 50 C64 46 76 46 83 50" stroke-width="2"/>`;
+const CREAM_W = `<path d="M18 80 C18 64 40 56 70 56 C100 56 122 64 122 80 C116 80 116 86 110 86 C104 86 104 80 98 80 C92 80 94 88 86 88 C80 88 80 80 74 80 H66 C60 80 60 86 54 86 C48 86 48 80 42 80 C36 80 36 86 30 86 C24 86 24 80 18 80 Z" fill="%C"/>`;
+const CREAM_T = `<path d="M50 60 C48 46 58 38 70 38 C82 38 92 46 90 60 Z" fill="%C"/><path d="M57 50 C64 46 76 46 83 50" stroke-width="2"/>`;
+const CREAM_P = CREAM_W + CREAM_T;
 const STRAW = `<path d="M70 42 C58 42 56 28 62 21 C66 17 74 17 78 21 C84 28 82 42 70 42 Z" fill="#F0506E"/><path d="M62 21 L65 14 L70 19 L75 14 L78 21 Z" fill="#7FB77E" stroke-width="2.2"/>`;
 const NUT = `<path d="M70 16 C62 24 57 31 57 38 C57 45 83 45 83 38 C83 31 78 24 70 16 Z" fill="#B07A4A"/>`;
+/* nét vẽ đế và topping dùng chung cho cakeSVG (một tầng) và cakeTiersSVG (nhiều tầng) */
+const BASE_G = [
+  `<rect x="22" y="74" width="96" height="34" rx="10" fill="#F6D59A"/><g fill="#E6B870" stroke="none"><circle cx="34" cy="100" r="2.4"/><circle cx="106" cy="99" r="2"/><circle cx="40" cy="86" r="1.8"/><circle cx="100" cy="86" r="2.2"/></g>`,
+  `<path d="M16 76 H124 L114 108 H26 Z" fill="#D9A66B"/><path d="M30 80 L33 104 M44 80 L46 104 M96 80 L94 104 M110 80 L107 104" stroke="#B98246" stroke-width="2.2"/>`,
+  `<path d="M22 108 C20 82 40 70 70 70 C100 70 120 82 118 108 Z" fill="#FFF4EE"/><g fill="#F1DDD5" stroke="none"><circle cx="36" cy="96" r="1.8"/><circle cx="104" cy="94" r="1.8"/><circle cx="44" cy="84" r="1.4"/><circle cx="98" cy="84" r="1.4"/></g>`
+];
+const TOP_G = [
+  `${STRAW}<g fill="#FFE08A" stroke="none"><ellipse cx="65" cy="28" rx="1.2" ry="1.8"/><ellipse cx="75" cy="28" rx="1.2" ry="1.8"/><ellipse cx="70" cy="34" rx="1.2" ry="1.8"/></g><g transform="translate(34 62) scale(.55) translate(-70 -30)" stroke-width="4.4">${STRAW}</g><g transform="translate(106 62) scale(.55) translate(-70 -30)" stroke-width="4.4">${STRAW}</g>`,
+  `<g fill="#8E3B46" stroke-width="2"><ellipse cx="60" cy="38" rx="5.5" ry="4.2"/><ellipse cx="72" cy="32" rx="5.5" ry="4.2" transform="rotate(-15 72 32)"/><ellipse cx="81" cy="40" rx="5.5" ry="4.2" transform="rotate(20 81 40)"/><ellipse cx="68" cy="42" rx="5.5" ry="4.2"/><ellipse cx="34" cy="64" rx="4.5" ry="3.4"/><ellipse cx="44" cy="60" rx="4.5" ry="3.4"/><ellipse cx="96" cy="60" rx="4.5" ry="3.4"/><ellipse cx="106" cy="64" rx="4.5" ry="3.4"/><g fill="#fff" stroke="none" opacity=".8"><circle cx="58.5" cy="36.5" r="1.2"/><circle cx="70.5" cy="30.5" r="1.2"/><circle cx="79.5" cy="38.5" r="1.2"/></g></g>`,
+  `${NUT}<path d="M58.5 37 C60 43 80 43 81.5 37 C76 40.5 64 40.5 58.5 37 Z" fill="#E8C9A0" stroke-width="2"/><path d="M66 24 C64 27 63 30 63 32" stroke="#D4A472" stroke-width="2.2"/><g transform="translate(36 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g><g transform="translate(104 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g>`
+];
 export interface CakeParts { base?: number | null; cream?: number | null; top?: number | null; sweet?: number | null }
 export interface CakeOpts { size?: number; done?: boolean; drop?: PartKey | null; still?: boolean }
 // Chỉ số -1..2; drop = phần vừa thêm (chỉ phần đó rơi xuống), still = không động
@@ -16,9 +29,9 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
   const drop = (k: PartKey) => o.drop === k ? ` style="transform-box:fill-box;transform-origin:50% 100%;animation:cakeDrop .55s cubic-bezier(.3,1.4,.5,1) both"` : "";
   const body = o.still ? "" : `transform-box:fill-box;transform-origin:50% 100%;animation:${done ? "cakeHop .8s cubic-bezier(.3,1.4,.5,1) infinite" : "cakeIdle 2.8s ease-in-out infinite"}`;
   let g = "";
-  if (b===0) g += `<g${drop("base")}><rect x="22" y="74" width="96" height="34" rx="10" fill="#F6D59A"/><g fill="#E6B870" stroke="none"><circle cx="34" cy="100" r="2.4"/><circle cx="106" cy="99" r="2"/><circle cx="40" cy="86" r="1.8"/><circle cx="100" cy="86" r="2.2"/></g></g>`;
-  if (b===1) g += `<g${drop("base")}><path d="M16 76 H124 L114 108 H26 Z" fill="#D9A66B"/><path d="M30 80 L33 104 M44 80 L46 104 M96 80 L94 104 M110 80 L107 104" stroke="#B98246" stroke-width="2.2"/></g>`;
-  if (b===2) g += `<g${drop("base")}><path d="M22 108 C20 82 40 70 70 70 C100 70 120 82 118 108 Z" fill="#FFF4EE"/><g fill="#F1DDD5" stroke="none"><circle cx="36" cy="96" r="1.8"/><circle cx="104" cy="94" r="1.8"/><circle cx="44" cy="84" r="1.4"/><circle cx="98" cy="84" r="1.4"/></g></g>`;
+  if (b===0) g += `<g${drop("base")}>${BASE_G[0]}</g>`;
+  if (b===1) g += `<g${drop("base")}>${BASE_G[1]}</g>`;
+  if (b===2) g += `<g${drop("base")}>${BASE_G[2]}</g>`;
   if (b>=0){
     g += `<ellipse cx="50" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><ellipse cx="90" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/>`;
     g += done ? `<path d="M54 97 Q58 92 62 97 M78 97 Q82 92 86 97" stroke-width="2.2"/>`
@@ -26,9 +39,9 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
     g += `<path d="M66 100 Q70 104 74 100" stroke-width="2.2"/>`;
   }
   if (c>=0) g += `<g${drop("cream")}>${CREAM_P.replace(/%C/g, CATS.cream[c][1])}</g>`;
-  if (t===0) g += `<g${drop("top")}>${STRAW}<g fill="#FFE08A" stroke="none"><ellipse cx="65" cy="28" rx="1.2" ry="1.8"/><ellipse cx="75" cy="28" rx="1.2" ry="1.8"/><ellipse cx="70" cy="34" rx="1.2" ry="1.8"/></g><g transform="translate(34 62) scale(.55) translate(-70 -30)" stroke-width="4.4">${STRAW}</g><g transform="translate(106 62) scale(.55) translate(-70 -30)" stroke-width="4.4">${STRAW}</g></g>`;
-  if (t===1) g += `<g${drop("top")} fill="#8E3B46" stroke-width="2"><ellipse cx="60" cy="38" rx="5.5" ry="4.2"/><ellipse cx="72" cy="32" rx="5.5" ry="4.2" transform="rotate(-15 72 32)"/><ellipse cx="81" cy="40" rx="5.5" ry="4.2" transform="rotate(20 81 40)"/><ellipse cx="68" cy="42" rx="5.5" ry="4.2"/><ellipse cx="34" cy="64" rx="4.5" ry="3.4"/><ellipse cx="44" cy="60" rx="4.5" ry="3.4"/><ellipse cx="96" cy="60" rx="4.5" ry="3.4"/><ellipse cx="106" cy="64" rx="4.5" ry="3.4"/><g fill="#fff" stroke="none" opacity=".8"><circle cx="58.5" cy="36.5" r="1.2"/><circle cx="70.5" cy="30.5" r="1.2"/><circle cx="79.5" cy="38.5" r="1.2"/></g></g>`;
-  if (t===2) g += `<g${drop("top")}>${NUT}<path d="M58.5 37 C60 43 80 43 81.5 37 C76 40.5 64 40.5 58.5 37 Z" fill="#E8C9A0" stroke-width="2"/><path d="M66 24 C64 27 63 30 63 32" stroke="#D4A472" stroke-width="2.2"/><g transform="translate(36 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g><g transform="translate(104 62) scale(.55) translate(-70 -32)" stroke-width="4.4">${NUT}</g></g>`;
+  if (t===0) g += `<g${drop("top")}>${TOP_G[0]}</g>`;
+  if (t===1) g += `<g${drop("top")}>${TOP_G[1]}</g>`;
+  if (t===2) g += `<g${drop("top")}>${TOP_G[2]}</g>`;
   if (s===2) g += `<path d="M26 72 C38 67 46 76 56 71 C66 66 76 76 86 71 C96 66 104 74 114 69" stroke="#E8A92A" stroke-width="3.6" style="animation:cakeDrop .5s ease-out both"/>`;
   let out = `<ellipse cx="70" cy="110" rx="62" ry="8" fill="#FFFFFF"/>`;
   if (b<0) out += `<path d="M24 108 C22 82 42 66 70 66 C98 66 118 82 116 108 Z" stroke="#D9C4CB" stroke-dasharray="6 6"/>`;
@@ -41,6 +54,24 @@ export function cakeSVG(p: CakeParts, o: CakeOpts = {}){
   }
   if (done) out += `<g fill="#FF8FAB" stroke-width="1.6"><g fill="#FFD166">${sparkle(14,60,1.3,0,1.2)}${sparkle(122,70,1.3,-.6,1.2)}</g>${heartP(110,29,-.3)}${heartP(24,25,-1)}</g>`;
   return `<svg width="${S}" height="${Math.round(S*114/140)}" viewBox="0 6 140 114" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${out}</svg>`;
+}
+
+/* Bánh nhiều tầng: dựng từ chính các nét của cakeSVG. Mỗi tầng = đế + một lớp kem rộng, tầng sau nhỏ dần (×0,8) và đứng trên mặt kem tầng dưới.
+   Chỉ tầng đáy có mặt cười; tầng trên cùng có đỉnh kem và topping. tiers[0] là tầng dưới cùng, mỗi tầng là [đế, kem]. */
+export function cakeTiersSVG(tiers: [number, number][], top: number, o: { size?: number; still?: boolean } = {}) {
+  const S = o.size || 140, n = Math.max(1, tiers.length), SC = 0.8;
+  const face = `<ellipse cx="50" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><ellipse cx="90" cy="100" rx="4.6" ry="2.6" fill="#FF9FB6" stroke="none" opacity=".8"/><circle cx="58" cy="96" r="3.4" fill="${INK}" stroke="none"/><circle cx="59.2" cy="94.8" r="1.2" fill="#fff" stroke="none"/><circle cx="82" cy="96" r="3.4" fill="${INK}" stroke="none"/><circle cx="83.2" cy="94.8" r="1.2" fill="#fff" stroke="none"/><path d="M66 100 Q70 104 74 100" stroke-width="2.2"/>`;
+  let g = "", creamTop = 56, minY = 56;
+  tiers.forEach(([b, c], i) => {
+    const s = Math.pow(SC, i), last = i === n - 1, bottom = i === 0 ? 108 : creamTop + 3, ty = bottom - 108 * s, cc = CATS.cream[c][1];
+    g += `<g transform="translate(${+(70 * (1 - s)).toFixed(2)} ${+ty.toFixed(2)}) scale(${+s.toFixed(3)})" stroke-width="${+(2.6 / s).toFixed(2)}">`
+      + `<g>${BASE_G[b]}</g>${i === 0 ? face : ""}${CREAM_W.replace(/%C/g, cc)}`
+      + (last ? `${CREAM_T.replace(/%C/g, cc)}<g>${TOP_G[top] ?? ""}</g>` : "") + `</g>`;
+    creamTop = ty + 56 * s;
+    if (last) minY = ty + 12 * s;
+  });
+  const y0 = Math.floor(minY - 4), h = 120 - y0, body = o.still ? "" : `transform-box:fill-box;transform-origin:50% 100%;animation:cakeIdle 2.8s ease-in-out infinite`;
+  return `<svg width="${S}" height="${Math.round(S * h / 140)}" viewBox="0 ${y0} 140 ${h}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><ellipse cx="70" cy="110" rx="62" ry="8" fill="#FFFFFF"/><g style="${body}">${g}</g></svg>`;
 }
 
 /* Thú cưng của tiệm: mỗi biểu cảm là một ảnh (vẫy tay là ảnh riêng), nằm sau quầy */

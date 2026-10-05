@@ -10,6 +10,8 @@ import {
   type GuestLook, type Look, type Mood, type PartKey
 } from "../content/game";
 import { rollDay } from "../engine/progress";
+import { GACHA_ITEMS } from "../content/gacha";
+import { placeStaff } from "../engine/gacha";
 import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
@@ -17,7 +19,7 @@ import { coinPill, esc, levelChip } from "../ui/dom";
 import { claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
-import { cakesSheet, daysSheet, menuSheet } from "../ui/sheets";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
@@ -84,6 +86,15 @@ const staffed = (s: State) => {
   s.staff.white = { hired: true, lv: 1, onDuty: true };
 };
 
+/* tiệm 3 tầng, đã đặt quản lý + linh thú từng tầng, đồ trang trí có buff, có danh hiệu diệt chuột */
+const buffed = (s: State) => {
+  s.venue.floors = 3; s.mouse = { king: 12, last: -9 }; s.cloud.rank = 256;
+  const mg = GACHA_ITEMS.filter(i => i.kind === "manager"), pt = GACHA_ITEMS.filter(i => i.kind === "mascot");
+  [0, 1, 2].forEach(f => { s.gacha.owned[mg[f].id] = 1; s.gacha.owned[pt[f].id] = 1; });
+  Object.assign(s.room, { wall: "starry", counter: "gold", floor: "sakura" });
+  [0, 1, 2].forEach(f => { placeStaff("mgr", mg[f].id, f); placeStaff("mascot", pt[f].id, f); });
+};
+
 /* lấy HTML của một hộp thoại (các hàm hộp thoại ghi vào #layer) */
 function modalOver(screen: string, open: () => void) {
   const layer = document.createElement("div"); layer.id = "layer"; document.body.appendChild(layer);
@@ -112,6 +123,8 @@ const STORIES: Story[] = [
     html: () => { lvState(3); return homeHTML(); } },
   { id: "home-named", sec: "screens", title: "Bắt đầu · đã đặt tên tiệm", desc: "Tiêu đề theo tên người chơi đặt: Tiệm của Vinh", kind: "screen",
     html: () => { lvState(2, s => { s.cloud.named = true; s.cloud.name = "Tiệm của Vinh"; s.cloud.at = new Date().toISOString(); }); return homeHTML(); } },
+  { id: "home-buff", sec: "screens", title: "Bắt đầu · 3 tầng, có buff", desc: "Cột TẦNG hiện đủ T1-T3, hàng buff có số, danh hiệu diệt chuột, hạng #256", kind: "screen",
+    html: () => { lvState(13, buffed); return homeHTML(); } },
   { id: "home-event", sec: "screens", title: "Bắt đầu · ngày đặc biệt", desc: "Sinh nhật bạn nữ (28/12): thẻ sự kiện, xu x2; thư đã đọc", kind: "screen",
     html: () => withDate(2026, 12, 28, () => { lvState(5, s => { s.letters = [{ day: "2026-12-28", txt: "…" }]; }); return homeHTML(); }) },
   { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 4: kho thiếu Dâu tây; Milo đi làm (có Pate), Siro đói (thiếu Hạt), Cacao nghỉ", kind: "screen", long: true,
@@ -158,6 +171,10 @@ const STORIES: Story[] = [
     html: () => { lvState(3); return roadmapHTML(); } },
 
   /* ---------- Hộp thoại ---------- */
+  { id: "m-more", sec: "modals", title: "Menu (nút ☰)", desc: "Công thức, Thú cưng, Hồ sơ, Xếp hạng, Sự kiện", kind: "modal",
+    html: () => { lvState(5); return modalOver(homeHTML(), moreSheet); } },
+  { id: "m-buff", sec: "modals", title: "Buff đang có", desc: "Tổng 4 loại buff và nguồn của từng buff", kind: "modal",
+    html: () => { lvState(13, buffed); return modalOver(homeHTML(), buffSheet); } },
   { id: "m-letter", sec: "modals", title: "Thư hôm nay", desc: "Mở từ thẻ thư ở màn Bắt đầu", kind: "modal",
     html: () => { lvState(3); return modalOver(homeHTML(), openLetter); } },
   { id: "m-gift", sec: "modals", title: "Nhận quà mục tiêu", desc: "Xong 3 mục tiêu: +60 xu và thư bí mật", kind: "modal",

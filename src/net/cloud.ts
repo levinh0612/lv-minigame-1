@@ -156,6 +156,17 @@ export function savedAgo() {
 export interface Rank { rank: number; username: string; lv: number; earned: number; me?: boolean }
 export interface Board { period: "week" | "all"; top: Rank[]; me: { username: string; lv: number; earned: number; rank: number | null } | null; follow: { username: string; lv: number; earned: number; savedAt: string } | null }
 export const leaderboard = (period: "week" | "all") => api<Board>("leaderboard?period=" + period);
+/* Hạng hiện ở màn chính: hỏi bảng "tất cả" tối đa 20 phút một lần, lưu lại để mở app là thấy ngay */
+export async function refreshRank() {
+  if (!loggedIn() || Date.now() - (S.cloud.rankAt ?? 0) < 20 * 60000) return;
+  S.cloud.rankAt = Date.now();
+  try {
+    const d = await leaderboard("all"), r = d.me?.rank;
+    if (!r) return;
+    S.cloud.rank = r; save();
+    const el = document.getElementById("rk5n"); if (el) el.textContent = "#" + String(r).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  } catch { /* mất mạng: giữ hạng cũ */ }
+}
 /* ===== Ghé thăm tiệm hàng xóm ===== */
 export interface VisitQuote { username: string; lv: number; fee: number; free: boolean; coins: number }
 export const visitQuote = (username: string) => api<VisitQuote>("visit?user=" + encodeURIComponent(username));

@@ -38,6 +38,7 @@ const ICON = {
 function insets(el: HTMLElement, scene: ShopScene) {
   if (el.dataset.full !== "1") return;
   const r = el.getBoundingClientRect(), top = document.querySelector(".h5-top")?.getBoundingClientRect(), bot = document.querySelector(".h5-bottom")?.getBoundingClientRect();
+  el.style.setProperty("--top-inset", (top ? Math.max(0, top.bottom - r.top) : 0) + "px");   // hai cột nút trái/phải bắt đầu dưới thẻ hồ sơ
   scene.setInsets(top ? Math.max(0, top.bottom - r.top) : 0, bot ? Math.max(0, r.bottom - bot.top) : 0);
 }
 const el0hs = (el: HTMLElement) => el.dataset.hs !== "0";      // màn trang trí: không có nút chạm trên cảnh
@@ -110,10 +111,10 @@ export async function mountRooms() {
     box.classList.add("live"); box.innerHTML = "";
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
     const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
-    box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">${ICON.left}</button><button data-rot="1" aria-label="Xoay sang phải">${ICON.right}</button></div>`);
-    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button>${scene.floors > 1 ? `<button data-floor aria-label="Chuyển tầng" class="vw fl">T1</button>` : ""}${box.dataset.full === "1" && !box.dataset.user ? `<button data-act="venue" aria-label="Nâng cấp tiệm" class="vw up">${ICON.up}</button>` : ""}</div>`);
+    box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">${ICON.left}</button><button data-rot="1" aria-label="Xoay sang phải">${ICON.right}</button>${scene.floors > 1 ? `<div class="floor3d" role="group" aria-label="Chọn tầng"><small>TẦNG</small>${Array.from({ length: scene.floors }, (_, i) => scene.floors - 1 - i).map(f => `<button data-fl="${f}" class="${f === scene.floor() ? "on" : ""}" aria-label="Tầng ${f + 1}">T${f + 1}</button>`).join("")}</div>` : ""}</div>`);
+    box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button>${box.dataset.full === "1" && !box.dataset.user ? `<button data-act="venue" aria-label="Nâng cấp tiệm" class="vw up">${ICON.up}</button>` : ""}</div>`);
     box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.innerHTML = on ? ICON.room : ICON.shop; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });
-    box.querySelector<HTMLElement>("[data-floor]")?.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement; scene.setFloor((scene.floor() + 1) % scene.floors); b.textContent = "T" + (scene.floor() + 1); });
+    box.querySelectorAll<HTMLElement>("[data-fl]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.setFloor(+b.dataset.fl!); b.parentElement!.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); }));
     box.querySelectorAll<HTMLElement>("[data-zoom]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.zoomBy(+b.dataset.zoom!); }));
     box.querySelectorAll<HTMLElement>("[data-rot]").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); scene.rotate(+b.dataset.rot!); }));
     /* vuốt ngang = xoay; vuốt dọc = di chuyển khi đã phóng to; chụm 2 ngón / lăn chuột = zoom; chạm đúp = về mặc định */
