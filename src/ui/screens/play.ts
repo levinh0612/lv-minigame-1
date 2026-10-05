@@ -16,7 +16,7 @@ import {
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { cakeSVG, charSVG, petSVG, ingSVG } from "../art";
-import { $, bump, coinPill, esc, floatText, haptic, modal, toast } from "../dom";
+import { $, bump, coinPill, dropModal, esc, floatText, haptic, hasModal, modal, toast } from "../dom";
 import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
@@ -53,37 +53,47 @@ export function pause() { if (SH) SH.paused = true; }
 /* ===== Chuột vào tiệm (luật ở engine/mouse.ts) ===== */
 interface Rat { el: HTMLElement; x: number; y: number; a: number; turn: number }
 let rat: Rat | null = null, mouseUiAt = 0;
-function removeRat() { rat?.el.remove(); rat = null; $("#mouseBox") && ($("#mouseBox")!.innerHTML = ""); }
-/* chuột chạy nhanh lúc mới vào rồi chậm dần theo thời gian */
+function removeRat() { rat?.el.remove(); rat = null; if ($("#ratArena")) dropModal(); const b = $("#mouseBox"); if (b) b.innerHTML = ""; }
+/* chuột chạy trong khung của hộp thoại; nhanh lúc mới vào rồi chậm dần theo thời gian */
 function moveRat(dt: number) {
-  const root = $("#play"); if (!root || !SH?.mouse) { if (rat) removeRat(); return; }
-  const box = root.getBoundingClientRect();
+  if (!SH?.mouse) { if (rat) removeRat(); return; }
+  const arena = $("#ratArena"); if (!arena) { rat = null; return; }
+  const box = arena.getBoundingClientRect(), SZ = 64;
   if (!rat || !rat.el.isConnected) {
-    const el = document.createElement("button"); el.id = "rat"; el.className = "rat"; el.setAttribute("aria-label", "Bắt chuột"); el.textContent = "🐭"; root.appendChild(el);
+    const el = document.createElement("button"); el.id = "rat"; el.className = "rat"; el.setAttribute("aria-label", "Bắt chuột"); el.textContent = "🐭"; arena.appendChild(el);
     el.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); doCatchMouse(); });
-    rat = { el, x: -40, y: box.height * (.25 + Math.random() * .4), a: -.2 + Math.random() * .4, turn: 0 };
+    rat = { el, x: -SZ + 1, y: box.height * (.2 + Math.random() * .5), a: -.2 + Math.random() * .4, turn: 0 };
   }
-  const age = SH.mouse.age, speed = Math.max(55, 420 - age * 12);
+  const k = box.width / 390, age = SH.mouse.age, speed = Math.max(55, 420 - age * 12) * k;
   rat.turn -= dt; if (rat.turn <= 0) { rat.a += (Math.random() - .5) * 2.2; rat.turn = .35 + Math.random() * .8; }
   rat.x += Math.cos(rat.a) * speed * dt; rat.y += Math.sin(rat.a) * speed * dt;
-  const W = box.width - 44, H = box.height - 60;
-  if (rat.x < 0 && rat.x > -39) { rat.x = 0; rat.a = Math.PI - rat.a; } else if (rat.x > W) { rat.x = W; rat.a = Math.PI - rat.a; }
-  if (rat.y < 80) { rat.y = 80; rat.a = -rat.a; } else if (rat.y > H) { rat.y = H; rat.a = -rat.a; }
+  const W = box.width - SZ, H = box.height - SZ;
+  if (rat.x < 0 && rat.x > -SZ + 2) { rat.x = 0; rat.a = Math.PI - rat.a; } else if (rat.x > W) { rat.x = W; rat.a = Math.PI - rat.a; }
+  if (rat.y < 0) { rat.y = 0; rat.a = -rat.a; } else if (rat.y > H) { rat.y = H; rat.a = -rat.a; }
   rat.el.style.transform = `translate(${rat.x.toFixed(1)}px,${rat.y.toFixed(1)}px) scaleX(${Math.cos(rat.a) < 0 ? -1 : 1})`;
 }
-function mouseHTML(sh: Shift) {
+function mouseInfo(sh: Shift) {
   const m = sh.mouse; if (!m) return "";
   const st = mouseStage(m), r = mouseRank(), pay = mousePay(), fine = mouseFine();
   const btn = m.age >= T_PERFECT ? `<button class="b3 mpay" data-act="mousepay" ${S.coins >= pay ? "" : "disabled"}>Xử lý nhanh · ${fmtN(pay)} xu</button>` : "";
   const left = (t: number) => Math.max(0, Math.ceil(t - m.age));
-  const text = st === "fast" ? `🐭 Chuột chạy vào tiệm! Chạm bắt trong ${left(T_PERFECT)}s để ${r.name ? "lên hạng" : "được hạng Vua diệt chuột"}`
-    : st === "ok" ? `🐭 Chuột còn chạy quanh. Bắt nó hoặc trả tiền xử lý nhanh`
+  const text = st === "fast" ? `Chạm vào chuột trong ${left(T_PERFECT)}s để ${r.name ? "lên hạng" : "được hạng Vua diệt chuột"}!`
+    : st === "ok" ? `Chuột còn chạy quanh. Bắt nó hoặc trả tiền xử lý nhanh`
     : st === "faint" ? `${m.fainted ? `😵 ${esc(petName(m.fainted))} ngất xỉu, nghỉ hết ca.` : "😟 Khách sốt ruột hơn."} Còn ${left(T_WARN)}s tới cảnh báo`
     : `⚠ Khách bắt đầu nghi ngờ! Còn ${left(T_FINE)}s là bị báo sở y tế, đóng ca và phạt ${fmtN(fine)} xu`;
-  const bar = Math.min(100, m.age / T_FINE * 100);
-  return `<div class="mbox s-${st}"><div class="mt">${text}</div><div class="mb"><i style="width:${bar}%"></i></div>${btn}</div>`;
+  return `<div class="mhud s-${st}"><div class="mt">${text}</div><div class="mb"><i style="width:${Math.min(100, m.age / T_FINE * 100)}%"></i></div>${btn}</div>`;
 }
-function renderMouse() { const b = $("#mouseBox"); if (b && SH) b.innerHTML = mouseHTML(SH); }
+/* thanh nhỏ trên màn ca để mở lại hộp thoại nếu lỡ đóng */
+const mouseChip = (sh: Shift) => sh.mouse ? `<button class="mhud chip s-${mouseStage(sh.mouse)}" data-act="mouseopen">🐭 Chuột đang chạy trong tiệm · chạm để bắt (${Math.max(0, Math.ceil(T_FINE - sh.mouse.age))}s)</button>` : "";
+export function openMouseDlg() {
+  if (!SH?.mouse) return;
+  modal(`<h2>🐭 Chuột vào tiệm!</h2><div id="mouseInfo">${mouseInfo(SH)}</div><div class="arena" id="ratArena"></div>`);
+}
+function renderMouse() {
+  if (!SH) return;
+  const i = $("#mouseInfo"); if (i) i.innerHTML = mouseInfo(SH);
+  const b = $("#mouseBox"); if (b) b.innerHTML = mouseChip(SH);
+}
 function doCatchMouse() {
   if (!SH?.mouse) return;
   const r = rat?.el.getBoundingClientRect(), res = catchMouse(SH); removeRat(); if (!res) return;
@@ -104,7 +114,7 @@ function loop(now: number) {
   if (!SH.paused) {
     const ev = tick(SH, dt);
     if (ev.rush) { sfx("level"); toast(`Giờ vàng! Khách đông bất ngờ, thêm ${ev.rush} khách`); }
-    if (ev.mouse.appeared) { sfx("bell"); haptic([40, 30, 40]); toast("🐭 Có chuột trong tiệm! Chạm vào chuột để bắt"); }
+    if (ev.mouse.appeared) { sfx("bell"); haptic([40, 30, 40]); if (!hasModal()) openMouseDlg(); }
     if (ev.mouse.fainted) { renderCrew(); sfx("wrong"); }
     if (ev.mouse.warn) { sfx("wrong"); haptic([60, 40, 60]); toast("⚠ Khách bắt đầu nghi ngờ có chuột!"); }
     if (ev.mouse.shutdown) { removeRat(); sfx("wrong"); haptic([80, 50, 80]); toast(`Sở y tế đóng cửa tiệm vì có chuột. Phạt ${fmtN(SH.mouseFine)} xu`); }
@@ -328,7 +338,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     </div>
     <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
     <div id="comboBox">${comboHTML(sh)}</div>
-    <div id="mouseBox">${mouseHTML(sh)}</div>
+    <div id="mouseBox">${mouseChip(sh)}</div>
     <div class="queue" style="--n:${Math.min(6, sh.seats.length)}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">

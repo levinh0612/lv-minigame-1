@@ -25,7 +25,7 @@ import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
-import { SH, pause, resume, doMousePay, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
+import { SH, pause, resume, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
 
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
@@ -63,6 +63,7 @@ document.addEventListener("click", e => {
     case "hardreload": return void hardReload();
     case "pause": return pauseMenu();
     case "serve": return doServe();
+    case "mouseopen": return openMouseDlg();
     case "mousepay": return doMousePay();
     case "peek": return doPeek();
     case "auto": return toggleAuto();
