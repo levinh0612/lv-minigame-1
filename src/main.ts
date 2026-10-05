@@ -17,7 +17,7 @@ import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
 import { askVisit } from "./ui/screens/visit";
 import { gachaAct } from "./ui/screens/gacha";
-import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { cakesSheet, daysSheet, menuSheet, musicSheet, photoSheet } from "./ui/sheets";
@@ -172,7 +172,7 @@ Sound.play("home");
 /* vào tiệm (mở khoá / đăng nhập xong): tải bản mới nhất, rồi hướng dẫn và quà khai trương nếu là lần đầu */
 async function enter() {
   await pull();
-  setTimeout(() => { if (hasModal() || SH) return; if (!S.tut) tutorial(); else if (!S.welcome) welcome(); else passive(); }, 300);
+  setTimeout(() => { if (hasModal() || SH) return; if (S.gacha.refund) refundModal(); else if (!S.tut) tutorial(); else if (!S.welcome) welcome(); else passive(); }, 300);
 }
 addEventListener("auth:in", () => void enter());
 addEventListener("cloud:logout", () => { if (!SH) { toast("Phiên đăng nhập đã hết, đăng nhập lại nha"); render(); } });

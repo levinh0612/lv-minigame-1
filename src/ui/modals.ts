@@ -170,6 +170,14 @@ export function whatsNew(prev: string) {
     <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`);
 }
 
+/* ===== Đền bù: nhân vật gacha đã gỡ (hiện một lần khi mở app) ===== */
+export function refundModal() {
+  const n = S.gacha.refund ?? 0; if (n <= 0) return;
+  modal(`<div class="tart">${petSVG({ ...PETS.white, mood: "love", wave: true }, 80)}</div><h2>Quà đền bù cho bạn!</h2>
+    <p class="sub">Chisa, Jiyan, Zhongli đã rời khỏi gacha vì chưa có model 3D để đứng trong tiệm. Tiệm tặng bạn <b>${fmtN(n)} lượt quay</b> mới để bù lại, đã cộng vào vé của bạn.</p>
+    <div class="mbtns"><button class="b3 w" data-close>Nhận ${fmtN(n)} lượt quay</button></div>`, () => { S.gacha.refund = 0; save(); render(); }, true);
+}
+
 /* ===== Hướng dẫn lần đầu ===== */
 const TUT = [
   { art: () => `<div class="tart">${petSVG(PETS.dog, 64)}${petSVG({ ...PETS.gold, mood: "love" }, 72)}${petSVG({ ...PETS.white, mood: "open", wave: true }, 64)}</div>`,

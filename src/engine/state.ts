@@ -10,7 +10,7 @@ export interface Review { who: string; look: Look; s: number; txt: string; love:
 export interface Letter { day: string; txt: string; tag?: string; bonus?: boolean }
 export interface PetState { aff: number; petDay: string; pets: number; fedDay: string }
 /** gacha: vé, Bụi sao, bộ đếm bảo hiểm, đồ đã có (id → số lần trúng), linh vật đang đồng hành, ngày đã nhận vé miễn phí */
-export interface GachaState { tickets: number; dust: number; pulls: number; sinceRare: number; sinceUltra: number; owned: Record<string, number>; mascot: string; freeDay: string; bond?: Record<string, number> }   // bond: số ca đã đồng hành của từng linh vật (tăng độ thân thiết)
+export interface GachaState { tickets: number; dust: number; pulls: number; sinceRare: number; sinceUltra: number; owned: Record<string, number>; mascot: string; freeDay: string; bond?: Record<string, number>; mgrs?: string[]; mascots?: string[]; refund?: number }   // mgrs/mascots: id quản lý, linh vật đứng ở từng tầng (theo thứ tự tầng); refund: số lượt quay vừa được bù (hiện dialog một lần rồi xoá); mascot: dữ liệu cũ, đã chuyển sang mascots[0]   // bond: số ca đã đồng hành của từng linh vật (tăng độ thân thiết)
 export interface StaffState { hired: boolean; lv: number; onDuty: boolean; food?: FoodId; prio?: number }   // prio: lúc bấm mua đồ ăn cho bé này, bé mua sau cùng được chia phần trước
 export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
 export interface State {
@@ -75,6 +75,17 @@ function upgradeLook(l: unknown): Look | null {
 
 /* Đọc dữ liệu đã lưu và chuyển từ các bản cũ.
    Phiên bản đọc từ dữ liệu gốc: bản 1 không có trường `v`. */
+/** nhân vật đã gỡ khỏi gacha: ai đã có thì mất nhân vật đó và được bù vé */
+const REMOVED_GACHA = ["m_chisa", "m_jiyan", "m_zhongli"], REFUND_PER = 100;
+function migrateGacha(g: GachaState) {
+  g.mgrs = Array.isArray(g.mgrs) ? g.mgrs : []; g.mascots = Array.isArray(g.mascots) ? g.mascots : [];
+  if (g.mascot && !g.mascots.some(Boolean)) g.mascots[0] = g.mascot;      // dữ liệu cũ: một linh vật chung → linh vật của tầng 1
+  g.mascot = "";
+  let n = 0;
+  for (const id of REMOVED_GACHA) if (g.owned[id]) { n += REFUND_PER; delete g.owned[id]; if (g.bond) delete g.bond[id]; }
+  g.mascots = g.mascots.map(x => REMOVED_GACHA.includes(x) ? "" : x);
+  if (n) { g.tickets += n; g.refund = (g.refund ?? 0) + n; }
+}
 export function loadState(raw: string | null): State {
   let saved: Partial<State>;
   try { saved = JSON.parse(raw || "{}"); } catch { saved = {}; }
@@ -113,6 +124,7 @@ export function loadState(raw: string | null): State {
   s.venue = Object.assign(fresh().venue, s.venue || {});
   s.mouse = { ...fresh().mouse!, ...(s.mouse || {}) };
   s.gacha = Object.assign(fresh().gacha, s.gacha || {}); s.gacha.owned = { ...(s.gacha.owned || {}) };
+  migrateGacha(s.gacha);
   if (s.me && isFixedChar(s.me.sprite)) s.gacha.owned["c_" + s.me.sprite] ||= 1;        // người đang dùng nhân vật làm sẵn: tặng luôn làm khách quen
   s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});
   s.owned = s.owned || [];

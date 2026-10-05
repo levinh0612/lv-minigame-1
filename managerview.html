@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Xem quản lý và linh thú 3D</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% -10%,#fff4f8,#EFE6F4 60%,#E6DDF0);font:700 13px system-ui;color:#4A3438;min-height:100vh}
+h1{font:800 20px system-ui;margin:14px 16px 2px}p{margin:0 16px 12px;color:#8A6F86}
+h2{font:800 15px system-ui;margin:18px 16px 8px;color:#6E58C0}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;padding:6px 16px 20px}
+/* thẻ: viền ánh kim xoay (cực hiếm) hoặc viền sáng (hiếm), nghiêng 3D theo con trỏ, vệt sáng quét */
+.c{display:flex;--tx:0deg;--ty:0deg;position:relative;border-radius:22px;padding:3px;background:var(--rc);transform:perspective(700px) rotateX(var(--tx)) rotateY(var(--ty));transition:transform .15s ease-out;box-shadow:0 10px 24px -10px var(--rc),0 3px 0 rgba(0,0,0,.08)}
+.c.ultra{background:conic-gradient(from var(--a,0deg),#F2B84B,#FF8FB5,#9F8BFF,#6FE0D0,#F2B84B);animation:spin 5s linear infinite;box-shadow:0 12px 30px -8px rgba(242,184,75,.65),0 0 24px rgba(255,143,181,.35)}
+.c.rare{background:linear-gradient(135deg,#9EACFF,#7A8CFF 40%,#B7C2FF 60%,#7A8CFF);box-shadow:0 10px 24px -10px rgba(122,140,255,.7)}
+.c.common{background:linear-gradient(135deg,#BBD3EA,#8FB4D9)}
+@property --a{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes spin{to{--a:360deg}}
+.in{flex:1;position:relative;border-radius:19px;background:#fff;padding:8px 8px 10px;overflow:hidden}
+.c.ultra .in{background:linear-gradient(#FFFDF6,#FFF6FA)}
+.v{position:relative;height:250px;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),inset 0 -30px 40px -20px rgba(0,0,0,.12)}
+.c.ultra .v{--bg:radial-gradient(ellipse at 50% 38%,#FFF9D6 0,#FFD9E8 45%,#CDB8FF 100%)}
+.c.rare .v{--bg:radial-gradient(ellipse at 50% 38%,#FFFFFF 0,#DDE3FF 50%,#B9C3FF 100%)}
+.c.common .v{--bg:radial-gradient(ellipse at 50% 38%,#FFFFFF 0,#E4F0FA 60%,#CFE2F2 100%)}
+/* tia sáng xoay chậm sau lưng (cực hiếm) */
+.c.ultra .v::before{content:"";position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,255,255,.55) 0 8deg,transparent 8deg 24deg);animation:rays 24s linear infinite;opacity:.55;mix-blend-mode:soft-light}
+@keyframes rays{to{transform:rotate(360deg)}}
+/* bóng đổ dưới chân */
+.v::after{content:"";position:absolute;left:50%;bottom:14px;width:62%;height:16px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(70,40,80,.32),transparent 70%);z-index:0}
+.v canvas{z-index:2}
+/* lấp lánh */
+.sp{position:absolute;z-index:3;pointer-events:none;font-size:14px;color:#fff;text-shadow:0 0 6px #fff,0 0 12px var(--rc);animation:tw 2.4s ease-in-out infinite}
+.sp:nth-child(2){animation-delay:.8s}.sp:nth-child(3){animation-delay:1.5s}.sp:nth-child(4){animation-delay:2s}
+@keyframes tw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(45deg)}}
+/* vệt sáng quét qua thẻ */
+.shine{position:absolute;inset:0;border-radius:19px;pointer-events:none;z-index:5;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 48%,transparent 60%);background-size:260% 100%;background-position:130% 0;animation:sh 4.5s ease-in-out infinite}
+.c.common .shine{display:none}
+@keyframes sh{0%,55%{background-position:130% 0}100%{background-position:-60% 0}}
+.top{display:flex;align-items:center;gap:6px;margin:10px 4px 4px}.top b{font:800 16px system-ui;flex:1}
+.r{padding:2px 9px;border-radius:9px;color:#fff;font:800 11px system-ui;background:var(--rc);box-shadow:0 2px 0 rgba(0,0,0,.12)}.gd{font-size:16px;font-weight:900}
+.gd.girl{color:#F06C9B}.gd.boy{color:#4C8DFF}
+.tags{padding:0 4px}.tg{display:inline-block;margin:2px 3px 2px 0;padding:2px 9px;border-radius:9px;background:#EFE8FF;color:#6E58C0;font:800 11px system-ui}
+.fx{margin:4px 4px 0;font:700 12px system-ui;color:#2E7D5E;line-height:1.55}
+</style></head>
+<body><h1>Quản lý & linh thú (xem trước)</h1><p>Rê chuột lên thẻ để nghiêng 3D. Mỗi quản lý đứng một tầng, buff áp dụng cho cả tiệm. Linh thú: mỗi tầng một bé.</p>
+<h2>Quản lý (13)</h2><div class="g" id="m"></div>
+<h2>Linh thú mới (11)</h2><div class="g" id="p"></div>
+<script type="module">
+import { GACHA_ITEMS, RARITY } from "/src/content/gacha.ts";
+import * as THREE from "three";
+import { frameOf, glbProp, PROPS } from "/src/scene/glbprop.ts";
+/* một renderer WebGL dùng chung, vẽ lần lượt từng thẻ đang hiện vào canvas 2D của thẻ (tránh giới hạn ~16 ngữ cảnh WebGL) */
+const PX = 230, DPR = Math.min(2, devicePixelRatio || 1), shared = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+shared.setPixelRatio(DPR); shared.setSize(PX, PX, false); shared.setClearColor(0, 0);
+const live = [];
+function mountShared(host, modelId) {
+  const cv = document.createElement("canvas"); cv.width = cv.height = PX * DPR; cv.style.cssText = `position:absolute;inset:0;width:${PX}px;height:${PX}px;left:50%;transform:translateX(-50%)`; host.appendChild(cv);
+  const scene = new THREE.Scene(); scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9ab0, 2.3)); const d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(2, 4, 3); scene.add(d);
+  const m = glbProp(modelId), cfg = PROPS[modelId], hh = cfg.h + (cfg.fly ?? 0) * .6, spin = new THREE.Group(); spin.add(m.group); scene.add(spin);
+  const cam = new THREE.PerspectiveCamera(30, 1, .1, 50), dist = hh / 2 / Math.tan(Math.PI / 12) * 1.35, cy = hh / 2; cam.position.set(0, cy + hh * .1, dist); cam.lookAt(0, cy, 0);
+  const o = { fit: false, cv, ctx: cv.getContext("2d"), scene, cam, spin, m, vis: false }; live.push(o); return o;
+}
+const t0 = performance.now();
+(function loop(now) { requestAnimationFrame(loop); const t = (now - t0) / 1000;
+  for (const o of live) { if (!o.vis) continue; if (!o.fit && o.m.dims) { o.fit = true; const f = frameOf(o.m.dims); o.cam.position.set(0, f.cy + o.m.dims.h * .1, f.dist); o.cam.lookAt(0, f.cy, 0); } o.spin.rotation.y = Math.sin(t * .9) * .7; o.m.update(t); shared.render(o.scene, o.cam); o.ctx.clearRect(0, 0, o.cv.width, o.cv.height); o.ctx.drawImage(shared.domElement, 0, 0); } })(performance.now());
+const FX = { price: "Giá bánh", tip: "Tip", pat: "Khách chờ lâu hơn", cust: "Khách thêm mỗi ca" };
+const fxText = fx => Object.entries(fx).map(([k, v]) => `${FX[k]} +${k === "cust" ? v : Math.round(v * 100) + "%"}`).join("<br>");
+const tilt = c => { c.addEventListener("pointermove", e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; c.style.setProperty("--ty", x * 14 + "deg"); c.style.setProperty("--tx", -y * 14 + "deg"); }); c.addEventListener("pointerleave", () => { c.style.setProperty("--tx", "0deg"); c.style.setProperty("--ty", "0deg"); }); };
+function card(host, it, model, gender, tagsHtml, fx) {
+  const R = RARITY[it.rarity], c = document.createElement("div"); c.className = "c " + it.rarity; c.style.setProperty("--rc", R.c);
+  const gd = gender ? `<span class="gd ${gender}">${gender === "girl" ? "♀" : "♂"}</span>` : "";
+  c.innerHTML = `<div class="in"><div class="v"><i class="sp" style="left:14%;top:16%">✦</i><i class="sp" style="right:12%;top:26%">✧</i><i class="sp" style="left:20%;top:62%">✧</i><i class="sp" style="right:18%;top:70%">✦</i></div>
+  <div class="top"><b>${it.n}</b>${gd}<span class="r">${R.n}</span></div><div class="tags">${tagsHtml}</div><div class="fx">${fxText(fx)}</div><div class="shine"></div></div>`;
+  host.appendChild(c); tilt(c);
+  const o = mountShared(c.querySelector(".v"), model);
+  new IntersectionObserver(([e]) => { o.vis = e.isIntersecting; }, { rootMargin: "80px" }).observe(c);
+}
+const M = document.getElementById("m"), P = document.getElementById("p"), order = { ultra: 0, rare: 1, common: 2 };
+GACHA_ITEMS.filter(i => i.kind === "manager").sort((a, b) => order[a.rarity] - order[b.rarity]).forEach(it => card(M, it, it.mgr.model, it.mgr.gender, it.mgr.tags.map(t => `<span class="tg">${t}</span>`).join(""), it.mgr.fx));
+GACHA_ITEMS.filter(i => i.kind === "mascot" && i.mascot.model && i.mascot.model.startsWith("pet_")).sort((a, b) => order[a.rarity] - order[b.rarity]).forEach(it => card(P, it, it.mascot.model, "", `<span class="tg">Linh thú</span>`, it.mascot.fx));
+</script></body></html>

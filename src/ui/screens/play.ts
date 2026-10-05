@@ -1,6 +1,7 @@
 /* Màn Chơi và màn Kết quả: phần hiển thị. Luật chơi nằm ở engine/shift.ts.
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
-import { bondMul, mascotItem } from "../../engine/gacha";
+import { gachaFx, staffPlaced } from "../../engine/gacha";
+import { itemImg } from "../../content/gacha";
 import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
@@ -190,22 +191,22 @@ const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
 
 /* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì */
 /* ô linh vật gacha đang đồng hành: hiện chỉ số đang cộng (đã nhân thân thiết) để thấy gacha có ích ngay lúc chơi */
-function mascotChip() {
-  const m = mascotItem(); if (!m?.mascot) return "";
-  const f = m.mascot.fx, k = bondMul(m.id), pc = (v: number) => Math.round(v * k * 100);
-  const bits = [f.price && `giá +${pc(f.price)}%`, f.tip && `tip +${pc(f.tip)}%`, f.pat && `chờ +${pc(f.pat)}%`, f.cust && `+${f.cust} khách`].filter(Boolean).slice(0, 1).join(" · ");
-  return `<div class="cm mas"><img src="/gacha/mascot-${m.mascot.img}.webp" alt="" width="30" height="30"><div class="ct"><b>${esc(m.n)}</b><small>${bits}</small></div></div>`;
+function staffChip() {
+  const mg = staffPlaced("mgr"), ms = staffPlaced("mascot"), lead = mg[0] ?? ms[0]; if (!lead) return "";
+  const pc = (k: "price" | "tip" | "pat") => Math.round(gachaFx(k) * 100), cu = gachaFx("cust");
+  const bits = [pc("price") && `giá +${pc("price")}%`, pc("tip") && `tip +${pc("tip")}%`, pc("pat") && `chờ +${pc("pat")}%`, cu && `+${cu} khách`].filter(Boolean).slice(0, 2).join(" · ");
+  return `<div class="cm mas"><img src="${itemImg(lead)}" alt="" width="30" height="30"><div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
 }
 export function crewHTML(sh: Shift) {
   const ids = STAFF.map(d => d.id).filter(id => sh.working.includes(id));
-  if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>${mascotItem() ? `<div class="crew" style="--n:1">${mascotChip()}</div>` : ""}`;
-  return `<div class="crew" style="--n:${ids.length + (mascotItem() ? 1 : 0)}">${ids.map(id => {
+  if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>${staffChip() ? `<div class="crew" style="--n:1">${staffChip()}</div>` : ""}`;
+  return `<div class="crew" style="--n:${ids.length + (staffChip() ? 1 : 0)}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeSVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
     return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${petSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
-  }).join("")}${mascotChip()}</div>`;
+  }).join("")}${staffChip()}</div>`;
 }
 /* bánh bé đang làm tới đâu: đế → kem → topping → độ ngọt theo phần trăm */
 const bakerBuild = (c: Customer, pct: number) => {
@@ -582,7 +583,7 @@ export function resultHTML(r: Result | null = result) {
         ${row("Nhập nguyên liệu", led.ingUsed + led.quick, false)}${row("Lương các bé", led.wages, false)}
         <div class="lg tot ${led.profit >= 0 ? "" : "neg"}"><span>Lãi</span><b>${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b></div>
       </div>
-      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.shutdown ? `<p class="rticket bad">🚨 Sở y tế đóng cửa tiệm vì có chuột: phạt ${fmtN(sh.mouseFine)} xu. Lần sau nhớ bắt chuột sớm nha</p>` : ""}${sh.mouseKills ? `<p class="rticket">🐭 Vua diệt chuột hạng ${mouseRank().name}: +${sh.mouseReward} xu${mouseRank().next ? ` · cần ${mouseRank().next} lần để lên hạng` : ""}</p>` : ""}${sh.mousePaid ? `<p class="rticket">Đã chi ${fmtN(sh.mousePaid)} xu xử lý chuột nhanh</p>` : ""}${sh.comboPaid ? `<p class="rticket">🔥 Combo dài nhất ×${sh.bestCombo}: +${fmtN(sh.comboPaid)} xu thưởng${sh.comboLost ? ` (mất ${fmtN(sh.comboLost)} xu vì đứt chuỗi)` : ""}</p>` : sh.comboLost ? `<p class="rticket">Đứt combo: mất ${fmtN(sh.comboLost)} xu thưởng dồn, ca sau giữ chuỗi nha</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 ${esc(mascotItem()?.n ?? "Linh vật")} thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
+      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.shutdown ? `<p class="rticket bad">🚨 Sở y tế đóng cửa tiệm vì có chuột: phạt ${fmtN(sh.mouseFine)} xu. Lần sau nhớ bắt chuột sớm nha</p>` : ""}${sh.mouseKills ? `<p class="rticket">🐭 Vua diệt chuột hạng ${mouseRank().name}: +${sh.mouseReward} xu${mouseRank().next ? ` · cần ${mouseRank().next} lần để lên hạng` : ""}</p>` : ""}${sh.mousePaid ? `<p class="rticket">Đã chi ${fmtN(sh.mousePaid)} xu xử lý chuột nhanh</p>` : ""}${sh.comboPaid ? `<p class="rticket">🔥 Combo dài nhất ×${sh.bestCombo}: +${fmtN(sh.comboPaid)} xu thưởng${sh.comboLost ? ` (mất ${fmtN(sh.comboLost)} xu vì đứt chuỗi)` : ""}</p>` : sh.comboLost ? `<p class="rticket">Đứt combo: mất ${fmtN(sh.comboLost)} xu thưởng dồn, ca sau giữ chuỗi nha</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 Linh vật thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
     </div>
     <div class="rbtns"><button class="b3 w" style="flex:1" data-go="/">Về tiệm</button><button class="b3" style="flex:1.6" data-go="/chuan-bi" data-replace>${good ? "Ca tiếp theo" : "Chơi lại ca"}</button></div>
   </div>`;

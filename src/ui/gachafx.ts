@@ -2,7 +2,7 @@
    Thường ~6s, Hiếm ~4,5s (sóng xung kích, chữ HIẾM), Cực hiếm ~9s (huy hiệu vàng, ba sao, chớp trắng, pháo giấy, cánh sáng).
    Chạm để bỏ qua. Quay 10 lần: sau phim là 10 thẻ lật lần lượt, thẻ hiếm bung hạt khi lật. */
 import { sfx } from "../audio/sound";
-import { RARITIES, RARITY, KIND_NAME, type GachaItem, type Rarity } from "../content/gacha";
+import { RARITIES, RARITY, KIND_NAME, itemImg, type GachaItem, type Rarity } from "../content/gacha";
 import { roomItem } from "../content/room";
 import type { PullResult } from "../engine/gacha";
 import { S } from "../engine/state";
@@ -26,7 +26,7 @@ export function gachaArt(it: GachaItem, px: number, live = false) {
   if (it.recipe) return cakeSVG({ base: it.recipe.base, cream: it.recipe.cream, top: it.recipe.top, sweet: 1 }, { size: px, still: true });
   if (it.decor) { const d = roomItem(it.decor.k, it.decor.v); return `<span class="gart sw" style="width:${px}px;height:${px}px;background:${d.sw};background-size:${d.sws || "auto"}"></span>`; }
   if (it.char) return portraitHTML(it.char.sprite, LOOK, px, guestSVG({ gender: it.char.gender, sprite: it.char.sprite, mood: "happy", ledge: false }, px), "", live);
-  if (it.mascot) return `<span class="gart mas${it.mascot.art ? " art" : ""}" style="width:${px}px;height:${px}px"><img src="/gacha/mascot-${it.mascot.img}.webp" alt="" width="${px}" height="${px}"></span>`;
+  if (it.mascot || it.mgr) return `<span class="gart mas${it.mascot?.art ? " art" : ""}" style="width:${px}px;height:${px}px"><img src="${itemImg(it)}" alt="" width="${px}" height="${px}"></span>`;
   return "";
 }
 
@@ -47,7 +47,7 @@ function heroHTML(r: PullResult, px: number) {
     return `<div class="ghx ghx-fs r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><div class="gh-fsbg" style="background-image:url(${url})"></div><img class="gh-fsimg" src="${url}" alt="" draggable="false"><div class="gh-fsinfo">${info}</div></div>`;
   }
   return `<div class="ghx k-${it.kind} r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}">
-    <div class="gh-wrap"><div class="gsun"></div><div class="gh-pillar"></div><div class="gh-aura"></div>${it.mascot ? `<i class="gh-heart">♥</i><i class="gh-heart b">♥</i><i class="gh-heart c">✦</i>` : ""}
+    <div class="gh-wrap"><div class="gsun"></div><div class="gh-pillar"></div><div class="gh-aura"></div>${it.mascot || it.mgr ? `<i class="gh-heart">♥</i><i class="gh-heart b">♥</i><i class="gh-heart c">✦</i>` : ""}
       <div class="gh-item" style="--px:${px}px">${gachaArt(it, px, true)}</div></div>${info}</div>`;
 }
 const SHINE: Record<Rarity, string> = { common: "gshine1", rare: "gshine2", ultra: "gshine3" };
@@ -106,7 +106,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
     const heroPx = Math.round(Math.min(300, innerWidth * .72, innerHeight * .4));
     out.innerHTML = heroHTML(star, heroPx);
     let unmount = () => { };
-    const mdl = star.item.mascot?.art ? undefined : star.item.mascot?.model, hostEl = out.querySelector<HTMLElement>(".gh-item");
+    const mdl = star.item.mascot?.art ? undefined : star.item.mascot?.model ?? star.item.mgr?.model, hostEl = out.querySelector<HTMLElement>(".gh-item");
     if (mdl && hostEl) { unmount = mountTurntable(hostEl, mdl, heroPx); window.setTimeout(() => { const im = hostEl.querySelector<HTMLElement>(".gart"); if (im && hostEl.querySelector(".gh-3d")) im.style.visibility = "hidden"; }, 900); }
     hydratePortraits(out); sfx(SHINE[star.item.rarity]);
     const fsImg = out.querySelector<HTMLImageElement>(".gh-fsimg");

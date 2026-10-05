@@ -1,7 +1,7 @@
 /* Màn Gacha: triệu hồi (1 hoặc 10 lần), vé, bảo hiểm, bộ sưu tập. Lợi ích của từng loại đồ nằm ở engine/gacha.ts */
 import { sfx } from "../../audio/sound";
-import { DUST_PER_TICKET, GACHA_ITEMS, itemsOf, KIND_NAME, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, gachaItem, type GachaKind, type Rarity } from "../../content/gacha";
-import { BOND_AT, BOND_STEP, bondLevel, bondOf, buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, setMascot, untilRare, untilUltra } from "../../engine/gacha";
+import { DUST_PER_TICKET, GACHA_ITEMS, itemsOf, KIND_NAME, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, gachaItem, type GachaItem, type GachaKind, type Rarity } from "../../content/gacha";
+import { BOND_AT, BOND_STEP, bondLevel, bondOf, buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, floorCount, floorOfStaff, placeStaff, clearStaff, untilRare, untilUltra } from "../../engine/gacha";
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { render } from "../app";
@@ -36,13 +36,13 @@ function summonHTML() {
     <p class="phint">Kiếm vé: vé miễn phí mỗi ngày, đạt hết mục tiêu ca, nhận quà mục tiêu ngày. Đồ trùng đổi Bụi sao nên quay nào cũng có ích.</p></div>`;
 }
 function bagHTML() {
-  const kinds: (GachaKind | "all")[] = ["all", "recipe", "decor", "char", "mascot"], items = GACHA_ITEMS.filter(i => filter === "all" || i.kind === filter);
+  const kinds: (GachaKind | "all")[] = ["all", "recipe", "decor", "char", "mascot", "manager"], items = GACHA_ITEMS.filter(i => filter === "all" || i.kind === filter);
   return `<div class="gbag"><div class="gfil">${kinds.map(k => `<button class="${filter === k ? "on" : ""}" data-gact="filter:${k}">${k === "all" ? `Tất cả ${ownedCount()}/${GACHA_ITEMS.length}` : KIND_NAME[k]}</button>`).join("")}</div>
     <div class="gitems">${items.map(it => {
-      const own = hasItem(it.id), R = RARITY[it.rarity], eq = S.gacha.mascot === it.id;
+      const own = hasItem(it.id), R = RARITY[it.rarity], fl = it.mgr ? floorOfStaff("mgr", it.id) : it.mascot ? floorOfStaff("mascot", it.id) : -1;
       return `<button class="gi r-${it.rarity} ${own ? "own" : "lock"}" style="--rc:${R.c};--rc2:${R.c2}" data-gact="card:${it.id}">
         <div class="gimg ${own ? "" : "dim"}">${gachaArt(it, 56)}</div><b>${esc(it.n)}</b>
-        <small>${own ? (it.recipe ? `thành thạo ${masteryOf(it.id)}/${MASTERY_MAX}` : eq ? "Đang đồng hành" : `x${countOf(it.id)}`) : "Chưa có"}</small><i class="gdot">${R.n}</i></button>`;
+        <small>${own ? (it.recipe ? `thành thạo ${masteryOf(it.id)}/${MASTERY_MAX}` : fl >= 0 ? `Tầng ${fl + 1}` : `x${countOf(it.id)}`) : "Chưa có"}</small><i class="gdot">${R.n}</i></button>`;
     }).join("")}</div></div>`;
 }
 export function gachaHTML() {
@@ -59,18 +59,24 @@ function bondHTML(id: string) {
   return `<div class="gbond"><div><b>💞 Thân thiết cấp ${lv}/${BOND_AT.length - 1}</b><small>${lv ? `chỉ số +${Math.round(lv * BOND_STEP * 100)}%` : "hoàn thành ca cùng bé để tăng"}</small></div>
     <div class="gbar"><i style="width:${pct}%"></i></div><small>${next === undefined ? "Đã đạt cấp tối đa" : `${n}/${next} ca để lên cấp ${lv + 1}`}</small></div>`;
 }
+/** nút đặt quản lý / linh vật vào từng tầng (mỗi tầng một người mỗi loại); đang đứng thì thêm nút Cất */
+function staffBtns(it: GachaItem) {
+  const k = it.mgr ? "mgr" : it.mascot ? "mascot" : null; if (!k) return "";
+  const at = floorOfStaff(k, it.id), n = floorCount();
+  return `<div class="gfl"><small>${k === "mgr" ? "Quản lý" : "Linh vật"} tầng nào?</small><div>${Array.from({ length: n }, (_, f) => `<button class="${f === at ? "on" : ""}" data-gact="place:${k}:${it.id}:${f}">Tầng ${f + 1}</button>`).join("")}${at >= 0 ? `<button class="off" data-gact="clear:${k}:${it.id}:${at}">Cất</button>` : ""}</div>${n === 1 ? `<small>Xây thêm lầu để có thêm chỗ đứng.</small>` : ""}</div>`;
+}
 function detail(id: string) {
   const it = gachaItem(id); if (!it) return;
   unmount();
-  const own = hasItem(id), R = RARITY[it.rarity], live = it.mascot?.model && !it.mascot.art, both = !!(it.full && it.mascot?.model);       // có tranh full thì hiện tranh, không thì model 3D xoay
+  const own = hasItem(id), R = RARITY[it.rarity], model = it.mascot?.model ?? it.mgr?.model, live = model && !it.mascot?.art, both = !!(it.full && model);       // có tranh full thì hiện tranh, không thì model 3D xoay
   modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
-    ${own && it.mascot ? bondHTML(it.id) : ""}<p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
-    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
+    ${own && it.mascot ? bondHTML(it.id) : ""}${it.mgr ? `<div class="gtags"><span>${it.mgr.gender === "girl" ? "♀ Nữ" : "♂ Nam"}</span>${it.mgr.tags.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}<p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
+    <div class="mbtns">${own ? staffBtns(it) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
   hydratePortraits();
   let host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
   if (both) { const row = document.createElement("div"); row.style.cssText = "flex:0 0 100%;width:100%;display:flex;justify-content:center;margin-top:8px"; const d = document.createElement("div"); d.style.cssText = "position:relative;width:180px;height:180px"; row.appendChild(d); document.querySelector(".gdet")?.appendChild(row); host = d; }
-  if (host && it.mascot?.model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, it.mascot.model, live ? 200 : 180); }
+  if (host && model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, model, live ? 200 : 180); }
 }
 
 /** xem trước toàn bộ vật phẩm theo độ hiếm: tên, lợi ích và tỷ lệ trúng từng món */
@@ -100,7 +106,8 @@ export async function gachaAct(act: string) {
     return;
   }
   if (a === "card") { sfx("click"); fromPool = !!document.querySelector(".gpl .gpr[data-gact=\"card:" + v + "\"]"); return detail(v!); }
-  if (a === "mascot") { if (setMascot(v!)) { sfx("level"); toast("Đã cho đồng hành"); } render(); return detail(v!); }
+  if (a === "place") { const [, k, id, f] = act.split(":"); if (placeStaff(k as "mgr" | "mascot", id!, +f!)) { sfx("level"); toast(`Đã đặt ở tầng ${+f! + 1}`); } render(); return detail(id!); }
+  if (a === "clear") { const [, k, id, f] = act.split(":"); clearStaff(k as "mgr" | "mascot", +f!); sfx("click"); toast("Đã cất"); render(); return detail(id!); }
   if (a === "free") { if (claimFreeTicket()) { sfx("coin"); toast("+1 vé triệu hồi"); } return render(); }
   if (a === "buy1" || a === "buy10") { if (buyTickets(a === "buy1" ? 1 : 10)) { sfx("coin"); toast(`+${a === "buy1" ? 1 : 10} vé`); } else toast("Không đủ xu"); return render(); }
   if (a === "dust") { if (exchangeDust()) { sfx("coin"); toast("+1 vé"); } return render(); }

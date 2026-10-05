@@ -390,7 +390,7 @@ body[data-scr="result"]{background:var(--pink-l)}
 .slot.low .fc svg{animation:fidget .3s ease-in-out infinite alternate}
 .slot.bye{animation:bye .5s ease-in forwards}
 .queue[style*="--n:5"],.queue[style*="--n:6"]{gap:5px;padding:0 10px}
-.queue[style*="--n:5"] .slot,.queue[style*="--n:6"] .slot{height:140px;border-radius:15px}
+.queue[style*="--n:5"] .slot,.queue[style*="--n:6"] .slot{height:auto;min-height:140px;gap:3px;border-radius:15px}   /* cao theo nội dung: chip bé thú cưng không tràn ra đè hàng sau */
 .queue[style*="--n:6"] .who.by span{display:none}
 .band{flex:1;min-height:0;margin-top:14px;background:var(--cream);border-top:12px solid #F3C7A4;box-shadow:inset 0 4px 0 #E2AE86;padding:16px 16px 0;display:flex;flex-direction:column;gap:14px}
 .crew{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px}
@@ -1503,3 +1503,12 @@ button.cm{position:relative}
 .mtitle{align-self:flex-start;margin:6px 0 0 4px;padding:3px 10px;border-radius:999px;background:#fff8e1;border:2px solid #3E3A4A;font-size:12px;font-weight:800;color:#8a5a00;width:max-content}
 .rbanner{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;margin-bottom:8px;border-radius:14px;background:#fff6d6;border:2.5px solid #3E3A4A}
 .rbanner span{font-size:12px;font-weight:700;opacity:.7}.rbanner b{font-size:26px;line-height:1.1}.rbanner b.p{color:#2f9a6e}.rbanner b.m{color:#d9534f}.rbanner small{font-size:12px;opacity:.8}
+
+/* quản lý và linh vật theo tầng (chi tiết vật phẩm gacha) */
+.gtags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin:4px 0 2px}
+.gtags span{padding:2px 9px;border-radius:9px;background:#EFE8FF;color:#6E58C0;font:800 11px var(--body)}
+.gfl{margin:8px 0 2px;text-align:center}.gfl small{display:block;font:700 12px var(--body);color:var(--soft)}
+.gfl div{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.gfl button{min-width:64px;height:34px;border-radius:12px;border:2.5px solid #F3D5DD;background:#fff;font:800 13px var(--body);color:var(--soft2)}
+.gfl button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.gfl button.off{border-color:#E0D4F5;color:#6E58C0}

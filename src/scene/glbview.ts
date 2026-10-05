@@ -1,6 +1,6 @@
 /* Khung xem 3D nhỏ (canvas riêng, nền trong) cho model GLB: xoay chậm, dùng ở màn hiện vật phẩm to. Trả về hàm dọn dẹp. */
 import * as THREE from "three";
-import { glbProp, PROPS } from "./glbprop";
+import { frameOf, glbProp, PROPS } from "./glbprop";
 import { webglOK } from "./shop3d";
 
 export function mountTurntable(host: HTMLElement, modelId: string, px: number): () => void {
@@ -12,8 +12,8 @@ export function mountTurntable(host: HTMLElement, modelId: string, px: number): 
   const m = glbProp(modelId), cfg = PROPS[modelId]!, hh = cfg.h + (cfg.fly ?? 0) * .6, spin = new THREE.Group(); spin.add(m.group); scene.add(spin);
   const cam = new THREE.PerspectiveCamera(30, 1, .1, 50), dist = hh / 2 / Math.tan(Math.PI / 12) * 1.35, cy = hh / 2;
   cam.position.set(0, cy + hh * .1, dist); cam.lookAt(0, cy, 0);
-  let raf = 0, t0 = performance.now(), dead = false;
-  const loop = (now: number) => { if (dead) return; if (!cv.isConnected) { dead = true; r.dispose(); return; } raf = requestAnimationFrame(loop); const t = (now - t0) / 1000; spin.rotation.y = Math.sin(t * .9) * .7; m.update(t); r.render(scene, cam); };
+  let fitted = false, raf = 0, t0 = performance.now(), dead = false;
+  const loop = (now: number) => { if (dead) return; if (!cv.isConnected) { dead = true; r.dispose(); return; } raf = requestAnimationFrame(loop); const t = (now - t0) / 1000; if (!fitted && m.dims) { fitted = true; const f = frameOf(m.dims); cam.position.set(0, f.cy + m.dims.h * .1, f.dist); cam.lookAt(0, f.cy, 0); } spin.rotation.y = Math.sin(t * .9) * .7; m.update(t); r.render(scene, cam); };
   raf = requestAnimationFrame(loop);
   return () => { dead = true; cancelAnimationFrame(raf); r.dispose(); cv.remove(); };
 }

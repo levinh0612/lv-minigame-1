@@ -4,10 +4,11 @@ import * as THREE from "three";
 import { CYL, RB, SPH, T, INK, add, CONE, CAP, mergeStatic } from "./kit";
 import { cake } from "./cake";
 import { pet, type PetKind } from "./pets";
-import { glbProp } from "./glbprop";
+import { glbProp, PROPS } from "./glbprop";
 import { APPROACH } from "./figure3d";
 import { person, personActor, type Actor, type PersonLook } from "./people";
 
+export interface StaffSlot { model: string; rarity: "common" | "rare" | "ultra" }   // model: id GLB trong public/models/gacha
 export interface ShopOpts {
   room: Record<string, string>;            // wall, floor, counter, curtain, lamp, wallItem, plant, rug
   event: boolean;                          // ngày đặc biệt: tường vàng, cờ và bóng bay
@@ -23,8 +24,7 @@ export interface ShopOpts {
   guestLooks: { sprite: string; look: PersonLook }[];
   menuCount: number;
   shopName: string;                        // tên tiệm trên biển hiệu
-  companionRarity?: "common" | "rare" | "ultra";
-  companion?: string;                      // linh vật/hộ vệ gacha đang đồng hành (id model GLB): đứng cạnh chủ tiệm
+  staff?: { mgr?: StaffSlot; pet?: StaffSlot }[];   // quản lý và linh vật gacha của từng tầng (theo thứ tự tầng): đứng cạnh chủ tiệm ở tầng đó
   hl?: string;                             // nhóm đồ đang được chọn ở màn trang trí: làm nổi bật
 }
 export interface Hotspot { id: string; attr: string; value: string; label: string; obj: THREE.Object3D; wall: number | null; dy: number }
@@ -237,11 +237,7 @@ export function createShop(o: ShopOpts): ShopScene {
     hotspots.push({ id: "pet-" + id, attr: "data-pet", value: id, label: "Vuốt ve " + id, obj: m.group, wall: null, dy: 1.15 });
   });
   const me = person(o.me.look, o.me.sprite, "stand"); me.group.position.set(1.0, .5, -2.55); me.group.scale.setScalar(1.2); root.add(me.group); ups.push(me.update);
-  const compSkip: THREE.Object3D[] = [], compHost = new THREE.Group(); root.add(compHost);
-  if (o.companion) {
-    const cm = glbProp(o.companion), fly = o.companion === "phoenix"; cm.group.position.set(2.5, .5, -2.45); compHost.position.set(2.5, .5, -2.45); cm.group.rotation.y = -.25; root.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, compHost);
-    if (!fly) add(root, CYL(.4, .45, .5, 22), T(PKM), 2.5, .25, -2.45, { ol: "mid" });
-  }
+  const compSkip: THREE.Object3D[] = [];
   add(root, CYL(.4, .44, .5, 22), T("#B98450"), 1.0, .25, -2.65, { ol: "mid" });
 
   /* bàn, ghế, khách, bánh trên bàn */
@@ -303,7 +299,17 @@ export function createShop(o: ShopOpts): ShopScene {
     for (let i = 0; i < n; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: col })), a = i / n * Math.PI * 2; sp.position.set(Math.sin(a) * .46, .15 + i * .2, Math.cos(a) * .46); g.add(sp); }
     host.add(g); auras.push({ g, host });
   };
-  if (o.companion && o.companionRarity && o.companionRarity !== "common") addAura(compHost, o.companionRarity);
+  /* quản lý (x 3.1) và linh vật (x 2.1) của từng tầng đứng trên bệ ở sát tường sau, chỉ hiện khi xem tầng đó */
+  (o.staff ?? []).slice(0, floors).forEach((st, f) => {
+    const par = flG[f]!;
+    ([[st.mgr, 3.1, -.2], [st.pet, 2.1, .2]] as const).forEach(([sl, x, ry]) => {
+      if (!sl) return;
+      const fly = !!PROPS[sl.model]?.fly, host = new THREE.Group(), cm = glbProp(sl.model);
+      host.position.set(x, .5, -2.45); par.add(host); cm.group.position.set(x, .5, -2.45); cm.group.rotation.y = ry; par.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, host);
+      if (!fly) add(par, CYL(.4, .45, .5, 22), T(PKM), x, .25, -2.45, { ol: "mid" });
+      if (sl.rarity !== "common") addAura(host, sl.rarity);
+    });
+  });
   const prepare = (sl: Slot) => {
     const gl = POOL[((sl.n + 1) * 5 + Math.floor(Math.random() * POOL.length)) % POOL.length]!;
     const actor = personActor(gl.look, gl.sprite); actor.mode("walk"); const a = actor.group; const rar = o.regulars.find(x => x.sprite === gl.sprite)?.rarity; if (rar && rar !== "common") addAura(a, rar); a.position.set(STREET[1].x, 0, STREET[1].y); a.rotation.y = Math.PI / 2; a.visible = false; root.add(a);

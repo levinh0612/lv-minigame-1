@@ -7,7 +7,7 @@ import { rollDay } from "../src/engine/progress";
 import { beginShift, breakCombo, createShift, finishShift, leaveCustomer, serve, tick, type Customer } from "../src/engine/shift";
 import { fame } from "../src/engine/economy";
 import { GACHA_ITEMS } from "../src/content/gacha";
-import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, gachaFx, mascotItem, packCost, pull, rollRarity, setMascot, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
+import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, clearStaff, floorOfStaff, gachaFx, packCost, placeStaff, pull, rollRarity, staffAt, staffPlaced, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
 import { fx, unlocked } from "../src/engine/progress";
 import { hostGift, seatsOfTables, visitFee } from "../src/engine/visit";
 import { resolve } from "../src/ui/router";
@@ -418,8 +418,8 @@ describe("ví: sổ thu chi", () => {
   describe("gacha", () => {
     const seq = (...v: number[]) => { let i = 0; return () => v[i++ % v.length]!; };
 
-    it("37 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
-      expect(GACHA_ITEMS.length).toBe(37);
+    it("58 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
+      expect(GACHA_ITEMS.length).toBe(58);
       ["common", "rare", "ultra"].forEach(r => expect(GACHA_ITEMS.some(i => i.rarity === r)).toBe(true));
       expect(rollRarity(() => 0.99)).toBe("common"); expect(rollRarity(() => 0.5)).toBe("common");
       expect(rollRarity(() => 0.1)).toBe("rare"); expect(rollRarity(() => 0.02)).toBe("ultra");
@@ -467,19 +467,51 @@ describe("ví: sổ thu chi", () => {
       const owned = GACHA_ITEMS.filter(i => countOf(i.id) > 0)[0]!;
       expect(owned.rarity).toBe("ultra");
       const m = GACHA_ITEMS.find(i => i.id === "m_thienthan")!;
-      expect(mascotItem()).toBeNull(); expect(setMascot(m.id)).toBe(false);
-      S.gacha.owned[m.id] = 1; expect(setMascot(m.id)).toBe(true);
+      expect(staffAt("mascot", 0)).toBeNull(); expect(placeStaff("mascot", m.id, 0)).toBe(false);
+      S.gacha.owned[m.id] = 1; expect(placeStaff("mascot", m.id, 0)).toBe(true);
       expect(gachaFx("price")).toBeCloseTo(0.1); expect(fx("cust")).toBeGreaterThanOrEqual(1);
     });
 
     it("thân thiết: mỗi cấp +12% chỉ số linh vật, số khách thêm giữ nguyên, lên cấp báo đúng", () => {
-      const m = GACHA_ITEMS.find(i => i.id === "m_thienthan")!; S.gacha.owned[m.id] = 1; setMascot(m.id);
+      const m = GACHA_ITEMS.find(i => i.id === "m_thienthan")!; S.gacha.owned[m.id] = 1; placeStaff("mascot", m.id, 0);
       expect(bondLevel(m.id)).toBe(0); expect(addBond()).toBe(0); expect(addBond()).toBe(0);
       expect(addBond()).toBe(1);                                // ca thứ 3: lên cấp 1
       expect(gachaFx("price")).toBeCloseTo(0.1 * 1.12); expect(gachaFx("cust")).toBe(1);
       for (let i = 0; i < 40; i++) addBond();
       expect(bondLevel(m.id)).toBe(4); expect(gachaFx("tip")).toBeCloseTo(0.08 * 1.48);
     });
+  });
+});
+
+describe("quản lý và linh vật theo tầng", () => {
+  const mgr = (id: string) => { S.gacha.owned[id] = 1; return id; };
+  it("mỗi tầng một ô; chưa xây lầu thì chưa đặt được; đặt lại sang tầng khác thì chuyển", () => {
+    mgr("g_tanjiro"); mgr("g_goku");
+    expect(placeStaff("mgr", "g_tanjiro", 1)).toBe(false);      // chỉ có 1 tầng
+    expect(placeStaff("mgr", "g_tanjiro", 0)).toBe(true); expect(placeStaff("mgr", "g_goku", 0)).toBe(true);
+    expect(staffAt("mgr", 0)!.id).toBe("g_goku"); expect(floorOfStaff("mgr", "g_tanjiro")).toBe(-1);   // Goku thế chỗ Tanjiro
+    S.venue.floors = 2; expect(placeStaff("mgr", "g_goku", 1)).toBe(true);
+    expect(staffAt("mgr", 0)).toBeNull(); expect(floorOfStaff("mgr", "g_goku")).toBe(1);
+    clearStaff("mgr", 1); expect(staffPlaced("mgr")).toHaveLength(0);
+  });
+  it("chỉ số quản lý và linh vật cộng dồn cho cả tiệm; tầng không còn thì mất buff", () => {
+    S.venue.floors = 2; mgr("g_tanjiro"); mgr("g_violet"); S.gacha.owned["m_cacao"] = 1;
+    placeStaff("mgr", "g_tanjiro", 0); placeStaff("mgr", "g_violet", 1); placeStaff("mascot", "m_cacao", 0);
+    expect(gachaFx("tip")).toBeCloseTo(0.08 + 0.1 + 0.05); expect(gachaFx("price")).toBeCloseTo(0.12); expect(gachaFx("cust")).toBe(1);
+    S.venue.floors = 1; expect(gachaFx("price")).toBe(0);       // Violet ở tầng 2 không còn tính
+  });
+  it("quản lý mới trúng tự đứng vào tầng trống đầu tiên", () => {
+    S.venue.floors = 2; addTickets(2);
+    const items = GACHA_ITEMS.filter(i => i.mgr), first = items[0]!;
+    S.gacha.owned[first.id] = 1; placeStaff("mgr", first.id, 0);
+    expect(staffAt("mgr", 1)).toBeNull();
+  });
+  it("dữ liệu cũ: linh vật chung chuyển thành linh vật tầng 1; Chisa/Jiyan/Zhongli bị gỡ và bù 100 vé mỗi nhân vật", () => {
+    const st = loadState(JSON.stringify({ gacha: { tickets: 5, owned: { m_chisa: 1, m_zhongli: 2, m_cacao: 1 }, mascot: "m_chisa" } }));
+    expect(st.gacha.owned.m_chisa).toBeUndefined(); expect(st.gacha.owned.m_zhongli).toBeUndefined(); expect(st.gacha.owned.m_cacao).toBe(1);
+    expect(st.gacha.tickets).toBe(205); expect(st.gacha.refund).toBe(200); expect(st.gacha.mascots![0]).toBe("");
+    const st2 = loadState(JSON.stringify({ gacha: { owned: { m_cacao: 1 }, mascot: "m_cacao" } }));
+    expect(st2.gacha.mascots![0]).toBe("m_cacao"); expect(st2.gacha.refund).toBeUndefined();
   });
 });
 
