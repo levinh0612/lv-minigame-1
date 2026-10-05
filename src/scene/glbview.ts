@@ -13,7 +13,7 @@ export function mountTurntable(host: HTMLElement, modelId: string, px: number): 
   const cam = new THREE.PerspectiveCamera(30, 1, .1, 50), dist = hh / 2 / Math.tan(Math.PI / 12) * 1.35, cy = hh / 2;
   cam.position.set(0, cy + hh * .1, dist); cam.lookAt(0, cy, 0);
   let raf = 0, t0 = performance.now(), dead = false;
-  const loop = (now: number) => { if (dead) return; raf = requestAnimationFrame(loop); const t = (now - t0) / 1000; spin.rotation.y = Math.sin(t * .9) * .7; m.update(t); r.render(scene, cam); };
+  const loop = (now: number) => { if (dead) return; if (!cv.isConnected) { dead = true; r.dispose(); return; } raf = requestAnimationFrame(loop); const t = (now - t0) / 1000; spin.rotation.y = Math.sin(t * .9) * .7; m.update(t); r.render(scene, cam); };
   raf = requestAnimationFrame(loop);
   return () => { dead = true; cancelAnimationFrame(raf); r.dispose(); cv.remove(); };
 }

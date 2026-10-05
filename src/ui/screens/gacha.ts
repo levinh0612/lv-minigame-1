@@ -8,7 +8,9 @@ import { render } from "../app";
 import { coinPill, esc, modal, toast } from "../dom";
 import { gachaArt, playReveal } from "../gachafx";
 import { hydratePortraits } from "../portrait";
+import { mountTurntable } from "../../scene/glbview";
 
+let unmount = () => { }, fromPool = false;
 let tab: "summon" | "bag" = "summon", filter: GachaKind | "all" = "all", busy = false, poolR: Rarity = "common";
 const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 
@@ -52,22 +54,26 @@ export function gachaHTML() {
 
 function detail(id: string) {
   const it = gachaItem(id); if (!it) return;
-  const own = hasItem(id), R = RARITY[it.rarity];
-  modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span><div class="gimg big ${own ? "" : "dim"}">${gachaArt(it, 130, true)}</div></div>
+  unmount();
+  const own = hasItem(id), R = RARITY[it.rarity], live = it.mascot?.model && !it.mascot.art;       // có tranh full thì hiện tranh, không thì model 3D xoay
+  modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
     <p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
-    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}<button class="b3 w" data-close>Đóng</button></div>`);
+    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}<button class="b3 w" data-close>Đóng</button></div>`);
   hydratePortraits();
+  const host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
+  if (host && it.mascot?.model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, it.mascot.model, 200); }
 }
 
 /** xem trước toàn bộ vật phẩm theo độ hiếm: tên, lợi ích và tỷ lệ trúng từng món */
 function poolSheet() {
+  unmount(); fromPool = true;
   const R = RARITY[poolR], list = itemsOf(poolR), each = R.w / list.length;
   modal(`<h2>Có thể trúng gì?</h2><p class="sub">Tỷ lệ ${R.w}% cho nhóm ${R.n} · mỗi món khoảng ${each.toFixed(1)}%</p>
     <div class="seg rseg">${RARITIES.map(r => `<button class="${r === poolR ? "on" : ""}" data-gact="pool:${r}">${RARITY[r].n}</button>`).join("")}</div>
     <div class="gpl">${list.map(it => `<div class="gpr r-${poolR}" style="--rc:${R.c};--rc2:${R.c2}" data-gact="card:${it.id}"><div class="gimg">${gachaArt(it, 50)}</div>
       <div class="gpi"><b>${esc(it.n)}</b><small>${KIND_NAME[it.kind]} · ${esc(it.desc)}</small></div><em>${hasItem(it.id) ? `x${countOf(it.id)}` : "mới"}</em></div>`).join("")}</div>
-    <p class="phint">Bảo hiểm: ${PITY_RARE} lần chắc chắn có Hiếm trở lên, ${PITY_ULTRA} lần chắc chắn có Cực hiếm.</p>
+    <p class="phint">Chạm vào một món để xem trước (tranh/3D, chỉ số). Bảo hiểm: ${PITY_RARE} lần chắc chắn có Hiếm trở lên, ${PITY_ULTRA} lần chắc chắn có Cực hiếm.</p>
     <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
   hydratePortraits();
 }
@@ -78,7 +84,7 @@ export async function gachaAct(act: string) {
   if (a === "tab") { tab = v as typeof tab; sfx("click"); return render(); }
   if (a === "filter") { filter = v as typeof filter; sfx("click"); return render(); }
   if (a === "pool") { poolR = (v as Rarity) || poolR; sfx("click"); return poolSheet(); }
-  if (a === "card") { sfx("click"); return detail(v!); }
+  if (a === "card") { sfx("click"); fromPool = !!document.querySelector(".gpl .gpr[data-gact=\"card:" + v + "\"]"); return detail(v!); }
   if (a === "mascot") { if (setMascot(v!)) { sfx("level"); toast("Đã cho đồng hành"); } render(); return detail(v!); }
   if (a === "free") { if (claimFreeTicket()) { sfx("coin"); toast("+1 vé triệu hồi"); } return render(); }
   if (a === "buy1" || a === "buy10") { if (buyTickets(a === "buy1" ? 1 : 10)) { sfx("coin"); toast(`+${a === "buy1" ? 1 : 10} vé`); } else toast("Không đủ xu"); return render(); }

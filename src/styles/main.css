@@ -1457,3 +1457,6 @@ button.cm{position:relative}
 .gh-item .gart.mas{background:none;border-radius:0}
 .gh-item .gart.mas.art img{-webkit-mask-image:none;mask-image:none;border-radius:22px;object-fit:cover;box-shadow:0 0 0 3px var(--rc2),0 0 30px color-mix(in srgb,var(--rc) 70%,transparent)}
 .gh-item .gart.mas img{-webkit-mask-image:radial-gradient(ellipse 52% 54% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 52% 54% at 50% 50%,#000 62%,transparent 100%)}
+
+.gdet .gfull{display:block;max-width:100%;max-height:46vh;margin:6px auto 0;border-radius:16px;box-shadow:0 0 0 3px var(--rc2),0 0 28px color-mix(in srgb,var(--rc) 60%,transparent)}
+.gdet .gimg.big .gh-3d{border-radius:12px}
