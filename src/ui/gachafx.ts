@@ -30,10 +30,11 @@ export function gachaArt(it: GachaItem, px: number, live = false) {
   return "";
 }
 
+let previewMode = false;                                                   // xem thử từ bảng "Có thể trúng gì": không đổi dữ liệu, ghi "Xem trước"
 const card = (r: PullResult, px: number, live: boolean) => {
   const R = RARITY[r.item.rarity];
   return `<div class="gcard r-${r.item.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span><div class="gimg">${gachaArt(r.item, px, live)}</div>
-    <b>${esc(r.item.n)}</b><small>${KIND_NAME[r.item.kind]}</small>${r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">Trùng · +${r.dust} Bụi sao</em>`}</div>`;
+    <b>${esc(r.item.n)}</b><small>${KIND_NAME[r.item.kind]}</small>${previewMode ? `<em class="gnew">Xem trước</em>` : r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">Trùng · +${r.dust} Bụi sao</em>`}</div>`;
 };
 const STARS: Record<Rarity, string> = { common: "★", rare: "★★", ultra: "★★★" };
 /** màn "vật phẩm hiện to" trước khi ra thẻ: mỗi loại có chuyển động riêng (nhân vật bước vào, thú nảy, bánh xoay, trang trí lật) */
@@ -43,13 +44,14 @@ function heroHTML(r: PullResult, px: number) {
     <div class="gh-wrap"><div class="gsun"></div><div class="gh-pillar"></div><div class="gh-aura"></div>${it.mascot ? `<i class="gh-heart">♥</i><i class="gh-heart b">♥</i><i class="gh-heart c">✦</i>` : ""}
       ${it.full ? `<div class="gh-item gh-full"><img src="/gacha/full-${it.full}.webp" alt="" draggable="false"></div>` : `<div class="gh-item" style="--px:${px}px">${gachaArt(it, px, true)}</div>`}</div>
     <div class="gh-name"><i>${STARS[it.rarity]}</i><b>${esc(it.n)}</b><span>${R.n} · ${KIND_NAME[it.kind]}</span></div>
-    ${r.isNew ? `<em class="gh-stamp">MỚI!</em>` : `<em class="gh-stamp dup">Trùng · +${r.dust} Bụi sao</em>`}<small class="gh-hint">Chạm để tiếp tục</small></div>`;
+    ${previewMode ? `<em class="gh-stamp dup">XEM TRƯỚC</em>` : r.isNew ? `<em class="gh-stamp">MỚI!</em>` : `<em class="gh-stamp dup">Trùng · +${r.dust} Bụi sao</em>`}<small class="gh-hint">Chạm để tiếp tục</small></div>`;
 }
 const SHINE: Record<Rarity, string> = { common: "gshine1", rare: "gshine2", ultra: "gshine3" };
 const BANNER: Partial<Record<Rarity, string>> = { rare: "✦ HIẾM ✦", ultra: "★ CỰC HIẾM ★" };
 
 /** chạy phim cho kết quả quay; gọi onDone khi người chơi bấm OK */
-export function playReveal(results: PullResult[], onDone: () => void) {
+export function playReveal(results: PullResult[], onDone: () => void, preview = false) {
+  previewMode = preview;
   const best = RARITIES.reduce((b, r) => (results.some(x => x.item.rarity === r) ? r : b), "common" as Rarity), R = RARITY[best], cols = PAL[best];
   const root = document.createElement("div");
   root.className = `gfx r-${best}`; root.style.cssText = `--rc:${R.c};--rc2:${R.c2};--d:${WARP_MS[best]}ms`;

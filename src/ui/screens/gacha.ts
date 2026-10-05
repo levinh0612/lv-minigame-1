@@ -55,14 +55,15 @@ export function gachaHTML() {
 function detail(id: string) {
   const it = gachaItem(id); if (!it) return;
   unmount();
-  const own = hasItem(id), R = RARITY[it.rarity], live = it.mascot?.model && !it.mascot.art;       // có tranh full thì hiện tranh, không thì model 3D xoay
+  const own = hasItem(id), R = RARITY[it.rarity], live = it.mascot?.model && !it.mascot.art, both = !!(it.full && it.mascot?.model);       // có tranh full thì hiện tranh, không thì model 3D xoay
   modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
     <p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
-    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}<button class="b3 w" data-close>Đóng</button></div>`);
+    <div class="mbtns">${own && it.mascot ? (S.gacha.mascot === id ? `<button class="b3" disabled>Đang đồng hành</button>` : `<button class="b3" data-gact="mascot:${id}">Cho đồng hành</button>`) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
   hydratePortraits();
-  const host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
-  if (host && it.mascot?.model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, it.mascot.model, 200); }
+  let host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
+  if (both) { const d = document.createElement("div"); d.style.cssText = "position:relative;width:180px;height:180px;margin:8px auto 0"; document.querySelector(".gdet")?.appendChild(d); host = d; }
+  if (host && it.mascot?.model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, it.mascot.model, live ? 200 : 180); }
 }
 
 /** xem trước toàn bộ vật phẩm theo độ hiếm: tên, lợi ích và tỷ lệ trúng từng món */
@@ -84,6 +85,7 @@ export async function gachaAct(act: string) {
   if (a === "tab") { tab = v as typeof tab; sfx("click"); return render(); }
   if (a === "filter") { filter = v as typeof filter; sfx("click"); return render(); }
   if (a === "pool") { poolR = (v as Rarity) || poolR; sfx("click"); return poolSheet(); }
+  if (a === "try") { const it = gachaItem(v!); if (!it) return; unmount(); document.querySelector<HTMLElement>("[data-close]")?.click(); sfx("click"); return void playReveal([{ item: it, isNew: !hasItem(it.id), dust: 0, count: 1 }], () => detail(it.id), true); }
   if (a === "card") { sfx("click"); fromPool = !!document.querySelector(".gpl .gpr[data-gact=\"card:" + v + "\"]"); return detail(v!); }
   if (a === "mascot") { if (setMascot(v!)) { sfx("level"); toast("Đã cho đồng hành"); } render(); return detail(v!); }
   if (a === "free") { if (claimFreeTicket()) { sfx("coin"); toast("+1 vé triệu hồi"); } return render(); }
