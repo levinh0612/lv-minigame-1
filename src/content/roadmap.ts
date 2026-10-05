@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.82", date: "05/10/2026", notes: ["Sửa lỗi chọn nguyên liệu phải bấm 3 đến 4 lần: nhận cú bấm lúc nhả tay, và không vẽ lại phiếu khi nội dung không đổi", "Phiếu làm bánh tự cao vừa đủ để thấy cả 4 hàng (Đế, Kem, Topping, Độ ngọt) và nút giao, không phải kéo xuống"] },
   { v: "2.81", date: "05/10/2026", notes: ["Chuột vào tiệm giờ mở trong hộp thoại: chuột to hơn, chạy trong khung riêng, có đếm giờ và nút xử lý nhanh; lỡ đóng thì chạm thanh 🐭 trên màn ca để mở lại", "Sửa lỗi giao diện: khung chuột trước đó làm các hộp thoại khác bị lệch kiểu"] },
   { v: "2.80", date: "05/10/2026", notes: ["Màn chuẩn bị ca: nút Chuẩn bị nhanh, một chạm nhập hàng theo gợi ý và mua đồ ăn cho bé đang đói; có dòng lãi ước tính của ca", "Màn kết quả: bảng tóm tắt lãi, mục tiêu, vé và combo ngay đầu thẻ", "Màn chính hiện danh hiệu Vua diệt chuột khi bạn đã có hạng"] },
   { v: "2.79", date: "05/10/2026", notes: ["Sự kiện chuột vào tiệm (khoảng 35% ca): chạm vào chuột để bắt, trong 10 giây đầu bắt kịp thì được thưởng xu và lên hạng Vua diệt chuột (F, E, D…)", "Để lâu: từ giây 30 một bé mèo đi làm bị ngất, không làm việc được; giây 45 có cảnh báo; giây 60 khách báo sở y tế, bắt buộc đóng ca và bị phạt 8% số xu (thấp nhất 100, cao nhất 1.000)", "Có thể trả tiền xử lý nhanh (40% tiền phạt) từ giây 10 để chuột biến mất ngay", "Màn tổng kết ca báo chuột đã bắt, tiền xử lý và tiền phạt"] },

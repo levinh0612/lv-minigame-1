@@ -27,6 +27,18 @@ import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, pause, resume, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
 
+/* Chọn nguyên liệu: xử lý lúc nhả tay (không cần chờ click) để không mất cú bấm khi giao diện vẽ lại hoặc ngón tay trượt nhẹ */
+let ingDown: { id: string; x: number; y: number; t: number } | null = null, ingAt = 0;
+document.addEventListener("pointerdown", e => {
+  const b = (e.target as HTMLElement).closest<HTMLElement>("[data-ing]");
+  ingDown = b && SH && (e.pointerType !== "mouse" || e.button === 0) ? { id: b.dataset.ing!, x: e.clientX, y: e.clientY, t: performance.now() } : null;
+});
+document.addEventListener("pointercancel", () => { ingDown = null; });
+document.addEventListener("pointerup", e => {
+  const d = ingDown; ingDown = null;
+  if (!d || !SH || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12 || performance.now() - d.t > 800) return;
+  ingAt = performance.now(); const [k, i] = d.id.split(":"); pickIngredient(k as PartKey, +i);
+});
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
   const t = (e.target as HTMLElement).closest<HTMLElement>("button, .modal"); if (!t) return;
@@ -108,7 +120,7 @@ document.addEventListener("click", e => {
     toast(`${petName(pet)} ăn ${foodDef(food).n} ngon lành! +${foodDef(food).aff} ♥`); return render();
   }
   if (d.selPet) { selectPet(d.selPet as PetId); sfx("tap"); return render(); }
-  if (d.ing) { const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
+  if (d.ing) { if (performance.now() - ingAt < 700) return; const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.seat) return selectSeat(+d.seat);
   if (d.tick) return tickStock(d.tick);
   if (d.watch) return watchBaker(d.watch as PetId);

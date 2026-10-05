@@ -377,12 +377,11 @@ export function renderTicket() {
   const root = $("#play"); if (!SH || !root) return;
   const m = mineIdx(SH);
   root.classList.toggle("has", m >= 0); root.classList.toggle("free", m < 0); root.classList.toggle("up", m >= 0 && sheetOpen);
-  $("#oinfo")!.innerHTML = oinfoHTML(SH);
-  $("#idle")!.innerHTML = idleHTML(SH);
-  $("#mini")!.innerHTML = miniHTML(SH);
+  /* chỉ vẽ lại khi nội dung đổi: thay DOM giữa lúc ngón tay đang chạm làm mất cú bấm */
+  setHTML($("#oinfo")!, oinfoHTML(SH)); setHTML($("#idle")!, idleHTML(SH)); setHTML($("#mini")!, miniHTML(SH));
   $("#stage")!.innerHTML = stageHTML(SH);
-  $("#rows")!.innerHTML = rowsHTML(SH);
-  renderCombo(); fitStage();
+  setHTML($("#rows")!, rowsHTML(SH));
+  renderCombo(); fitStage(); fitSheet();
   const g = $("#give")!; g.textContent = giveLabel(SH); g.classList.toggle("off", !isComplete(SH.build));
   SH.seats.forEach((c, i) => {
     const el = $("#seat" + i); if (!el || !c || c.gone) return;
@@ -404,9 +403,19 @@ const refreshCoins = (pulse = true) => {
 export function setSheet(open: boolean) { sheetOpen = open; renderTicket(); sfx(open ? "tap" : "untap"); }
 export const toggleSheet = () => setSheet(!sheetOpen);
 /* phiếu order không được che hàng đợi */
+const setHTML = (el: HTMLElement, html: string) => { if (el.dataset.h !== html) { el.dataset.h = html; el.innerHTML = html; } };
+/* phiếu cao vừa đủ cho cả 4 hàng (Đế, Kem, Topping, Độ ngọt) và nút giao; chỉ chừa lại đầu hàng khách ở trên */
 function fitSheet() {
-  const p = $("#play"), q = document.querySelector(".queue"); if (!p || !q) return;
-  p.style.setProperty("--qb", Math.round(q.getBoundingClientRect().bottom - p.getBoundingClientRect().top + 8) + "px");
+  const p = $("#play"), q = document.querySelector<HTMLElement>(".queue"); if (!p || !q) return;
+  const pr = p.getBoundingClientRect(), qr = q.getBoundingClientRect();
+  const head = $("#ohead"), rows = $("#rows"), give = $("#give");
+  const want = qr.bottom - pr.top + 8;
+  let qb = want;
+  if (head && rows && give) {
+    const natural = head.offsetHeight + rows.scrollHeight + give.offsetHeight + 40 + 14;
+    qb = Math.min(want, Math.max(qr.top - pr.top + 70, pr.height - natural));
+  }
+  p.style.setProperty("--qb", Math.round(qb) + "px");
 }
 window.addEventListener("resize", () => { if (SH) { fitSheet(); fitStage(); } });
 /* kéo phiếu xuống để thu gọn */
