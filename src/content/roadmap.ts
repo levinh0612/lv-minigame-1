@@ -69,6 +69,7 @@ export const PHASES: Phase[] = [
 /* "Có gì mới": bản mới nhất ở trên cùng */
 export interface Release { v: string; date: string; notes: string[] }
 export const CHANGELOG: Release[] = [
+  { v: "2.72", date: "05/10/2026", notes: ["Jiyan, Bạch Chi, Chisa, Zhongli đứng trong tiệm dạng standee theo đúng dáng đứng bạn đưa (tách nền), luôn quay mặt về phía camera, thay cho model 3D dang tay chữ T", "Bỏ 4 model 3D dang tay khỏi game (nhẹ hơn khoảng 12MB)"] },
   { v: "2.71", date: "05/10/2026", notes: ["Jiyan và Phượng Hoàng cũng hiện tranh minh hoạ full lúc triệu hồi rồi thu nhỏ vào thẻ"] },
   { v: "2.70", date: "05/10/2026", notes: ["Nâng bản để máy nhận bản mới của Gacha: video summon giữ độ phân giải gốc, tranh minh hoạ full lúc triệu hồi (Lynae, Bạch Chi, Chisa, Zhongli), Siro đứng yên không còn quay vòng"] },
   { v: "2.69", date: "05/10/2026", notes: ["Phim quay Gacha dùng đúng video bạn đưa: Thường 0–6s, Hiếm 9–13s, Cực hiếm 14–23s (đã cắt bỏ chữ và logo), có dự phòng nếu video không phát được", "Thêm 7 linh vật/hộ vệ 3D: Mèo Béo, Mèo Xiêm, Bạch Chi, Chisa, Jiyan, Zhongli, Phượng Hoàng; đang đồng hành thì đứng cạnh chủ tiệm trong cảnh 3D và cộng chỉ số thật (giá bánh, tip, khách chờ lâu hơn, thêm khách mỗi ca)", "Thú cưng Siro và Cacao đổi sang model 3D mới", "Bộ sưu tập gacha: 37 vật phẩm; Lynae, Bạch Chi, Chisa, Zhongli hiện tranh minh hoạ full lúc triệu hồi rồi thu nhỏ vào thẻ"] },
