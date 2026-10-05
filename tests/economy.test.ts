@@ -4,7 +4,7 @@ import {
   buy, buyFood, buySuggested, buyVenue, plannedMeal, seatLevels, spareSeats, venueFame, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, claimWelcome, crewPlan, hire, mealFor, mealOf, mealSlow, outOfStock, packPrice, quickBuy, setMeal, snack, suggestion, toggleDuty, train
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
-import { beginShift, createShift, serve, tick, type Customer } from "../src/engine/shift";
+import { beginShift, breakCombo, createShift, finishShift, leaveCustomer, serve, tick, type Customer } from "../src/engine/shift";
 import { fame } from "../src/engine/economy";
 import { GACHA_ITEMS } from "../src/content/gacha";
 import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, gachaFx, mascotItem, packCost, pull, rollRarity, setMascot, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
@@ -480,5 +480,34 @@ describe("ví: sổ thu chi", () => {
       for (let i = 0; i < 40; i++) addBond();
       expect(bondLevel(m.id)).toBe(4); expect(gachaFx("tip")).toBeCloseTo(0.08 * 1.48);
     });
+  });
+});
+
+describe("combo phục vụ", () => {
+  const give = (sh: ReturnType<typeof createShift>, pat: number) => {
+    sh.seats[0] = customer({ pat, max: 40 }); sh.build = { base: 0, cream: 0, top: 0, sweet: 0 };
+    const r = serve(sh); if (!r.ok) throw new Error(r.msg); return r;
+  };
+  it("Hoàn hảo (3 sao) liên tiếp cộng dồn thưởng, 1-2 sao không thêm cũng không đứt", () => {
+    const sh = createShift();
+    const a = give(sh, 40), b = give(sh, 40);
+    expect(a.perfect && a.combo).toBe(1); expect(b.perfect && b.combo).toBe(2);
+    expect(sh.comboBank).toBe(a.comboAdd + b.comboAdd); expect(b.comboAdd).toBeGreaterThan(a.comboAdd);
+    const c = give(sh, 10);                                  // chậm: 1 sao
+    expect(c.perfect).toBe(false); expect(sh.combo).toBe(2);
+  });
+  it("đứt chuỗi (khách giận hoặc giao sai) mất một nửa thưởng đã dồn; chuỗi dưới 2 thì không mất", () => {
+    const sh = createShift(); give(sh, 40); expect(breakCombo(sh)).toBe(0); expect(sh.combo).toBe(0);
+    give(sh, 40); give(sh, 40); give(sh, 40);
+    const bank = sh.comboBank; sh.seats[1] = customer(); leaveCustomer(sh, 1);
+    expect(sh.combo).toBe(0); expect(sh.comboBank).toBe(bank - Math.floor(bank / 2)); expect(sh.comboLost).toBe(Math.floor(bank / 2));
+    give(sh, 40); give(sh, 40);
+    sh.seats[0] = customer({ r: RECIPES[1] }); sh.build = { base: 0, cream: 0, top: 0, sweet: 0 };
+    const bad = serve(sh); expect(bad.ok).toBe(false); expect(sh.combo).toBe(0);
+  });
+  it("hết ca trả thưởng combo đã dồn và tính vào doanh thu", () => {
+    const sh = createShift(); give(sh, 40); give(sh, 40);
+    const before = S.coins, bank = sh.comboBank, led = finishShift(sh);
+    expect(sh.comboPaid).toBe(bank); expect(S.coins).toBeGreaterThanOrEqual(before + bank); expect(led.revenue).toBeGreaterThanOrEqual(bank);
   });
 });

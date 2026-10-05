@@ -1471,3 +1471,16 @@ button.cm{position:relative}
 .gbond{margin:6px 0 8px;padding:9px 12px;border-radius:14px;background:#FFF1F6;display:grid;gap:5px;text-align:left}
 .gbond>div:first-child{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.gbond b{font:800 13px var(--body);color:#C44A6C}.gbond small{font:700 11px var(--body);color:#8a6a76}
 .gbar{height:8px;border-radius:99px;background:#F6D7E2;overflow:hidden}.gbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#FF8FB1,#FF5C8A);transition:width .4s}
+
+/* combo + bàn làm bánh lớn + ô linh vật trong ca */
+#comboBox:empty{display:none}
+.combo{margin:6px 14px 0;padding:7px 12px;border-radius:14px;background:#FFF1D6;display:grid;grid-template-columns:auto 1fr;gap:1px 10px;align-items:baseline;box-shadow:0 3px 0 #F3D9A4}
+.combo b{font:900 15px var(--display);color:#B25A00}.combo span{font:800 13px var(--body);color:#8A6A1F;text-align:right}.combo small{grid-column:1/-1;font:700 11px var(--body);color:#A48A5C}
+.combo.c0{background:#F3EEF5;box-shadow:0 3px 0 #DCD3E3}.combo.c0 b{color:#8F7FA0}
+.combo.c3,.combo.c4,.combo.c5,.combo.c6{background:#FFE6C2;animation:comboGlow 1.6s ease-in-out infinite}
+@keyframes comboGlow{50%{box-shadow:0 3px 0 #F3D9A4,0 0 18px rgba(255,160,40,.55)}}
+.play.has.up .stage.big{display:flex;flex:none;height:var(--free);padding:0;overflow:hidden;align-items:center;justify-content:center}
+.stage .plate.big{gap:2px}
+.crew .cm.mas{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:14px;background:linear-gradient(135deg,#FFF3C9,#FFE0EC);border:0;font:inherit;text-align:left}
+.crew .cm.mas img{width:26px;height:26px;border-radius:50%;object-fit:cover;flex:none}
+.crew .cm.mas .ct{min-width:0}.crew .cm.mas small{display:block;color:#A0623A;font:700 10px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

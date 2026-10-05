@@ -1,6 +1,6 @@
 /* Màn Chơi và màn Kết quả: phần hiển thị. Luật chơi nằm ở engine/shift.ts.
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
-import { mascotItem } from "../../engine/gacha";
+import { bondMul, mascotItem } from "../../engine/gacha";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
 import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, type PartKey, type StockKey } from "../../content/game";
@@ -8,8 +8,9 @@ import { daysTogether } from "../../engine/dates";
 import { REFILL, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
+  makeCustomer,
   beginShift, emptyBuild, finishShift, goalDone, goalProgress, goalText, isComplete, isOver, ledger, matches, mineIdx, needOf, peek, release, remaining, serve, summary, take, tick,
-  type Customer, type ServeResult, type Shift
+  COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
@@ -20,7 +21,7 @@ import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
 
 export let SH: Shift | null = null;
-let raf = 0, lastT = 0, leftShown = -1, drop: PartKey | null = null;
+let raf = 0, lastT = 0, leftShown = -1, drop: PartKey | null = null, stageDrop: PartKey | null = null, stageFree = 0, lastComboLost = 0;
 type Result = { sh: Shift; lv: number; led: ReturnType<typeof ledger> };
 let result: Result | null = null;
 
@@ -123,16 +124,23 @@ const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
   `<button class="${slotClass(sh, i, st === "low" ? "low" : "")}" id="seat${i}" data-seat="${i}" aria-label="${esc(slotLabel(sh, i))}">${slotHTML(sh, i, st)}</button>`;
 
 /* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì */
+/* ô linh vật gacha đang đồng hành: hiện chỉ số đang cộng (đã nhân thân thiết) để thấy gacha có ích ngay lúc chơi */
+function mascotChip() {
+  const m = mascotItem(); if (!m?.mascot) return "";
+  const f = m.mascot.fx, k = bondMul(m.id), pc = (v: number) => Math.round(v * k * 100);
+  const bits = [f.price && `giá +${pc(f.price)}%`, f.tip && `tip +${pc(f.tip)}%`, f.pat && `chờ +${pc(f.pat)}%`, f.cust && `+${f.cust} khách`].filter(Boolean).slice(0, 1).join(" · ");
+  return `<div class="cm mas"><img src="/gacha/mascot-${m.mascot.img}.webp" alt="" width="30" height="30"><div class="ct"><b>${esc(m.n)}</b><small>${bits}</small></div></div>`;
+}
 export function crewHTML(sh: Shift) {
   const ids = STAFF.map(d => d.id).filter(id => sh.working.includes(id));
-  if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>`;
-  return `<div class="crew" style="--n:${ids.length}">${ids.map(id => {
+  if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>${mascotItem() ? `<div class="crew" style="--n:1">${mascotChip()}</div>` : ""}`;
+  return `<div class="crew" style="--n:${ids.length + (mascotItem() ? 1 : 0)}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeSVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
     return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${petSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
-  }).join("")}</div>`;
+  }).join("")}${mascotChip()}</div>`;
 }
 /* bánh bé đang làm tới đâu: đế → kem → topping → độ ngọt theo phần trăm */
 const bakerBuild = (c: Customer, pct: number) => {
@@ -204,6 +212,28 @@ function miniHTML(sh: Shift) {
   return `<span class="mc">${cakeSVG(sh.build, { size: 46, still: true })}</span><span class="mt"><b>Đang làm cho ${esc(c.who)}</b><small>${picked(sh)}/4 món · chạm để mở</small></span>${CHEV(true)}`;
 }
 
+/* thanh combo: số bánh Hoàn hảo liên tiếp và thưởng đã dồn (trả lúc hết ca) */
+function comboHTML(sh: Shift) {
+  if (sh.combo < 1 && sh.comboBank < 1) return "";
+  const hot = Math.min(sh.combo, COMBO_CAP);
+  return `<div class="combo c${hot}"><b>${sh.combo ? `🔥 Combo ×${sh.combo}` : "Combo đã đứt"}</b><span>${sh.comboBank ? `+${fmtN(sh.comboBank)} xu dồn · trả cuối ca` : ""}</span><small>${sh.combo >= COMBO_CAP ? "Tối đa! " : ""}Khách giận hoặc giao sai thì mất ${Math.round(COMBO_LOSS * 100)}% thưởng dồn</small></div>`;
+}
+const renderCombo = () => { const b = $("#comboBox"); if (b && SH) b.innerHTML = comboHTML(SH); };
+
+/* khi phiếu mở: bàn làm bánh lớn lấp phần trống giữa hàng bé và phiếu (không lộ đơn khách để giữ thưởng Tự nhớ) */
+function stageBig(sh: Shift) {
+  const size = Math.max(64, Math.min(150, stageFree - 26));
+  return `<div class="plate big">${cakeSVG(sh.build, { size, drop: stageDrop })}<small>${picked(sh) === 4 ? "Đủ rồi, giao bánh nào!" : `Bánh đang làm · ${picked(sh)}/4 món`}</small></div>`;
+}
+function fitStage() {
+  const root = $("#play"), st = $("#stage"), sheet = $("#osheet"), crew = $("#crewBox"); if (!root || !st || !sheet || !crew || !SH) return;
+  if (!root.classList.contains("up") || mineIdx(SH) < 0) { st.classList.remove("big"); return; }
+  const free = Math.floor(sheet.getBoundingClientRect().top - crew.getBoundingClientRect().bottom - 14);
+  stageFree = Math.max(0, free);
+  if (free < 90) { st.classList.remove("big"); return; }
+  st.classList.add("big"); st.style.setProperty("--free", free + "px"); st.innerHTML = stageBig(SH);
+}
+
 /* thu gọn phiếu: quầy hiện bánh đang ghép cạnh đơn khách gọi (không để trống) */
 function stageHTML(sh: Shift) {
   const m = mineIdx(sh), c = m >= 0 ? sh.seats[m] : null; if (!c) return "";
@@ -242,6 +272,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
     <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
+    <div id="comboBox">${comboHTML(sh)}</div>
     <div class="queue" style="--n:${Math.min(6, sh.seats.length)}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
@@ -259,7 +290,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
 let sheetOpen = true;
 export function renderPlay() {
   if (!SH) return;
-  leftShown = -1; views.length = 0;
+  leftShown = -1; views.length = 0; lastComboLost = SH.comboLost;
   $("#app")!.innerHTML = playHTML(SH);
   SH.seats.forEach((_, i) => renderSlot(i));
   bindSheetDrag(); fitSheet();
@@ -285,6 +316,7 @@ export function renderTicket() {
   $("#mini")!.innerHTML = miniHTML(SH);
   $("#stage")!.innerHTML = stageHTML(SH);
   $("#rows")!.innerHTML = rowsHTML(SH);
+  renderCombo(); fitStage();
   const g = $("#give")!; g.textContent = giveLabel(SH); g.classList.toggle("off", !isComplete(SH.build));
   SH.seats.forEach((c, i) => {
     const el = $("#seat" + i); if (!el || !c || c.gone) return;
@@ -296,8 +328,8 @@ export function renderTicket() {
 function renderBuild(done = false) {
   if (!SH) return;
   $("#cake")!.innerHTML = cakeSVG(SH.build, { size: 82, done, drop });
-  drop = null;
-  renderTicket();
+  stageDrop = drop; drop = null;
+  renderTicket(); stageDrop = null;
 }
 const refreshCoins = (pulse = true) => {
   const cp = $("#shCoins"); if (cp) { cp.querySelector("span:last-child")!.textContent = fmtN(S.coins); if (pulse) bump(cp, "pulse"); }
@@ -310,7 +342,7 @@ function fitSheet() {
   const p = $("#play"), q = document.querySelector(".queue"); if (!p || !q) return;
   p.style.setProperty("--qb", Math.round(q.getBoundingClientRect().bottom - p.getBoundingClientRect().top + 8) + "px");
 }
-window.addEventListener("resize", () => { if (SH) fitSheet(); });
+window.addEventListener("resize", () => { if (SH) { fitSheet(); fitStage(); } });
 /* kéo phiếu xuống để thu gọn */
 function bindSheetDrag() {
   const h = $("#ohead"), sh = $("#osheet"); if (!h || !sh) return;
@@ -377,8 +409,10 @@ export function doServe() {
   if (!SH) return;
   if (!isComplete(SH.build)) { sfx("untap"); return toast(`Chọn đủ Đế, Kem, Topping và Độ ngọt nha (${picked(SH)}/4)`); }
   const res = serve(SH);
-  if (!res.ok) { sfx("wrong"); haptic([60, 40, 60]); renderTicket(); bump($("#cake"), "shake"); return toast(res.msg); }
+  if (!res.ok) { sfx("wrong"); haptic([60, 40, 60]); renderTicket(); bump($("#cake"), "shake"); return toast(res.broke !== undefined ? `${res.msg} · đứt combo, mất ${fmtN(res.broke)} xu thưởng dồn` : res.msg); }
   showServed(res);
+  if (res.perfect) { const c = $("#cake")?.getBoundingClientRect(); if (c) floatText(c.left + c.width / 2, c.top - 6, res.combo > 1 ? `Hoàn hảo! ×${res.combo}` : "Hoàn hảo!"); if (res.combo >= 3) sfx("level"); }
+  renderCombo();
   renderBuild(true);
   if (res.bonus) toast(`Nhớ công thức giỏi quá! +${res.bonus} xu thưởng`);
   const sh = SH;
@@ -413,6 +447,7 @@ function onLeave(i: number) {
   const c = SH!.seats[i]!, v = views[i];
   if (v) { v.art.innerHTML = charSVG(c.look, "impatient", faceSize(SH!)); v.el.classList.add("bye"); }
   sfx("leave"); haptic(30); renderCrew(); renderTicket();
+  if (SH!.comboLost && SH!.combo === 0 && lastComboLost !== SH!.comboLost) { toast(`Khách giận bỏ về, đứt combo. Mất ${fmtN(SH!.comboLost - lastComboLost)} xu thưởng dồn`); lastComboLost = SH!.comboLost; }
   const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSlot(i); }, 500);
 }
 
@@ -471,7 +506,7 @@ export function resultHTML(r: Result | null = result) {
         ${row("Nhập nguyên liệu", led.ingUsed + led.quick, false)}${row("Lương các bé", led.wages, false)}
         <div class="lg tot ${led.profit >= 0 ? "" : "neg"}"><span>Lãi</span><b>${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b></div>
       </div>
-      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 ${esc(mascotItem()?.n ?? "Linh vật")} thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
+      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.comboPaid ? `<p class="rticket">🔥 Combo dài nhất ×${sh.bestCombo}: +${fmtN(sh.comboPaid)} xu thưởng${sh.comboLost ? ` (mất ${fmtN(sh.comboLost)} xu vì đứt chuỗi)` : ""}</p>` : sh.comboLost ? `<p class="rticket">Đứt combo: mất ${fmtN(sh.comboLost)} xu thưởng dồn, ca sau giữ chuỗi nha</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 ${esc(mascotItem()?.n ?? "Linh vật")} thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
     </div>
     <div class="rbtns"><button class="b3 w" style="flex:1" data-go="/">Về tiệm</button><button class="b3" style="flex:1.6" data-go="/chuan-bi" data-replace>${good ? "Ca tiếp theo" : "Chơi lại ca"}</button></div>
   </div>`;
@@ -483,3 +518,6 @@ export const unlockCard = () => giftReady()
 /* cho Storybook: đặt kết quả mẫu */
 export const _setResult = (r: Result | null) => { result = r; };
 export const _setShift = (sh: Shift | null) => { SH = sh; };
+
+/* chỉ khi chạy dev: móc để kiểm tra giao diện trong ca bằng tay */
+if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__play = { sh: () => SH, renderPlay, renderTicket, renderCombo, makeCustomer, take, fitStage, setSheet };

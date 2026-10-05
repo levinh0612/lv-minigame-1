@@ -35,7 +35,9 @@ export interface Shift {
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
-  goals: ShiftGoal[]; goalCoins: number; ticket: boolean; bondUp: number;   // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
+  goals: ShiftGoal[]; goalCoins: number; ticket: boolean; bondUp: number;
+  combo: number; bestCombo: number; comboBank: number; comboLost: number; comboPaid: number;   // combo: số bánh Hoàn hảo liên tiếp; comboBank: thưởng dồn chờ cuối ca (đứt chuỗi thì mất nửa)
+  // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
 }
 
 export const emptyBuild = (): Build => ({ base: null, cream: null, top: null, sweet: null });
@@ -54,7 +56,7 @@ export function createShift(): Shift {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0
   };
 }
 
@@ -176,8 +178,8 @@ export function release(sh: Shift) { sh.mine = -1; sh.peek = false; }
 export function peek(sh: Shift) { sh.peek = true; }
 
 export type ServeResult =
-  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number }
-  | { ok: false; msg: string };
+  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; perfect: boolean; combo: number; comboAdd: number }
+  | { ok: false; msg: string; broke?: number };
 
 export function serve(sh: Shift): ServeResult {
   const b = sh.build;
@@ -189,7 +191,8 @@ export function serve(sh: Shift): ServeResult {
     if (ti < 0) return { ok: false, msg: "Chưa có khách nào gọi món" };
     const c = sh.seats[ti]!, n = needOf(c), bad = KEYS.find(k => b[k] !== n[k])!;
     sh.peek = true;                      // đã được mách nguyên liệu: mất thưởng nhớ bài
-    return { ok: false, msg: `Sai ${LABELS[bad].toLowerCase()} rồi: ${c.who} gọi ${CATS[bad][n[bad]][0]}, không phải ${CATS[bad][b[bad]!][0]}` };
+    const broke = breakCombo(sh);
+    return { ok: false, ...(broke ? { broke } : {}), msg: `Sai ${LABELS[bad].toLowerCase()} rồi: ${c.who} gọi ${CATS[bad][n[bad]][0]}, không phải ${CATS[bad][b[bad]!][0]}` };
   }
   // lấy nguyên liệu trong kho; thiếu thì nhập nhanh (đắt hơn)
   const missing = STOCK_KEYS.filter(k => stockOf(k, b[k]!) <= 0);
@@ -212,16 +215,29 @@ function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult,
   earn("sales", price); earn("tip", tip); earn("memo", bonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0); S.served++;
   sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.served++; sh.stars.push(stars);
   if (bonus) sh.memo++;
+  // combo (chỉ tính bánh chủ tiệm tự làm): Hoàn hảo = giao nhanh 3 sao; 1-2 sao không thêm cũng không đứt
+  const perfect = !byStaff && stars === 3; let comboAdd = 0;
+  if (perfect) { sh.combo++; sh.bestCombo = Math.max(sh.bestCombo, sh.combo); comboAdd = Math.round(price * COMBO_PCT * Math.min(sh.combo, COMBO_CAP)); sh.comboBank += comboAdd; }
   if (byStaff) sh.helped++;
   if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
   addReview(c, stars); save();
-  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus };
+  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, perfect, combo: sh.combo, comboAdd };
 }
 
 export function leaveCustomer(sh: Shift, i: number) {
   const c = sh.seats[i]!; c.gone = true; sh.left++; sh.stars.push(0); S.daily.angry++;
+  breakCombo(sh);
   addReview(c, 0); save();
+}
+
+/* Combo: mỗi bánh Hoàn hảo liên tiếp cộng dồn thưởng (trả lúc hết ca). Khách giận bỏ về hoặc giao sai bánh thì đứt chuỗi và mất một nửa thưởng đã dồn
+   (chỉ phạt phần thưởng thêm, tiền bánh và tip vẫn nguyên, để game vẫn thư giãn). Trả về số xu vừa mất. */
+export const COMBO_PCT = 0.08, COMBO_CAP = 6, COMBO_LOSS = 0.5;
+export function breakCombo(sh: Shift): number {
+  const had = sh.combo >= 2; sh.combo = 0;
+  if (!had) return 0;
+  const lost = Math.floor(sh.comboBank * COMBO_LOSS); sh.comboBank -= lost; sh.comboLost += lost; return lost;
 }
 
 /* Đóng cửa sớm: khách đang chờ tính là bỏ về */
@@ -251,13 +267,14 @@ export function finishShift(sh: Shift) {
   earn("goal", sh.goalCoins); S.shifts++;
   if (sh.goals.every(g => goalDone(sh, g))) { sh.ticket = true; addTickets(1); }
   sh.bondUp = addBond();
+  if (sh.comboBank > 0) { earn("combo", sh.comboBank); sh.comboPaid = sh.comboBank; }
   const led = ledger(sh); S.earned += led.revenue;
   note(`Ca ${S.shifts} · tiền bán bánh`, led.revenue); note(`Ca ${S.shifts} · nhập nhanh giữa ca`, -led.quick);
   save();
   return led;
 }
 export const ledger = (sh: Shift) => {
-  const revenue = sh.coins + sh.tips + sh.bonus + sh.goalCoins;
+  const revenue = sh.coins + sh.tips + sh.bonus + sh.goalCoins + sh.comboPaid;
   return { revenue, ingUsed: sh.ingUsed, quick: sh.quickCost, wages: sh.wages, profit: revenue - sh.ingUsed - sh.quickCost - sh.wages };
 };
 
