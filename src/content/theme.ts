@@ -3,11 +3,16 @@
 export interface Theme { id: string; name: string; dot: string }
 export const THEMES: Theme[] = [
   { id: "pink", name: "Hồng", dot: "#FF7FA1" },
-  { id: "blue", name: "Xanh dương", dot: "#5D9AD9" },
-  { id: "green", name: "Xanh lá", dot: "#4FB27E" },
-  { id: "purple", name: "Tím", dot: "#8F72D9" },
+  { id: "red", name: "Đỏ", dot: "#F05A5A" },
   { id: "orange", name: "Cam", dot: "#F29A4A" },
-  { id: "slate", name: "Xám than", dot: "#6B7C8F" }
+  { id: "gold", name: "Vàng", dot: "#EDB631" },
+  { id: "green", name: "Xanh lá", dot: "#4FB27E" },
+  { id: "teal", name: "Xanh ngọc", dot: "#2FB5B0" },
+  { id: "blue", name: "Xanh dương", dot: "#5D9AD9" },
+  { id: "purple", name: "Tím", dot: "#8F72D9" },
+  { id: "magenta", name: "Hồng tím", dot: "#D45AB5" },
+  { id: "slate", name: "Xám than", dot: "#6B7C8F" },
+  { id: "black", name: "Đen", dot: "#2B2F3A" }
 ];
 export const themeOf = (id: string) => THEMES.find(t => t.id === id) || THEMES[0];
 

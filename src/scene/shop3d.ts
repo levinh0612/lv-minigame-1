@@ -534,15 +534,30 @@ export function createShop(o: ShopOpts): ShopScene {
   const skyCv = document.createElement("canvas"), skyTex = new THREE.CanvasTexture(skyCv); skyTex.colorSpace = THREE.SRGBColorSpace; scene.background = skyTex;
   let skyState = { h: 12, n: 0, warm: 0 }, skyAsp = 1;
   const star = (g: CanvasRenderingContext2D, x: number, y: number, rr: number) => { g.beginPath(); g.arc(x, y, rr, 0, 7); g.fill(); };
+  /* ảnh nền theo giờ (public/bg): làm mờ một lần bằng cách thu nhỏ rồi phóng lại, để tiệm không bị chìm vào hình */
+  const PHOTO_FILES = { day: "morning", dusk: "afternoon", night: "evening" } as const;
+  const photo: Partial<Record<keyof typeof PHOTO_FILES, HTMLCanvasElement>> = {};
+  (Object.keys(PHOTO_FILES) as (keyof typeof PHOTO_FILES)[]).forEach(k => {
+    const im = new Image();
+    im.onload = () => {
+      const w = k === "night" ? 300 : k === "dusk" ? 150 : 110, h = Math.round(w * im.height / im.width), a = document.createElement("canvas"), b = document.createElement("canvas");
+      a.width = w; a.height = h; b.width = w * 3; b.height = h * 3;
+      const ga = a.getContext("2d")!, gb = b.getContext("2d")!; ga.imageSmoothingQuality = gb.imageSmoothingQuality = "high";
+      ga.drawImage(im, 0, 0, w, h); gb.drawImage(a, 0, 0, w * 3, h * 3);
+      photo[k] = b; drawSky();
+    };
+    im.src = import.meta.env.BASE_URL + "bg/" + PHOTO_FILES[k] + ".jpg";
+  });
+  const ramp = (x: number, a: number, b: number) => Math.max(0, Math.min(1, (x - a) / (b - a)));
   function drawSky() {
     const { h, n, warm } = skyState, H = 512, W = Math.round(H * skyAsp); skyCv.width = W; skyCv.height = H;
     const g = skyCv.getContext("2d")!, hex = (c: THREE.Color) => "#" + c.getHexString();
-    const top = C("#8FD0FF").lerp(C("#FFB78A"), Math.min(1, warm * 1.4)).lerp(C("#161E4A"), n), bot = C("#FFF4D6").lerp(C("#FFD9A8"), warm).lerp(C("#3A3F7A"), n);
+    const top = C("#8FD0FF").lerp(C("#FFB78A"), Math.min(1, warm * 1.4)).lerp(C("#161E4A"), n), bot = C("#FFF4D6").lerp(C("#FFD9A8"), warm).lerp(C("#5C55A3"), n);
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, hex(top)); gr.addColorStop(1, hex(bot)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     const night = n > .55, t = Math.max(0, Math.min(1, ((night ? (h < 12 ? h + 24 : h) - 19 : h - 6)) / (night ? 11 : 12)));
     const R = H * .075;
-    // ban ngày: mặt trời đi vòng cung; ban đêm: mặt trăng đậu ở góc trên bên trái (vùng trống, không bị căn phòng che) và trôi nhẹ theo giờ
-    const bx = night ? W * (.06 + .06 * t) + R * 1.7 : W * (.12 + .76 * t), by = night ? H * (.15 - Math.sin(t * Math.PI) * .04) : H * (.82 - Math.sin(t * Math.PI) * .62);
+    // ban ngày: mặt trời đi vòng cung; ban đêm: mặt trăng đậu ở góc trên bên phải (sau thẻ hồ sơ, không bị căn phòng che) và trôi nhẹ theo giờ
+    const bx = night ? W * (.88 - .04 * t) : W * (.12 + .76 * t), by = night ? H * (.1 + Math.sin(t * Math.PI) * .02) : H * (.82 - Math.sin(t * Math.PI) * .62);
     if (!night) {
       const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 6); gl.addColorStop(0, "rgba(255,240,170,.85)"); gl.addColorStop(1, "rgba(255,240,170,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
       g.save(); g.translate(bx, by); g.strokeStyle = "rgba(255,226,120,.8)"; g.lineWidth = R * .22; g.lineCap = "round";
@@ -558,12 +573,30 @@ export function createShop(o: ShopOpts): ShopScene {
         if (big) { g.globalAlpha = .5; g.fillRect(x - 5, y - .5, 10, 1); g.fillRect(x - .5, y - 5, 1, 10); }
       }
       g.globalAlpha = 1;
-      const gl = g.createRadialGradient(bx, by, R * .5, bx, by, R * 5); gl.addColorStop(0, "rgba(200,215,255,.45)"); gl.addColorStop(1, "rgba(200,215,255,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
-      // trăng lưỡi liềm: khoét một vòng tròn khỏi đĩa trăng (không tô màu nền đè lên nên khớp với dải màu bầu trời)
-      const mc = document.createElement("canvas"); mc.width = mc.height = Math.ceil(R * 4); const mg = mc.getContext("2d")!;
-      mg.fillStyle = "#FFF6D8"; mg.beginPath(); mg.arc(R * 2, R * 2, R * 1.15, 0, 7); mg.fill();
-      mg.globalCompositeOperation = "destination-out"; mg.beginPath(); mg.arc(R * 2 + R * .6, R * 2 - R * .25, R * 1.0, 0, 7); mg.fill();
-      g.drawImage(mc, bx - R * 2, by - R * 2);
+      // trăng tròn có quầng sáng ấm, sao 4 cánh vàng và mây tím mềm (theo ảnh mẫu); bán kính theo bề ngang để màn hẹp không bị trăng quá to
+      const Rn = Math.min(R, W * .1);
+      const gl = g.createRadialGradient(bx, by, Rn * .6, bx, by, Rn * 5); gl.addColorStop(0, "rgba(255,226,140,.42)"); gl.addColorStop(1, "rgba(255,226,140,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+      g.fillStyle = "#F0CB78"; star(g, bx, by, Rn);
+      g.save(); g.beginPath(); g.arc(bx, by, Rn, 0, 7); g.clip(); g.fillStyle = "#FFE9A8"; star(g, bx - Rn * .22, by - Rn * .18, Rn * 1.02); g.restore();
+      const spark = (x: number, y: number, r: number) => {
+        const sg = g.createRadialGradient(x, y, 0, x, y, r * 2.4); sg.addColorStop(0, "rgba(255,231,154,.5)"); sg.addColorStop(1, "rgba(255,231,154,0)"); g.fillStyle = sg; g.fillRect(x - r * 2.4, y - r * 2.4, r * 4.8, r * 4.8);
+        g.fillStyle = "#FFE79A"; g.beginPath(); g.moveTo(x, y - r); g.quadraticCurveTo(x + r * .18, y - r * .18, x + r, y); g.quadraticCurveTo(x + r * .18, y + r * .18, x, y + r); g.quadraticCurveTo(x - r * .18, y + r * .18, x - r, y); g.quadraticCurveTo(x - r * .18, y - r * .18, x, y - r); g.fill();
+      };
+      ([[.22, .3, 1], [.5, .14, .8], [.12, .55, .6], [.7, .62, .9], [.4, .78, .7], [.9, .48, .6]] as number[][]).forEach(([cx, cy, k]) => spark(W * cx, H * cy, H * .022 * k));
+      const cloud = (cx: number, cy: number, sz: number, a: number) => [[-1.2, .2, .8], [-.4, -.1, 1], [.5, 0, 1.1], [1.3, .25, .8], [0, .35, 1.3]].forEach(([dx, dy, k]) => {
+        const x = W * cx + dx * sz, y = H * cy + dy * sz, rr = sz * k * 1.3, cg = g.createRadialGradient(x, y, 0, x, y, rr);
+        cg.addColorStop(0, `rgba(205,192,248,${a})`); cg.addColorStop(1, "rgba(205,192,248,0)"); g.fillStyle = cg; g.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+      });
+      cloud(.02, .46, H * .06, .38); cloud(.98, .6, H * .07, .38); cloud(.1, .9, H * .1, .5); cloud(.9, .97, H * .12, .55);
+    }
+    /* ảnh nền thật: sáng 7h-15h, chiều 17h-19h, tối 20h30-5h; chuyển dần ở giữa. Phủ một lớp dịu để căn phòng nổi lên */
+    const wD = h < 12 ? ramp(h, 5, 7) : 1 - ramp(h, 15.5, 17.5), wU = h < 12 ? 0 : ramp(h, 15.5, 17.5) * (1 - ramp(h, 18.8, 20.5)), wN = h < 12 ? 1 - ramp(h, 5, 7) : ramp(h, 18.8, 20.5);
+    const layers = ([[photo.day, wD, "255,255,255", .3], [photo.dusk, wU, "46,26,84", .28], [photo.night, wN, "6,9,38", .1]] as [HTMLCanvasElement | undefined, number, string, number][]).filter(l => l[0] && l[1] > .001);
+    if (layers.length) {
+      let acc = 0;
+      layers.forEach(([cv, w]) => { acc += w; const sc = Math.max(W / cv!.width, H / cv!.height), dw = cv!.width * sc, dh = cv!.height * sc; g.globalAlpha = w / acc; g.drawImage(cv!, (W - dw) / 2, (H - dh) / 2, dw, dh); });
+      g.globalAlpha = 1;
+      layers.forEach(([, w, rgb, a]) => { g.fillStyle = `rgba(${rgb},${a * w / acc})`; g.fillRect(0, 0, W, H); });
     }
     skyTex.needsUpdate = true;
   }

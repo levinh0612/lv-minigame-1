@@ -8,7 +8,13 @@ export const THEMES = [
   { id: "green", hue: 150, sat: .7 },
   { id: "purple", hue: 265, sat: .85 },
   { id: "orange", hue: 28, sat: .95 },
-  { id: "slate", hue: 215, sat: .16 }
+  { id: "slate", hue: 215, sat: .16 },
+  { id: "red", hue: 2, sat: .95 },
+  { id: "gold", hue: 42, sat: .95 },
+  { id: "teal", hue: 175, sat: .8 },
+  { id: "magenta", hue: 318, sat: .9 },
+  /* đen: màu nhấn (nút, thanh, viền chính) gần đen; nền và màu nhạt vẫn sáng để chữ dễ đọc. dark = độ sáng riêng của từng biến nhấn */
+  { id: "black", hue: 230, sat: .1, dark: { "--pink": .22, "--pink-d": .12, "--pink-m": .32 } }
 ];
 const BASE_HUE = 346;
 const css = readFileSync("src/styles/main.css", "utf8");
@@ -26,7 +32,7 @@ const isPink = hex => { const [h, s] = toHSL(hex); return h >= 330 && h <= 358 &
 const mine = vars.filter(([n, hex]) => n !== "--red" && isPink(hex));   // --red là màu báo lỗi nên giữ đỏ
 let out = "/* Tạo bằng `npm run themes` (scripts/gen-themes.mjs), đừng sửa tay. */\n";
 for (const t of THEMES) {
-  out += `:root[data-theme="${t.id}"]{\n  ` + mine.map(([n, hex]) => { const [h, s, l] = toHSL(hex); return `${n}:${toHex(t.hue + (h - BASE_HUE), Math.min(1, s * t.sat), l)}`; }).join(";") + ";\n}\n";
+  out += `:root[data-theme="${t.id}"]{\n  ` + mine.map(([n, hex]) => { const [h, s, l] = toHSL(hex); return `${n}:${toHex(t.hue + (h - BASE_HUE), Math.min(1, s * t.sat), t.dark?.[n] ?? l)}`; }).join(";") + ";\n}\n";
 }
 writeFileSync("src/styles/themes.css", out);
 console.log(`${mine.length} màu × ${THEMES.length} theme -> src/styles/themes.css`);
