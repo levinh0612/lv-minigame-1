@@ -37,6 +37,8 @@ const card = (r: PullResult, px: number, live: boolean) => {
   return `<div class="gcard r-${r.item.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span><div class="gimg">${gachaArt(r.item, px, live)}</div>
     <b>${esc(r.item.n)}</b><small>${KIND_NAME[r.item.kind]}</small>${previewMode ? `<em class="gnew">Xem trước</em>` : r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">Trùng · +${r.dust} Bụi sao</em>`}</div>`;
 };
+const gridCard = (r: PullResult) => { const R = RARITY[r.item.rarity];
+  return `<div class="gcard r-${r.item.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><div class="gimg">${gachaArt(r.item, 52, false)}</div><b>${esc(r.item.n)}</b>${r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">+${r.dust} ✦</em>`}</div>`; };
 const STARS: Record<Rarity, string> = { common: "★", rare: "★★", ultra: "★★★" };
 /** màn "vật phẩm hiện to" trước khi ra thẻ: mỗi loại có chuyển động riêng (nhân vật bước vào, thú nảy, bánh xoay, trang trí lật) */
 function heroHTML(r: PullResult, px: number) {
@@ -102,20 +104,22 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
         <div class="gstep ${it.char ? "walk" : ""}">${card(results[0]!, 150, true)}</div><button class="b3 gok">OK</button></div>`;
       at(180, () => { const c = out.querySelector(".gcard")?.getBoundingClientRect(); if (c) vfx.burstAt(c.left + c.width / 2, c.top + c.height / 2, best === "ultra" ? 50 : best === "rare" ? 28 : 14, 300); });
     } else {
+      const rk = { ultra: 2, rare: 1, common: 0 } as const;
+      const sorted = [...results].sort((a, b) => rk[b.item.rarity] - rk[a.item.rarity] || Number(b.isNew) - Number(a.isNew));   // hiếm nhất lên đầu
       const news = results.filter(x => x.isNew).length, dust = results.reduce((a, x) => a + x.dust, 0);
       out.innerHTML = `<div class="gmulti"><h2>Triệu hồi ${results.length} lần</h2><p>${news} món mới${dust ? ` · +${fmtN(dust)} Bụi sao` : ""}</p>
-        <div class="ggrid">${results.map(x => `<div class="gflip r-${x.item.rarity}" style="--rc:${RARITY[x.item.rarity].c}"><div class="gface front">${card(x, 52, false)}</div><div class="gface back"><span>★</span></div></div>`).join("")}</div>
+        <div class="ggrid">${sorted.map(x => `<div class="gflip r-${x.item.rarity}" style="--rc:${RARITY[x.item.rarity].c}"><div class="gface front">${gridCard(x)}</div><div class="gface back"><span>★</span></div></div>`).join("")}</div>
         <button class="b3 gok" disabled>OK</button></div>`;
       const flips = [...out.querySelectorAll<HTMLElement>(".gflip")], ok = out.querySelector<HTMLButtonElement>(".gok")!;
-      flips.forEach((el, i) => at(300 + i * 230, () => {
+      flips.forEach((el, i) => at(300 + (flips.length - 1 - i) * 230, () => {      // lật từ thẻ thấp lên cao, thẻ hiếm nhất lật cuối
         el.classList.add("open"); sfx("gflip");
-        const rar = results[i]!.item.rarity;
+        const rar = sorted[i]!.item.rarity;
         if (rar !== "common") { sfx(rar === "ultra" ? "gshine2" : "gshine1"); const b = el.getBoundingClientRect(); vfx.burstAt(b.left + b.width / 2, b.top + b.height / 2, rar === "ultra" ? 46 : 22, 260); if (rar === "ultra") vfx.ring(cols[0]!, 120, .8, 4); }
-        if (i === flips.length - 1) ok.disabled = false;
+        if (i === 0) ok.disabled = false;
       }));
     }
       hydratePortraits(out);
-      out.querySelector(".gok")?.addEventListener("click", e => { e.stopPropagation(); root.classList.add("out"); setTimeout(() => { vfx.stop(); root.remove(); onDone(); }, 220); });
+      out.querySelector(".gok")?.addEventListener("click", e => { e.stopPropagation(); root.classList.add("out"); setTimeout(() => { root.remove(); try { vfx.stop(); } catch { /* đã huỷ */ } onDone(); }, 220); });
     };
     if (use3d) { buildCard(); return; }                         // phim Three.js đã cho xem vật phẩm to rồi
     /* vật phẩm hiếm nhất (ưu tiên món mới) hiện to trước, rồi mới ra thẻ hoặc lưới */
@@ -174,7 +178,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
     let h: Reveal3d | null = null, iv = 0, closed = false;
     h = await (await import("./gachareveal3d")).createReveal3d({ host: st, rar: best, img: img.url, full: img.full, fallbackText: it.n, w: stW, h: stH, frozenT: rtp ? +rtp : undefined,
       onPhase: p => { st.classList.add("p" + p); if (p === 1) sfx(best === "common" ? "gcharge1" : best === "rare" ? "gcharge2" : "gcharge3"); else if (p === 2) sfx("gwhoosh"); else if (p === 4) { sfx("gboom"); shake(st, best === "ultra" ? 10 : 5, 500); } else if (p === 5) { sfx(SHINE[best]); if (isFull) st.classList.add("full"); } } });
-    const close = (toGrid: boolean) => { if (closed) return; closed = true; clearInterval(iv); if (toGrid) { h?.dispose(); out.innerHTML = ""; root.classList.remove("is3d"); show(); } else { root.classList.add("out"); setTimeout(() => { h?.dispose(); vfx.stop(); root.remove(); onDone(); }, 220); } };
+    const close = (toGrid: boolean) => { if (closed) return; closed = true; clearInterval(iv); if (toGrid) { h?.dispose(); out.innerHTML = ""; root.classList.remove("is3d"); show(); } else { root.classList.add("out"); setTimeout(() => { root.remove(); try { h?.dispose(); vfx.stop(); } catch { /* đã huỷ */ } onDone(); }, 220); } };
     iv = window.setInterval(() => { if (h?.ended()) { st.classList.add("ready"); clearInterval(iv); } }, 120);
     st.addEventListener("click", e => { if (e.target === okb) return; if (h && !h.ended()) h.skipToEnd(); });
     okb.addEventListener("click", e => { e.stopPropagation(); close(results.length > 1); });

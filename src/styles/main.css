@@ -2047,7 +2047,22 @@ button.cm{position:relative}
 .cf-common{border-image-source:url(/gacha/frames/card-common.webp)}
 .cf-rare{border-image-source:url(/gacha/frames/card-rare.webp);filter:drop-shadow(0 0 4px rgba(90,130,255,.5))}
 .cf-ultra{border-image-source:url(/gacha/frames/card-ultra.webp);border-image-repeat:stretch;filter:drop-shadow(0 0 6px rgba(255,190,70,.6))}
-.cf-common .cfi,.cf-rare .cfi,.cf-ultra .cfi{clip-path:none;border-radius:3px}
-.cf-rare .cfi{background:radial-gradient(circle at 50% 35%,#2A3470,#0E1233)}.cf-ultra .cfi{background:radial-gradient(circle at 50% 35%,#4A3513,#14100A)}
+.cf-common .cfi,.cf-rare .cfi,.cf-ultra .cfi{clip-path:none;border-radius:8px}
+.cf-common .cfi{background:radial-gradient(circle at 50% 35%,#fff,#EEF2F8)}.cf-rare .cfi{background:radial-gradient(circle at 50% 35%,#fff,#E3ECFF)}.cf-ultra .cfi{background:radial-gradient(circle at 50% 35%,#FFFBEA,#FFEFC2)}
 .cf-ultra::after,.cf-rare::after{display:none}
 .cf.dim{filter:grayscale(.85) opacity(.6)}
+
+/* màn cố định (nhà, ghé thăm): khoá cuộn trang để iPhone không kéo lộ dải trắng dưới chân */
+body[data-scr="home"],body[data-scr="visit"]{position:fixed;inset:0;width:100%;overflow:hidden}
+
+/* 3.13: lưới triệu hồi nhiều lần: ô cao đều, tên tối đa 2 dòng, hào quang theo độ hiếm; thẻ đối tượng có hào quang nhẹ */
+.ggrid{gap:8px}
+.ggrid>.gflip{aspect-ratio:3/4}
+.ggrid .gcard{height:100%;justify-content:center;gap:3px;padding:6px 3px;overflow:hidden}
+.ggrid .gcard b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:center;min-height:2.2em}
+.ggrid .gnew,.ggrid .gdup{white-space:nowrap}
+.ggrid .gcard.r-common{box-shadow:0 0 8px rgba(190,205,225,.45)}
+.ggrid .gcard.r-rare{box-shadow:0 0 14px color-mix(in srgb,var(--rc) 75%,transparent)}
+.ggrid .gcard.r-ultra{box-shadow:0 0 20px 2px color-mix(in srgb,var(--rc) 85%,transparent)}
+.er-rare{box-shadow:0 0 14px -2px rgba(90,130,255,.55)}
+.er-ultra{box-shadow:0 0 18px -2px rgba(255,190,70,.75)}
