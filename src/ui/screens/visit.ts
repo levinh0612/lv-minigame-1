@@ -76,7 +76,7 @@ function shopHTML(v: VisitShop) {
         <div class="pc-top">
           <div class="pc-av" style="--p:0" aria-hidden="true">${guestSVG({ ...look, mood: "happy", ledge: false }, 72)}${levelFrame(v.lv)}<span class="pc-lv bdg">${levelMedal(v.lv, 34)}</span></div>
           <div class="pc-t">
-            <small>${ic.sprout(16, 2.2)}Đang ghé thăm · Tiệm Bánh của</small>
+            <small>${ic.sprout(16, 2.2)}Đang ghé thăm</small>
             <b style="font-size:${name.length <= 12 ? 26 : 20}px">${esc(name)}</b>
             ${name !== v.username ? `<em class="pc-title">@${esc(v.username)}</em>` : ""}
             <div class="pc-stats"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${seatsOfTables(v.venue.tbl)} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Độ viral</small><b>${viral} khách</b></i></span></div>

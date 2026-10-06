@@ -2037,3 +2037,7 @@ button.cm{position:relative}
 .lvm::before{content:"";position:absolute;width:calc(var(--s) * .72);height:calc(var(--s) * .72);border-radius:50%;background:radial-gradient(circle,#1C2540,#0B1020);box-shadow:0 0 0 1px color-mix(in srgb,var(--lvc) 60%,transparent)}
 .lvm>b{position:relative;z-index:1;font-family:var(--display);font-weight:800;line-height:1;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .lvbadge:has(.lvm){width:46px;height:46px}.lvbadge:has(.lvm) .lvm{width:46px;height:46px}
+
+/* nhãn nhỏ trên tên tiệm: không tràn sang cột chỉ số */
+.pc-t>small{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pc-t>small>span,.pc-t>small{white-space:nowrap}
