@@ -72,9 +72,9 @@ function dismissToast(el: HTMLElement) {
   window.setTimeout(() => { const w = el.parentElement; el.remove(); if (w) layoutToasts(w); }, 260);
 }
 export function toast(m: string) {
-  let wrap = document.querySelector<HTMLElement>(".sn-wrap");
-  if (!wrap) { wrap = document.createElement("div"); wrap.className = "sn-wrap"; wrap.setAttribute("role", "status"); wrap.setAttribute("aria-live", "polite"); document.body.appendChild(wrap); }
-  const t = document.createElement("div"); t.className = "sn"; t.textContent = m;
+  let wrap = document.querySelector<HTMLElement>(".tstw");
+  if (!wrap) { wrap = document.createElement("div"); wrap.className = "tstw"; wrap.setAttribute("role", "status"); wrap.setAttribute("aria-live", "polite"); document.body.appendChild(wrap); }
+  const t = document.createElement("div"); t.className = "tst"; t.textContent = m;
   let y0 = 0;
   t.onpointerdown = e => { y0 = e.clientY; t.setPointerCapture(e.pointerId); };
   t.onpointermove = e => { if (y0) t.style.setProperty("--dy", Math.min(0, e.clientY - y0) + "px"); };

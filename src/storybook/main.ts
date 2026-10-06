@@ -22,7 +22,7 @@ import { authHTML } from "../ui/screens/auth";
 import { openItemDialog, openStaffDialog, setDDOpen, setTeamTab } from "../ui/team";
 import { ingredientSheet } from "../ui/ingredients";
 import { openCustom } from "../ui/custom";
-import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, recipeFilter } from "../ui/sheets";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, recipeFilter } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
@@ -182,6 +182,8 @@ const STORIES: Story[] = [
     html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; if (location.search.includes("many")) GACHA_ITEMS.filter(i => i.mgr).forEach(i => { st.gacha.owned[i.id] = 1; }); }); setTeamTab("place"); setDDOpen((new URLSearchParams(location.search).get("dd") as "mgr" | null)); return shopHTML("pets"); } },
   { id: "m-teamitem", sec: "modals", title: "Đội ngũ · Chi tiết linh thú", desc: "Hộp thoại: chỉ số, nguồn Gacha, đặt vào tầng, thuê làm thợ", kind: "modal",
     html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; st.coins = 30000; }); setTeamTab("place"); return modalOver(shopHTML("pets"), () => openItemDialog("c_m2")); } },
+  { id: "m-music", sec: "modals", title: "Chọn nhạc nền", desc: "Danh sách bài hát phải hiện tên và mô tả (từng bị mất chữ do trùng class .sn với toast)", kind: "modal",
+    html: () => { lvState(13, st => { st.coins = 100; }); return modalOver(shopHTML("pets"), () => musicSheet()); } },
   { id: "m-admin", sec: "modals", title: "Quản trị game (admin)", desc: "Tên, khách, thư, thông báo; chỉ levinh thấy trong Cài đặt", kind: "modal",
     html: () => { lvState(13, st => { st.coins = 100; }); return modalOver(shopHTML("pets"), () => adminPanel(true)); } },
   { id: "m-teamdlg", sec: "modals", title: "Đội ngũ · Chi tiết thợ bánh", desc: "Hộp thoại: thông tin, đi làm, lên bậc, đồ ăn đề xuất và tủ đồ ăn", kind: "modal",
