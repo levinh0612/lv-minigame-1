@@ -6,7 +6,7 @@ import {
 } from "../content/game";
 import { BAKE_TIME, TIER_BAKE_SLOW, TIER_HAND_BONUS, partsOfRecipe, tiersOf, type FoodId, type StaffId, type StockKey } from "../content/game";
 import { addBond, addTickets, regulars } from "./gacha";
-import { comfortPat, comfortTip, dutyLv, staffIds, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
+import { comfortPat, comfortTip, dutyLv, mascotBonus, staffIds, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { planMouse, tickMouse, type MouseEvt, type MouseOut } from "./mouse";
 import { featured, fx, lvl, unlocked } from "./progress";
@@ -148,7 +148,7 @@ function bake(sh: Shift, dt: number, out: TickOut) {
     if (b.done < b.need) return;
     const c = sh.seats[b.seat]!;
     c.by = undefined;
-    const res = deliver(sh, b.seat, true);
+    const res = deliver(sh, b.seat, true, b.id);
     out.baked.push({ baker: b, res });
   });
   sh.bakers = sh.bakers.filter(b => b.done < b.need);
@@ -245,12 +245,13 @@ export function serve(sh: Shift): ServeResult {
 }
 
 /* Giao bánh cho khách ở ghế idx (người chơi hoặc bé thợ bánh), tính thưởng */
-function deliver(sh: Shift, idx: number, byStaff: boolean): Extract<ServeResult, { ok: true }> {
+function deliver(sh: Shift, idx: number, byStaff: boolean, staffId?: StaffId): Extract<ServeResult, { ok: true }> {
   const quick = 0;
   const c = sh.seats[idx]!; c.gone = true;
   const f = c.pat / c.max, stars = f > 0.55 ? 3 : f > 0.3 ? 2 : 1, mult = coinMult();
-  const price = Math.round(c.r.price * (1 + fx("price")) * (1 + (c.perkPrice ?? 0))) * mult;
-  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0))) * mult;
+  const mb = staffId ? mascotBonus(staffId) : { price: 0, tip: 0 };   // linh thú thuê: bánh bé làm bán được giá hơn
+  const price = Math.round(c.r.price * (1 + fx("price")) * (1 + (c.perkPrice ?? 0)) * (1 + mb.price)) * mult;
+  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0)) * (1 + mb.tip)) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
   // Thưởng bánh nhiều tầng: chủ tiệm tự tay làm thì thêm (số tầng − 1) × 20% giá bánh; bé làm hộ thì không có
@@ -301,7 +302,7 @@ export function addReview(c: Customer, s: number) {
 /* Mở ca: các bé đi làm ăn lương (đồ ăn) trước, giá trị đồ ăn tính vào chi phí ca */
 export function beginShift() {
   const pay = payCrew(), sh = createShift();
-  sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id); pay.fed.forEach(x => { sh.meals[x.id] = x.meal; });
+  sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id); pay.fed.forEach(x => { if (x.meal) sh.meals[x.id] = x.meal; });
   return { sh, pay };
 }
 /* Hết ca: tính lãi */

@@ -1,10 +1,11 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import { CATS, FOODS, STOCK_KEYS } from "../../content/game";
-import { canHire, staffIds, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { canHire, staffIds, isMascotStaff, hireFee, mascotBonus, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { availableIdx } from "../../engine/suppliers";
 import { staffAvatar } from "../staffav";
+import { tierBadge } from "../badges";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { foodSVG, ingSVG } from "../art";
@@ -15,7 +16,16 @@ export const pageHead = (title: string, sub = "") =>
   `<div class="phead">${BACK}<div class="pt">${sub ? `<small>${sub}</small>` : ""}<h2>${title}</h2></div>${coinPill()}</div>`;
 
 /* thẻ một bé: đi làm / nghỉ / đói / chờ nhận / chưa mở */
+/* thẻ linh thú Gacha: không ăn, thuê có phí, đổi lại bánh bé làm bán được giá hơn */
+function mascotTile(id: string) {
+  const st = S.staff[id]!, on = onDuty(id), mb = mascotBonus(id), fee = hireFee(id), tier = st.hired ? st.lv : 1;
+  const btn = !st.hired ? `<button class="tb3 hire" data-hire="${id}" ${S.coins < fee ? "disabled" : ""}>Thuê · ${fmtN(fee)} xu</button>`
+    : `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`;
+  return `<div class="btile mas ${st.hired && !on ? "off" : !st.hired ? "off" : ""}"><div class="av">${staffAvatar(id, 72, on ? "happy" : "open", true)}${tierBadge(tier)}</div>
+    <b>${esc(petName(id))}</b><div class="bs"><span class="mtag">Linh thú</span> không cần ăn<br>+${Math.round(mb.price * 100)}% giá bánh · +${Math.round(mb.tip * 100)}% tip</div>${btn}</div>`;
+}
 export function bakerTile(id: string) {
+  if (isMascotStaff(id)) return mascotTile(id);
   const d = staffDef(id), st = S.staff[id], on = onDuty(id);
   const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1];
   const meal = st.hired ? plannedMeal(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
@@ -28,7 +38,7 @@ export function bakerTile(id: string) {
   else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
   else { btn = `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`; if (!on) cls = "off"; }
   const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 18)}Bậc ${tier} · ${eat.n}${slow > 1 ? ` <span class="bad">chậm +${Math.round((slow - 1) * 100)}%</span>` : ""}`;
-  return `<div class="btile ${cls}"><div class="av">${staffAvatar(id, 72, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}</div>
+  return `<div class="btile ${cls}"><div class="av">${staffAvatar(id, 72, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}${st.hired ? tierBadge(tier) : ""}</div>
     <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${picks}${btn}</div>`;
 }
 

@@ -166,6 +166,13 @@ export const SHOP = {
   wideCost: (built: number) => 2000 * 2 ** built        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
 };
 export type StaffId = string;     // 3 bé thợ bánh (PetId) hoặc id linh thú Gacha đã thuê
+/* Linh thú Gacha làm nhân viên: không ăn, trả phí thuê một lần (đắt) và đổi lại mỗi bánh bé làm ra bán được giá hơn + tip.
+   price/tip: [bậc I, bậc V], nội suy theo bậc */
+export const MASCOT_HIRE = {
+  common: { fee: 2000, price: [.06, .18], tip: .03 },
+  rare: { fee: 5000, price: [.10, .30], tip: .06 },
+  ultra: { fee: 12000, price: [.16, .45], tip: .10 }
+} as const;
 export interface StaffDef { id: StaffId; role: string; unlock: number; train: number[]; effect: string[] }   // train[i]: phí lên bậc i + 2
 /** phí huấn luyện lên bậc 2..5 của linh thú Gacha theo độ hiếm */
 export const MASCOT_TRAIN: Record<"common" | "rare" | "ultra", number[]> = { common: [150, 350, 650, 1050], rare: [250, 550, 900, 1400], ultra: [400, 800, 1300, 2000] };

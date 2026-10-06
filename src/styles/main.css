@@ -1758,3 +1758,30 @@ button.cm{position:relative}
 .gok{display:block;margin:14px auto 0;min-width:168px;height:52px;border-radius:26px;background:#fff;color:var(--ink2);font:900 17px var(--body);letter-spacing:.06em;box-shadow:0 4px 0 rgba(0,0,0,.28)}
 .gok:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
 .gmulti h2{font:900 21px var(--body)}
+
+/* ===== Phim mở thẻ Gacha bằng Three.js (2.93): canvas ở dưới, chữ và nút phủ lên ===== */
+.gfx.is3d{background:#05070f}.gfx.is3d .gfx-world,.gfx.is3d .gfx-hint,.gfx.is3d .gfx-flash{display:none}
+.gr3{position:fixed;inset:0;display:grid;place-items:center;background:#05070f;pointer-events:auto}
+.gr3-st{position:relative;overflow:hidden;background:#05070f;touch-action:manipulation}
+.gr3-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gr3-tt{position:absolute;left:18px;top:calc(18px + env(safe-area-inset-top,0px));display:flex;gap:10px;align-items:flex-start;color:#fff;font:500 21px/1.15 var(--body);letter-spacing:.07em;text-shadow:0 1px 4px rgba(0,0,0,.85),0 0 12px var(--g);opacity:0;transition:opacity .8s;z-index:5;pointer-events:none}
+.gr3-tt small{display:block;font:500 10px var(--body);letter-spacing:.12em;opacity:.65;margin-top:3px}
+.gr3-ic,.gr3-stars i{clip-path:polygon(50% 0,59% 41%,100% 50%,59% 59%,50% 100%,41% 59%,0 50%,41% 41%);background:linear-gradient(135deg,#fff,var(--g));flex:none}.gr3-ic{width:28px;height:28px;margin-top:-1px}
+.gr3-info{position:absolute;left:18px;right:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:5;color:#fff;opacity:0;transform:translateY(14px);transition:all .6s;pointer-events:none;text-shadow:0 1px 6px #000}
+.gr3-stars{display:flex;gap:9px;margin-bottom:10px}.gr3-stars i{width:20px;height:20px}
+.gr3-info b{display:block;font:800 22px/1.2 var(--body);text-shadow:0 2px 8px #000,0 0 14px var(--g)}
+.gr3-info em{display:block;font:700 11px var(--body);font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:var(--g);margin:3px 0 6px}
+.gr3-info span{display:block;font:500 11px/1.55 var(--body);color:#b4bdd6;max-width:320px}
+.gr3-ok{margin-top:14px;min-width:150px;height:48px;border-radius:24px;background:#fff;color:var(--ink2);font:900 16px var(--body);letter-spacing:.06em;box-shadow:0 4px 0 rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .4s}
+.gr3-st.p5 .gr3-tt,.gr3-st.p5 .gr3-info{opacity:1;transform:none}
+.gr3-st.ready .gr3-ok{opacity:1;pointer-events:auto}.gr3-ok:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.gr3-fa{position:absolute;inset:0;background-size:cover;background-position:50% 18%;opacity:0;clip-path:inset(26% 31% 24% 31% round 12px);transition:clip-path 1.3s cubic-bezier(.3,.9,.3,1),opacity .6s;z-index:3;pointer-events:none}
+.gr3-fa::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(2,4,10,.92))}
+.gr3-st.p5.full .gr3-fa{opacity:1;clip-path:inset(0 round 0)}.gr3-st.p5.full .gr3-cv{opacity:.001}
+.av{position:relative}.av .tbg,.pav .tbg{position:absolute;right:-7px;bottom:-7px;filter:drop-shadow(0 2px 2px rgba(60,30,40,.4))}
+.pav{position:relative}
+.btile.mas .bs{line-height:1.45}.mtag{display:inline-block;padding:0 7px;border-radius:7px;background:#FFE9C7;color:#9A5B00;font:800 10px var(--body);margin-right:3px}
+.pc-lv.bdg{background:none!important;border:0!important;box-shadow:none!important;padding:0;min-width:0;width:34px;height:34px;right:-10px;bottom:-8px;display:block}
+.hint5{margin:6px 16px 4px;padding:8px 12px;border-radius:14px;background:#fff;color:var(--soft2);font:700 12px/1.45 var(--body);box-shadow:0 2px 0 var(--sh)}
+.team-tabs{margin:4px 16px 8px}.ptg.g{background:#FFE9C7;color:#9A5B00}
+.prow.mas .pav{background:#FFF4DA}

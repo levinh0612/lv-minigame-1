@@ -33,6 +33,7 @@ import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/scr
 import { prepHTML } from "../ui/screens/prep";
 import { roadmapHTML } from "../ui/screens/roadmap";
 import { shopHTML, tryDecor } from "../ui/screens/shop";
+import { setTeamTab } from "../ui/staff";
 import { applyTheme } from "../content/theme";
 import { profileSheet } from "../ui/profile";
 import { mountRooms } from "../ui/room3d";
@@ -134,7 +135,7 @@ const STORIES: Story[] = [
   { id: "visit", sec: "screens", title: "Ghé thăm tiệm bạn", desc: "Cùng khung với màn của mình: thẻ hồ sơ, hàng thông tin, 3 số thống kê", kind: "screen",
     html: () => { lvState(13, buffed); setVisiting({ username: "nlat", lv: 16, earned: 52486, shop: "", served: 944, decor: 9, hired: 3, room: { ...S.room }, me: { ...S.me }, venue: { tbl: [1, 1, 2], floors: 3, wide: 0 } }); return visitHTML("nlat"); } },
   { id: "reveal-ultra", sec: "screens", title: "Mở thẻ Gacha · Cực hiếm", desc: "Hiệu ứng triệu hồi rồi thẻ kết quả (xem trước, không đổi dữ liệu)", kind: "screen",
-    html: () => { lvState(13, buffed); setTimeout(() => playReveal([{ item: GACHA_ITEMS.find(i => i.id === "m_baoden")!, isNew: false, dust: 10 } as never], () => {}, true), 400); return homeHTML(); } },
+    html: () => { lvState(13, buffed); setTimeout(() => playReveal([{ item: GACHA_ITEMS.find(i => i.id === (new URLSearchParams(location.search).get("ri") || "m_baoden"))!, isNew: false, dust: 10 } as never], () => {}, true), 400); return homeHTML(); } },
   { id: "home-event", sec: "screens", title: "Bắt đầu · ngày đặc biệt", desc: "Sinh nhật bạn nữ (28/12): thẻ sự kiện, xu x2; thư đã đọc", kind: "screen",
     html: () => withDate(2026, 12, 28, () => { lvState(5, s => { s.letters = [{ day: "2026-12-28", txt: "…" }]; }); return homeHTML(); }) },
   { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 4: kho thiếu Dâu tây; Milo đi làm (có Pate), Siro đói (thiếu Hạt), Cacao nghỉ", kind: "screen", long: true,
@@ -176,6 +177,10 @@ const STORIES: Story[] = [
     html: () => { lvState(4, s => { s.reviews = REVIEWS as State["reviews"]; }); S.daily.served = 5; S.daily.feat = 1; return goalsHTML(); } },
   { id: "shop-decor", sec: "screens", title: "Trang trí tiệm", desc: "Đang dùng Rèm ren và Đèn mây; đang thử tường Sọc bạc hà", kind: "screen",
     html: () => { lvState(4, s => { s.room.curtain = "1"; s.room.lamp = "1"; s.room.plant = "1"; s.owned = ["curtain:1", "lamp:1", "plant:1"]; }); tryDecor("wall", "mint"); const h = shopHTML("decor"); tryDecor("wall", "pink"); return h; } },
+  { id: "team", sec: "screens", title: "Đội ngũ · Thợ bánh", desc: "Gộp thợ bánh và linh thú Gacha: huy hiệu bậc I-V, linh thú không ăn, phí thuê và buff", kind: "screen", long: true,
+    html: () => { lvState(13, st => { buffed(st); st.coins = 30000; st.gacha.owned.m_xiem = 1; st.gacha.owned.m_baoden = 1; st.gacha.owned.m_cacao = 1; st.pets.dog.aff = 32; st.food = { kibble: 4, pate: 2, chicken: 0, salmon: 0, steak: 0 }; st.staff.dog = { hired: true, lv: 4, onDuty: true }; st.staff.gold = { hired: true, lv: 2, onDuty: true }; st.staff.m_xiem = { hired: true, lv: 3, onDuty: true }; }); setTeamTab("bake"); return shopHTML("pets"); } },
+  { id: "team-mgr", sec: "screens", title: "Đội ngũ · Quản lý", desc: "Tab Quản lý: chọn tầng, đặt quản lý và khách quen Hiếm+", kind: "screen", long: true,
+    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; }); setTeamTab("mgr"); return shopHTML("pets"); } },
   { id: "shop-pets", sec: "screens", title: "Thú cưng (kiêm nhân viên)", desc: "Tủ đồ ăn; Milo đi làm bậc 2, Siro chờ nhận vào làm, Cacao chưa đủ cấp; thưởng đồ ăn mỗi ngày", kind: "screen", long: true,
     html: () => { lvState(3, s => { s.pets.dog.aff = 32; s.pets.gold.aff = 14; s.food = { kibble: 4, pate: 2, chicken: 0 }; s.staff.dog = { hired: true, lv: 2, onDuty: true }; });
       S.pets.dog.fedDay = S.daily.day; return shopHTML("pets"); } },

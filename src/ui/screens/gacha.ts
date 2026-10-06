@@ -81,11 +81,17 @@ function detail(id: string) {
   modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
     ${own && it.mascot ? bondHTML(it.id) : ""}${roleTags(it)}<p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
-    <div class="mbtns">${own ? staffBtns(it) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
+    <div class="mbtns">${own ? staffBtns(it) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char && !it.full ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);
   hydratePortraits();
   let host = live ? document.querySelector<HTMLElement>(".gdet .gimg.big") : null;
   if (both) { const row = document.createElement("div"); row.style.cssText = "flex:0 0 100%;width:100%;display:flex;justify-content:center;margin-top:8px"; const d = document.createElement("div"); d.style.cssText = "position:relative;width:180px;height:180px"; row.appendChild(d); document.querySelector(".gdet")?.appendChild(row); host = d; }
   if (host && model) { host.querySelector<HTMLElement>(".gart")?.style.setProperty("opacity", ".0"); unmount = mountTurntable(host, model, live ? 200 : 180); }
+  if (it.char && it.full) {      // nhân vật có tranh toàn thân (như Lynae): dưới tranh là model 3D đang đứng, để thấy cả hai
+    const row = document.createElement("div"); row.style.cssText = "flex:0 0 100%;width:100%;display:flex;flex-direction:column;align-items:center;margin-top:8px";
+    const cap = document.createElement("small"); cap.textContent = "Model 3D trong tiệm"; cap.style.cssText = "font:800 12px var(--body);color:var(--soft2)";
+    const d = document.createElement("div"); d.style.cssText = "position:relative;width:240px;height:240px"; row.append(cap, d); document.querySelector(".gdet")?.appendChild(row);
+    void import("../../scene/portrait3d").then(m => m.liveFullBody(d, it.char!.sprite, LOOK, 240));
+  }
 }
 
 /** xem trước toàn bộ vật phẩm theo độ hiếm: tên, lợi ích và tỷ lệ trúng từng món */

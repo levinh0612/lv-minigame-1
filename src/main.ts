@@ -5,7 +5,7 @@ import { Sound, sfx } from "./audio/sound";
 import type { PetId } from "./content/couple";
 import { CATS, type PartKey, type StockKey } from "./content/game";
 import type { RoomKey } from "./content/room";
-import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, quickPrep, foodDef, hire, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
+import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, quickPrep, foodDef, hire, hireFee, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
 import { S, petName, save } from "./engine/state";
 import { tickIncident } from "./engine/incident";
@@ -22,7 +22,8 @@ import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHi
 import { navigate } from "./ui/router";
 import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
-import { staffAct, staffSheet } from "./ui/staff";
+import { fmtN } from "./engine/util";
+import { setTeamTab, staffAct, staffSheet, type TeamTab } from "./ui/staff";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
@@ -101,7 +102,7 @@ document.addEventListener("click", e => {
     if (buy(key, +i, +n)) { sfx("tap"); toast(`+${n} ${CATS[key][+i][0]} · ${packPrice(key, +i, +n)} xu`); } else toast("Không đủ xu");
     return render();
   }
-  if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } return render(); }
+  if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } else if (hireFee(d.hire)) toast(`Cần ${fmtN(hireFee(d.hire))} xu để thuê ${petName(d.hire)}`); return render(); }
   if (d.gact) return void gachaAct(d.gact);
   if (d.sact) return staffAct(d.sact);
   if (d.iact) return ingAct(d.iact);
@@ -133,6 +134,7 @@ document.addEventListener("click", e => {
     const r = t.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop");
     toast(`${petName(pet)} ăn ${foodDef(food).n} ngon lành! +${foodDef(food).aff} ♥`); return render();
   }
+  if (d.team) { setTeamTab(d.team as TeamTab); sfx("click"); return render(); }
   if (d.selPet) { selectPet(d.selPet as PetId); sfx("tap"); return render(); }
   if (d.ing) { if (performance.now() - ingAt < 700) return; const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.tier != null) return setTier(+d.tier);
