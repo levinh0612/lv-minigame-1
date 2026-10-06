@@ -1,6 +1,6 @@
 /* Cấu hình game do admin (levinh) chỉnh và đồng bộ cho mọi máy: tên, tên khách, thư, thông báo.
    Dùng chung cho app và api (không đụng DOM). Trường nào thiếu thì dùng mặc định trong couple.ts. */
-import { CFG, type EventKey, type PetId } from "./couple";
+import { CFG, type EventKey, type PetId } from "./couple.js";
 
 export interface GameConfig {
   his?: string; her?: string;                       // người gửi thư; người nhận mặc định (mỗi người chơi vẫn đặt được tên chủ tiệm của mình)
