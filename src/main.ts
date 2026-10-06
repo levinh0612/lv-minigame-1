@@ -237,7 +237,9 @@ if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) wh
 /* chiều cao thật của khung nhìn (px). Trên iPhone chạy từ icon, vh và % có lúc kẹt ở số cũ, còn innerHeight thì đúng. */
 {
   let last = 0;
-  const fit = () => { const h = Math.round(window.visualViewport?.height ?? innerHeight); if (h && h !== last) { last = h; document.documentElement.style.setProperty("--ih", h + "px"); } };
+  const standalone = () => (navigator as { standalone?: boolean }).standalone || matchMedia("(display-mode: standalone)").matches;
+  /* chạy từ icon, dọc: app chiếm trọn màn hình nên lấy screen.height; innerHeight có lúc thấp hơn ~59px (số đo thật: 873 so với 932) */
+  const fit = () => { const h = Math.round(standalone() && innerHeight > innerWidth ? Math.max(innerHeight, screen.height) : (window.visualViewport?.height ?? innerHeight)); if (h && h !== last) { last = h; document.documentElement.style.setProperty("--ih", h + "px"); } };
   fit();
   for (const ev of ["resize", "orientationchange", "pageshow", "focus"]) addEventListener(ev, fit);
   window.visualViewport?.addEventListener("resize", fit);
