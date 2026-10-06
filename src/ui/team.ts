@@ -39,8 +39,8 @@ function staffCard(id: string) {
   const st = staffState(id), on = onDuty(id), mas = isMascotStaff(id), tier = st.lv, meal = on ? plannedMeal(id) : null, hungry = on && !meal;
   const eat = foodDef(mealOf(id)), mb = mascotBonus(id);
   const status = hungry ? `<span class="ptg bad">Đói</span>` : on ? `<span class="ptg w">Đi làm</span>` : `<span class="ptg o">Nghỉ</span>`;
-  return `<button class="tm-card ${on ? "on" : ""}" data-sd="open:${id}"><span class="tm-av">${staffAvatar(id, 54, on ? "happy" : "open")}${tierBadge(tier, 28)}</span>
-    <span class="tm-main"><span class="tm-name"><b>${esc(petName(id))}</b>${status}</span>
+  return `<button class="tm-card ${on ? "on" : ""}" data-sd="open:${id}"><span class="tm-av">${staffAvatar(id, 54, on ? "happy" : "open")}</span>
+    <span class="tm-main"><span class="tm-name"><b>${esc(petName(id))}</b>${tierBadge(tier, 22)}${status}</span>
       <span class="tm-meta">${bake(tier)} · ${foodSVG(eat.id, 15)}${eat.n}</span>
       ${mas ? `<span class="tm-chips"><i>+${Math.round(mb.price * 100)}% giá</i><i>+${Math.round(mb.tip * 100)}% tip</i></span>` : ""}</span><span class="tm-go" aria-hidden="true">›</span></button>`;
 }

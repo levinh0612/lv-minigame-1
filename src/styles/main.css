@@ -2031,3 +2031,8 @@ button.pcrew{width:100%;text-align:left;font:inherit}
 .gr3-tt.gr3-rl{left:0;right:0;display:flex;justify-content:center}
 .gr3-info{padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,rgba(8,12,28,.4),rgba(8,12,28,.72));-webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);border:1px solid rgba(255,255,255,.12)}
 .gtag .rar-ic{margin:-3px 3px -3px 0;filter:none}
+
+/* crest bậc nằm cạnh tên (không còn đè lên ảnh bé) */
+.pcrew .pn{display:flex;align-items:center;gap:6px}.pcrew .pn .tbg,.tm-name .tbg{position:static;flex:none;filter:none;margin:0}
+.tm-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gr3-rate{display:flex;margin:-2px 0 2px}.gr3-rate .rar-ic{margin:0;filter:drop-shadow(0 0 6px var(--g))}

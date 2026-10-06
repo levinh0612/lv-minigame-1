@@ -47,10 +47,10 @@ function crewCard(id: string) {
   const line = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 16)}Bậc ${tier} · ${eat.n}`;
   const buff = mb ? `<small><span class="mtag">Linh thú</span> +${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip</small>` : `<small>${esc(d.role)}</small>`;
   const act = `<i class="pc-chk" aria-hidden="true">${on ? "✓" : ""}</i>`;
-  if (hungry) return `<div class="pcwrap"><button class="pcrew hun" data-duty="${id}" role="switch" aria-checked="${on}"><div class="av">${staffAvatar(id, 60, "impatient", true)}${tierBadge(tier)}</div><div class="pi"><b>${esc(petName(id))}</b><div class="bs">${line}</div>${buff}</div></button><button class="pc-buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button></div>`;
+  if (hungry) return `<div class="pcwrap"><button class="pcrew hun" data-duty="${id}" role="switch" aria-checked="${on}"><div class="av">${staffAvatar(id, 60, "impatient", true)}</div><div class="pi"><b class="pn">${esc(petName(id))}${tierBadge(tier, 22)}</b><div class="bs">${line}</div>${buff}</div></button><button class="pc-buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button></div>`;
   return `<button class="pcrew ${on ? "on" : ""} ${hungry ? "hun" : ""}" data-duty="${id}" role="switch" aria-checked="${on}">
-    <div class="av">${staffAvatar(id, 60, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}${tierBadge(tier)}</div>
-    <div class="pi"><b>${esc(petName(id))}</b><div class="bs">${line}</div>${buff}</div>${act}</button>`;
+    <div class="av">${staffAvatar(id, 60, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}</div>
+    <div class="pi"><b class="pn">${esc(petName(id))}${tierBadge(tier, 22)}</b><div class="bs">${line}</div>${buff}</div>${act}</button>`;
 }
 
 export function prepHTML() {

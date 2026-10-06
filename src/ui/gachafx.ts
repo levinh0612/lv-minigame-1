@@ -1,7 +1,7 @@
 /* Hiệu ứng quay gacha: phim triệu hồi dựng bằng canvas (gachawarp.ts) + hạt/rung/chớp + âm thanh tổng hợp.
    Thường ~6s, Hiếm ~4,5s (sóng xung kích, chữ HIẾM), Cực hiếm ~9s (huy hiệu vàng, ba sao, chớp trắng, pháo giấy, cánh sáng).
    Chạm để bỏ qua. Quay 10 lần: sau phim là 10 thẻ lật lần lượt, thẻ hiếm bung hạt khi lật. */
-import { rarityText } from "./badges";
+import { rarityIcon, rarityText } from "./badges";
 import { sfx } from "../audio/sound";
 import { RARITIES, RARITY, KIND_NAME, itemImg, type GachaItem, type Rarity } from "../content/gacha";
 import { roomItem } from "../content/room";
@@ -61,6 +61,10 @@ async function itemImageURL(it: GachaItem): Promise<{ url: string | null; full: 
   if (it.full) return { url: `/gacha/full-${it.full}.webp`, full: true };
   if (it.mascot || it.mgr) return { url: itemImg(it), full: false };
   if (it.char) { try { const m = await import("../scene/portrait3d"); return { url: await m.portrait3d(it.char.sprite, LOOK), full: false }; } catch { return { url: null, full: false }; } }
+  if (it.decor) {      // đồ trang trí: ảnh mẫu hoa văn (vẽ bằng foreignObject để dùng đúng nền CSS của món)
+    const d = roomItem(it.decor.k, it.decor.v), svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><foreignObject width="300" height="300"><div xmlns="http://www.w3.org/1999/xhtml" style="width:300px;height:300px;border-radius:36px;background:${d.sw};background-size:${d.sws || "auto"}"></div></foreignObject></svg>`;
+    return { url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), full: false };
+  }
   if (it.recipe) return { url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(cakeSVG({ base: it.recipe.base, cream: it.recipe.cream, top: it.recipe.top, sweet: 1 }, { size: 300, still: true }).replace("<svg ", "<svg xmlns=\"http://www.w3.org/2000/svg\" ")), full: false };
   return { url: null, full: false };
 }
@@ -161,7 +165,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
     out.innerHTML = `<div class="gr3"><div class="gr3-st" style="width:${stW}px;height:${stH}px;--g:${PAL[best][0]}">
       ${img.full ? `<div class="gr3-fa" style="background-image:url(${img.url})"></div>` : ""}
       <div class="gr3-tt gr3-rl">${rarityText(best, 168)}</div>
-      <div class="gr3-info"><div class="gr3-stars">${Array.from({ length: best === "ultra" ? 5 : best === "rare" ? 4 : 3 }, () => `<i></i>`).join("")}</div>
+      <div class="gr3-info"><div class="gr3-rate">${rarityIcon(best, 30)}</div>
         <b>${esc(it.n)}</b><em>${esc(KIND_NAME[it.kind])}${previewMode ? " · Xem trước" : results.length === 1 ? (star.isNew ? " · Mới!" : ` · Trùng, +${star.dust} Bụi sao`) : ""}</em><span>${esc(it.desc || DESC[best])}</span>
         <button class="b3 gr3-ok">${results.length > 1 ? "Tiếp tục" : "OK"}</button></div></div></div>`;
     const st = out.querySelector<HTMLElement>(".gr3-st")!, okb = out.querySelector<HTMLButtonElement>(".gr3-ok")!;
