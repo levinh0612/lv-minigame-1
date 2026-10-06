@@ -2082,5 +2082,7 @@ button.cm{position:relative}
 /* lớp kết quả luôn nằm trên canvas hiệu ứng (canvas warp từng chặn nút OK) */
 .gfx-out{z-index:6}.gfx-world>*{pointer-events:none}
 
-/* iPhone chạy từ icon: chiều cao tính theo % và vh có lúc kẹt ở số cũ (thấp hơn màn hình ~59px) trong khi bottom:0 luôn đúng. Màn cố định neo bằng top/bottom, không dùng chiều cao. */
-.home5{top:0;bottom:0;height:auto}
+/* iPhone chạy từ icon (iOS 26): chiều cao % và vh có lúc kẹt thấp hơn màn hình ~59px (đúng chỗ thanh công cụ Safari) nên sinh dải trắng chân màn. innerHeight thì luôn đúng, main.ts ghi vào --ih và các lớp phủ toàn màn dùng nó. */
+html,body{height:var(--ih,100%)}
+.scr{min-height:var(--ih,100%)}
+.home5,.modal,.gfx,.cfm,.updov,.conf{top:0;bottom:auto;height:var(--ih,100%)}

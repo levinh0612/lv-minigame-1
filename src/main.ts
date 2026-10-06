@@ -233,3 +233,14 @@ if (location.search) history.replaceState(null, "", location.pathname + location
 // vừa cập nhật xong: cho xem có gì mới (một lần)
 const prevVer = justUpdated();
 if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) whatsNew(prevVer); }, 1200);
+
+/* chiều cao thật của khung nhìn (px). Trên iPhone chạy từ icon, vh và % có lúc kẹt ở số cũ, còn innerHeight thì đúng. */
+{
+  let last = 0;
+  const fit = () => { const h = Math.round(window.visualViewport?.height ?? innerHeight); if (h && h !== last) { last = h; document.documentElement.style.setProperty("--ih", h + "px"); } };
+  fit();
+  for (const ev of ["resize", "orientationchange", "pageshow", "focus"]) addEventListener(ev, fit);
+  window.visualViewport?.addEventListener("resize", fit);
+  document.addEventListener("visibilitychange", fit);
+  setInterval(fit, 600);
+}
