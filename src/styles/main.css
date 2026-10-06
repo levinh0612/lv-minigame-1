@@ -2041,3 +2041,13 @@ button.cm{position:relative}
 /* nhãn nhỏ trên tên tiệm: không tràn sang cột chỉ số */
 .pc-t>small{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .pc-t>small>span,.pc-t>small{white-space:nowrap}
+
+/* khung thẻ Gacha dùng đúng ảnh khung ở màn mở thẻ (xuất từ hàm vẽ drawFrame): bạc, tinh thể xanh, vàng. Viền ảnh 9 mảnh nên co theo cỡ ảnh. */
+.cf-common,.cf-rare,.cf-ultra{--bw:9px;padding:0;background:none;clip-path:none;filter:none;border:var(--bw) solid transparent;border-image-slice:46;border-image-repeat:round;box-sizing:content-box}
+.cf-common{border-image-source:url(/gacha/frames/card-common.webp)}
+.cf-rare{border-image-source:url(/gacha/frames/card-rare.webp);filter:drop-shadow(0 0 4px rgba(90,130,255,.5))}
+.cf-ultra{border-image-source:url(/gacha/frames/card-ultra.webp);border-image-repeat:stretch;filter:drop-shadow(0 0 6px rgba(255,190,70,.6))}
+.cf-common .cfi,.cf-rare .cfi,.cf-ultra .cfi{clip-path:none;border-radius:3px}
+.cf-rare .cfi{background:radial-gradient(circle at 50% 35%,#2A3470,#0E1233)}.cf-ultra .cfi{background:radial-gradient(circle at 50% 35%,#4A3513,#14100A)}
+.cf-ultra::after,.cf-rare::after{display:none}
+.cf.dim{filter:grayscale(.85) opacity(.6)}

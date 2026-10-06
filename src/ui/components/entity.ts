@@ -23,7 +23,8 @@ const HEARTS = (n: number) => `<i class="ec-bond" title="Thân thiết cấp ${n
 /** ảnh đại diện: đồ Gacha nằm trong khung độ hiếm (bạc, xanh, vàng), thú cưng 3 bé nằm trên nền xanh nhạt */
 export function entityAvatar(i: EntityInfo, px: number, mood: Mood = "open") {
   const inner = `<span class="cfi" style="width:${px}px;height:${px}px">${artOf(i, px, mood)}</span>`;
-  return i.rarity ? `<span class="cf cf-${i.rarity} ${i.owned ? "" : "dim"}">${inner}</span>` : `<span class="cf cf-pet">${inner}</span>`;
+  const bw = px >= 80 ? 12 : 9;     // độ dày viền ảnh khung: cỡ lớn dày hơn
+  return i.rarity ? `<span class="cf cf-${i.rarity} ${i.owned ? "" : "dim"}" style="--bw:${bw}px">${inner}</span>` : `<span class="cf cf-pet">${inner}</span>`;
 }
 /** nhóm chip chỉ số */
 export const entityChips = (chips: Chip[]) => chips.length ? `<span class="ec-chips">${chips.map(c => `<i class="ec-${c.tone}">${esc(c.t)}</i>`).join("")}</span>` : "";

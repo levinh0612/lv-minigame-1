@@ -32,7 +32,7 @@ const loadImg = (u: string) => new Promise<HTMLImageElement | null>(res => { con
 const canvasTex = (w: number, h: number, f: (g: CanvasRenderingContext2D, w: number, h: number) => void) => { const c = document.createElement("canvas"); c.width = w; c.height = h; f(c.getContext("2d")!, w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 /** khung thẻ vẽ bằng code: bạc (thường), tinh thể xanh (hiếm), vàng có sao và dải cuốn (cực hiếm) */
-function drawFrame(g: CanvasRenderingContext2D, w: number, h: number, rar: Rarity) {
+export function drawFrame(g: CanvasRenderingContext2D, w: number, h: number, rar: Rarity) {
   const grad = (cols: string[]) => { const gr = g.createLinearGradient(0, 0, w, h); cols.forEach((c, i) => gr.addColorStop(i / (cols.length - 1), c)); return gr; };
   const rr = (i: number, r: number) => { g.beginPath(); g.roundRect(i, i, w - 2 * i, h - 2 * i, r); };
   const star = (cx: number, cy: number, s: number, col: string) => { g.save(); g.translate(cx, cy); g.fillStyle = col; g.shadowColor = col; g.shadowBlur = 16; g.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 ? s * .26 : s; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.fill(); g.restore(); };
