@@ -55,15 +55,20 @@ function bakeTab() {
 }
 
 /* ============ tab Quản lý và Linh thú ============ */
+let ddOpen: StaffKind | null = null;
+export const setDDOpen = (k: StaffKind | null) => { ddOpen = k; };
 const slotInfo = (k: StaffKind) => {
   const it = staffAt(k, floor);
   return { it, art: it ? gachaArt(it, 46) : `<span class="tp-empty">+</span>`, name: it ? esc(it.n) : "Chưa đặt", fx: it ? esc(fxOf(it)) : "Chọn ở ô bên phải hoặc kéo từ danh sách" };
 };
 function slotRow(k: StaffKind) {
   const { it, art, name, fx } = slotInfo(k), own = itemsOf(k).filter(i => hasItem(i.id));
-  const opts = own.map(i => { const at = floorOfStaff(k, i.id); return `<option value="${i.id}" ${it?.id === i.id ? "selected" : ""}>${esc(i.n)}${at >= 0 && at !== floor ? ` (tầng ${at + 1})` : ""}</option>`; }).join("");
+  const isOpen = ddOpen === k, label = (i: { n: string; id: string }) => { const at = floorOfStaff(k, i.id); return `${esc(i.n)}${at >= 0 && at !== floor ? ` <em>tầng ${at + 1}</em>` : ""}`; };
+  const opts = [`<button class="dd-o ${it ? "" : "on"}" data-ddv="${k}:" role="option" aria-selected="${!it}"><span class="dd-n">— Trống —</span></button>`,
+    ...own.map(i => `<button class="dd-o ${it?.id === i.id ? "on" : ""}" data-ddv="${k}:${i.id}" role="option" aria-selected="${it?.id === i.id}">${gachaArt(i, 26)}<span class="dd-n">${label(i)}</span>${it?.id === i.id ? "<i>✓</i>" : ""}</button>`)].join("");
   return `<div class="tp-row" data-drop="${k}"><div class="tp-art">${art}</div><div class="tp-info"><small>${k === "mgr" ? "Quản lý" : "Linh thú"}</small><b>${name}</b><em>${fx}</em></div>
-    <select class="tp-sel" data-tsel="${k}" aria-label="${k === "mgr" ? "Chọn quản lý" : "Chọn linh thú"} tầng ${floor + 1}"><option value="">— Trống —</option>${opts}</select></div>`;
+    <button class="dd-btn ${isOpen ? "open" : ""}" data-dd="${k}" aria-haspopup="listbox" aria-expanded="${isOpen}" aria-label="${k === "mgr" ? "Chọn quản lý" : "Chọn linh thú"} tầng ${floor + 1}"><span>${it ? esc(it.n) : "— Trống —"}</span><i aria-hidden="true">▾</i></button>
+    ${isOpen ? `<div class="dd-list" role="listbox">${opts}</div>` : ""}</div>`;
 }
 function placeTab() {
   floor = Math.max(0, Math.min(floor, floorCount() - 1));
@@ -186,7 +191,13 @@ function assign(k: StaffKind, id: string) {
 }
 /** đăng ký sự kiện ô chọn và kéo thả (gọi một lần ở main.ts) */
 export function initTeam() {
-  document.addEventListener("change", e => { const t = e.target as HTMLSelectElement; if (t.matches?.("select[data-tsel]")) assign(t.dataset.tsel as StaffKind, t.value); });
+  /* ô chọn tự vẽ (không dùng <select> mặc định): bấm để mở danh sách, chọn một dòng, bấm ra ngoài để đóng */
+  document.addEventListener("click", e => {
+    const t = e.target as HTMLElement, v = t.closest<HTMLElement>("[data-ddv]"), b = t.closest<HTMLElement>("[data-dd]");
+    if (v) { const [k, id] = v.dataset.ddv!.split(":"); ddOpen = null; return assign(k as StaffKind, id); }
+    if (b) { const k = b.dataset.dd as StaffKind; ddOpen = ddOpen === k ? null : k; sfx("click"); return render(); }
+    if (ddOpen) { ddOpen = null; render(); }
+  });
   document.addEventListener("dragstart", e => { const t = (e.target as HTMLElement).closest<HTMLElement>("[data-drag]"); if (!t) return; e.dataTransfer?.setData("text/plain", t.dataset.drag!); e.dataTransfer!.effectAllowed = "move"; t.classList.add("dragging"); });
   document.addEventListener("dragend", e => { (e.target as HTMLElement).classList?.remove("dragging"); document.querySelectorAll(".tp-row.over").forEach(r => r.classList.remove("over")); });
   document.addEventListener("dragover", e => { const r = (e.target as HTMLElement).closest<HTMLElement>("[data-drop]"); if (r) { e.preventDefault(); r.classList.add("over"); } });
