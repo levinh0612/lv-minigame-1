@@ -1,13 +1,12 @@
 /* Luật của một ca bán: khách vào, chờ, giao bánh, tính thưởng. Không đụng DOM để test được. */
-import { CFG, type PetId } from "../content/couple";
-const STAFF_IDS: PetId[] = ["dog", "gold", "white"];
+import { CFG } from "../content/couple";
 import {
   BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN,
   type Build, type Look, type Mood, type PartKey, type Recipe
 } from "../content/game";
-import { BAKE_TIME, TIER_BAKE_SLOW, TIER_HAND_BONUS, partsOfRecipe, tiersOf, type FoodId, type StockKey } from "../content/game";
+import { BAKE_TIME, TIER_BAKE_SLOW, TIER_HAND_BONUS, partsOfRecipe, tiersOf, type FoodId, type StaffId, type StockKey } from "../content/game";
 import { addBond, addTickets, regulars } from "./gacha";
-import { comfortPat, comfortTip, dutyLv, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
+import { comfortPat, comfortTip, dutyLv, staffIds, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { planMouse, tickMouse, type MouseEvt, type MouseOut } from "./mouse";
 import { featured, fx, lvl, unlocked } from "./progress";
@@ -18,27 +17,27 @@ import { nameList, pick, rnd } from "./util";
 export interface Customer {
   who: string; look: Look; r: Recipe; sweet: number; max: number; pat: number;
   him?: boolean; gone?: boolean; mood?: Mood; note?: string;
-  by?: PetId;          // thú cưng đang làm đơn này (người chơi không chọn được)
+  by?: StaffId;          // thú cưng đang làm đơn này (người chơi không chọn được)
   reg?: string;        // khách quen từ gacha (id vật phẩm)
   perkPrice?: number; perkTip?: number;   // lợi ích riêng của khách quen: giá bánh và tip cộng thêm
   seatLv?: number;     // cấp bàn khách đang ngồi (1..3)
 }
 /* một bé thợ bánh trong ca: đang làm cho ghế nào, được bao nhiêu */
-export interface Baker { id: PetId; seat: number; done: number; need: number }
+export interface Baker { id: StaffId; seat: number; done: number; need: number }
 export interface Shift {
   total: number; spawned: number; served: number; left: number; coins: number; tips: number; stars: number[];
   seats: (Customer | null)[]; build: Build; t: number; next: number; paused: boolean;
   boyDone: boolean; lv0: number;
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
-  bonus: number; tierBonus: number; lack: Partial<Record<PetId, string>>;
-  ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: PetId[]; meals: Partial<Record<PetId, FoodId>>;
+  bonus: number; tierBonus: number; lack: Partial<Record<StaffId, string>>;
+  ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: StaffId[]; meals: Partial<Record<StaffId, FoodId>>;
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
   goals: ShiftGoal[]; goalCoins: number; ticket: boolean; bondUp: number;
   combo: number; bestCombo: number; comboBank: number; comboLost: number; comboPaid: number;
-  mouse: MouseEvt | null; mousePlan: number; mouseDone: boolean; fainted: PetId[]; patMul: number; shutdown: boolean; mouseFine: number; mouseReward: number; mouseKills: number; mousePaid: number;   // chuột vào tiệm (xem mouse.ts)   // combo: số bánh Hoàn hảo liên tiếp; comboBank: thưởng dồn chờ cuối ca (đứt chuỗi thì mất nửa)
+  mouse: MouseEvt | null; mousePlan: number; mouseDone: boolean; fainted: StaffId[]; patMul: number; shutdown: boolean; mouseFine: number; mouseReward: number; mouseKills: number; mousePaid: number;   // chuột vào tiệm (xem mouse.ts)   // combo: số bánh Hoàn hảo liên tiếp; comboBank: thưởng dồn chờ cuối ca (đứt chuỗi thì mất nửa)
   // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
 }
 
@@ -117,7 +116,7 @@ export function makeCustomer(sh: Shift): Customer {
 
 /* Chạy thời gian. Trả về ghế vừa có khách và các ghế khách vừa bỏ về. */
 export type StaffDone = { baker: Baker; res: Extract<ServeResult, { ok: true }> };
-export interface TickOut { rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: PetId; what: string }[]; mouse: MouseOut }
+export interface TickOut { rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: StaffId; what: string }[]; mouse: MouseOut }
 export function tick(sh: Shift, dt: number): TickOut {
   const out: TickOut = { rush: 0, spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [], mouse: {} };
   if (sh.paused) return out;
@@ -153,7 +152,7 @@ function bake(sh: Shift, dt: number, out: TickOut) {
     out.baked.push({ baker: b, res });
   });
   sh.bakers = sh.bakers.filter(b => b.done < b.need);
-  STAFF_IDS.forEach(id => {
+  staffIds().forEach(id => {
     const lv = dutyLv(id);
     if (!lv || sh.bakers.some(b => b.id === id) || !sh.working.includes(id) || sh.fainted.includes(id)) return;
     const mine = mineIdx(sh);

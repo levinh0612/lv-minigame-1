@@ -8,7 +8,13 @@ import { spend } from "../../engine/wallet";
 import { fmtN } from "../../engine/util";
 import { visitEnter, visitQuote } from "../../net/cloud";
 import { render } from "../app";
-import { coinPill, dropModal, esc, modal, toast } from "../dom";
+import { ic } from "../icons";
+import type { GuestLook } from "../../content/game";
+import { portraitHTML } from "../portrait";
+import { guestSVG } from "../art";
+import { demandOf } from "../../engine/economy";
+import { ROOM_CATS, isDefault } from "../../content/room";
+import { coinPill, dropModal, esc, modal, shopStatsHTML, toast } from "../dom";
 import { room3dHTML } from "../room3d";
 import { navigate } from "../router";
 
@@ -58,19 +64,29 @@ export function visitHTML(user: string) {
 }
 
 function shopHTML(v: VisitShop) {
+  const me = v.me, look = { ...me, gender: me.sprite?.[0] === "b" || me.sprite?.[0] === "m" ? "boy" : "girl" } as unknown as GuestLook;
+  const viral = demandOf(v.stars ?? 2, ROOM_CATS.filter(c => !isDefault(c.k, v.room[c.k])).length, v.lv, v.venue);
   const name = v.shop.trim() || v.username, recipes = RECIPES.filter(r => r.lv <= v.lv).length;
   const note = paid === null ? "Bạn đang tham quan, chỉ xem thôi nha" : paid > 0 ? `Bạn đã gửi tiền mừng, phí vé ${fmtN(paid)} xu` : "Hôm nay bạn đã ghé tiệm này rồi nên không mất phí";
   return `<div class="scr home5 visit5">
     <div class="h5-room">${room3dHTML(v.room as never, { event: false, recipes, guests: 2, tables: v.venue.tbl.join(","), wide: v.venue.wide, floors: v.venue.floors, user: v.username }, true, true)}</div>
     <div class="h5-top">
-      <div class="hrow4">${BACK}<div class="sp"></div>${coinPill()}</div>
-      <div class="vcard"><div class="vav" aria-hidden="true">🏪</div>
-        <div class="vmain"><small>Đang ghé thăm · Tiệm Bánh của</small><b>${esc(name)}</b>${name !== v.username ? `<em>@${esc(v.username)}</em>` : ""}</div>
-        <span class="vlv">Lv ${v.lv}</span></div>
-      <div class="h5-chips"><span class="pchip lav">🛍 ${v.decor} đồ trang trí</span><span class="pchip lav">🪑 sức chứa ${seatsOfTables(v.venue.tbl)}</span><span class="pchip lav">🏢 ${v.venue.floors} lầu</span><span class="pchip mint">🐾 ${v.hired} nhân viên</span></div>
+      <div class="hrow5">${BACK}<div class="sp"></div>${coinPill(false, "", true)}</div>
+      <div class="pcard5">
+        <div class="pc-top">
+          <div class="pc-av" style="--p:0" aria-hidden="true">${portraitHTML(look.sprite, look, 70, guestSVG({ ...look, mood: "happy" }, 70), "", true)}<span class="pc-lv">${v.lv}</span></div>
+          <div class="pc-t">
+            <small>${ic.sprout(16, 2.2)}Đang ghé thăm · Tiệm Bánh của</small>
+            <b style="font-size:${name.length <= 12 ? 26 : 20}px">${esc(name)}</b>
+            ${name !== v.username ? `<em class="pc-title">@${esc(v.username)}</em>` : ""}
+            <div class="pc-stats"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${seatsOfTables(v.venue.tbl)} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Độ viral</small><b>${viral} khách</b></i></span></div>
+          </div>
+        </div>
+        <div class="pc-buffs pc-info"><span class="bf">🛍 ${v.decor} đồ trang trí</span><span class="bf">🏢 ${v.venue.floors} lầu</span><span class="bf">🐾 ${v.hired} nhân viên</span></div>
+        ${shopStatsHTML(v.earned, v.served, recipes)}
+      </div>
     </div>
     <div class="h5-bottom">
-      <div class="vstats"><div><b>${fmtN(v.earned)}</b><small>xu bán được</small></div><div><b>${fmtN(v.served)}</b><small>khách đã phục vụ</small></div><div><b>${recipes}</b><small>món bánh</small></div></div>
       <p class="vnote">${esc(note)}</p>
       <div class="h5-row"><button class="b3 h5-open" data-go="/"><span>Về tiệm của mình</span></button></div>
     </div>

@@ -1,7 +1,8 @@
 import { CFG, type PetId } from "../../content/couple";
-import { FOODS, PETS } from "../../content/game";
+import { FOODS, MAX_STAFF_LV, PETS } from "../../content/game";
+import { staffAvatar } from "../staffav";
 import { ROOM_CATS, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
-import { tableLvs, canHire, foodOf, foodDef, mealOf, plannedMeal, onDuty, staffDef, trainCost } from "../../engine/economy";
+import { tableLvs, staffIds, canHire, foodOf, foodDef, mealOf, plannedMeal, onDuty, staffDef, trainCost } from "../../engine/economy";
 import { decorCount, unlocked } from "../../engine/progress";
 import { S, petName, save } from "../../engine/state";
 import { spend } from "../../engine/wallet";
@@ -63,17 +64,18 @@ export function pantryHTML() {
     <button class="pk" data-food-buy="${f.id}:5" ${S.coins < f.cost * 5 ? "disabled" : ""}>+5 · ${f.cost * 5} xu</button></div>`).join("")}</div>`;
 }
 /* một hàng trong Ca làm việc: bậc, lương, độ thân, nút thưởng */
-export function petRowHTML(id: PetId) {
-  const d = staffDef(id), st = S.staff[id], on = onDuty(id), fed = S.pets[id].fedDay === S.daily.day;
+export function petRowHTML(id: string) {
+  const own = id in S.pets, d = staffDef(id), st = S.staff[id], on = onDuty(id), fed = own ? S.pets[id as PetId].fedDay === S.daily.day : true;   // linh thú Gacha: chỉ có bậc và lương, không có thưởng/độ thân
   const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1], meal = st.hired ? plannedMeal(id) : null, eat = foodDef(meal ?? mealOf(id));
   const act = !canHire(id) ? `<div class="rb lock"><b>Lv ${d.unlock}</b><small>mới mở</small></div>`
     : !st.hired ? `<button class="rb hire" data-hire="${id}"><b>Nhận</b><small>vào làm</small></button>`
+    : !own ? `<div class="rb lock"><b>Bậc ${tier}</b><small>${tier < MAX_STAFF_LV ? "còn lên được" : "tối đa"}</small></div>`
     : `<button class="rb ${fed ? "done" : ""}" data-treat="${id}:${food.id}" ${fed || (!foodOf(food.id) && S.coins < food.cost) ? "disabled" : ""}>${foodSVG(food.id, 28)}<small>${fed ? "Đã thưởng" : "Thưởng"}</small></button>`;
   const train = st.hired && trainCost(id) ? `<button class="up" data-train="${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${st.lv + 1} · ${fmtN(trainCost(id))} xu</button>` : "";
-  return `<div class="prow"><div class="pav ${on ? "on" : ""}">${petSVG({ ...PETS[id], mood: on ? "happy" : "open", ledge: false }, 70)}</div>
+  return `<div class="prow"><div class="pav ${on ? "on" : ""}">${staffAvatar(id, 70, on ? "happy" : "open")}</div>
     <div class="pin"><div class="pn"><b>${esc(petName(id))}</b><span class="ptg t">Bậc ${tier}</span>${on ? `<span class="ptg w">Đi làm</span>` : st.hired ? `<span class="ptg o">Nghỉ</span>` : ""}</div>
       <div class="pw">${foodSVG(eat.id, 20)}Lương: 1 ${eat.n}/ca${st.hired && on && !meal ? ` <em>· hết đồ ăn</em>` : ""}</div>
-      <div class="ph2"><span data-hearts="${id}">${heartRow(S.pets[id].aff)}</span><small>thân thiết</small></div>${train}</div>${act}</div>`;
+      ${own ? `<div class="ph2"><span data-hearts="${id}">${heartRow(S.pets[id as PetId].aff)}</span><small>thân thiết</small></div>` : `<div class="ph2"><small>Linh thú Gacha · đứng tầng vẫn cộng chỉ số</small></div>`}${train}</div>${act}</div>`;
 }
 export function petsHTML() {
   const id = sel, fed = S.pets[id].fedDay === S.daily.day, k = FOODS[0];
@@ -87,7 +89,7 @@ export function petsHTML() {
     </div>
     <div class="ptabs">${CFG.pets.map(p => `<button class="${p.id === id ? "on" : ""}" data-sel-pet="${p.id}">${petSVG({ ...PETS[p.id], paws: false, ledge: false }, 52)}<span>${esc(petName(p.id))}</span></button>`).join("")}</div>
     <div class="sh2"><b>Ca làm việc</b><span class="lav">đi làm / nghỉ ở màn Chuẩn bị</span></div>
-    <div class="prows">${CFG.pets.map(p => petRowHTML(p.id)).join("")}</div>
+    <div class="prows">${staffIds().map(sid => petRowHTML(sid)).join("")}</div>
     <div class="sh2"><b>Tủ đồ ăn</b><span class="lav">lương & quà thưởng</span></div>
     ${pantryHTML()}
     <p class="phint">Mỗi ngày thưởng một lần. Cho ăn để bé thân thiết hơn.</p>

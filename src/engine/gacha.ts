@@ -2,7 +2,7 @@
    Vé kiếm khi chơi (vé miễn phí mỗi ngày, đạt hết mục tiêu ca, nhận quà ngày) hoặc mua bằng xu. */
 import type { FxKey, Recipe } from "../content/game";
 import {
-  DUST_PER_TICKET, GACHA_ITEMS, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, gachaItem, itemsOf,
+  DUST_PER_TICKET, GACHA_ITEMS, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, asManager, gachaItem, itemsOf, mgrFx,
   type GachaItem, type Rarity
 } from "../content/gacha";
 import { dayKey } from "./passive";
@@ -86,14 +86,14 @@ export const floorCount = () => S.venue.floors;
 /** vật phẩm đang đứng ở tầng f (0 = tầng 1); null nếu trống hoặc chưa sở hữu */
 export function staffAt(k: StaffKind, f: number): GachaItem | null {
   const it = f >= 0 && f < floorCount() ? gachaItem(listOf(k)[f] ?? "") : undefined;
-  return it && (k === "mgr" ? it.mgr : it.mascot) && hasItem(it.id) ? it : null;
+  return it && (k === "mgr" ? asManager(it) : it.mascot) && hasItem(it.id) ? it : null;
 }
 export const staffPlaced = (k: StaffKind) => Array.from({ length: floorCount() }, (_, f) => staffAt(k, f)).filter((x): x is GachaItem => !!x);
 /** tầng đang đặt vật phẩm này, -1 nếu chưa đặt */
 export const floorOfStaff = (k: StaffKind, id: string) => { const f = listOf(k).indexOf(id); return f >= 0 && f < floorCount() ? f : -1; };
 /** đặt vào tầng f (chuyển từ tầng khác nếu đang đứng ở đó; người cũ của ô đó bị gỡ ra) */
 export function placeStaff(k: StaffKind, id: string, f: number): boolean {
-  const it = gachaItem(id); if (!it || !(k === "mgr" ? it.mgr : it.mascot) || !hasItem(id) || f < 0 || f >= floorCount()) return false;
+  const it = gachaItem(id); if (!it || !(k === "mgr" ? asManager(it) : it.mascot) || !hasItem(id) || f < 0 || f >= floorCount()) return false;
   const l = listOf(k), old = l.indexOf(id); if (old >= 0) l[old] = "";
   while (l.length <= f) l.push("");
   l[f] = id; save(); return true;
@@ -119,7 +119,7 @@ export function addBond(): number {
 export const gachaFx = (k: FxKey) => {
   let sum = 0;
   for (const m of staffPlaced("mascot")) { const v = m.mascot!.fx[k] ?? 0; sum += k === "cust" ? v : v * bondMul(m.id); }
-  for (const m of staffPlaced("mgr")) sum += m.mgr!.fx[k] ?? 0;
+  for (const m of staffPlaced("mgr")) sum += mgrFx(m)[k] ?? 0;
   return sum;
 };
 /** khách quen: các nhân vật đã trúng */

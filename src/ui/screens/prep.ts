@@ -1,13 +1,13 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
-import type { PetId } from "../../content/couple";
-import { CATS, FOODS, PETS, STAFF, STOCK_KEYS } from "../../content/game";
-import { canHire, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { CATS, FOODS, STOCK_KEYS } from "../../content/game";
+import { canHire, staffIds, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, fame, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { availableIdx } from "../../engine/suppliers";
+import { staffAvatar } from "../staffav";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { petSVG, foodSVG, ingSVG } from "../art";
+import { foodSVG, ingSVG } from "../art";
 import { coinPill, esc } from "../dom";
 
 const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
@@ -15,7 +15,7 @@ export const pageHead = (title: string, sub = "") =>
   `<div class="phead">${BACK}<div class="pt">${sub ? `<small>${sub}</small>` : ""}<h2>${title}</h2></div>${coinPill()}</div>`;
 
 /* thẻ một bé: đi làm / nghỉ / đói / chờ nhận / chưa mở */
-export function bakerTile(id: PetId) {
+export function bakerTile(id: string) {
   const d = staffDef(id), st = S.staff[id], on = onDuty(id);
   const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1];
   const meal = st.hired ? plannedMeal(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
@@ -28,7 +28,7 @@ export function bakerTile(id: PetId) {
   else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
   else { btn = `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`; if (!on) cls = "off"; }
   const sub = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 18)}Bậc ${tier} · ${eat.n}${slow > 1 ? ` <span class="bad">chậm +${Math.round((slow - 1) * 100)}%</span>` : ""}`;
-  return `<div class="btile ${cls}"><div class="av">${petSVG({ ...PETS[id], mood: on && !hungry ? "happy" : hungry ? "impatient" : "open" }, 72)}</div>
+  return `<div class="btile ${cls}"><div class="av">${staffAvatar(id, 72, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}</div>
     <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${picks}${btn}</div>`;
 }
 
@@ -49,8 +49,8 @@ export function prepHTML() {
     <div class="feat">${ingSVG("cream", feat.cream, 18)}Món nổi bật: <b>${esc(feat.n)}</b><span>✦ ${f.n}</span></div>
     ${needUpgrade() ? `<button class="vwarn" data-act="venue"><span>🪑</span><div><b>Khách đông hơn chỗ ngồi</b><small>Giờ cao điểm ${demand()} khách, tiệm có ${capacity()} ghế. Chạm để nâng cấp.</small></div></button>` : ""}
     <div class="custcnt"><span class="cntico">👥</span><div><b>Hôm nay có ${expectedCustomers()} khách</b><small>Ca ${S.shifts + 1} · ${goals[0]?.n ?? 0} khách vui là đạt mục tiêu${spareSeats() ? ` · ghế dư ${spareSeats()}, có thể gặp giờ vàng` : ""}</small></div></div>
-    <div class="sh2"><b>Ai đi làm hôm nay?</b><span class="lav">${plan.filter(x => x.meal).length}/${STAFF.length} bé</span></div>
-    <div class="btiles">${STAFF.map(d => bakerTile(d.id)).join("")}</div>
+    <div class="sh2"><b>Ai đi làm hôm nay?</b><span class="lav">${plan.filter(x => x.meal).length}/${staffIds().length} bé</span></div>
+    <div class="btiles">${staffIds().map(id => bakerTile(id)).join("")}</div>
     <div class="sh2"><b>Mục tiêu ca này</b><span class="gold">thưởng lúc hết ca</span></div>
     <div class="goals">${goals.map((g, i) => `<div class="goal"><i style="background:${ic[i][0]};color:${ic[i][1]}">${g.n}</i><span>${goalText(g)}</span><b>+${g.reward} xu</b></div>`).join("")}</div>
     <div class="sh2"><b>Kho trước ca</b><span class="${low.length ? "red" : "lav"}">${low.length ? `${low.length} món sắp hết` : "Đủ hàng"}</span></div>

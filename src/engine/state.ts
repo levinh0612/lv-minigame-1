@@ -1,6 +1,7 @@
 /* Tiến trình người chơi, lưu trong localStorage (cùng key với bản cũ để không mất dữ liệu). */
 import { CFG, type PetId } from "../content/couple";
 import { BOY_SPRITES, CATS, MAX_CUSTOM, GIRL_SPRITES, SPRITES, STARTER_STOCK, STOCK_KEYS, SUPPLIERS, isFixedChar, type CustomCake, type FoodId, type GuestLook, type Look, type StockKey } from "../content/game";
+import { gachaItem } from "../content/gacha";
 import { DEFAULT_ROOM, OLD_TO_ROOM, type Room } from "../content/room";
 import { freshBook, type Book } from "./wallet";
 
@@ -19,8 +20,8 @@ export interface State {
   pets: Record<PetId, PetState>;
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; suppliers: string[]; custom: CustomCake[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
-  staff: Record<PetId, StaffState>; tut: boolean;
-  food: Record<FoodId, number>; welcome: boolean; autoTake: boolean;
+  staff: Record<string, StaffState>; tut: boolean;   // khoá: PetId của 3 bé thợ bánh hoặc id linh thú Gacha đã thuê
+  food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean;
   gacha: GachaState;
   mouse?: { king: number; last: number };   // king: số lần diệt chuột kịp trong 10 giây (hạng Vua diệt chuột); last: ca gần nhất có chuột
   venue: { tbl: number[]; floors: number; wide: number; tables?: number };   // cấp từng bàn ([] = chưa đặt: người chơi cũ được tặng theo độ nổi tiếng), số lầu, số lần mở rộng ngang; tables = số ghế của bản 2.52
@@ -54,7 +55,7 @@ export function fresh(): State {
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map((_, i) => i < 3 ? STARTER_STOCK : 0)])) as Record<StockKey, number[]>, suppliers: [], custom: [],
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
-    food: { kibble: 0, pate: 0, chicken: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
+    food: { kibble: 0, pate: 0, chicken: 0, salmon: 0, steak: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
     room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
@@ -153,4 +154,4 @@ export function save() { if (!persist) return; try { localStorage.setItem(KEY, J
 export function resetState() { S = fresh(); save(); }
 /* thay toàn bộ tiến trình (tải từ server về) */
 export function replaceState(s: State) { S = s; save(); }
-export const petName = (id: PetId) => S.names.pets[id] || CFG.pets.find(p => p.id === id)!.name;
+export const petName = (id: string) => S.names.pets[id as PetId] || CFG.pets.find(p => p.id === id)?.name || gachaItem(id)?.n || id;

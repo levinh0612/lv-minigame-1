@@ -26,6 +26,9 @@ import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, recipeFilter } 
 import { earn, note, spend } from "../engine/wallet";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
+import { playReveal } from "../ui/gachafx";
+import { visitHTML } from "../ui/screens/visit";
+import { setVisiting } from "../engine/visit";
 import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/screens/play";
 import { prepHTML } from "../ui/screens/prep";
 import { roadmapHTML } from "../ui/screens/roadmap";
@@ -128,6 +131,10 @@ const STORIES: Story[] = [
     html: () => { lvState(2, s => { s.cloud.named = true; s.cloud.name = "Tiệm của Vinh"; s.cloud.at = new Date().toISOString(); }); return homeHTML(); } },
   { id: "home-buff", sec: "screens", title: "Bắt đầu · 3 tầng, có buff", desc: "Cột TẦNG hiện đủ T1-T3, hàng buff có số, danh hiệu diệt chuột, hạng #256", kind: "screen",
     html: () => { lvState(13, buffed); return homeHTML(); } },
+  { id: "visit", sec: "screens", title: "Ghé thăm tiệm bạn", desc: "Cùng khung với màn của mình: thẻ hồ sơ, hàng thông tin, 3 số thống kê", kind: "screen",
+    html: () => { lvState(13, buffed); setVisiting({ username: "nlat", lv: 16, earned: 52486, shop: "", served: 944, decor: 9, hired: 3, room: { ...S.room }, me: { ...S.me }, venue: { tbl: [1, 1, 2], floors: 3, wide: 0 } }); return visitHTML("nlat"); } },
+  { id: "reveal-ultra", sec: "screens", title: "Mở thẻ Gacha · Cực hiếm", desc: "Hiệu ứng triệu hồi rồi thẻ kết quả (xem trước, không đổi dữ liệu)", kind: "screen",
+    html: () => { lvState(13, buffed); setTimeout(() => playReveal([{ item: GACHA_ITEMS.find(i => i.id === "m_baoden")!, isNew: false, dust: 10 } as never], () => {}, true), 400); return homeHTML(); } },
   { id: "home-event", sec: "screens", title: "Bắt đầu · ngày đặc biệt", desc: "Sinh nhật bạn nữ (28/12): thẻ sự kiện, xu x2; thư đã đọc", kind: "screen",
     html: () => withDate(2026, 12, 28, () => { lvState(5, s => { s.letters = [{ day: "2026-12-28", txt: "…" }]; }); return homeHTML(); }) },
   { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 4: kho thiếu Dâu tây; Milo đi làm (có Pate), Siro đói (thiếu Hạt), Cacao nghỉ", kind: "screen", long: true,
@@ -187,7 +194,7 @@ const STORIES: Story[] = [
   { id: "m-menu3", sec: "modals", title: "Công thức · bánh tuỳ chỉnh", desc: "Mục Bánh tuỳ chỉnh: mẫu đã lưu, ô Tạo mẫu mới", kind: "modal",
     html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }, { id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); return modalOver(homeHTML(), () => { menuSheet(); recipeFilter("custom"); }); } },
   { id: "m-staff", sec: "modals", title: "Quản lý · Nhân vật", desc: "Chọn tầng, chạm để đặt; món chưa có hiện mờ và dẫn sang Gacha", kind: "modal",
-    html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mgr")); } },
+    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; st.gacha.owned.c_n1 = 1; placeStaff("mgr", "c_m2", 1); }); return modalOver(homeHTML(), () => staffSheet("mgr")); } },
   { id: "m-staff2", sec: "modals", title: "Quản lý · Linh thú", desc: "Cùng bảng, tab Linh thú", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mascot")); } },
   { id: "m-buff", sec: "modals", title: "Buff đang có", desc: "Tổng 4 loại buff và nguồn của từng buff", kind: "modal",

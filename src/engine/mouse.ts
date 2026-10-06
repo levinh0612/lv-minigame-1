@@ -6,7 +6,7 @@
    60 giây: khách báo sở y tế, bắt buộc đóng ca và đền 8% số xu đang có (thấp nhất 100, cao nhất 1.000, không quá số xu đang có)
    Từ giây thứ 10 có thể trả tiền xử lý nhanh để chuột biến mất, rẻ hơn tiền phạt. */
 import { PETS } from "../content/game";
-import type { PetId } from "../content/couple";
+import type { StaffId } from "../content/game";
 import { earn, spend } from "./wallet";
 import { S, save } from "./state";
 import type { Shift } from "./shift";
@@ -15,7 +15,7 @@ export const MOUSE_CHANCE = 0.35, T_PERFECT = 10, T_OK = 30, T_WARN = 45, T_FINE
 export const FINE_PCT = 0.08, FINE_MIN = 100, FINE_MAX = 1000, PAY_PCT = 0.4, CATCH_REWARD = 30;
 export const RANKS: { n: number; name: string }[] = [{ n: 1, name: "F" }, { n: 3, name: "E" }, { n: 6, name: "D" }, { n: 10, name: "C" }, { n: 15, name: "B" }, { n: 25, name: "A" }, { n: 40, name: "S" }];
 
-export interface MouseEvt { age: number; warned: boolean; fainted: PetId | null }
+export interface MouseEvt { age: number; warned: boolean; fainted: StaffId | null }
 export type MouseStage = "fast" | "ok" | "faint" | "warn";
 
 /** hạng hiện tại ("" nếu chưa diệt con nào) và số lần cần cho hạng kế */
@@ -38,7 +38,7 @@ export function planMouse(total: number, rng: () => number = Math.random): numbe
   return Math.max(2, Math.floor(total * (0.3 + rng() * 0.3)));
 }
 
-export interface MouseOut { appeared?: boolean; fainted?: PetId | null; patience?: boolean; warn?: boolean; shutdown?: boolean }
+export interface MouseOut { appeared?: boolean; fainted?: StaffId | null; patience?: boolean; warn?: boolean; shutdown?: boolean }
 /** gọi mỗi nhịp của ca (khi không tạm dừng) */
 export function tickMouse(sh: Shift, dt: number, closeEarly: (sh: Shift) => void): MouseOut {
   const out: MouseOut = {};
@@ -50,7 +50,7 @@ export function tickMouse(sh: Shift, dt: number, closeEarly: (sh: Shift) => void
   }
   const m = sh.mouse; const was = m.age; m.age += dt;
   if (was < T_OK && m.age >= T_OK) {
-    const cats = sh.working.filter(id => PETS[id].pet !== "dog" && !sh.fainted.includes(id));
+    const cats = sh.working.filter(id => PETS[id as keyof typeof PETS]?.pet !== "dog" && !sh.fainted.includes(id));
     if (cats.length) { const id = cats[Math.floor(Math.random() * cats.length)]!; sh.fainted.push(id); m.fainted = id; out.fainted = id; sh.bakers = sh.bakers.filter(b => { if (b.id !== id) return true; const c = sh.seats[b.seat]; if (c?.by === id) c.by = undefined; return false; }); }
     else { sh.patMul = 1.3; out.patience = true; }
   }

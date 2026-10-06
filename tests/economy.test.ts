@@ -5,7 +5,7 @@ import {
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
 import { beginShift, breakCombo, createShift, finishShift, leaveCustomer, serve, tick, type Customer } from "../src/engine/shift";
-import { fame } from "../src/engine/economy";
+import { fame, staffIds, trainCost, canHire, onDuty } from "../src/engine/economy";
 import { GACHA_ITEMS } from "../src/content/gacha";
 import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, clearStaff, floorOfStaff, gachaFx, packCost, placeStaff, pull, rollRarity, staffAt, staffPlaced, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
 import { fx, unlocked } from "../src/engine/progress";
@@ -104,7 +104,21 @@ describe("thú cưng làm nhân viên", () => {
     const { sh, pay } = beginShift();
     expect(pay.fed).toEqual([{ id: "dog", meal: "kibble" }, { id: "gold", meal: "chicken" }]);
     expect(sh.wages).toBe(6 + 15);
-    expect(S.food).toEqual({ kibble: 0, pate: 0, chicken: 0 });
+    expect(S.food).toMatchObject({ kibble: 0, pate: 0, chicken: 0 });
+  });
+
+  it("nâng tối đa bậc 5 (Cá hồi, Bò bít tết); linh thú Gacha đã có thuê được như bé thợ bánh", () => {
+    lvUp(2); S.coins = 100000; hire("dog");
+    for (let i = 0; i < 6; i++) train("dog");
+    expect(S.staff.dog.lv).toBe(5);
+    expect(trainCost("dog")).toBe(0);
+    expect(mealOf("dog")).toBe("steak");
+    expect(staffIds()).toEqual(["dog", "gold", "white"]);
+    S.gacha.owned.m_xiem = 1;
+    expect(staffIds()).toContain("m_xiem");
+    expect(canHire("m_xiem")).toBe(true);
+    expect(hire("m_xiem")).toBe(true);
+    expect(onDuty("m_xiem")).toBe(true);
   });
 
   it("chọn món thấp hơn bậc: ăn món đã chọn, làm chậm hơn; hết thì ăn món kém hơn kế tiếp", () => {

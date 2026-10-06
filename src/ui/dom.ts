@@ -96,3 +96,7 @@ export const heartRow = (n: number, S = 15) => { const k = Math.min(5, Math.floo
   return Array.from({ length: 5 }, (_, i) => `<svg width="${S}" height="${Math.round(S * 14 / 15)}" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="${i < k ? "#FF7FA1" : "#FFF"}" stroke="#4A3438" stroke-width="1.4"/></svg>`).join(""); };
 export const twinkles = (cols: string[], n: number) => `<div class="twk" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
   `<i style="left:${6 + Math.random() * 88}%;top:${8 + Math.random() * 60}%;font-size:${10 + Math.random() * 14}px;color:${cols[i % cols.length]};animation-duration:${2 + Math.random() * 2}s;animation-delay:${-Math.random() * 3}s">✦</i>`).join("")}</div>`;
+
+/** Hàng 3 số thống kê của tiệm, dùng chung cho màn của mình và màn ghé thăm để hai màn giống nhau */
+export const shopStatsHTML = (earned: number, served: number, recipes: number) =>
+  `<div class="vstats"><div><b>${fmtN(earned)}</b><small>xu bán được</small></div><div><b>${fmtN(served)}</b><small>khách đã phục vụ</small></div><div><b>${recipes}</b><small>món bánh</small></div></div>`;

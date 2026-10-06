@@ -5,10 +5,11 @@ import { itemImg } from "../../content/gacha";
 import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
+import { staffAvatar } from "../staffav";
 import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
 import { daysTogether } from "../../engine/dates";
 import { usedIdx } from "../../engine/progress";
-import { REFILL, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
+import { REFILL, staffIds, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { giftReady, lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
@@ -149,7 +150,7 @@ function updatePatience(c: Customer, i: number) {
   if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, faceSize(SH!)); }
 }
 /* tiến độ các bé thợ bánh: dưới mặt khách và ở quầy */
-const bakeStep: Partial<Record<PetId, number>> = {};
+const bakeStep: Record<string, number> = {};
 function updateBaking() {
   let redraw = false;
   SH!.bakers.forEach(b => {
@@ -181,7 +182,7 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const f = c.pat / c.max, S2 = faceSize(sh), mine = mineIdx(sh) === i;
   const b = c.by ? sh.bakers.find(x => x.id === c.by) : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
   const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
-  const who = c.by ? `<div class="who by" data-bake="${c.by}">${petSVG({ ...PETS[c.by], ledge: false, paws: false }, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
+  const who = c.by ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
   return `${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
@@ -201,14 +202,14 @@ function staffChip() {
   return `<div class="cm mas"><img src="${itemImg(lead)}" alt="" width="30" height="30"><div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
 }
 export function crewHTML(sh: Shift) {
-  const ids = STAFF.map(d => d.id).filter(id => sh.working.includes(id));
+  const ids = staffIds().filter(id => sh.working.includes(id));
   if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>${staffChip() ? `<div class="crew" style="--n:1">${staffChip()}</div>` : ""}`;
   return `<div class="crew" style="--n:${ids.length + (staffChip() ? 1 : 0)}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
-    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${petSVG({ ...PETS[id], mood: b ? "happy" : sh.lack[id] ? "impatient" : "open", ledge: false, paws: false }, 30)}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
+    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${staffAvatar(id, 30, b ? "happy" : sh.lack[id] ? "impatient" : "open")}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}${staffChip()}</div>`;
 }
 /* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
@@ -226,14 +227,14 @@ const bakeSteps = (c: Customer) => {
 };
 /* chạm vào thẻ thợ bánh: xem quá trình bé làm bánh (cập nhật trực tiếp) */
 let watchT = 0;
-export function watchBaker(id: PetId) {
+export function watchBaker(id: string) {
   if (!SH) return;
   const draw = () => {
     const sh = SH, box = $("#watch"); if (!sh || !box) { clearInterval(watchT); return; }
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null;
-    if (!b || !c) { box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: sh.lack[id] ? "impatient" : "open" }, 90)}</div><p class="sub">${sh.lack[id] ? `${esc(petName(id))} đang chờ vì thiếu ${esc(sh.lack[id]!)}. Nhập thêm ở nút hộp trên cùng nha.` : `${esc(petName(id))} đang nghỉ, có khách là bé nhận đơn ngay.`}</p>`; return; }
+    if (!b || !c) { box.innerHTML = `<div class="wch">${staffAvatar(id, 90, sh.lack[id] ? "impatient" : "open", true)}</div><p class="sub">${sh.lack[id] ? `${esc(petName(id))} đang chờ vì thiếu ${esc(sh.lack[id]!)}. Nhập thêm ở nút hộp trên cùng nha.` : `${esc(petName(id))} đang nghỉ, có khách là bé nhận đơn ngay.`}</p>`; return; }
     const pct = Math.min(100, Math.round(b.done / b.need * 100)), steps = bakeSteps(c), step = Math.min(steps.length, Math.floor(pct / (100 / steps.length)));
-    box.innerHTML = `<div class="wch">${petSVG({ ...PETS[id], mood: "happy", ledge: false }, 70)}<div class="wcake">${cakeAnySVG(bakerBuild(c, pct), { size: 130 })}</div></div>
+    box.innerHTML = `<div class="wch">${staffAvatar(id, 70, "happy")}<div class="wcake">${cakeAnySVG(bakerBuild(c, pct), { size: 130 })}</div></div>
       <p class="sub">Đang làm <b>${esc(c.r.n)}</b> · ${CATS.sweet[c.sweet][0]} cho <b>${esc(c.who)}</b></p>
       <div class="wbar"><i style="width:${pct}%"></i><span>${pct}%</span></div>
       <div class="wsteps ${steps.length > 4 ? "many" : ""}" style="--n:${steps.length}">${steps.map((x, i) => `<div class="${i < step ? "ok" : i === step ? "now" : ""}">${ingSVG(x.k, x.i, 26)}<small>${x.label}</small><b>${CATS[x.k][x.i][0]}</b><em>${i < step ? "✓" : i === step ? "…" : ""}</em></div>`).join("")}</div>`;
@@ -541,7 +542,7 @@ export function doServe() {
 }
 
 /* hiệu ứng giao bánh (chủ tiệm hoặc bé thợ bánh): bong bóng thành xu, khách thả tim, bắn tim */
-function showServed(res: Extract<ServeResult, { ok: true }>, by?: PetId) {
+function showServed(res: Extract<ServeResult, { ok: true }>, by?: string) {
   const { idx, c, price, tip, bonus, tierBonus } = res, v = views[idx];
   if (!v || !SH) return;
   v.el.querySelector(".bub")!.outerHTML = `<div class="bub ok">+${price + tip + bonus + tierBonus}<small>${by ? esc(petName(by)) : "xu"}</small></div>`;

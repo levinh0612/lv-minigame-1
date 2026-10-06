@@ -17,6 +17,11 @@ const strMap = (o: unknown, max: number) => {
   if (o && typeof o === "object") for (const [k, v] of Object.entries(o as Record<string, unknown>)) if (/^[a-zA-Z0-9_]{1,24}$/.test(k) && typeof v === "string") out[k] = str(v, max);
   return out;
 };
+/** sao trung bình 20 đánh giá gần nhất (mặc định 2 khi chưa có), để màn ghé thăm tính độ viral như màn của chủ tiệm */
+const starsOf = (r: unknown) => {
+  const a = (Array.isArray(r) ? r : []).slice(0, 20).map(x => Number((x as { s?: unknown })?.s)).filter(n => Number.isFinite(n));
+  return a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 100) / 100 : 2;
+};
 /* chỉ gửi phần công khai của tiệm: không xu, kho, PIN hay thư */
 function publicShop(u: { username: string; lv: number; earned: unknown; state: unknown }) {
   const s = (u.state ?? {}) as Record<string, unknown>;
@@ -28,6 +33,7 @@ function publicShop(u: { username: string; lv: number; earned: unknown; state: u
     username: u.username, lv: u.lv, earned: Number(u.earned),
     shop: str(s.shop, 20), room: strMap(s.room, 24), me: strMap(s.me, 24),
     served: Math.max(0, Math.floor(Number(s.served) || 0)), decor: Array.isArray(s.owned) ? s.owned.length : 0,
+    stars: starsOf(s.reviews),
     hired: Object.values(staff).filter(x => x?.hired).length,
     venue: { tbl, floors: Math.max(1, Math.min(4, Math.floor(Number(v.floors) || 1))), wide: Math.max(0, Math.min(4, Math.floor(Number(v.wide) || 0))) }
   };

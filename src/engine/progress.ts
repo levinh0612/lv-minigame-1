@@ -1,6 +1,6 @@
 /* Cấp, mục tiêu ngày, hiệu ứng đồ trang trí */
 import { RECIPES, customRecipe, partsOfRecipe, type FxKey, type Recipe, type StockKey } from "../content/game";
-import type { GachaItem } from "../content/gacha";
+import { mgrFx, type GachaItem } from "../content/gacha";
 import { ROOM_CATS, isDefault, roomItem, type RoomItem } from "../content/room";
 import { daysTogether } from "./dates";
 import { bondMul, floorCount, gachaFx, specialRecipes, staffAt } from "./gacha";
@@ -23,7 +23,7 @@ export function buffSources(): BuffRow[] {
   const rows: BuffRow[] = [];
   for (let f = 0; f < floorCount(); f++) {
     const m = staffAt("mgr", f), a = staffAt("mascot", f);
-    if (m) rows.push({ src: "mgr", name: m.n, sub: `Quản lý · Tầng ${f + 1}`, fx: { ...m.mgr!.fx }, item: m });
+    if (m) rows.push({ src: "mgr", name: m.n, sub: `Quản lý · Tầng ${f + 1}`, fx: { ...mgrFx(m) }, item: m });
     if (a) rows.push({ src: "mascot", name: a.n, sub: `Linh thú · Tầng ${f + 1}`, item: a,
       fx: Object.fromEntries(Object.entries(a.mascot!.fx).map(([k, v]) => [k, k === "cust" ? v : v! * bondMul(a.id)])) });
   }

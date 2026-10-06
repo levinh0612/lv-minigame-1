@@ -43,7 +43,7 @@ function insets(el: HTMLElement, scene: ShopScene) {
 }
 const el0hs = (el: HTMLElement) => el.dataset.hs !== "0";      // màn trang trí: không có nút chạm trên cảnh
 const hash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
-const staffOf = (it: GachaItem | null) => { const model = it?.mgr?.model ?? it?.mascot?.model; return it && model ? { model, rarity: it.rarity } : undefined; };   // người/linh vật chưa có model 3D thì không hiện trong tiệm
+const staffOf = (it: GachaItem | null) => { if (it?.char) return { char: it.char.sprite, rarity: it.rarity }; const model = it?.mgr?.model ?? it?.mascot?.model; return it && model ? { model, rarity: it.rarity } : undefined; };   // người/linh vật chưa có model 3D thì không hiện trong tiệm
 function optsOf(el: HTMLElement): ShopOpts {
   const n = +(el.dataset.recipes || 4), vs = el.dataset.user ? visiting() : null, g = vs ? (vs.me as unknown as typeof S.me) : S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {

@@ -6,7 +6,7 @@ import { fx, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../eng
 import { S, meLook } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { mouseTitle } from "../../engine/mouse";
-import { coinPill, esc } from "../dom";
+import { coinPill, esc, shopStatsHTML } from "../dom";
 import { ic } from "../icons";
 import { guestSVG } from "../art";
 import { room3dHTML } from "../room3d";
@@ -49,6 +49,7 @@ function profileCard(L: number, cur: number, need: number) {
       </div>
     </div>
     <button class="pc-buffs" data-act="buff" aria-label="Buff đang có">${BUFFS.map(([k, f]) => `<span class="bf ${k} ${fx(k) ? "" : "zero"}">${f(15, 2.4)}${buffText(k)}</span>`).join("")}<i>${ic.chevron(18, 2.6)}</i></button>
+    ${shopStatsHTML(S.earned, S.served, unlocked().length)}
   </div>`;
 }
 

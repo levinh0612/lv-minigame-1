@@ -1722,3 +1722,39 @@ button.cm{position:relative}
 .cu-ings.many .ing .cn{flex:none;font-size:10px;line-height:1.1;letter-spacing:-.3px}
 .cu-ings.many .ing .q{right:3px;top:2px}
 .rc5 .art svg{height:66px;width:auto;max-width:100%}
+
+/* 2.92: màn ghé thăm cùng khung với màn của mình; thống kê nằm trong thẻ hồ sơ; màn cố định phủ kín chiều cao thật (không còn dải trắng dưới chân trên iPhone) */
+.home5{bottom:auto;height:max(100%,100vh,100lvh)}
+.pcard5 .vstats{margin:8px 0 0;padding:8px 4px 2px;border-radius:0;background:none;box-shadow:none;border-top:2px solid color-mix(in srgb,var(--pink) 14%,#fff)}
+.pcard5 .vstats b{font-size:16px}
+.pc-info{flex-wrap:wrap;cursor:default}
+.pc-av.vis{font-size:34px;line-height:1;align-items:center}
+.pc-av.vis::before{background:color-mix(in srgb,var(--pink) 30%,#fff)}
+.visit5 .vnote{color:#fff;text-shadow:0 1px 3px rgba(20,16,50,.7);margin:0 16px 8px}
+.visit5 .h5-bottom{padding-top:20px}
+
+/* nhãn vai: khách quen (cam) và quản lý (tím) */
+.role{display:inline-block;text-decoration:none;padding:1px 7px;border-radius:8px;font:800 10.5px var(--body);white-space:nowrap}
+.role.reg{background:#FFE9C7;color:#9A5B00}.role.mgr{background:#E6DDFF;color:#5B44B8}
+.gtags .role{font-size:11px;padding:2px 9px;border-radius:9px}
+.gi small .role{display:block;width:max-content;margin:0 auto 2px}
+
+/* 2.92: dọn hiệu ứng mở thẻ Gacha cho gọn: bỏ cánh, tia sáng mảnh và mờ, dải chữ không nghiêng, nhãn không xoay, chữ dùng Nunito */
+.gwing{display:none}
+.gfx-rays{background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 30%,transparent) 0 2.5deg,transparent 2.5deg 15deg);-webkit-mask:radial-gradient(circle,#000 8%,transparent 62%);mask:radial-gradient(circle,#000 8%,transparent 62%);filter:blur(1.5px)}
+.gfx.s2 .gfx-rays,.gfx.p3 .gfx-rays{opacity:.38}
+.gsun{opacity:.4;background:repeating-conic-gradient(color-mix(in srgb,var(--rc) 45%,transparent) 0 3deg,transparent 3deg 15deg)}
+.gfx-banner span,.gfx.r-ultra .gfx-banner span{transform:none;font:900 clamp(22px,6.4vw,32px)/1 var(--body);letter-spacing:.12em;padding:11px 34px;border-radius:999px;color:#fff;border:2.5px solid rgba(255,255,255,.8);
+  background:linear-gradient(color-mix(in srgb,var(--rc) 82%,#fff),var(--rc));box-shadow:0 0 26px color-mix(in srgb,var(--rc) 65%,transparent),0 4px 0 rgba(0,0,0,.25);text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.gfx.r-ultra .gfx-banner span{background:linear-gradient(#FFE08A,#F2A41F)}
+.gh-name b{font:900 clamp(26px,7.4vw,36px)/1.15 var(--body);letter-spacing:.01em;text-shadow:0 2px 14px color-mix(in srgb,var(--rc) 70%,transparent),0 2px 0 rgba(0,0,0,.35)}
+.gh-name span{font:800 13px var(--body)}
+.gh-name i{font:900 20px var(--body);letter-spacing:.3em;text-indent:.3em}
+.gh-stamp{transform:none;font:900 12.5px var(--body);letter-spacing:.1em;padding:5px 16px;border-radius:999px;box-shadow:none;animation:ghstamp2 .4s 1s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes ghstamp2{from{opacity:0;transform:scale(.7)}}
+.gcard b{font:900 18px var(--body)}
+.gcard .gtag{font:900 11px var(--body);letter-spacing:.04em}
+.gone .gcard.r-ultra{animation:none}
+.gok{display:block;margin:14px auto 0;min-width:168px;height:52px;border-radius:26px;background:#fff;color:var(--ink2);font:900 17px var(--body);letter-spacing:.06em;box-shadow:0 4px 0 rgba(0,0,0,.28)}
+.gok:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.gmulti h2{font:900 21px var(--body)}

@@ -14,6 +14,7 @@ export const PROPS: Record<string, PropCfg> = {
   pet_chicken: { h: .8, clip: "stand" }, pet_frog: { h: .6, clip: "stand" }, pet_mouse: { h: .6, clip: "stand" }, pet_cat: { h: .8 }, pet_tako: { h: .8 },
   pet_leopard: { h: .8 }, pet_eagle: { h: 1.1, fly: .15 }, pet_rover: { h: .85, clip: "Pleased" }, pet_dragon1: { h: .9, clip: 1 },
   pet_dragon2: { h: 1.1, fly: .3, clip: 1 }, pet_panther: { h: 1, hide: ["Object_15", "Object_17", "Object_18"] },
+  pet_blackcat: { h: .8 }, pet_graycat: { h: .85 }, pet_angel: { h: .9 }, pet_corgi: { h: 1 },
   phoenix: { h: .9, ry: -Math.PI / 2, fly: 1.1 }
 };
 const pick = (clips: THREE.AnimationClip[], cfg: PropCfg) => (typeof cfg.clip === "number" ? clips[cfg.clip] : cfg.clip ? clips.find(c => c.name.includes(cfg.clip as string)) : undefined) ?? clips[0]!;   // clip: tên (hoặc số thứ tự) clip đứng yên, mặc định clip đầu

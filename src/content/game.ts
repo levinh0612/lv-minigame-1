@@ -133,19 +133,22 @@ export const QUICK_MULT = 1.5;    // nhập nhanh giữa ca: đắt hơn 50%
 export const STARTER_STOCK = 8;   // kho tặng lúc đầu
 
 /* Đồ ăn thú cưng: vừa là lương (mỗi ca 1 phần theo bậc), vừa để thưởng tăng thân thiết */
-export type FoodId = "kibble" | "pate" | "chicken";
+export type FoodId = "kibble" | "pate" | "chicken" | "salmon" | "steak";
 export interface Food { id: FoodId; n: string; cost: number; aff: number; c: string }
 export const FOODS: Food[] = [
   { id: "kibble", n: "Hạt", cost: 6, aff: 3, c: "#C98B5A" },
   { id: "pate", n: "Pate", cost: 10, aff: 5, c: "#F2B266" },
-  { id: "chicken", n: "Ức gà", cost: 15, aff: 8, c: "#F7C9A8" }
+  { id: "chicken", n: "Ức gà", cost: 15, aff: 8, c: "#F7C9A8" },
+  { id: "salmon", n: "Cá hồi", cost: 22, aff: 11, c: "#F59A7B" },
+  { id: "steak", n: "Bò bít tết", cost: 32, aff: 15, c: "#B5533C" }
 ];
 export const WELCOME = { coins: 300, food: { kibble: 5 } as Partial<Record<FoodId, number>> };
 
 /* Thú cưng làm nhân viên: tự nhận đơn và làm bánh cho khách. Làm 1 bánh mất BAKE_TIME giây theo bậc.
-   Lương mỗi ca = 1 phần ăn theo bậc: bậc 1 Hạt, bậc 2 Pate, bậc 3 Ức gà */
-export const BAKE_TIME = [10, 7.5, 5];
-const BAKE_TEXT: [string, string, string] = ["Tự nhận đơn, 10 giây một bánh", "Tự nhận đơn, 7,5 giây một bánh", "Tự nhận đơn, 5 giây một bánh"];
+   Lương mỗi ca = 1 phần ăn theo bậc: bậc 1 Hạt, 2 Pate, 3 Ức gà, 4 Cá hồi, 5 Bò bít tết */
+export const BAKE_TIME = [10, 7.5, 5, 3.5, 2.5];
+export const MAX_STAFF_LV = BAKE_TIME.length;
+const BAKE_TEXT = BAKE_TIME.map(t => `Tự nhận đơn, ${String(t).replace(".", ",")} giây một bánh`);
 /* Độ nổi tiếng: càng nổi tiếng càng nhiều bàn, khách đến càng dày */
 export const FAME = [
   { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Viral", seats: 6 },
@@ -162,11 +165,14 @@ export const SHOP = {
   floorCost: (built: number) => 1000 * 2 ** built,      // xây thêm lầu: lần 1 là 1.000, rồi gấp đôi
   wideCost: (built: number) => 2000 * 2 ** built        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
 };
-export interface StaffDef { id: PetId; role: string; unlock: number; train: [number, number]; effect: [string, string, string] }
+export type StaffId = string;     // 3 bé thợ bánh (PetId) hoặc id linh thú Gacha đã thuê
+export interface StaffDef { id: StaffId; role: string; unlock: number; train: number[]; effect: string[] }   // train[i]: phí lên bậc i + 2
+/** phí huấn luyện lên bậc 2..5 của linh thú Gacha theo độ hiếm */
+export const MASCOT_TRAIN: Record<"common" | "rare" | "ultra", number[]> = { common: [150, 350, 650, 1050], rare: [250, 550, 900, 1400], ultra: [400, 800, 1300, 2000] };
 export const STAFF: StaffDef[] = [
-  { id: "dog", role: "Thợ bánh", unlock: 2, train: [120, 300], effect: BAKE_TEXT },
-  { id: "gold", role: "Thợ bánh", unlock: 3, train: [150, 350], effect: BAKE_TEXT },
-  { id: "white", role: "Thợ bánh", unlock: 4, train: [150, 350], effect: BAKE_TEXT }
+  { id: "dog", role: "Thợ bánh", unlock: 2, train: [120, 300, 600, 1000], effect: BAKE_TEXT },
+  { id: "gold", role: "Thợ bánh", unlock: 3, train: [150, 350, 650, 1050], effect: BAKE_TEXT },
+  { id: "white", role: "Thợ bánh", unlock: 4, train: [150, 350, 650, 1050], effect: BAKE_TEXT }
 ];
 
 /* ===== Bánh tuỳ chỉnh nhiều tầng =====

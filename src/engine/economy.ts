@@ -1,6 +1,8 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
 import type { PetId } from "../content/couple";
-import { CATS, partsOfRecipe, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, SHOP, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StockKey } from "../content/game";
+import { CATS, partsOfRecipe, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, MASCOT_TRAIN, MAX_STAFF_LV, SHOP, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StaffDef, type StaffId, type StockKey } from "../content/game";
+import { GACHA_ITEMS, gachaItem } from "../content/gacha";
+import { hasItem } from "./gacha";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
 import { S, petName, save } from "./state";
@@ -89,7 +91,7 @@ export function buyFood(id: FoodId, n: number): boolean {
 export function snack(pet: PetId, id: FoodId): boolean {
   const st = S.pets[pet];
   if (st.fedDay === S.daily.day || foodOf(id) <= 0) return false;
-  S.food[id]--; st.fedDay = S.daily.day; st.aff += foodDef(id).aff; save(); return true;
+  S.food[id] = foodOf(id) - 1; st.fedDay = S.daily.day; st.aff += foodDef(id).aff; save(); return true;
 }
 
 /* Thưởng nhanh: tủ hết món đó thì mua 1 phần rồi cho ăn luôn */
@@ -108,50 +110,57 @@ export function claimWelcome(): boolean {
 }
 
 /* ===== Thú cưng làm nhân viên ===== */
-export const staffDef = (id: PetId) => STAFF.find(s => s.id === id)!;
-export const canHire = (id: PetId) => lvl() >= staffDef(id).unlock;
-export const onDuty = (id: PetId) => S.staff[id].hired && S.staff[id].onDuty;
-export const dutyLv = (id: PetId) => (onDuty(id) ? S.staff[id].lv : 0);
+/** linh thú Gacha đã có: thuê làm nhân viên được như 3 bé thợ bánh, vẫn đứng tầng cộng chỉ số */
+const ownedMascots = () => GACHA_ITEMS.filter(i => i.mascot && hasItem(i.id));
+/** mọi nhân viên: 3 bé thợ bánh rồi tới linh thú đã có (tạo sẵn trạng thái cho linh thú mới) */
+export const staffIds = (): StaffId[] => {
+  const m = ownedMascots(); m.forEach(i => { S.staff[i.id] ??= { hired: false, lv: 1, onDuty: false }; });
+  return [...STAFF.map(d => d.id), ...m.map(i => i.id)];
+};
+export const staffDef = (id: StaffId): StaffDef => STAFF.find(s => s.id === id) ?? { id, role: "Thợ bánh", unlock: 0, train: MASCOT_TRAIN[gachaItem(id)?.rarity ?? "common"], effect: [] };
+export const canHire = (id: StaffId) => lvl() >= staffDef(id).unlock;
+export const onDuty = (id: StaffId) => S.staff[id].hired && S.staff[id].onDuty;
+export const dutyLv = (id: StaffId) => (onDuty(id) ? S.staff[id].lv : 0);
 /* lương mỗi ca = 1 phần ăn. Món mặc định theo bậc, người chơi chọn được món thấp hơn;
    hết món đã chọn thì ăn món kém hơn kế tiếp (làm chậm hơn), hết nữa mới lấy món ngon hơn */
-const tierIdx = (id: PetId) => (S.staff[id].hired ? S.staff[id].lv : 1) - 1;
-export const mealChoices = (id: PetId): Food[] => FOODS.slice(0, tierIdx(id) + 1);
-export const mealOf = (id: PetId): FoodId => {
+const tierIdx = (id: StaffId) => (S.staff[id].hired ? S.staff[id].lv : 1) - 1;
+export const mealChoices = (id: StaffId): Food[] => FOODS.slice(0, tierIdx(id) + 1);
+export const mealOf = (id: StaffId): FoodId => {
   const pick = S.staff[id].food, top = tierIdx(id);
   return FOODS[Math.min(top, Math.max(0, pick ? FOODS.findIndex(f => f.id === pick) : top))].id;
 };
-export const setMeal = (id: PetId, food: FoodId) => { S.staff[id].food = food; save(); };
-export const mealFor = (id: PetId, have: (f: FoodId) => number = foodOf): FoodId | null => {
+export const setMeal = (id: StaffId, food: FoodId) => { S.staff[id].food = food; save(); };
+export const mealFor = (id: StaffId, have: (f: FoodId) => number = foodOf): FoodId | null => {
   const want = FOODS.findIndex(f => f.id === mealOf(id));
   const order = [...FOODS.slice(0, want + 1).reverse(), ...FOODS.slice(want + 1)];
   return order.find(f => have(f.id) > 0)?.id ?? null;
 };
 /* ăn món kém hơn bậc của mình thì làm chậm thêm 25% mỗi bậc */
-export const mealSlow = (id: PetId, meal: FoodId) => 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
+export const mealSlow = (id: StaffId, meal: FoodId) => 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
 /** bữa ăn dự kiến của các bé đi làm: kho dùng chung nên mỗi bé lấy phần của mình trước khi tới bé sau (giống lúc mở ca) */
 export function crewPlan() {
-  const left: Record<FoodId, number> = { kibble: foodOf("kibble"), pate: foodOf("pate"), chicken: foodOf("chicken") };
-  return STAFF.filter(d => onDuty(d.id)).sort((a, b) => (S.staff[b.id].prio ?? 0) - (S.staff[a.id].prio ?? 0)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
+  const left = Object.fromEntries(FOODS.map(f => [f.id, foodOf(f.id)])) as Record<FoodId, number>;
+  return staffIds().filter(sid => onDuty(sid)).map(sid => ({ id: sid })).sort((a, b) => (S.staff[b.id].prio ?? 0) - (S.staff[a.id].prio ?? 0)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
 }
 /** bữa của một bé: đi làm thì theo kế hoạch chung, đang nghỉ thì chỉ xem món nào còn trong kho */
-export const plannedMeal = (id: PetId): FoodId | null => (onDuty(id) ? crewPlan().find(x => x.id === id)?.meal ?? null : mealFor(id));
-export const trainCost = (id: PetId) => (S.staff[id].lv < 3 ? staffDef(id).train[S.staff[id].lv - 1] : 0);
+export const plannedMeal = (id: StaffId): FoodId | null => (onDuty(id) ? crewPlan().find(x => x.id === id)?.meal ?? null : mealFor(id));
+export const trainCost = (id: StaffId) => (S.staff[id].lv < MAX_STAFF_LV ? staffDef(id).train[S.staff[id].lv - 1] ?? 0 : 0);
 
-export function hire(id: PetId) { if (!canHire(id)) return false; S.staff[id] = { ...S.staff[id], hired: true, onDuty: true }; save(); return true; }
-export function toggleDuty(id: PetId) { if (!S.staff[id].hired) return; S.staff[id].onDuty = !S.staff[id].onDuty; save(); }
-export function train(id: PetId) {
+export function hire(id: StaffId) { if (!canHire(id)) return false; S.staff[id] = { ...S.staff[id], hired: true, onDuty: true }; save(); return true; }
+export function toggleDuty(id: StaffId) { if (!S.staff[id].hired) return; S.staff[id].onDuty = !S.staff[id].onDuty; save(); }
+export function train(id: StaffId) {
   const c = trainCost(id);
   if (!S.staff[id].hired || !c || S.coins < c) return false;
   spend("train", c, `Huấn luyện ${petName(id)} lên bậc ${S.staff[id].lv + 1}`); S.staff[id].lv++; delete S.staff[id].food; save(); return true;
 }
 /* Đầu ca: các bé đi làm ăn lương trước. Bé nào không còn đồ ăn thì nghỉ ca này.
    Trả về giá trị đồ ăn đã dùng (để tính lãi) và các bé phải nghỉ vì đói */
-export function payCrew(): { cost: number; fed: { id: PetId; meal: FoodId }[]; hungry: PetId[] } {
-  const out = { cost: 0, fed: [] as { id: PetId; meal: FoodId }[], hungry: [] as PetId[] };
+export function payCrew(): { cost: number; fed: { id: StaffId; meal: FoodId }[]; hungry: StaffId[] } {
+  const out = { cost: 0, fed: [] as { id: StaffId; meal: FoodId }[], hungry: [] as StaffId[] };
   crewPlan().forEach(({ id }) => {
     const meal = mealFor(id);                 // tính lại lúc ăn: bé trước đã lấy phần thì bé sau xét kho còn lại
     if (!meal) { S.staff[id].onDuty = false; out.hungry.push(id); return; }
-    S.food[meal]--; out.cost += foodDef(meal).cost; out.fed.push({ id, meal });
+    S.food[meal] = foodOf(meal) - 1; out.cost += foodDef(meal).cost; out.fed.push({ id, meal });
   });
   save(); return out;
 }
@@ -160,6 +169,11 @@ export function payCrew(): { cost: number; fed: { id: PetId; meal: FoodId }[]; h
 export function fameScore() {
   const r = S.reviews.slice(0, 20), avg = r.length ? r.reduce((a, x) => a + x.s, 0) / r.length : 2;
   return avg + decorCount() * 0.4 + (lvl() - 1) * 0.3 + venueFame();
+}
+/** độ viral (số khách giờ cao điểm) của một tiệm bất kỳ, dùng cho màn ghé thăm: cùng công thức với fameScore */
+export function demandOf(stars: number, decor: number, lv: number, v: { tbl: number[]; floors: number; wide: number }) {
+  const x = stars + decor * 0.4 + (lv - 1) * 0.3 + (v.floors - 1) * 0.8 + v.wide * 0.5 + v.tbl.reduce((a, l) => a + (l - 1) * 0.25, 0);
+  return FAME[FAME_AT.filter(t => x >= t).length].seats;
 }
 /** đầu tư vào tiệm cộng điểm nổi tiếng: mỗi lầu thêm 0,8, mỗi lần mở rộng 0,5, mỗi cấp nâng của bàn 0,25 */
 export const venueFame = () => (S.venue.floors - 1) * 0.8 + S.venue.wide * 0.5 + S.venue.tbl.reduce((a, l) => a + (l - 1) * 0.25, 0);

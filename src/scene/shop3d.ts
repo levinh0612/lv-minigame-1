@@ -8,7 +8,7 @@ import { glbProp, PROPS } from "./glbprop";
 import { APPROACH } from "./figure3d";
 import { person, personActor, type Actor, type PersonLook } from "./people";
 
-export interface StaffSlot { model: string; rarity: "common" | "rare" | "ultra" }   // model: id GLB trong public/models/gacha
+export interface StaffSlot { model?: string; char?: string; rarity: "common" | "rare" | "ultra" }   // char: sprite khách quen làm quản lý (đứng yên trên bệ)   // model: id GLB trong public/models/gacha
 export interface ShopOpts {
   room: Record<string, string>;            // wall, floor, counter, curtain, lamp, wallItem, plant, rug
   event: boolean;                          // ngày đặc biệt: tường vàng, cờ và bóng bay
@@ -304,7 +304,8 @@ export function createShop(o: ShopOpts): ShopScene {
     const par = flG[f]!;
     ([[st.mgr, 3.1, -.2], [st.pet, 2.1, .2]] as const).forEach(([sl, x, ry]) => {
       if (!sl) return;
-      const fly = !!PROPS[sl.model]?.fly, host = new THREE.Group(), cm = glbProp(sl.model);
+      const fly = !!(sl.model && PROPS[sl.model]?.fly), host = new THREE.Group();
+      const cm = sl.char ? (() => { const a = personActor({ skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" }, sl.char); a.mode("idle"); return { group: a.group, update: (t: number) => a.update(t) }; })() : glbProp(sl.model!);
       host.position.set(x, .5, -2.45); par.add(host); cm.group.position.set(x, .5, -2.45); cm.group.rotation.y = ry; par.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, host);
       if (!fly) add(par, CYL(.4, .45, .5, 22), T(PKM), x, .25, -2.45, { ol: "mid" });
       if (sl.rarity !== "common") addAura(host, sl.rarity);
