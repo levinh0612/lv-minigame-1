@@ -57,12 +57,30 @@ export function dropModal() { onClose = null; dismiss(); }
 export const modalLocked = () => !!$("#modal.locked");
 export const hasModal = () => !!$("#modal");
 
-let toastT = 0;
+/* Toast kiểu Sonner: xếp chồng (mới nhất ở trên, cũ thu nhỏ lùi sau), trượt vào/ra mượt, vuốt lên hoặc chạm để tắt */
+const MAX_TOAST = 3;
+function layoutToasts(wrap: HTMLElement) {
+  [...wrap.children].reverse().forEach((el, i) => {
+    (el as HTMLElement).style.setProperty("--i", String(i));
+    if (i >= MAX_TOAST) dismissToast(el as HTMLElement);
+  });
+}
+function dismissToast(el: HTMLElement) {
+  if (el.dataset.gone) return; el.dataset.gone = "1";
+  clearTimeout(+(el.dataset.t || 0));
+  el.classList.add("out");
+  window.setTimeout(() => { const w = el.parentElement; el.remove(); if (w) layoutToasts(w); }, 260);
+}
 export function toast(m: string) {
-  clearTimeout(toastT);
-  document.querySelector(".toast")?.remove();
-  const t = document.createElement("div"); t.className = "toast"; t.textContent = m;
-  document.body.appendChild(t); toastT = window.setTimeout(() => t.remove(), 3200);
+  let wrap = document.querySelector<HTMLElement>(".sn-wrap");
+  if (!wrap) { wrap = document.createElement("div"); wrap.className = "sn-wrap"; wrap.setAttribute("role", "status"); wrap.setAttribute("aria-live", "polite"); document.body.appendChild(wrap); }
+  const t = document.createElement("div"); t.className = "sn"; t.textContent = m;
+  let y0 = 0;
+  t.onpointerdown = e => { y0 = e.clientY; t.setPointerCapture(e.pointerId); };
+  t.onpointermove = e => { if (y0) t.style.setProperty("--dy", Math.min(0, e.clientY - y0) + "px"); };
+  t.onpointerup = e => { const dy = e.clientY - y0; y0 = 0; t.style.removeProperty("--dy"); if (dy < -20 || Math.abs(dy) < 4) dismissToast(t); };
+  wrap.appendChild(t); layoutToasts(wrap);
+  t.dataset.t = String(window.setTimeout(() => dismissToast(t), 3200));
 }
 export function floatHearts(x: number, y: number, n: number) {
   for (let i = 0; i < n; i++) {

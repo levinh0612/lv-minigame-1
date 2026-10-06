@@ -19,7 +19,7 @@ import { coinPill, esc, levelChip } from "../ui/dom";
 import { claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
-import { staffSheet } from "../ui/staff";
+import { openStaffDialog, setTeamTab } from "../ui/team";
 import { ingredientSheet } from "../ui/ingredients";
 import { openCustom } from "../ui/custom";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, recipeFilter } from "../ui/sheets";
@@ -30,10 +30,9 @@ import { playReveal } from "../ui/gachafx";
 import { visitHTML } from "../ui/screens/visit";
 import { setVisiting } from "../engine/visit";
 import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/screens/play";
-import { prepHTML } from "../ui/screens/prep";
+import { prepHTML, setPrepTab, type PrepTab } from "../ui/screens/prep";
 import { roadmapHTML } from "../ui/screens/roadmap";
 import { shopHTML, tryDecor } from "../ui/screens/shop";
-import { setTeamTab } from "../ui/staff";
 import { applyTheme } from "../content/theme";
 import { profileSheet } from "../ui/profile";
 import { mountRooms } from "../ui/room3d";
@@ -140,7 +139,7 @@ const STORIES: Story[] = [
     html: () => withDate(2026, 12, 28, () => { lvState(5, s => { s.letters = [{ day: "2026-12-28", txt: "…" }]; }); return homeHTML(); }) },
   { id: "prep", sec: "screens", title: "Chuẩn bị ca", desc: "Lv 4: kho thiếu Dâu tây; Milo đi làm (có Pate), Siro đói (thiếu Hạt), Cacao nghỉ", kind: "screen", long: true,
     html: () => { lvState(4, s => { s.stock.top[0] = 0; s.stock.cream[0] = 2; s.food = { kibble: 0, pate: 3, chicken: 1 };
-      s.staff.dog = { hired: true, lv: 2, onDuty: true }; s.staff.gold = { hired: true, lv: 1, onDuty: true }; s.staff.white = { hired: true, lv: 1, onDuty: false }; }); return prepHTML(); } },
+      s.staff.dog = { hired: true, lv: 2, onDuty: true }; s.staff.gold = { hired: true, lv: 1, onDuty: true }; s.staff.white = { hired: true, lv: 1, onDuty: false }; }); setPrepTab((new URLSearchParams(location.search).get("ptab") || "crew") as PrepTab); return prepHTML(); } },
   { id: "play-empty", sec: "screens", title: "Chơi · đầu ca", desc: "Chưa có khách, đĩa trống", kind: "screen",
     html: () => { lvState(1); const sh = createShift(); _setShift(sh); return playHTML(sh); } },
   { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "4 bàn trong một hàng; Milo làm cho Chị Mai 60%, Siro làm cho Anh Tùng 20%; chủ tiệm nhận đơn của Anh (sắp giận), chưa xem công thức; Hạt dẻ hết hàng", kind: "screen",
@@ -179,8 +178,10 @@ const STORIES: Story[] = [
     html: () => { lvState(4, s => { s.room.curtain = "1"; s.room.lamp = "1"; s.room.plant = "1"; s.owned = ["curtain:1", "lamp:1", "plant:1"]; }); tryDecor("wall", "mint"); const h = shopHTML("decor"); tryDecor("wall", "pink"); return h; } },
   { id: "team", sec: "screens", title: "Đội ngũ · Thợ bánh", desc: "Gộp thợ bánh và linh thú Gacha: huy hiệu bậc I-V, linh thú không ăn, phí thuê và buff", kind: "screen", long: true,
     html: () => { lvState(13, st => { buffed(st); st.coins = 30000; st.gacha.owned.m_xiem = 1; st.gacha.owned.m_baoden = 1; st.gacha.owned.m_cacao = 1; st.pets.dog.aff = 32; st.food = { kibble: 4, pate: 2, chicken: 0, salmon: 0, steak: 0 }; st.staff.dog = { hired: true, lv: 4, onDuty: true }; st.staff.gold = { hired: true, lv: 2, onDuty: true }; st.staff.m_xiem = { hired: true, lv: 3, onDuty: true }; }); setTeamTab("bake"); return shopHTML("pets"); } },
-  { id: "team-mgr", sec: "screens", title: "Đội ngũ · Quản lý", desc: "Tab Quản lý: chọn tầng, đặt quản lý và khách quen Hiếm+", kind: "screen", long: true,
-    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; }); setTeamTab("mgr"); return shopHTML("pets"); } },
+  { id: "team-place", sec: "screens", title: "Đội ngũ · Quản lý và Linh thú", desc: "Cột tầng, ô chọn quản lý và linh thú, danh sách bên dưới", kind: "screen", long: true,
+    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; }); setTeamTab("place"); return shopHTML("pets"); } },
+  { id: "m-teamdlg", sec: "modals", title: "Đội ngũ · Chi tiết thợ bánh", desc: "Hộp thoại: thông tin, đi làm, lên bậc, đồ ăn đề xuất và tủ đồ ăn", kind: "modal",
+    html: () => { lvState(13, st => { buffed(st); st.coins = 30000; st.food = { kibble: 4, pate: 2, chicken: 0, salmon: 0, steak: 0 }; st.staff.dog = { hired: true, lv: 3, onDuty: true }; }); setTeamTab("bake"); return modalOver(shopHTML("pets"), () => openStaffDialog("dog")); } },
   { id: "shop-pets", sec: "screens", title: "Thú cưng (kiêm nhân viên)", desc: "Tủ đồ ăn; Milo đi làm bậc 2, Siro chờ nhận vào làm, Cacao chưa đủ cấp; thưởng đồ ăn mỗi ngày", kind: "screen", long: true,
     html: () => { lvState(3, s => { s.pets.dog.aff = 32; s.pets.gold.aff = 14; s.food = { kibble: 4, pate: 2, chicken: 0 }; s.staff.dog = { hired: true, lv: 2, onDuty: true }; });
       S.pets.dog.fedDay = S.daily.day; return shopHTML("pets"); } },
@@ -198,10 +199,6 @@ const STORIES: Story[] = [
     html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }]; }); return modalOver(homeHTML(), () => openCustom("c1")); } },
   { id: "m-menu3", sec: "modals", title: "Công thức · bánh tuỳ chỉnh", desc: "Mục Bánh tuỳ chỉnh: mẫu đã lưu, ô Tạo mẫu mới", kind: "modal",
     html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }, { id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); return modalOver(homeHTML(), () => { menuSheet(); recipeFilter("custom"); }); } },
-  { id: "m-staff", sec: "modals", title: "Quản lý · Nhân vật", desc: "Chọn tầng, chạm để đặt; món chưa có hiện mờ và dẫn sang Gacha", kind: "modal",
-    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; st.gacha.owned.c_n1 = 1; placeStaff("mgr", "c_m2", 1); }); return modalOver(homeHTML(), () => staffSheet("mgr")); } },
-  { id: "m-staff2", sec: "modals", title: "Quản lý · Linh thú", desc: "Cùng bảng, tab Linh thú", kind: "modal",
-    html: () => { lvState(13, buffed); return modalOver(homeHTML(), () => staffSheet("mascot")); } },
   { id: "m-buff", sec: "modals", title: "Buff đang có", desc: "Tổng 4 loại buff và nguồn của từng buff", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), buffSheet); } },
   { id: "m-letter", sec: "modals", title: "Thư hôm nay", desc: "Mở từ thẻ thư ở màn Bắt đầu", kind: "modal",

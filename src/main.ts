@@ -23,13 +23,16 @@ import { navigate } from "./ui/router";
 import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { fmtN } from "./engine/util";
-import { setTeamTab, staffAct, staffSheet, type TeamTab } from "./ui/staff";
+import { initTeam, setTeamTab, staffDialogAct, staffSheet, teamAct, type TeamTab } from "./ui/team";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
+import { setPrepTab, type PrepTab } from "./ui/screens/prep";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
-import { applyDecor, cancelDecor, selectPet, setDecorCat, tryDecor } from "./ui/screens/shop";
+import { applyDecor, cancelDecor, setDecorCat, tryDecor } from "./ui/screens/shop";
 import { SH, pause, resume, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
+
+initTeam();
 
 /* Chọn nguyên liệu: xử lý lúc nhả tay (không cần chờ click) để không mất cú bấm khi giao diện vẽ lại hoặc ngón tay trượt nhẹ */
 let ingDown: { id: string; x: number; y: number; t: number } | null = null, ingAt = 0;
@@ -104,7 +107,8 @@ document.addEventListener("click", e => {
   }
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } else if (hireFee(d.hire)) toast(`Cần ${fmtN(hireFee(d.hire))} xu để thuê ${petName(d.hire)}`); return render(); }
   if (d.gact) return void gachaAct(d.gact);
-  if (d.sact) return staffAct(d.sact);
+  if (d.sd) return staffDialogAct(d.sd, t);
+  if (d.tm) return teamAct(d.tm);
   if (d.iact) return ingAct(d.iact);
   if (d.cact) return customAct(d.cact);
   if (d.cedit) { sfx("click"); return openCustom(d.cedit); }
@@ -113,6 +117,7 @@ document.addEventListener("click", e => {
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
   if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
+  if (d.ptab) { setPrepTab(d.ptab as PrepTab); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }
   if (d.train) { if (train(d.train as PetId)) { sfx("level"); toast(`${petName(d.train as PetId)} lên bậc ${S.staff[d.train as PetId].lv}!`); } return render(); }
   if (d.pet) {
@@ -135,7 +140,6 @@ document.addEventListener("click", e => {
     toast(`${petName(pet)} ăn ${foodDef(food).n} ngon lành! +${foodDef(food).aff} ♥`); return render();
   }
   if (d.team) { setTeamTab(d.team as TeamTab); sfx("click"); return render(); }
-  if (d.selPet) { selectPet(d.selPet as PetId); sfx("tap"); return render(); }
   if (d.ing) { if (performance.now() - ingAt < 700) return; const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.tier != null) return setTier(+d.tier);
   if (d.seat) return selectSeat(+d.seat);

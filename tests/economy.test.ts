@@ -5,7 +5,7 @@ import {
 } from "../src/engine/economy";
 import { rollDay } from "../src/engine/progress";
 import { beginShift, breakCombo, createShift, finishShift, leaveCustomer, serve, tick, type Customer } from "../src/engine/shift";
-import { fame, staffIds, trainCost, canHire, onDuty, mascotBonus } from "../src/engine/economy";
+import { fame, staffIds, ownedMascotIds, trainCost, canHire, onDuty, mascotBonus, treat } from "../src/engine/economy";
 import { GACHA_ITEMS } from "../src/content/gacha";
 import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, clearStaff, floorOfStaff, gachaFx, packCost, placeStaff, pull, rollRarity, staffAt, staffPlaced, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
 import { fx, unlocked } from "../src/engine/progress";
@@ -115,26 +115,35 @@ describe("thú cưng làm nhân viên", () => {
     expect(mealOf("dog")).toBe("steak");
     expect(staffIds()).toEqual(["dog", "gold", "white"]);
     S.gacha.owned.m_xiem = 1;
-    expect(staffIds()).toContain("m_xiem");
+    expect(staffIds()).not.toContain("m_xiem");        // có linh thú nhưng chưa thuê thì chưa là thợ
+    expect(ownedMascotIds()).toContain("m_xiem");
     expect(canHire("m_xiem")).toBe(true);
     const before = S.coins;
     expect(hire("m_xiem")).toBe(true);
     expect(before - S.coins).toBe(5000);                    // phí thuê linh thú Hiếm
     expect(onDuty("m_xiem")).toBe(true);
+    expect(staffIds()).toContain("m_xiem");
     expect(hire("m_xiem")).toBe(false);                    // đã thuê rồi
   });
 
-  it("linh thú Gacha không ăn, thuê cần đủ xu, bánh bé làm bán được giá hơn theo bậc", () => {
+  it("linh thú Gacha: chỉ hiện làm thợ khi đã thuê, thuê cần đủ xu, ăn như các bé, bánh làm ra bán được giá hơn theo bậc, ăn thưởng thì thân thiết", () => {
     lvUp(2); S.gacha.owned.m_baoden = 1; S.coins = 100;   // Cực hiếm: phí 12.000
-    staffIds();
+    expect(staffIds()).not.toContain("m_baoden");          // chưa thuê thì không có trong danh sách thợ
+    expect(ownedMascotIds()).toContain("m_baoden");
     expect(hire("m_baoden")).toBe(false); expect(S.coins).toBe(100);
     S.coins = 20000; expect(hire("m_baoden")).toBe(true);
+    expect(staffIds()).toContain("m_baoden");
+    expect(crewPlan().some(x => x.id === "m_baoden")).toBe(true);   // phải có đồ ăn
+    expect(crewPlan().find(x => x.id === "m_baoden")!.meal).toBeNull();   // kho trống nên đói
+    buyFood("kibble", 3); S.food.kibble = 3;
     const { pay } = beginShift();
-    expect(pay.fed).toContainEqual({ id: "m_baoden", meal: null });   // đi làm không cần đồ ăn
-    expect(pay.hungry).not.toContain("m_baoden");
+    expect(pay.fed.some(x => x.id === "m_baoden")).toBe(true);
     expect(mascotBonus("m_baoden").price).toBeCloseTo(.16, 5);
     S.staff.m_baoden.lv = 5; expect(mascotBonus("m_baoden").price).toBeCloseTo(.45, 5);
-    expect(mealSlow("m_baoden", "kibble")).toBe(1);
+    const b0 = S.gacha.bond?.m_baoden ?? 0; S.food.pate = 1;
+    expect(treat("m_baoden", "pate")).toBe(true);
+    expect(S.gacha.bond!.m_baoden).toBeGreaterThan(b0);
+    expect(treat("m_baoden", "pate")).toBe(false);            // mỗi ngày thưởng một lần
   });
 
   it("chọn món thấp hơn bậc: ăn món đã chọn, làm chậm hơn; hết thì ăn món kém hơn kế tiếp", () => {

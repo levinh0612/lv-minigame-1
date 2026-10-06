@@ -114,6 +114,8 @@ export function addBond(): number {
   for (const m of staffPlaced("mascot")) { const before = bondLevel(m.id); (S.gacha.bond ??= {})[m.id] = bondOf(m.id) + 1; if (!up && bondLevel(m.id) > before) up = bondLevel(m.id); }
   return up;
 }
+/** cho linh vật ăn thưởng: cộng thẳng vào thân thiết (mỗi 3 điểm thân của đồ ăn = 1 ca) */
+export function addBondTo(id: string, n: number) { (S.gacha.bond ??= {})[id] = bondOf(id) + Math.max(0, Math.round(n)); save(); }
 /** tổng chỉ số của mọi quản lý và linh vật đang đứng tầng */
 export const gachaFx = (k: FxKey) => {
   let sum = 0;

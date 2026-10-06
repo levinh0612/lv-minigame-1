@@ -17,7 +17,7 @@ export interface Daily { day: string; served: number; earned: number; feat: numb
 export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
   names: { her: string; his: string; girls: string; boys: string; pets: Record<PetId, string> };
-  pets: Record<PetId, PetState>;
+  pets: Record<string, PetState>;   // thân thiết của 3 bé và của linh thú Gacha đã thuê (tạo khi cần)
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; suppliers: string[]; custom: CustomCake[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
   staff: Record<string, StaffState>; tut: boolean;   // khoá: PetId của 3 bé thợ bánh hoặc id linh thú Gacha đã thuê
@@ -154,4 +154,6 @@ export function save() { if (!persist) return; try { localStorage.setItem(KEY, J
 export function resetState() { S = fresh(); save(); }
 /* thay toàn bộ tiến trình (tải từ server về) */
 export function replaceState(s: State) { S = s; save(); }
+/** trạng thái thân thiết / thưởng của một nhân viên (tạo mặc định cho linh thú Gacha) */
+export const petState = (id: string): PetState => (S.pets[id] ??= { aff: 0, petDay: "", pets: 0, fedDay: "" });
 export const petName = (id: string) => S.names.pets[id as PetId] || CFG.pets.find(p => p.id === id)?.name || gachaItem(id)?.n || id;

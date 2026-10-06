@@ -302,7 +302,7 @@ export function addReview(c: Customer, s: number) {
 /* Mở ca: các bé đi làm ăn lương (đồ ăn) trước, giá trị đồ ăn tính vào chi phí ca */
 export function beginShift() {
   const pay = payCrew(), sh = createShift();
-  sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id); pay.fed.forEach(x => { if (x.meal) sh.meals[x.id] = x.meal; });
+  sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id); pay.fed.forEach(x => { sh.meals[x.id] = x.meal; });
   return { sh, pay };
 }
 /* Hết ca: tính lãi */

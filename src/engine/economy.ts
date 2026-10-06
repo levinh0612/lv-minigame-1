@@ -1,11 +1,10 @@
 /* Kinh tế tiệm: mua nguyên liệu, nhập nhanh, nhân viên và lương. */
-import type { PetId } from "../content/couple";
 import { CATS, partsOfRecipe, FAME, FAME_AT, FOODS, PACKS, QUICK_MULT, RECIPES, MASCOT_HIRE, MASCOT_TRAIN, MAX_STAFF_LV, SHOP, STAFF, STOCK_KEYS, UNIT_COST, WELCOME, type Food, type FoodId, type StaffDef, type StaffId, type StockKey } from "../content/game";
 import { GACHA_ITEMS, gachaItem } from "../content/gacha";
-import { hasItem } from "./gacha";
+import { addBondTo, hasItem } from "./gacha";
 import { decorCount, featured, fx, lvl, unlocked } from "./progress";
 import { roomItem, type RoomKey } from "../content/room";
-import { S, petName, save } from "./state";
+import { S, petName, petState, save } from "./state";
 import { ingAvailable } from "./suppliers";
 import { earn, note, spend } from "./wallet";
 
@@ -88,15 +87,15 @@ export function buyFood(id: FoodId, n: number): boolean {
   spend("food", price, `Mua ${n} ${foodDef(id).n}`); S.food[id] = foodOf(id) + n; save(); return true;
 }
 /* Thưởng mỗi ngày một lần: món càng ngon càng thân */
-export function snack(pet: PetId, id: FoodId): boolean {
-  const st = S.pets[pet];
+export function snack(pet: StaffId, id: FoodId): boolean {
+  const st = petState(pet);
   if (st.fedDay === S.daily.day || foodOf(id) <= 0) return false;
-  S.food[id] = foodOf(id) - 1; st.fedDay = S.daily.day; st.aff += foodDef(id).aff; save(); return true;
+  S.food[id] = foodOf(id) - 1; st.fedDay = S.daily.day; st.aff += foodDef(id).aff; if (isMascotStaff(pet)) addBondTo(pet, foodDef(id).aff / 3); save(); return true;
 }
 
 /* Thưởng nhanh: tủ hết món đó thì mua 1 phần rồi cho ăn luôn */
-export function treat(pet: PetId, id: FoodId): boolean {
-  if (S.pets[pet].fedDay === S.daily.day) return false;
+export function treat(pet: StaffId, id: FoodId): boolean {
+  if (petState(pet).fedDay === S.daily.day) return false;
   if (foodOf(id) <= 0 && !buyFood(id, 1)) return false;
   return snack(pet, id);
 }
@@ -112,14 +111,15 @@ export function claimWelcome(): boolean {
 /* ===== Thú cưng làm nhân viên ===== */
 /** linh thú Gacha đã có: thuê làm nhân viên được như 3 bé thợ bánh, vẫn đứng tầng cộng chỉ số */
 const ownedMascots = () => GACHA_ITEMS.filter(i => i.mascot && hasItem(i.id));
-/** mọi nhân viên: 3 bé thợ bánh rồi tới linh thú đã có (tạo sẵn trạng thái cho linh thú mới) */
-export const staffIds = (): StaffId[] => {
-  const m = ownedMascots(); m.forEach(i => { S.staff[i.id] ??= { hired: false, lv: 1, onDuty: false }; });
-  return [...STAFF.map(d => d.id), ...m.map(i => i.id)];
-};
+/** trạng thái làm việc của một nhân viên, tạo mặc định cho linh thú chưa thuê */
+export const staffState = (id: StaffId) => (S.staff[id] ??= { hired: false, lv: 1, onDuty: false });
+/** linh thú Gacha đã có (kể cả chưa thuê) */
+export const ownedMascotIds = (): StaffId[] => ownedMascots().map(i => { staffState(i.id); return i.id; });
+/** thợ bánh: 3 bé, và linh thú Gacha chỉ khi đã chọn thuê làm thợ */
+export const staffIds = (): StaffId[] => [...STAFF.map(d => d.id), ...ownedMascots().filter(i => staffState(i.id).hired).map(i => i.id)];
 export const staffDef = (id: StaffId): StaffDef => STAFF.find(s => s.id === id) ?? { id, role: "Thợ bánh", unlock: 0, train: MASCOT_TRAIN[gachaItem(id)?.rarity ?? "common"], effect: [] };
 export const canHire = (id: StaffId) => lvl() >= staffDef(id).unlock;
-/** linh thú Gacha (không phải 3 bé thợ bánh): không ăn, thuê có phí */
+/** linh thú Gacha (không phải 3 bé thợ bánh): thuê có phí, ăn và nhận thưởng như các bé, thêm buff giá bánh và tip */
 export const isMascotStaff = (id: StaffId) => !!gachaItem(id)?.mascot;
 export const hireFee = (id: StaffId) => { const it = gachaItem(id); return it?.mascot ? MASCOT_HIRE[it.rarity].fee : 0; };
 /** buff của linh thú đã thuê theo bậc: giá bánh bé làm ra và tip cộng thêm (phân số) */
@@ -145,11 +145,11 @@ export const mealFor = (id: StaffId, have: (f: FoodId) => number = foodOf): Food
   return order.find(f => have(f.id) > 0)?.id ?? null;
 };
 /* ăn món kém hơn bậc của mình thì làm chậm thêm 25% mỗi bậc */
-export const mealSlow = (id: StaffId, meal: FoodId) => isMascotStaff(id) ? 1 : 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
+export const mealSlow = (id: StaffId, meal: FoodId) => 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
 /** bữa ăn dự kiến của các bé đi làm: kho dùng chung nên mỗi bé lấy phần của mình trước khi tới bé sau (giống lúc mở ca) */
 export function crewPlan() {
   const left = Object.fromEntries(FOODS.map(f => [f.id, foodOf(f.id)])) as Record<FoodId, number>;
-  return staffIds().filter(sid => onDuty(sid) && !isMascotStaff(sid)).map(sid => ({ id: sid })).sort((a, b) => (S.staff[b.id].prio ?? 0) - (S.staff[a.id].prio ?? 0)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
+  return staffIds().filter(sid => onDuty(sid)).map(sid => ({ id: sid })).sort((a, b) => (S.staff[b.id].prio ?? 0) - (S.staff[a.id].prio ?? 0)).map(d => { const meal = mealFor(d.id, f => left[f]); if (meal) left[meal]--; return { id: d.id, meal }; });
 }
 /** bữa của một bé: đi làm thì theo kế hoạch chung, đang nghỉ thì chỉ xem món nào còn trong kho */
 export const plannedMeal = (id: StaffId): FoodId | null => (onDuty(id) ? crewPlan().find(x => x.id === id)?.meal ?? null : mealFor(id));
@@ -169,14 +169,13 @@ export function train(id: StaffId) {
 }
 /* Đầu ca: các bé đi làm ăn lương trước. Bé nào không còn đồ ăn thì nghỉ ca này.
    Trả về giá trị đồ ăn đã dùng (để tính lãi) và các bé phải nghỉ vì đói */
-export function payCrew(): { cost: number; fed: { id: StaffId; meal: FoodId | null }[]; hungry: StaffId[] } {
-  const out = { cost: 0, fed: [] as { id: StaffId; meal: FoodId | null }[], hungry: [] as StaffId[] };
+export function payCrew(): { cost: number; fed: { id: StaffId; meal: FoodId }[]; hungry: StaffId[] } {
+  const out = { cost: 0, fed: [] as { id: StaffId; meal: FoodId }[], hungry: [] as StaffId[] };
   crewPlan().forEach(({ id }) => {
     const meal = mealFor(id);                 // tính lại lúc ăn: bé trước đã lấy phần thì bé sau xét kho còn lại
     if (!meal) { S.staff[id].onDuty = false; out.hungry.push(id); return; }
     S.food[meal] = foodOf(meal) - 1; out.cost += foodDef(meal).cost; out.fed.push({ id, meal });
   });
-  staffIds().filter(id => isMascotStaff(id) && onDuty(id)).forEach(id => out.fed.push({ id, meal: null }));   // linh thú Gacha đi làm không cần ăn
   save(); return out;
 }
 
