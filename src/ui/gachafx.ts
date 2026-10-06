@@ -1,6 +1,7 @@
 /* Hiệu ứng quay gacha: phim triệu hồi dựng bằng canvas (gachawarp.ts) + hạt/rung/chớp + âm thanh tổng hợp.
    Thường ~6s, Hiếm ~4,5s (sóng xung kích, chữ HIẾM), Cực hiếm ~9s (huy hiệu vàng, ba sao, chớp trắng, pháo giấy, cánh sáng).
    Chạm để bỏ qua. Quay 10 lần: sau phim là 10 thẻ lật lần lượt, thẻ hiếm bung hạt khi lật. */
+import { rarityText } from "./badges";
 import { sfx } from "../audio/sound";
 import { RARITIES, RARITY, KIND_NAME, itemImg, type GachaItem, type Rarity } from "../content/gacha";
 import { roomItem } from "../content/room";
@@ -159,7 +160,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
     const img = await itemImageURL(it);
     out.innerHTML = `<div class="gr3"><div class="gr3-st" style="width:${stW}px;height:${stH}px;--g:${PAL[best][0]}">
       ${img.full ? `<div class="gr3-fa" style="background-image:url(${img.url})"></div>` : ""}
-      <div class="gr3-tt"><i class="gr3-ic"></i><span>THẺ ${RARITY[best].n.toUpperCase()}<small>(${best === "ultra" ? 5 : best === "rare" ? 4 : 3}★)</small></span></div>
+      <div class="gr3-tt gr3-rl">${rarityText(best, 168)}</div>
       <div class="gr3-info"><div class="gr3-stars">${Array.from({ length: best === "ultra" ? 5 : best === "rare" ? 4 : 3 }, () => `<i></i>`).join("")}</div>
         <b>${esc(it.n)}</b><em>${esc(KIND_NAME[it.kind])}${previewMode ? " · Xem trước" : results.length === 1 ? (star.isNew ? " · Mới!" : ` · Trùng, +${star.dust} Bụi sao`) : ""}</em><span>${esc(it.desc || DESC[best])}</span>
         <button class="b3 gr3-ok">${results.length > 1 ? "Tiếp tục" : "OK"}</button></div></div></div>`;

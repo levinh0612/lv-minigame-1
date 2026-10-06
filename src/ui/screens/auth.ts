@@ -3,8 +3,9 @@
 import { sfx } from "../../audio/sound";
 import { PETS } from "../../content/game";
 import { S, meLook } from "../../engine/state";
-import { hydratePortraits, portraitHTML } from "../portrait";
 import { guestSVG } from "../art";
+import { lvl } from "../../engine/progress";
+import { levelBadge, levelFrame } from "../badges";
 import { account, checkName, login, logout, pinTriesLeft, question, register, resetPin, unlock } from "../../net/cloud";
 import { petSVG } from "../art";
 import { $, esc, haptic, toast } from "../dom";
@@ -38,12 +39,13 @@ export function authHTML(v?: View) {
       <button class="b3" id="aGo">Đặt PIN mới</button>`
     : `<label class="field">Tên tiệm${userInput(fUser || account())}</label><button class="b3" id="aQn">Tiếp</button>`}
     <button class="alink" data-av="${account() ? "lock" : "login"}">← Quay lại</button>`;
-  if (view === "lock") body = `<div class="lk-av"><i class="lk-ring"></i>${portraitHTML(S.me.sprite, S.me, 112, guestSVG({ ...meLook(), mood: "happy" }, 112), "", true)}</div>
+  if (view === "lock") body = `<div class="lk-av">${guestSVG({ ...meLook(), mood: "happy", ledge: false }, 96)}${levelFrame(lvl())}<span class="lk-lv">${levelBadge(lvl(), 36)}</span></div>
     <h2>Chào ${esc(account())}!</h2><p class="asub">Nhập PIN để mở tiệm</p>
-    <div class="dots" id="aDots">${[0, 1, 2, 3].map(i => `<i class="${i < pin.length ? "on" : ""}"></i>`).join("")}</div>
-    <div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-key="${n}">${n}</button>`).join("")}<button class="alink" data-av="forgot">Quên PIN?</button><button data-key="0">0</button><button data-key="del" aria-label="Xoá">⌫</button></div>
+    <label class="pinbox" id="aBox" aria-label="Nhập mã PIN 4 số">${[0, 1, 2, 3].map(i => `<i data-i="${i}"></i>`).join("")}<input id="aPinLk" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="PIN"></label>
+    <p class="pinerr" id="aErr" role="alert"></p>
+    <button class="alink" data-av="forgot">Quên PIN?</button>
     <button class="alink lk-out" id="aOut">Đăng nhập tiệm khác</button>`;
-  setTimeout(() => { bind(); hydratePortraits(); }, 0);
+  setTimeout(bind, 0);
   return `<div class="scr auth4${view === "lock" ? " lock" : ""}" id="auth">${body}</div>`;
 }
 
@@ -86,7 +88,10 @@ function bind() {
     }));
   }
   if (view === "lock") {
-    root.querySelectorAll<HTMLButtonElement>("[data-key]").forEach(b => b.addEventListener("click", () => key(b.dataset.key!)));
+    const inp = $<HTMLInputElement>("#aPinLk")!;
+    inp.addEventListener("input", () => onPin(inp));
+    $("#aBox")!.addEventListener("click", () => inp.focus());
+    setTimeout(() => inp.focus(), 150);      // mở bàn phím số của máy (iOS có thể cần chạm vào ô một lần)
     $("#aOut")!.addEventListener("click", async e => {
       const b = e.currentTarget as HTMLButtonElement;
       if (b.dataset.arm !== "1") { b.dataset.arm = "1"; b.textContent = "Chạm lần nữa để đăng xuất tiệm này"; return; }
@@ -94,15 +99,32 @@ function bind() {
     });
   }
 }
-async function key(k: string) {
-  sfx("tap"); haptic(6);
-  pin = k === "del" ? pin.slice(0, -1) : (pin + k).slice(0, 4);
-  const dots = $("#aDots"); if (dots) dots.innerHTML = [0, 1, 2, 3].map(i => `<i class="${i < pin.length ? "on" : ""}"></i>`).join("");
-  if (pin.length < 4) return;
-  const r = await unlock(pin);
-  if (r === "ok") return done(`Chào ${account()} ♥`);
-  pin = ""; sfx("wrong"); haptic([60, 40, 60]); bump();
-  if (r === "out") { toast("Sai PIN 5 lần, đăng nhập lại bằng tên tiệm và PIN nha"); fUser = account(); show("login"); }
-  else toast(`Sai PIN, còn ${pinTriesLeft()} lần`);
+/** các ô PIN: số cũ hiện dấu chấm, số vừa gõ hiện rõ chừng 0,7 giây rồi cũng ẩn */
+let maskT = 0;
+function paint(showLast: boolean) {
+  const cells = document.querySelectorAll<HTMLElement>("#aBox i");
+  cells.forEach((c, i) => {
+    const has = i < pin.length, last = i === pin.length - 1;
+    c.className = has ? "on" : ""; c.textContent = has ? (showLast && last ? pin[i]! : "•") : "";
+  });
+  clearTimeout(maskT); if (showLast && pin.length) maskT = window.setTimeout(() => paint(false), 700);
 }
-function bump() { const d = $("#aDots"); if (!d) return; d.innerHTML = "<i></i><i></i><i></i><i></i>"; d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake"); }
+let busy = false;
+async function onPin(inp: HTMLInputElement) {
+  if (busy) { inp.value = pin; return; }
+  const before = pin.length; pin = inp.value.replace(/\D/g, "").slice(0, 4); inp.value = pin;
+  if (pin.length > before) { sfx("tap"); haptic(6); }
+  const err = $("#aErr"); if (err) err.textContent = "";
+  paint(pin.length > before);
+  if (pin.length < 4) return;
+  busy = true; inp.blur();
+  try {
+    const r = await unlock(pin);
+    if (r === "ok") return done(`Chào ${account()} ♥`);
+    pin = ""; inp.value = ""; sfx("wrong"); haptic([60, 40, 60]); bump();
+    if (r === "out") { toast("Sai PIN 5 lần, đăng nhập lại bằng tên tiệm và PIN nha"); fUser = account(); show("login"); return; }
+    const msg = `Sai PIN, còn ${pinTriesLeft()} lần`; if (err) err.textContent = msg; toast(msg);
+    paint(false); inp.focus();
+  } finally { busy = false; }
+}
+function bump() { const d = $("#aBox"); if (!d) return; d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake"); }

@@ -1989,3 +1989,40 @@ button.pcrew{width:100%;text-align:left;font:inherit}
 /* tạm bỏ vòng XP quanh avatar (xem kinh nghiệm trong Hồ sơ); chữ nằm trên cánh khung */
 .pc-av::before{display:none}
 .pc-top .pc-t{position:relative;z-index:3}
+
+/* màn khoá: avatar có khung theo cấp (ảnh) thay vòng màu cũ */
+.lk-av{margin:38px 0 30px}.lk-ring{display:none}
+.lk-av .lvf.lvfimg{width:236px}
+.lk-lv{position:absolute;right:-4px;bottom:-4px;z-index:3;width:40px;height:40px}
+
+/* thẻ tiệm: avatar to hơn và có chỗ riêng để khung nằm gọn trong thẻ */
+.pc-av{width:84px;height:84px;margin:14px 12px 14px 8px}
+.pc-av .lvf.lvfimg,.pc-av>img.lvf{width:186px}
+.pc-lv.bdg{right:-6px;bottom:-4px}
+.pc-av.vis{font-size:38px}
+
+/* thẻ tiệm: avatar 2D, khung nhỏ lại cho hài hoà */
+.pc-av{width:72px;height:72px;margin:12px 12px 12px 6px}
+.pc-av .lvf.lvfimg,.pc-av>img.lvf{width:150px}
+.pc-av>svg:not(.lvf){position:relative;z-index:1}
+/* màn khoá: nền phẳng như màn chính, 4 ô PIN dùng bàn phím số của máy */
+.auth4.lock{background:var(--bg)}
+.lk-av .lvf.lvfimg{width:200px}.lk-av{margin:34px 0 26px;width:96px;height:96px}
+.lk-av>svg:not(.lvf){border-radius:50%;background:var(--pink-l);box-shadow:inset 0 0 0 3px #fff}
+.pinbox{position:relative;display:flex;gap:12px;margin:12px 0 4px;cursor:text}
+.pinbox i{width:54px;height:64px;border-radius:18px;background:#fff;border:2.5px solid var(--pink-b);box-shadow:0 3px 0 var(--sh);display:grid;place-items:center;font:800 28px var(--display);font-style:normal;color:var(--ink2);transition:border-color .15s}
+.pinbox i.on{border-color:var(--pink)}
+.pinbox:focus-within i:not(.on):first-of-type,.pinbox:focus-within i.on+i:not(.on){border-color:var(--pink);box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 25%,transparent),0 3px 0 var(--sh)}
+.pinbox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;background:none;caret-color:transparent}
+.pinbox.shake{animation:shake .45s ease}
+.pinerr{min-height:20px;margin:0 0 8px;font:800 13px var(--body);color:var(--k-d14e73)}
+.auth4.lock .alink{padding:8px 12px}.auth4.lock .lk-out{margin-top:2px}
+
+/* độ hiếm bằng ảnh: sao phát sáng và chữ có hoa văn */
+.rar-ic{display:inline-block;vertical-align:middle;margin:-3px 3px -3px 0;filter:drop-shadow(0 0 4px rgba(255,255,255,.4))}
+.rar-tx{display:block;height:auto;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+.gtag.rlock{top:-6px;left:-4px;padding:0;background:none;border-radius:0}
+.gr3-tt.gr3-rl{display:block;text-shadow:none;letter-spacing:0}
+.itm-chips .rar .rar-ic{margin:-2px 3px -2px 0;filter:none}
+.grates span .rar-ic{margin:-3px 4px -3px 0}
+.gr3-tt .rar-tx{filter:drop-shadow(0 0 3px rgba(0,0,0,.75)) drop-shadow(0 2px 8px rgba(0,0,0,.55))}

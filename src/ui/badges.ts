@@ -47,3 +47,10 @@ export function levelFrame(lv: number) {
   const i = lvTier(lv);
   return `<img class="lvf lvfimg lvf${i}" src="/badges/frame-${i}.webp" alt="" width="306" height="281" decoding="async" aria-hidden="true">`;
 }
+
+/* ===== Độ hiếm Thường / Hiếm / Cực hiếm: ngôi sao phát sáng (icon) và chữ có hoa văn (text), ảnh trong public/gacha/rarity ===== */
+type RarityId = "common" | "rare" | "ultra";
+/** ngôi sao phát sáng của độ hiếm, w là chiều rộng hiển thị (ảnh tỉ lệ 3:4) */
+export const rarityIcon = (r: RarityId, w = 22) => `<img class="rar-ic" src="/gacha/rarity/icon-${r}.webp" alt="" width="${w}" height="${Math.round(w * 1.333)}" decoding="async" draggable="false">`;
+/** chữ độ hiếm có hoa văn và sao nhỏ (ảnh tỉ lệ 300:211), alt là tên độ hiếm */
+export const rarityText = (r: RarityId, w = 120) => `<img class="rar-tx" src="/gacha/rarity/text-${r}.webp" alt="${{ common: "Thường", rare: "Hiếm", ultra: "Cực hiếm" }[r]}" width="${w}" height="${Math.round(w * 0.703)}" decoding="async" draggable="false">`;

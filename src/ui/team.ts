@@ -12,7 +12,7 @@ import { clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, typ
 import { S, petName, petState, save } from "../engine/state";
 import { fmtN, roman } from "../engine/util";
 import { render } from "./app";
-import { tierBadge } from "./badges";
+import { rarityIcon, tierBadge } from "./badges";
 import { petSVG, foodSVG } from "./art";
 import { bump, confirmSpend, dropModal, esc, floatHearts, heartRow, modal, toast } from "./dom";
 import { gachaArt } from "./gachafx";
@@ -141,7 +141,7 @@ function itemBody(id: string) {
   const place = has ? `<div class="itm-sec"><h4>Đặt vào tầng</h4><div class="itm-floors">${Array.from({ length: n }, (_, f) => `<button class="${f === at ? "on" : ""}" data-tm="put:${id}:${f}">Tầng ${f + 1}</button>`).join("")}${at >= 0 ? `<button class="off" data-tm="clear:${id}">Cất</button>` : ""}</div></div>` : "";
   const hire = it.mascot && has ? (hired ? `<div class="itm-ok"><b>✓ Đang làm thợ bánh</b><span>Bậc ${roman(staffState(id).lv)} · xem ở tab Thợ bánh</span></div>` : `<button class="b3 itm-hire" data-tm="hire:${id}" ${S.coins < hireFee(id) ? "disabled" : ""}>Thuê làm thợ bánh · ${fmtN(hireFee(id))} xu<small>không bắt buộc, bé vẫn đứng tầng được</small></button>`) : "";
   return `<div class="itm" style="--rc:${R.c}"><div class="itm-hero"><div class="itm-art">${gachaArt(it, 96)}</div>
-      <div class="itm-id"><b>${esc(it.n)}</b><div class="itm-chips"><span class="rar">${R.n}</span>${roleTag(it)}${tags}</div></div></div>
+      <div class="itm-id"><b>${esc(it.n)}</b><div class="itm-chips"><span class="rar">${rarityIcon(it.rarity, 12)}${R.n}</span>${roleTag(it)}${tags}</div></div></div>
     <div class="itm-buff"><i aria-hidden="true">✦</i><div><small>Chỉ số khi đứng tầng</small><b>${esc(fxOf(it))}</b></div></div>
     <div class="itm-src"><i aria-hidden="true">🎁</i><div><small>Nguồn</small><b>Triệu hồi Gacha</b><span>Nhóm ${R.n} · ${has ? `đã có x${S.gacha.owned[id] ?? 1}` : "chưa có"}</span></div>
       <button data-tm="gacha:${id}">${has ? "Xem" : "Triệu hồi"}</button></div>
