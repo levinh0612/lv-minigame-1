@@ -37,8 +37,9 @@ const card = (r: PullResult, px: number, live: boolean) => {
   return `<div class="gcard r-${r.item.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span><div class="gimg">${gachaArt(r.item, px, live)}</div>
     <b>${esc(r.item.n)}</b><small>${KIND_NAME[r.item.kind]}</small>${previewMode ? `<em class="gnew">Xem trước</em>` : r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">Trùng · +${r.dust} Bụi sao</em>`}</div>`;
 };
-const gridCard = (r: PullResult) => { const R = RARITY[r.item.rarity];
-  return `<div class="gcard r-${r.item.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><div class="gimg">${gachaArt(r.item, 52, false)}</div><b>${esc(r.item.n)}</b>${r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">+${r.dust} ✦</em>`}</div>`; };
+const gridCard = (r: PullResult) => { const k = r.item.rarity;
+  return `<div class="mc r-${k}" style="--bg:url(/gacha/fx2/bg-${k}.webp);--rc:${RARITY[k].c}"><div class="mc-art">${gachaArt(r.item, 64, false)}</div>
+    <b>${esc(r.item.n)}</b>${r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="mc-dup">+${r.dust} ✦</em>`}<i class="mc-fr" style="border-image-source:url(/gacha/frames/card-${k}.webp)"></i></div>`; };
 const STARS: Record<Rarity, string> = { common: "★", rare: "★★", ultra: "★★★" };
 /** màn "vật phẩm hiện to" trước khi ra thẻ: mỗi loại có chuyển động riêng (nhân vật bước vào, thú nảy, bánh xoay, trang trí lật) */
 function heroHTML(r: PullResult, px: number) {
@@ -108,7 +109,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
       const sorted = [...results].sort((a, b) => rk[b.item.rarity] - rk[a.item.rarity] || Number(b.isNew) - Number(a.isNew));   // hiếm nhất lên đầu
       const news = results.filter(x => x.isNew).length, dust = results.reduce((a, x) => a + x.dust, 0);
       out.innerHTML = `<div class="gmulti"><h2>Triệu hồi ${results.length} lần</h2><p>${news} món mới${dust ? ` · +${fmtN(dust)} Bụi sao` : ""}</p>
-        <div class="ggrid">${sorted.map(x => `<div class="gflip r-${x.item.rarity}" style="--rc:${RARITY[x.item.rarity].c}"><div class="gface front">${gridCard(x)}</div><div class="gface back"><span>★</span></div></div>`).join("")}</div>
+        <div class="ggrid">${sorted.map(x => `<div class="gflip r-${x.item.rarity}" style="--rc:${RARITY[x.item.rarity].c}"><div class="gface front">${gridCard(x)}</div><div class="gface back" style="background-image:url(/gacha/fx2/back-${x.item.rarity}.webp)"></div></div>`).join("")}</div>
         <button class="b3 gok" disabled>OK</button></div>`;
       const flips = [...out.querySelectorAll<HTMLElement>(".gflip")], ok = out.querySelector<HTMLButtonElement>(".gok")!;
       flips.forEach((el, i) => at(300 + (flips.length - 1 - i) * 230, () => {      // lật từ thẻ thấp lên cao, thẻ hiếm nhất lật cuối

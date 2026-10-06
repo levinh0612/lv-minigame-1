@@ -233,3 +233,13 @@ if (location.search) history.replaceState(null, "", location.pathname + location
 // vừa cập nhật xong: cho xem có gì mới (một lần)
 const prevVer = justUpdated();
 if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) whatsNew(prevVer); }, 1200);
+
+/* đo chênh lệch giữa chiều cao màn hình và khung nhìn (iPhone chạy từ icon màn hình chính), để phủ kín dải trắng dưới chân */
+function fitViewport() {
+  const standalone = (navigator as { standalone?: boolean }).standalone || matchMedia("(display-mode: standalone)").matches;
+  const gap = standalone && innerHeight > innerWidth ? Math.round(screen.height - innerHeight) : 0;
+  const ok = gap >= 8 && gap <= 120;
+  document.documentElement.classList.toggle("vgap", ok);
+  document.documentElement.style.setProperty("--vgap", ok ? gap + "px" : "0px");
+}
+fitViewport(); addEventListener("resize", fitViewport); addEventListener("orientationchange", () => setTimeout(fitViewport, 300));
