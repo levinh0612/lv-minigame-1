@@ -32,7 +32,7 @@ export function staffBodyHTML() {
       <small>${role(it)}${has ? (at >= 0 ? `Đang ở tầng ${at + 1}` : `Chạm để đặt vào tầng ${floor + 1}`) : "Chưa có · Triệu hồi ›"}</small><i class="gdot">${R.n}</i></button>`;
   }).join("");
   return `<div class="stf-floors">${Array.from({ length: floorCount() }, (_, f) => `<button class="${f === floor ? "on" : ""}" data-sact="floor:${f}">Tầng ${f + 1}</button>`).join("")}</div>
-    <div class="stf-cur">${current("mgr", "Quản lý")}${current("mascot", "Linh thú")}</div>
+    <div class="stf-cur one">${current(tab(), tab() === "mgr" ? "Quản lý" : "Linh thú")}</div>
     <div class="gitems stf-grid">${cards}</div>`;
 }
 
