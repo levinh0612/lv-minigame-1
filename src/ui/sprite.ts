@@ -47,7 +47,7 @@ const PET_MOODS = ["happy", "open", "wink", "impatient", "love", "wave"];
  *  Gọi một lần lúc mở app; chưa xong thì khách dùng ảnh gốc chưa tô màu. */
 export function loadSprites(): Promise<void> {
   const pets = Object.keys(PET_SIZE).flatMap(id => PET_MOODS.map(m => new Promise<void>(res => {
-    const i = new Image(); i.onload = i.onerror = () => res(); i.src = `/chars/pets/${id}-${m}.png`;
+    const i = new Image(); i.onload = i.onerror = () => res(); i.src = `/chars/pets/${id}-${m}.webp`;
   })));
   return Promise.all([...pets, ...Object.entries(SPRITES).map(([id, def]) => new Promise<void>(res => {
     const i = new Image();

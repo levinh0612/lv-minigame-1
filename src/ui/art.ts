@@ -89,7 +89,7 @@ export function cakeAnySVG(p: CakeParts & { up?: readonly (readonly [number | nu
 export function petSVG(p: PetLook & { mood?: Mood }, S = 90){
   const [w, h] = PET_SIZE[p.pet], H = Math.round(120 * h / w), file = p.wave ? "wave" : p.mood || "happy";
   const px = Math.round(S * .77 * w / h);   // ảnh cao hơn bản vẽ cũ: giữ chiều cao tương đương S × 0.77 để các khung cũ vẫn vừa
-  return `<svg width="${px}" height="${Math.round(px*H/120)}" viewBox="0 0 120 ${H}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><image href="/chars/pets/${p.pet}-${file}.png" width="120" height="${H}"/>${p.ledge !== false ? `<path d="M-6 ${H} H126"/>` : ""}</svg>`;
+  return `<svg width="${px}" height="${Math.round(px*H/120)}" viewBox="0 0 120 ${H}" style="display:block;overflow:visible;flex:none" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><image href="/chars/pets/${p.pet}-${file}.webp" width="120" height="${H}"/>${p.ledge !== false ? `<path d="M-6 ${H} H126"/>` : ""}</svg>`;
 }
 
 /* Khách (nam/nữ): ảnh vẽ sẵn tô lại màu theo từng khách, thỉnh thoảng chớp mắt; ló nửa người sau quầy */

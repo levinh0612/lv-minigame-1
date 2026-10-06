@@ -10,7 +10,6 @@ import { S, save } from "./state";
 import { spend } from "./wallet";
 
 export interface PullResult { item: GachaItem; isNew: boolean; dust: number; count: number }
-export const ticketsOf = () => S.gacha.tickets;
 export const countOf = (id: string) => S.gacha.owned[id] ?? 0;
 export const hasItem = (id: string) => countOf(id) > 0;
 

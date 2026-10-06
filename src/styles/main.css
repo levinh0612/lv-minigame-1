@@ -1369,8 +1369,6 @@ button.cm{position:relative}
 /* ---- phim gacha v2 ---- */
 .gfx-world{inset:0;position:absolute}.gfx-world>*{position:absolute}
 .gfx-cv{inset:0;width:100%;height:100%;pointer-events:none}
-.gfx-vid{inset:0;width:100%;height:100%;object-fit:contain;background:#05040f;z-index:1}@media (min-aspect-ratio:1/1){.gfx-vid{object-fit:cover}}
-@media (max-aspect-ratio:1/1){.gfx-vid{object-fit:cover}}
 .gfx-warp{inset:0;width:100%;height:100%;z-index:1}.gfx-cv{z-index:2}.gfx-banner{z-index:3}
 .gfx-flash{opacity:0;pointer-events:none}
 .gfx-flash.soft{animation:gflash .7s ease-out forwards}

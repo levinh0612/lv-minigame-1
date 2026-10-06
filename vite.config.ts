@@ -30,13 +30,14 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
+        globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}", "chars/**/*.webp"],
         globIgnores: ["storybook.html", "assets/storybook-*", "splash/**"],
         navigateFallbackDenylist: [/storybook/, /^\/api\//],
         importScripts: ["push-sw.js"],
         navigateFallback: "/index.html",
         runtimeCaching: [
           { urlPattern: /\/bg\/.*\.jpg$/, handler: "CacheFirst", options: { cacheName: "sky-bg", expiration: { maxEntries: 6 }, cacheableResponse: { statuses: [200] } } },
+          { urlPattern: /\/gacha\/.*\.webp$/, handler: "CacheFirst", options: { cacheName: "gacha-img", expiration: { maxEntries: 90 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /\/models\/.*\.(glb|jpg)$/, handler: "CacheFirst", options: { cacheName: "models-3d", expiration: { maxEntries: 24 }, cacheableResponse: { statuses: [200] } } },
           { urlPattern: /^https:\/\/fonts\.googleapis\.com\//, handler: "StaleWhileRevalidate", options: { cacheName: "google-fonts-css" } },
           { urlPattern: /^https:\/\/fonts\.gstatic\.com\//, handler: "CacheFirst",

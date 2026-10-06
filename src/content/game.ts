@@ -33,14 +33,12 @@ const MORE_RECIPES: Recipe[] = ([
 ] as [string, number, number, number, number, number][]).map(([n, base, cream, top, lv, price], i) => ({ id: "r" + (BASIC_RECIPES.length + i + 1), n, base, cream, top, lv, price }));
 export const RECIPES: Recipe[] = [...BASIC_RECIPES, ...MORE_RECIPES];
 // Lv 1 mở sẵn 4 công thức, sau đó mỗi cấp mở thêm 1 (tới Lv 6)
-export const recipeOf = (b: Build) => RECIPES.find(r => r.base === b.base && r.cream === b.cream && r.top === b.top);
-export const partsText = (r: Recipe) => `${CATS.base[r.base][0]} · ${CATS.cream[r.cream][0]} · ${CATS.top[r.top][0]}`;
 
 /* Nhân vật */
 export type Mood = "happy" | "open" | "wink" | "impatient" | "love";
 /** Khách: nam hoặc nữ, vẽ bằng ảnh `sprite` (xem SPRITES) và tô lại màu theo hair/skin/eye/coat/shirt */
 export interface GuestLook { gender: "girl" | "boy"; sprite: string; hair?: string; skin?: string; eye?: string; coat?: string; shirt?: string; ledge?: boolean }
-/** Thú cưng của tiệm: mỗi biểu cảm là một ảnh riêng (public/chars/pets/<id>-<mood>.png) */
+/** Thú cưng của tiệm: mỗi biểu cảm là một ảnh riêng (public/chars/pets/<id>-<mood>.webp) */
 export interface PetLook { pet: PetId; wave?: boolean; ledge?: boolean; paws?: boolean }
 export type Look = GuestLook;
 
@@ -50,10 +48,10 @@ export const PET_SIZE: Record<PetId, [number, number]> = { dog: [256, 241], gold
 /** Nhân vật vẽ sẵn (ảnh trong public/chars), đổi màu bằng ui/sprite.ts.
  *  w,h: cỡ ảnh. skin: màu da gốc. eyes: [tâm x, tâm y, nửa rộng, nửa cao] của từng mắt (để chớp mắt). */
 export interface SpriteDef { src: string; w: number; h: number; skin: string; eyes: [number, number, number, number][] }
-const FEMALE = (n: number, w: number, eyes: SpriteDef["eyes"]): SpriteDef => ({ src: `/chars/g${n}.png`, w, h: 400, skin: "#FCD2B2", eyes });
-const MALE = (n: number, w: number, eyes: SpriteDef["eyes"]): SpriteDef => ({ src: `/chars/b${n}.png`, w, h: 400, skin: "#F3C39A", eyes });
+const FEMALE = (n: number, w: number, eyes: SpriteDef["eyes"]): SpriteDef => ({ src: `/chars/g${n}.webp`, w, h: 400, skin: "#FCD2B2", eyes });
+const MALE = (n: number, w: number, eyes: SpriteDef["eyes"]): SpriteDef => ({ src: `/chars/b${n}.webp`, w, h: 400, skin: "#F3C39A", eyes });
 export const SPRITES: Record<string, SpriteDef> = {
-  boy: { src: "/chars/anh.png", w: 279, h: 312, skin: "#F3C39A", eyes: [[145, 189, 22, 19]] },   // riêng cho "Anh"
+  boy: { src: "/chars/anh.webp", w: 279, h: 312, skin: "#F3C39A", eyes: [[145, 189, 22, 19]] },   // riêng cho "Anh"
   b1: MALE(1, 266, [[156, 189, 13, 19], [210, 183, 9, 17]]),   // tóc dựng, hoodie
   b2: MALE(2, 285, [[161, 192, 13, 19], [216, 187, 9, 17]]),   // tóc xoăn, áo len cổ sơ mi
   b3: MALE(3, 274, [[149, 190, 13, 16], [205, 183, 9, 15]]),   // tóc vuốt, áo khoác jean
@@ -95,8 +93,6 @@ export const STYLE_NAME: Record<string, string> = Object.fromEntries(STYLES);
 /** người chơi cũ chọn theo mã nhân vật (b2, g3...): ánh xạ sang kiểu đầu tương ứng */
 export const STYLE_OF: Record<string, string> = { b2: "beanie", b3: "headband", b4: "bun", b5: "glasses", b6: "ears", g2: "bow", g3: "ears", g4: "flower", g5: "glasses", g6: "twinbows" };
 export const styleOf = (me: { sprite: string; style?: string }) => me.style ?? STYLE_OF[me.sprite] ?? "";
-export const PANTS = ["#2A2A33", "#3A4A6B", "#6B3F22", "#5A6B4A", "#8A3D55", "#E8E1D4"];
-export const SHOES = ["#F2E6D0", "#E7B872", "#2E4A7A", "#8A3D55", "#3D7A55", "#2B1A1A"];
 export const SHIRT = ["#8A3D55", "#F2E6D0", "#C9962E", "#2E4A7A", "#3D7A55"];
 
 /* Đồ trang trí: pv = hình trong thẻ, rm = hình trong phòng */

@@ -5,7 +5,6 @@ import { sfx } from "../audio/sound";
 import { RARITIES, RARITY, KIND_NAME, itemImg, type GachaItem, type Rarity } from "../content/gacha";
 import { roomItem } from "../content/room";
 import type { PullResult } from "../engine/gacha";
-import { S } from "../engine/state";
 import { fmtN } from "../engine/util";
 import { cakeSVG, guestSVG } from "./art";
 import { esc } from "./dom";
@@ -13,7 +12,7 @@ import { createVFX, shake } from "./gachavfx";
 import { runWarp, WARP_MS } from "./gachawarp";
 import { mountTurntable } from "../scene/glbview";
 import { hydratePortraits, portraitHTML } from "./portrait";
-import { createReveal3d, type Reveal3d } from "./gachareveal3d";
+import type { Reveal3d } from "./gachareveal3d";
 
 export const LOOK = { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" };
 const PAL: Record<Rarity, string[]> = {
@@ -75,13 +74,12 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
   root.className = `gfx r-${best}${use3d ? " is3d" : ""}`; root.style.cssText = `--rc:${R.c};--rc2:${R.c2};--d:${WARP_MS[best]}ms`;
   root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "Kết quả triệu hồi");
   root.innerHTML = `<div class="gfx-world"><div class="gfx-bg"></div><div class="gfx-rays"></div><canvas class="gfx-cv"></canvas>
-      <video class="gfx-vid" playsinline preload="none"></video><canvas class="gfx-warp"></canvas>${BANNER[best] ? `<div class="gfx-banner"><span>${BANNER[best]}</span></div>` : ""}</div>
+      <canvas class="gfx-warp"></canvas>${BANNER[best] ? `<div class="gfx-banner"><span>${BANNER[best]}</span></div>` : ""}</div>
     <div class="gfx-flash"></div><div class="gfx-hint">Chạm để bỏ qua</div><div class="gfx-out"></div>`;
   document.body.appendChild(root);
   const world = root.querySelector<HTMLElement>(".gfx-world")!, out = root.querySelector<HTMLElement>(".gfx-out")!;
-  const vid = root.querySelector<HTMLVideoElement>(".gfx-vid")!, wcv = root.querySelector<HTMLCanvasElement>(".gfx-warp")!;
+  const wcv = root.querySelector<HTMLCanvasElement>(".gfx-warp")!;
   let warp: ReturnType<typeof runWarp> | null = null;
-  vid.muted = !S.sound; vid.volume = .8;
   const vfx = createVFX(root.querySelector<HTMLCanvasElement>(".gfx-cv")!, cols);
   const timers: number[] = [], at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
   const flash = (cls: string) => { const f = root.querySelector<HTMLElement>(".gfx-flash")!; f.className = "gfx-flash"; void f.offsetWidth; f.classList.add(cls); };
@@ -90,7 +88,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
 
   const show = () => {
     if (shown) return; shown = true; timers.forEach(clearTimeout);
-    warp?.stop(); vid.pause(); vid.remove(); vfx.setCharge(0); cls("p1", "s2", "s3", "s4", "p3", "p4"); flash("soft");
+    warp?.stop(); vfx.setCharge(0); cls("p1", "s2", "s3", "s4", "p3", "p4"); flash("soft");
     if (best !== "common") vfx.setEmbers(best === "ultra" ? 1.2 : .7);
     const buildCard = () => {
     if (results.length === 1) {
@@ -137,7 +135,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
   /* ---- phương án dự phòng (video lỗi/không phát được): phim vẽ bằng canvas theo mốc tỷ lệ thời gian (WARP_MS) ---- */
   const fallback = () => {
   if (shown) return;
-  vid.remove(); warp = runWarp(wcv, best);
+  warp = runWarp(wcv, best);
   const wob = (amp: number, ms: number) => shake(world, amp, ms), D = WARP_MS[best], T = (f: number) => Math.round(D * f);
   const burstEnd = () => { cls("p3", "s4"); vfx.setCharge(0); sfx("gboom"); wob(best === "ultra" ? 16 : best === "rare" ? 9 : 4, 600); };
   at(20, () => { cls("p1"); vfx.setCharge(.3); sfx(best === "common" ? "gcharge1" : best === "rare" ? "gcharge2" : "gcharge3"); if (best !== "common") vfx.setEmbers(.6); });
@@ -152,17 +150,8 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
   });
   at(T(.985), show);
   };
-  /* ---- phim cổ điển: phát đoạn video đã cắt (thường 0–6s, hiếm 9–13s, cực hiếm 14–23s của summon_animation.mp4); dùng khi máy không có WebGL ---- */
-  const startClassic = () => {
-  vid.src = `/gacha/summon-${best}${innerHeight > innerWidth ? "-v" : ""}.mp4`; vid.load();
-  wcv.style.display = "none";
-  cls("p1"); vfx.setEmbers(0);
-  vid.addEventListener("ended", () => { flash(best === "ultra" ? "white" : "soft"); at(250, show); });
-  vid.addEventListener("error", () => { wcv.style.display = ""; fallback(); });
-  at(WARP_MS[best] + 2500, show);                                                      // chốt chặn nếu video đứng
-  vid.play().then(() => { if (best === "ultra") at(WARP_MS[best] - 1200, () => root.classList.add("banner")); else if (best === "rare") at(WARP_MS[best] - 1500, () => root.classList.add("banner")); }).catch(() => { vid.muted = true; vid.play().catch(() => { wcv.style.display = ""; fallback(); }); });
-  root.addEventListener("click", () => { if (!shown) show(); });
-  };
+  /* ---- phim dự phòng vẽ bằng canvas, dùng khi máy không có WebGL ---- */
+  const startClassic = () => { wcv.style.display = ""; fallback(); root.addEventListener("click", () => { if (!shown) show(); }); };
 
   /* ---- phim Three.js: 5 bước theo bản thiết kế, chữ và nút là lớp HTML phủ lên ---- */
   const run3d = async () => {
@@ -175,10 +164,10 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
         <b>${esc(it.n)}</b><em>${esc(KIND_NAME[it.kind])}${previewMode ? " · Xem trước" : results.length === 1 ? (star.isNew ? " · Mới!" : ` · Trùng, +${star.dust} Bụi sao`) : ""}</em><span>${esc(it.desc || DESC[best])}</span>
         <button class="b3 gr3-ok">${results.length > 1 ? "Tiếp tục" : "OK"}</button></div></div></div>`;
     const st = out.querySelector<HTMLElement>(".gr3-st")!, okb = out.querySelector<HTMLButtonElement>(".gr3-ok")!;
-    const icUrl = `url(/gacha/fx/star-${best}.png)`; st.style.setProperty("--ic", icUrl);
+    const icUrl = `url(/gacha/fx/star-${best}.webp)`; st.style.setProperty("--ic", icUrl);
     const rtp = new URLSearchParams(location.search).get("rt");
     let h: Reveal3d | null = null, iv = 0, closed = false;
-    h = await createReveal3d({ host: st, rar: best, img: img.url, full: img.full, fallbackText: it.n, w: stW, h: stH, frozenT: rtp ? +rtp : undefined,
+    h = await (await import("./gachareveal3d")).createReveal3d({ host: st, rar: best, img: img.url, full: img.full, fallbackText: it.n, w: stW, h: stH, frozenT: rtp ? +rtp : undefined,
       onPhase: p => { st.classList.add("p" + p); if (p === 1) sfx(best === "common" ? "gcharge1" : best === "rare" ? "gcharge2" : "gcharge3"); else if (p === 2) sfx("gwhoosh"); else if (p === 4) { sfx("gboom"); shake(st, best === "ultra" ? 10 : 5, 500); } else if (p === 5) { sfx(SHINE[best]); if (isFull) st.classList.add("full"); } } });
     const close = (toGrid: boolean) => { if (closed) return; closed = true; clearInterval(iv); if (toGrid) { h?.dispose(); out.innerHTML = ""; root.classList.remove("is3d"); show(); } else { root.classList.add("out"); setTimeout(() => { h?.dispose(); vfx.stop(); root.remove(); onDone(); }, 220); } };
     iv = window.setInterval(() => { if (h?.ended()) { st.classList.add("ready"); clearInterval(iv); } }, 120);

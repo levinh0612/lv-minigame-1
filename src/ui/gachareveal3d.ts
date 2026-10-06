@@ -89,7 +89,7 @@ export async function createReveal3d(o: Reveal3dOpts): Promise<Reveal3d> {
   const CW = 1.38, CH = 2.16, disposables: { dispose(): void }[] = [renderer, composer];
   const track = <T extends { dispose(): void }>(x: T) => { disposables.push(x); return x; };
   const [bgT, backT, starT, shardsT, sparkT, ringsT, itemImg] = await Promise.all([
-    loadTex(`${FX2}bg-${rar}.webp`), loadTex(`${FX2}back-${rar}.webp`), loadTex(`${FX}star-${rar}.png`), loadTex(`${FX}shards.png`), loadTex(`${FX}sparkles.png`), loadTex(`${FX}rings.png`),
+    loadTex(`${FX2}bg-${rar}.webp`), loadTex(`${FX2}back-${rar}.webp`), loadTex(`${FX}star-${rar}.webp`), loadTex(`${FX}shards.webp`), loadTex(`${FX}sparkles.webp`), loadTex(`${FX}rings.webp`),
     o.img ? loadImg(o.img) : Promise.resolve(null)
   ]);
   [bgT, backT, starT, shardsT, sparkT, ringsT].forEach(t => track(t));

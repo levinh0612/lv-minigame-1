@@ -18,7 +18,6 @@ const ROUTES: [string, Route][] = [
   ["/choi", { name: "play" }],
   ["/ket-qua", { name: "result" }]
 ];
-export const SHOP_PATH: Record<ShopTab, string> = { decor: "/cua-hang", pets: "/cua-hang/thu-cung", gift: "/cua-hang/qua-tang" };
 
 export const currentPath = () => location.hash.replace(/^#/, "") || "/";
 export const resolve = (path: string): Route =>

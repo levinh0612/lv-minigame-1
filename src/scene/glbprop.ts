@@ -21,7 +21,6 @@ const pick = (clips: THREE.AnimationClip[], cfg: PropCfg) => (typeof cfg.clip ==
 type Loaded = { scene: THREE.Object3D; clips: THREE.AnimationClip[] };
 const cache = new Map<string, Promise<Loaded>>();
 const load = (id: string) => { let p = cache.get(id); if (!p) { p = new GLTFLoader().loadAsync(`/models/gacha/${id}.glb`).then(g => ({ scene: g.scene, clips: g.animations })); cache.set(id, p); } return p; };
-export const preloadProp = (id: string) => { void load(id).catch(() => { }); };
 
 /** kích thước thật sau khi chuẩn hoá (đơn vị cảnh); fly đã cộng vào h. Dùng để lấy khung hình vừa ô xem */
 export interface PropAnim extends Animated { dims?: { w: number; h: number; d: number } }
