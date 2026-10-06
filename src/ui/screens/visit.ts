@@ -10,7 +10,7 @@ import { visitEnter, visitQuote } from "../../net/cloud";
 import { render } from "../app";
 import { ic } from "../icons";
 import type { GuestLook } from "../../content/game";
-import { levelBadge, levelFrame } from "../badges";
+import { levelFrame, levelMedal } from "../badges";
 import { guestSVG } from "../art";
 import { demandOf } from "../../engine/economy";
 import { ROOM_CATS, isDefault } from "../../content/room";
@@ -74,7 +74,7 @@ function shopHTML(v: VisitShop) {
       <div class="hrow5">${BACK}<div class="sp"></div>${coinPill(false, "", true)}</div>
       <div class="pcard5">
         <div class="pc-top">
-          <div class="pc-av" style="--p:0" aria-hidden="true">${guestSVG({ ...look, mood: "happy", ledge: false }, 72)}${levelFrame(v.lv)}<span class="pc-lv bdg">${levelBadge(v.lv, 34)}</span></div>
+          <div class="pc-av" style="--p:0" aria-hidden="true">${guestSVG({ ...look, mood: "happy", ledge: false }, 72)}${levelFrame(v.lv)}<span class="pc-lv bdg">${levelMedal(v.lv, 34)}</span></div>
           <div class="pc-t">
             <small>${ic.sprout(16, 2.2)}Đang ghé thăm · Tiệm Bánh của</small>
             <b style="font-size:${name.length <= 12 ? 26 : 20}px">${esc(name)}</b>

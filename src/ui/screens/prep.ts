@@ -1,11 +1,9 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
-import { CATS, FOODS, STOCK_KEYS, partsOfRecipe } from "../../content/game";
-import { canHire, staffIds, isMascotStaff, mascotBonus, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estCostRows, estProfit, expectedCustomers, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { CATS, STOCK_KEYS, partsOfRecipe } from "../../content/game";
+import { canHire, hireFee, staffIds, capacity, demand, needUpgrade, spareSeats, crewPlan, estCostRows, estProfit, expectedCustomers, foodDef, mealOf, plannedMeal, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured, unlocked } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { availableIdx } from "../../engine/suppliers";
-import { staffAvatar } from "../staffav";
-import { tierBadge } from "../badges";
 import { entityInfo, entityRow } from "../components/entity";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
@@ -16,23 +14,14 @@ const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><sv
 export const pageHead = (title: string, sub = "") =>
   `<div class="phead">${BACK}<div class="pt">${sub ? `<small>${sub}</small>` : ""}<h2>${title}</h2></div>${coinPill()}</div>`;
 
-/* thẻ một bé: đi làm / nghỉ / đói / chờ nhận / chưa mở */
-export function bakerTile(id: string) {
-  const d = staffDef(id), st = S.staff[id], on = onDuty(id);
-  const tier = st.hired ? st.lv : 1, food = FOODS[tier - 1];
-  const meal = st.hired ? plannedMeal(id) : null, hungry = on && !meal, need = st.hired ? foodDef(mealOf(id)) : food;
-  const eat = meal ? foodDef(meal) : need, slow = meal && st.hired ? mealSlow(id, meal) : 1;
-  const picks = st.hired && tier > 1 ? `<div class="mpick" role="radiogroup" aria-label="Món ăn của ${esc(petName(id))}">${mealChoices(id).map(f =>
-    `<button class="${f.id === need.id ? "on" : ""}" data-meal="${id}:${f.id}" role="radio" aria-checked="${f.id === need.id}" aria-label="${f.n}, còn ${foodOf(f.id)}">${foodSVG(f.id, 16)}<small>${foodOf(f.id)}</small></button>`).join("")}</div>` : "";
-  let btn: string, cls = "";
-  if (!canHire(id)) { btn = `<button class="tb3 lock" disabled>Mở ở Lv ${d.unlock}</button>`; cls = "off"; }
-  else if (!st.hired) { btn = `<button class="tb3 hire" data-hire="${id}">Nhận vào làm</button>`; cls = "off"; }
-  else if (hungry) btn = `<button class="tb3 buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button>`;
-  else { btn = `<button class="duty2 ${on ? "on" : ""}" data-duty="${id}" role="switch" aria-checked="${on}"><span>Đi làm<br><small>${on ? "✓ ca này" : "đang nghỉ"}</small></span><i></i></button>`; if (!on) cls = "off"; }
-  const mb = isMascotStaff(id) ? mascotBonus(id) : null, buff = mb ? `<br><span class="mtag">Linh thú</span> +${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip` : "";
-  const sub = (hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 18)}Bậc ${tier} · ${eat.n}${slow > 1 ? ` <span class="bad">chậm +${Math.round((slow - 1) * 100)}%</span>` : ""}`) + buff;
-  return `<div class="btile ${cls}"><div class="av">${staffAvatar(id, 72, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}${st.hired ? tierBadge(tier) : ""}</div>
-    <b>${esc(petName(id))}</b><div class="bs">${sub}</div>${picks}${btn}</div>`;
+/* thẻ bé chưa nhận vào làm: chạm để nhận (hoặc báo mở ở cấp nào), dùng thành phần chung */
+function lockedCard(id: string) {
+  const i = entityInfo(id)!, can = canHire(id), fee = hireFee(id), unlock = staffDef(id).unlock;
+  return entityRow(i, {
+    attrs: can ? `data-hire="${id}"` : "disabled", cls: "crew", px: 52,
+    meta: can ? `Chạm để nhận vào làm${fee ? ` · ${fmtN(fee)} xu` : ""}` : `Mở ở Lv ${unlock}`,
+    trail: `<em class="er-st er-st-${can ? "work" : "lock"}">${can ? "Nhận" : "Khoá"}</em>`
+  });
 }
 
 export type PrepTab = "crew" | "cakes" | "stock" | "goals";
@@ -42,7 +31,7 @@ export const setPrepTab = (t: PrepTab) => { prepTab = t; };
 /* thẻ gọn của một bé: chạm cả thẻ để chọn/bỏ chọn đi làm (dùng thành phần chung entityRow) */
 function crewCard(id: string) {
   const st = S.staff[id];
-  if (!st.hired) return bakerTile(id);
+  if (!st.hired) return lockedCard(id);
   const i = entityInfo(id)!, on = onDuty(id), need = foodDef(mealOf(id)), meal = plannedMeal(id), hungry = on && !meal, eat = meal ? foodDef(meal) : need;
   const line = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 16)}Bậc ${st.lv} · ${eat.n}`;
   const row = entityRow(i, {
