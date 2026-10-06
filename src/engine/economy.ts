@@ -69,9 +69,14 @@ export function estProfit(): { revenue: number; cost: number; profit: number } {
   const w = rs.reduce((a, r) => a + (r.id === feat.id ? 2 : 1), 0) || 1;
   const avg = rs.reduce((a, r) => a + r.price * (r.id === feat.id ? 2 : 1), 0) / w;
   const revenue = Math.round(expectedCustomers() * avg * 0.85);
-  const cost = suggestion().reduce((a, x) => a + x.cost, 0)
-    + crewPlan().reduce((a, x) => a + foodDef(x.meal ?? mealOf(x.id)).cost, 0);
+  const cost = estCostRows().reduce((a, x) => a + x.cost, 0);
   return { revenue, cost, profit: revenue - cost };
+}
+/** các khoản chi dự tính của ca: đồ ăn cho bé đi làm (lương) và nguyên liệu còn thiếu cần nhập thêm */
+export function estCostRows(): { kind: "food" | "stock"; label: string; cost: number }[] {
+  const food = crewPlan().map(x => { const f = foodDef(x.meal ?? mealOf(x.id)); return { kind: "food" as const, label: `${petName(x.id)} ăn ${f.n}`, cost: f.cost }; });
+  const stock = suggestion().map(x => ({ kind: "stock" as const, label: `Nhập ${x.n} ${CATS[x.k][x.i][0]}`, cost: x.cost }));
+  return [...food, ...stock];
 }
 /* Nguyên liệu mà công thức đã mở cần nhưng đang hết */
 export const outOfStock = () => {

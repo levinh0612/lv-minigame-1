@@ -1,6 +1,6 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import { CATS, FOODS, STOCK_KEYS, partsOfRecipe } from "../../content/game";
-import { canHire, staffIds, isMascotStaff, mascotBonus, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estProfit, expectedCustomers, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
+import { canHire, staffIds, isMascotStaff, mascotBonus, capacity, demand, needUpgrade, spareSeats, foodOf, crewPlan, estCostRows, estProfit, expectedCustomers, foodDef, mealChoices, mealOf, plannedMeal, mealSlow, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { featured, unlocked } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { availableIdx } from "../../engine/suppliers";
@@ -61,6 +61,7 @@ export function prepHTML() {
   const low = STOCK_KEYS.flatMap(k => availableIdx(k).map(i => ({ k, i }))).filter(x => stockOf(x.k, x.i) <= 2);
   const tab = (id: PrepTab, label: string, badge = "") => `<button class="${prepTab === id ? "on" : ""}" data-ptab="${id}" role="tab" aria-selected="${prepTab === id}">${label}${badge}</button>`;
   const ic = [["#FFE9EF", "#E0567A"], ["#E3F6EC", "#3F9C78"], ["#FFF0C9", "#A77A0E"]];
+  const rows = estCostRows();
   let body = "";
   if (prepTab === "crew") {
     const ids = staffIds();
@@ -89,7 +90,8 @@ export function prepHTML() {
       <div class="sh2"><b>Mục tiêu ca này</b><span class="gold">thưởng lúc hết ca</span></div>
       <div class="goals">${goals.map((g, i) => `<div class="goal"><i style="background:${ic[i][0]};color:${ic[i][1]}">${g.n}</i><span>${goalText(g)}</span><b>+${g.reward} xu</b></div>`).join("")}</div>
       <div class="pfin"><div><small>Tổng thu dự tính</small><b>${fmtN(est.revenue)} xu</b></div><div><small>Tổng chi dự tính</small><b class="m">${fmtN(est.cost)} xu</b></div></div>
-      <p class="pest">Lãi ước tính: <b class="${est.profit >= 0 ? "p" : "m"}">${est.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(est.profit))} xu</b></p>`;
+      <div class="pcost"><h4>Khoản chi gồm</h4>${rows.length ? rows.map(r => `<div><span>${r.kind === "food" ? "🍖" : "🧺"} ${esc(r.label)}</span><b>${fmtN(r.cost)} xu</b></div>`).join("") : `<p>Chưa cần chi gì thêm: kho và đồ ăn đã đủ.</p>`}</div>
+      <div class="pprofit ${est.profit >= 0 ? "p" : "m"}"><span>Lãi ước tính</span><b>${est.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(est.profit))} xu</b></div>`;
   }
   return `<div class="scr prep2">
     <div class="pfix">${pageHead("Chuẩn bị mở tiệm", `Ca ${S.shifts + 1}`)}

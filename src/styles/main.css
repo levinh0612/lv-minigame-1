@@ -1949,3 +1949,10 @@ button.pcrew{width:100%;text-align:left;font:inherit}
 .adm summary::after{content:"▾";float:right;color:var(--pink-d)}.adm details[open] summary::after{content:"▴"}
 .adm .field textarea,.adm .field input{width:100%}.adm-h{display:block;font:700 11px var(--body);color:var(--soft2);margin:2px 0 4px}
 .adm summary{text-align:left}
+
+.pcost{margin:10px 16px 0;padding:10px 14px;border-radius:16px;background:#fff;box-shadow:0 3px 0 var(--sh)}
+.pcost h4{margin:0 0 6px;font:800 13px var(--body);color:var(--ink2)}.pcost>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--pink-b);font:700 13px var(--body);color:var(--soft2)}
+.pcost>div:first-of-type{border-top:0}.pcost b{color:#d9534f;white-space:nowrap}.pcost p{margin:0;font:700 12.5px var(--body);color:var(--soft2)}
+.pprofit{display:flex;align-items:center;justify-content:space-between;margin:12px 16px 0;padding:14px 18px;border-radius:20px;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+.pprofit.p{background:linear-gradient(160deg,#5BC79B,#2f9a6e)}.pprofit.m{background:linear-gradient(160deg,#F0788A,#d9534f)}
+.pprofit span{font:800 15px var(--body)}.pprofit b{font:900 28px var(--display)}
