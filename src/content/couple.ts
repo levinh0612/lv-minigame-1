@@ -19,8 +19,8 @@ export const CFG = {
     {id:"white", name:"Cacao", desc:"Mèo trắng hay ngồi canh khay bánh"}
   ],
   // Tên khách (cách nhau bằng dấu phẩy), đổi được trong Cài đặt
-  girlNames: "Bé Na, Chị Mơ, Bé Bông, Cô Hạnh, Bé Kem, Chị Thơ",
-  boyNames: "Anh Tùng, Bé Bin, Cậu Khoai, Anh Mít, Bé Su, Anh Đậu",
+  girlNames: "Chị Na, Chị Mơ, Chị Bông, Cô Hạnh, Chị Kem, Chị Thơ",
+  boyNames: "Anh Tùng, Anh Bin, Cậu Khoai, Anh Mít, Anh Su, Anh Đậu",
   // Thư mỗi ngày: mỗi ngày mở 1 lá, hết thì quay vòng. Thêm bớt tuỳ thích.
   notes: [
     "Hôm nay Em đã làm việc chăm lắm rồi. Nghỉ tay ăn miếng bánh matcha ít ngọt nha, Anh bao.",

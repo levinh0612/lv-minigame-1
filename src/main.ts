@@ -233,27 +233,3 @@ if (location.search) history.replaceState(null, "", location.pathname + location
 // vừa cập nhật xong: cho xem có gì mới (một lần)
 const prevVer = justUpdated();
 if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) whatsNew(prevVer); }, 1200);
-
-/* đo chênh lệch giữa chiều cao màn hình và khung nhìn (iPhone chạy từ icon màn hình chính), để phủ kín dải trắng dưới chân */
-function fitViewport() {
-  const standalone = (navigator as { standalone?: boolean }).standalone || matchMedia("(display-mode: standalone)").matches;
-  const gap = standalone && innerHeight > innerWidth ? Math.round(screen.height - innerHeight) : 0;
-  const ok = gap >= 8 && gap <= 120;
-  document.documentElement.classList.toggle("vgap", ok);
-  document.documentElement.style.setProperty("--vgap", ok ? gap + "px" : "0px");
-}
-fitViewport(); addEventListener("resize", fitViewport); addEventListener("orientationchange", () => setTimeout(fitViewport, 300));
-
-/* TẠM (3.15): bảng chẩn đoán dải trắng dưới chân trên iPhone; sẽ gỡ khi sửa xong */
-(() => {
-  const mk = (css: string) => { const d = document.createElement("div"); d.style.cssText = "position:fixed;left:0;right:0;z-index:99999;pointer-events:none;" + css; document.body.appendChild(d); return d; };
-  const red = mk("bottom:0;height:8px;background:red"), blue = mk("bottom:-30px;height:8px;background:blue"), green = mk("top:0;height:3px;background:lime");
-  void red; void blue; void green;
-  const probe = document.createElement("div"); probe.style.cssText = "position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom,0px);visibility:hidden"; document.body.appendChild(probe);
-  const box = mk("top:calc(env(safe-area-inset-top,0px) + 54px);left:8px;right:8px;width:auto;background:rgba(0,0,0,.78);color:#0f0;font:700 11px/1.35 monospace;padding:6px;border-radius:8px;white-space:pre-wrap");
-  const upd = () => {
-    const vv = window.visualViewport, se = probe.getBoundingClientRect().height, h = document.documentElement;
-    box.textContent = `v${__APP_VERSION__}  inner ${innerWidth}x${innerHeight}  screen ${screen.width}x${screen.height}\nvv ${Math.round(vv?.width ?? 0)}x${Math.round(vv?.height ?? 0)} top ${Math.round(vv?.offsetTop ?? 0)}  client ${h.clientHeight}  outer ${outerHeight}\nsafeBottom ${se}  standalone ${(navigator as { standalone?: boolean }).standalone}  vgap ${getComputedStyle(h).getPropertyValue("--vgap")}\nbodyH ${document.body.getBoundingClientRect().height}  redBottom ${Math.round(red.getBoundingClientRect().bottom)}  blueBottom ${Math.round(blue.getBoundingClientRect().bottom)}`;
-  };
-  upd(); setInterval(upd, 1000);
-})();

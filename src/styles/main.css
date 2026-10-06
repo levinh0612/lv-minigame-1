@@ -2082,8 +2082,5 @@ button.cm{position:relative}
 /* lớp kết quả luôn nằm trên canvas hiệu ứng (canvas warp từng chặn nút OK) */
 .gfx-out{z-index:6}.gfx-world>*{pointer-events:none}
 
-/* iPhone (app thêm vào màn hình chính) đôi khi báo khung nhìn thấp hơn màn hình thật: dải trắng dưới chân. --vgap do fitViewport() đo (main.ts); kéo các lớp phủ cố định xuống phủ kín */
-html.vgap .modal,html.vgap .gfx,html.vgap .cfm,html.vgap .updov,html.vgap .conf{bottom:calc(var(--vgap) * -1)}
-html.vgap .startbar,html.vgap .pfoot,html.vgap .dfoot{bottom:calc(var(--vgap) * -1)}
-html.vgap .home5{height:calc(100% + var(--vgap))}
-html.vgap body{min-height:calc(100% + var(--vgap))}
+/* iPhone chạy từ icon: chiều cao tính theo % và vh có lúc kẹt ở số cũ (thấp hơn màn hình ~59px) trong khi bottom:0 luôn đúng. Màn cố định neo bằng top/bottom, không dùng chiều cao. */
+.home5{top:0;bottom:0;height:auto}

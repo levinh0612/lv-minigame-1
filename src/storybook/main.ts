@@ -67,7 +67,7 @@ const cust = (who: string, look: Look, r: number, sweet: number, pat: number, ex
   ({ who, look, r: RECIPES[r], sweet, max: 40, pat, ...extra });
 const REVIEWS = [
   { who: CFG.hisName, look: HIM, s: 3, txt: CFG.notes[2], love: true },
-  { who: "Bé Na", look: NA(), s: 3, txt: "Ngon xỉu, mai tui ghé nữa!", love: false },
+  { who: "Chị Na", look: NA(), s: 3, txt: "Ngon xỉu, mai tui ghé nữa!", love: false },
   { who: "Chị Mai", look: MAI(), s: 2, txt: "Ngon nè, chờ hơi lâu xíu thôi.", love: false },
   { who: "Anh Tùng", look: TUNG(), s: 0, txt: "Chờ lâu quá tui đi mất tiêu...", love: false }
 ];
@@ -75,7 +75,7 @@ function busyShift(): Shift {
   const sh = createShift();
   sh.seats = [
     cust("Chị Mai", MAI(), 1, 0, 30, { by: "dog" }),
-    cust("Bé Na", NA(), 3, 1, 20),
+    cust("Chị Na", NA(), 3, 1, 20),
     cust(CFG.hisName, HIM, 0, 0, 8, { him: true, mood: "impatient" }),
     cust("Anh Tùng", TUNG(), 2, 2, 34, { by: "gold" })
   ];
@@ -166,7 +166,7 @@ const STORIES: Story[] = [
       return playHTML(sh, { states: ["", "", "", ""] }); } },
   { id: "play-queue8", sec: "screens", title: "Chơi · hàng đợi 8 bàn", desc: "flex-wrap: đủ 5 thẻ một hàng thì xuống hàng 2, cả hai hàng đều thấy hết", kind: "screen",
     html: () => { lvState(13, st => { staffed(st); });
-      const sh = busyShift(); sh.seats = [...sh.seats, cust("Bé Bin", NA(), 1, 1, 25), cust("Chị Mơ", MAI(), 2, 0, 18), null, cust("Cô Hạnh", TUNG(), 0, 2, 40)] as typeof sh.seats; _setShift(sh);
+      const sh = busyShift(); sh.seats = [...sh.seats, cust("Anh Bin", NA(), 1, 1, 25), cust("Chị Mơ", MAI(), 2, 0, 18), null, cust("Cô Hạnh", TUNG(), 0, 2, 40)] as typeof sh.seats; _setShift(sh);
       return playHTML(sh, { states: ["", "", "low", "", "", "", "", ""] }); } },
   { id: "play-many", sec: "screens", title: "Chơi · nhiều nguyên liệu", desc: "Lv 24, đã ký cả 3 nhà cung cấp: mỗi hàng có tới 5 nguyên liệu", kind: "screen",
     html: () => { lvState(24, s => { staffed(s); s.suppliers = ["alpine", "berry", "cacao"]; STOCK_KEYS.forEach(k => s.stock[k].fill(8)); }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
@@ -321,7 +321,7 @@ const STORIES: Story[] = [
         <div class="sbrow">${KEYS.map(k => CATS[k].map((_, i) => ingSVG(k, i, 40)).join("")).join("")}</div></div>`; } },
   { id: "c-orders", sec: "ui", title: "Khách trong hàng đợi", desc: "Bình thường · đơn của bạn · sắp giận · bé đang làm (40%) · đã giao", kind: "comp",
     html: () => { lvState(5, staffed); const sh = createShift();
-      sh.seats = [cust("Bé Kem", P("g1", "#E7B872", "#6C8FC0", "#2F6F86", "#8A3D55"), 5, 0, 36), cust("Chị Mai", MAI(), 1, 1, 30), cust("Bạn Tí", P("b1", "#6B4A3A", "#4F9A6B", "#3D7A55", "#F2E6D0"), 2, 2, 6), cust("Anh Gấu", P("b5", "#3B2A26", "#C9803F", "#6A4C93", "#C9962E"), 4, 1, 28, { by: "dog" }), cust("Bé Na", NA(), 0, 0, 30)];
+      sh.seats = [cust("Chị Kem", P("g1", "#E7B872", "#6C8FC0", "#2F6F86", "#8A3D55"), 5, 0, 36), cust("Chị Mai", MAI(), 1, 1, 30), cust("Bạn Tí", P("b1", "#6B4A3A", "#4F9A6B", "#3D7A55", "#F2E6D0"), 2, 2, 6), cust("Anh Gấu", P("b5", "#3B2A26", "#C9803F", "#6A4C93", "#C9962E"), 4, 1, 28, { by: "dog" }), cust("Chị Na", NA(), 0, 0, 30)];
       sh.bakers = [{ id: "dog", seat: 3, done: 3, need: 7.5 }]; sh.mine = 1;
       const st: ("" | "low" | "ok")[] = ["", "", "low", "", "ok"], lab = ["Bình thường", "Đơn của bạn", "Sắp giận", "Bé đang làm", "Đã giao"];
       return `<div class="board"><div class="queue" style="--n:5;width:560px;padding:0">${sh.seats.map((x, i) => `<div class="slot ${i === 1 ? "mine" : ""} ${x!.by ? "taken" : ""} ${st[i] === "low" ? "low" : ""}" style="height:152px">${slotHTML(sh, i, st[i])}</div>`).join("")}</div>
@@ -334,7 +334,7 @@ const STORIES: Story[] = [
       <div class="ledger"><div class="lg"><span>Tiền bánh + tip</span><b>+405</b></div><div class="lg"><span>Nguyên liệu đã dùng</span><b>−96</b></div><div class="lg"><span>Lương thú cưng (đồ ăn)</span><b>−16</b></div><div class="lg tot"><span>Lãi ca này</span><b>+293 xu</b></div></div>
       <button class="unlock"><div class="env"></div><div><b>Mở khoá thư tình mới</b><small>Chạm để nhận quà hôm nay</small></div></button>
       <div class="lvup">Lên Lv 5! Mở khoá: Mochi Matcha Đậu đỏ</div>
-      <div class="toast" style="position:static;transform:none;align-self:center">Sai độ ngọt rồi: Bé Na gọi Ít ngọt, không phải Vừa</div></div>` },
+      <div class="toast" style="position:static;transform:none;align-self:center">Sai độ ngọt rồi: Chị Na gọi Ít ngọt, không phải Vừa</div></div>` },
 
   /* ---------- Trang trí ---------- */
   { id: "c-room", sec: "decor", title: "Cảnh tiệm với đủ đồ", desc: "Tường kem, sàn gỗ, quầy matcha, rèm caro, dây đèn sao, đồng hồ mèo, monstera, thảm dâu", kind: "comp",

@@ -72,8 +72,8 @@ export const GACHA_ITEMS: GachaItem[] = [
   { id: "d_counter_gold", kind: "decor", rarity: "ultra", n: "Quầy vàng", desc: "Giá bánh +12%", decor: { k: "counter", v: "gold" } },
   /* nhân vật 3D làm sẵn: thành khách quen của tiệm */
   ch("k4", "girl", "common", "Chị Hoa"), ch("k5", "boy", "common", "Anh Quân"), ch("k6", "boy", "common", "Anh Phát"),
-  ch("k7", "boy", "common", "Anh Long"), ch("k8", "girl", "common", "Bé Mây"), ch("k9", "girl", "common", "Chị Trang"),
-  ch("k10", "girl", "rare", "Chị Thảo"), ch("k11", "girl", "rare", "Chị Vy"), ch("n4", "girl", "rare", "Chị Yến"),
+  ch("k7", "boy", "common", "Anh Long"), ch("k8", "girl", "common", "Chị Mây"), ch("k9", "girl", "common", "Chị Trang"),
+  ch("k10", "girl", "rare", "Chị Thu"), ch("k11", "girl", "rare", "Chị Vy"), ch("n4", "girl", "rare", "Chị Yến"),
   ch("n5", "girl", "rare", "Nàng mũ mèo"), ch("m1", "boy", "rare", "Anh Nam"), ch("m2", "boy", "rare", "Kiếm sĩ"),
   ch("n1", "girl", "ultra", "Anime Chan"), ch("n2", "girl", "ultra", "Cyber Nova"), ch("n3", "girl", "ultra", "Lynae"),
   /* quản lý: mỗi tầng một người, đứng ở tầng đó trong tiệm và cộng chỉ số cho cả tiệm */
