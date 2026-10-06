@@ -1,25 +1,49 @@
-/* Huy hiệu cấp: khiên có số, đổi màu theo khoảng cấp. Cấp người chơi ghi số thường, bậc nhân viên/linh thú ghi số La Mã I đến V. */
+/* Huy hiệu: số cấp người chơi (khiên SVG), bậc nhân viên/linh thú (crest) và khung avatar theo cấp (ảnh vẽ trong public/badges, tách từ bảng thiết kế).
+   Phong cách: nền tối, đường nét mảnh sáng màu, lưỡi cánh nhọn, điểm phát sáng. */
 import { roman } from "../engine/util";
 
 let uid = 0;
-/** khiên SVG: txt là chữ trong khiên, c1/c2 là hai màu chuyển, wings: thêm cánh hai bên */
-function shield(txt: string, c1: string, c2: string, size: number, wings: boolean) {
-  const id = "bd" + uid++, fs = txt.length > 2 ? 15 : txt.length > 1 ? 19 : 24;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true" style="display:block;overflow:visible"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
-${wings ? `<path d="M6 22C10 14 18 12 22 16L22 40C14 38 8 32 6 22ZM58 22C54 14 46 12 42 16L42 40C50 38 56 32 58 22Z" fill="${c1}" opacity=".78" stroke="#fff7" stroke-width="1.2"/>` : ""}
-<path d="M32 6 50 14V32C50 44 42 52 32 58 22 52 14 44 14 32V14Z" fill="url(#${id})" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
-<path d="M32 10 46 16V32C46 41 40 48 32 53 24 48 18 41 18 32V16Z" fill="none" stroke="#ffffff88" stroke-width="1.4"/>
-<text x="32" y="${txt.length > 2 ? 36 : 38}" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="${fs}" fill="#fff" stroke="#0005" stroke-width=".7" paint-order="stroke">${txt}</text></svg>`;
-}
-/* cấp người chơi: 1–9 đồng, 10–19 vàng, 20–29 xanh, 30–39 tím, 40+ cam (từ 30 có cánh) */
-const LV: [number, string, string][] = [[1, "#E3A27A", "#9A5B3C"], [10, "#FFD45A", "#E08E0B"], [20, "#6FD3FF", "#2C7BE0"], [30, "#C9A0FF", "#7A45D6"], [40, "#FFB36B", "#E5522A"]];
+/** một hạng: a = màu sáng (viền), b = màu giữa (sống lưỡi, phát sáng), c = màu tối (thân lưỡi) */
+interface Tier { n: string; a: string; b: string; c: string; a2?: string }
+const BASE = "#0B1020", BASE2 = "#1B2338";
+const TIERS: Tier[] = [
+  { n: "Sắt", a: "#C4CBD6", b: "#7E8896", c: "#3A4150" },
+  { n: "Đồng", a: "#F2B98E", b: "#B87348", c: "#5B3320" },
+  { n: "Bạc", a: "#F4F8FF", b: "#AEBBCF", c: "#4A586E" },
+  { n: "Vàng", a: "#FFE08A", b: "#E0A93A", c: "#7A5214" },
+  { n: "Bạch kim", a: "#D8FBFF", b: "#6FD3E6", c: "#1F6F86" },
+  { n: "Lục bảo", a: "#B6FFD9", b: "#38C98A", c: "#0F5B3F" },
+  { n: "Kim cương", a: "#CFE4FF", b: "#5C94F2", c: "#24308F" },
+  { n: "Cao thủ", a: "#EBD2FF", b: "#A765F0", c: "#3F2191" },
+  { n: "Đại cao thủ", a: "#FFD2B0", b: "#F2602F", c: "#8A1F18" },
+  { n: "Thách đấu", a: "#FFF0B8", b: "#E9B84A", c: "#1F6FB5", a2: "#7FE3FF" }
+];
+const f1 = (n: number) => n.toFixed(1);
+
+const diamond = (x: number, y: number, r: number, fill: string, stroke: string) => `<path d="M${f1(x)} ${f1(y - r)}L${f1(x + r * .7)} ${f1(y)}L${f1(x)} ${f1(y + r)}L${f1(x - r * .7)} ${f1(y)}Z" fill="${fill}" stroke="${stroke}" stroke-width=".8" stroke-linejoin="miter"/>`;
+const grad = (id: string, t: Tier) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${t.a}"/><stop offset=".5" stop-color="${t.a2 ?? t.b}"/><stop offset="1" stop-color="${t.b}"/></linearGradient>`;
+
+/* ===== Số cấp người chơi: khiên lục giác tối, viền sáng theo hạng ===== */
+const lvTier = (lv: number) => Math.max(0, Math.min(TIERS.length - 1, Math.floor(lv / 10)));
 export function levelBadge(lv: number, size = 34) {
-  let i = 0; LV.forEach((x, k) => { if (lv >= x[0]) i = k; });
-  return shield(String(lv), LV[i]![1], LV[i]![2], size, i >= 3);
+  const i = lvTier(lv), t = TIERS[i]!, id = "bd" + uid++, txt = String(lv), fs = txt.length > 2 ? 15 : txt.length > 1 ? 21 : 26;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true" style="display:block;overflow:visible"><defs>${grad(id, t)}<linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${BASE2}"/><stop offset="1" stop-color="${BASE}"/></linearGradient></defs>
+<path d="M32 4L53 15V39L32 60 11 39V15Z" fill="url(#${id}f)" stroke="url(#${id})" stroke-width="2.4" stroke-linejoin="miter"/>
+<path d="M32 10L48 18V37L32 53 16 37V18Z" fill="none" stroke="${t.b}" stroke-opacity=".55" stroke-width="1"/>${diamond(32, 4, 3.4, t.a, t.c)}
+<text x="32" y="${txt.length > 2 ? 36 : 39}" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="${fs}" fill="#fff" stroke="${t.c}" stroke-width=".6" paint-order="stroke">${txt}</text></svg>`;
 }
-/* bậc nhân viên: I đồng, II lục, III lam, IV tím (có cánh), V vàng cam (có cánh) */
-const TIER: [string, string][] = [["#E3A27A", "#9A5B3C"], ["#8FE0B0", "#2F9C6A"], ["#6FD3FF", "#2C7BE0"], ["#C9A0FF", "#7A45D6"], ["#FFD45A", "#E5522A"]];
-export function tierBadge(tier: number, size = 30) {
-  const i = Math.max(0, Math.min(TIER.length - 1, Math.floor(tier) - 1));
-  return `<span class="tbg" title="Bậc ${roman(tier)}">${shield(roman(tier), TIER[i]![0], TIER[i]![1], size, i >= 3)}</span>`;
+
+/* ===== Bậc nhân viên / linh thú (1 đến 10): crest có cánh bằng ảnh public/badges/crest-N.webp (170x94, số La Mã nằm sẵn trong ảnh).
+   I Sắt, II Đồng, III Bạc, IV Vàng, V Bạch kim, VI Lục bảo, VII Kim cương, VIII Cao thủ, IX Đại cao thủ, X Thách đấu. ===== */
+export function tierBadge(tier: number, size = 36) {
+  const i = Math.max(0, Math.min(TIERS.length - 1, Math.floor(tier) - 1)), rn = roman(tier);
+  return `<span class="tbg crest" title="Bậc ${rn} · ${TIERS[i]!.n}"><img src="/badges/crest-${i}.webp" alt="Bậc ${rn}" width="${Math.round(size * 1.75)}" height="${Math.round(size * 0.97)}" decoding="async" style="display:block"></span>`;
+}
+
+/* ===== Khung avatar theo cấp người chơi (tối đa 100): mười khung, mỗi 10 cấp một khung (1–9 Sắt, 10–19 Đồng, ..., 90–100 Thách đấu).
+   Ảnh public/badges/frame-N.webp (306x281, lỗ giữa trong suốt, tâm vòng hơi cao hơn giữa ảnh): đặt chồng lên avatar, căn theo tâm. ===== */
+export const frameName = (lv: number) => TIERS[lvTier(lv)]!.n;
+export function levelFrame(lv: number) {
+  const i = lvTier(lv);
+  return `<img class="lvf lvfimg lvf${i}" src="/badges/frame-${i}.webp" alt="" width="306" height="281" decoding="async" aria-hidden="true">`;
 }

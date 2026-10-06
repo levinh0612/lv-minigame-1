@@ -9,7 +9,7 @@ import { mouseTitle } from "../../engine/mouse";
 import { coinPill, esc, shopStatsHTML } from "../dom";
 import { ic } from "../icons";
 import { guestSVG } from "../art";
-import { levelBadge } from "../badges";
+import { levelBadge, levelFrame } from "../badges";
 import { room3dHTML } from "../room3d";
 import { account, savedAgo } from "../../net/cloud";
 
@@ -41,7 +41,7 @@ function profileCard(L: number, cur: number, need: number) {
   const nm = S.shop.trim() || account(), len = [...nm || "Matcha"].length, fs = len <= 8 ? 28 : len <= 12 ? 24 : len <= 16 ? 21 : 18, pct = Math.min(100, cur / need * 100), title = mouseTitle();
   return `<div class="pcard5">
     <div class="pc-top">
-      <button class="pc-av" style="--p:${pct}" data-act="profile" aria-label="Hồ sơ của bạn, cấp ${L}, ${cur}/${need} kinh nghiệm">${portraitHTML(S.me.sprite, S.me, 70, guestSVG({ ...meLook(), mood: "happy" }, 70), "", true)}<span class="pc-lv bdg">${levelBadge(L, 34)}</span></button>
+      <button class="pc-av" style="--p:${pct}" data-act="profile" aria-label="Hồ sơ của bạn, cấp ${L}, ${cur}/${need} kinh nghiệm">${portraitHTML(S.me.sprite, S.me, 70, guestSVG({ ...meLook(), mood: "happy" }, 70), "", true)}${levelFrame(L)}<span class="pc-lv bdg">${levelBadge(L, 34)}</span></button>
       <div class="pc-t">
         <small>${ic.sprout(16, 2.2)}${nm ? "Tiệm Bánh của" : "Tiệm Bánh"}</small>
         <b style="font-size:${fs}px">${esc(nm || "Matcha")}</b>

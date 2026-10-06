@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   const b = await body<{ state: unknown; earned?: number; lv?: number; base?: number }>(req);
   if (!b?.state || typeof b.state !== "object") return bad("Thiếu tiến trình");
   const earned = Math.max(0, Math.min(1e9, Math.floor(Number(b.earned) || 0)));
-  const lv = Math.max(1, Math.min(99, Math.floor(Number(b.lv) || 1)));
+  const lv = Math.max(1, Math.min(100, Math.floor(Number(b.lv) || 1)));
   const base = b.base == null ? null : Math.floor(Number(b.base));
   const sql = db();
   const old = await sql`SELECT earned, rev FROM users WHERE id = ${me.id}`;

@@ -16,6 +16,7 @@ import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
+import { frameName, levelBadge, levelFrame, tierBadge } from "../ui/badges";
 import { adminPanel, claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
@@ -144,6 +145,22 @@ const STORIES: Story[] = [
     html: () => { lvState(1); const sh = createShift(); _setShift(sh); return playHTML(sh); } },
   { id: "play-busy", sec: "screens", title: "Chơi · đông khách", desc: "4 bàn trong một hàng; Milo làm cho Chị Mai 60%, Siro làm cho Anh Tùng 20%; chủ tiệm nhận đơn của Anh (sắp giận), chưa xem công thức; Hạt dẻ hết hàng", kind: "screen",
     html: () => { lvState(5, s => { staffed(s); s.stock.top[2] = 0; }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
+  { id: "play-crew", sec: "screens", title: "Chơi · đủ thợ bánh", desc: "3 bé + Mèo Đêm (linh thú thuê) cùng đi làm, kèm ô quản lý/linh vật: dải thợ thành lưới 2 cột, tên đọc đủ", kind: "screen",
+    html: () => { lvState(13, st => { buffed(st); st.food = { kibble: 5, pate: 5, chicken: 5 }; st.gacha.owned.m_tuyet = 1;
+      st.staff.dog = { hired: true, lv: 3, onDuty: true }; st.staff.gold = { hired: true, lv: 2, onDuty: true }; st.staff.white = { hired: true, lv: 1, onDuty: true };
+      st.staff.m_tuyet = { hired: true, lv: 3, onDuty: true }; });
+      const sh = busyShift(); sh.working = ["dog", "gold", "white", "m_tuyet"];
+      sh.bakers = [{ id: "dog", seat: 0, done: 4.5, need: 7.5 }, { id: "gold", seat: 3, done: 2, need: 10 }, { id: "m_tuyet", seat: 1, done: 1, need: 5 }];
+      sh.seats[1] = { ...sh.seats[1]!, by: "m_tuyet" }; _setShift(sh); return playHTML(sh, { states: ["", "", "", ""] }); } },
+  { id: "badges", sec: "screens", title: "Khung avatar theo cấp + crest bậc thú", desc: "Khung: 10 kiểu từ Lv 5 đến 100. Crest: bậc I đến X", kind: "screen",
+    html: () => { lvState(5);
+      const fr = [5, 15, 25, 35, 45, 55, 65, 75, 85, 100].map(l => `<div style="text-align:center"><div class="pc-av" style="--p:${l + 20};margin:30px 20px 22px">${levelFrame(l)}<span style="font:900 26px var(--display)">🙂</span><span class="pc-lv bdg">${levelBadge(l, 34)}</span></div><small style="font:800 12px var(--body)">Lv ${l} · ${frameName(l)}</small></div>`).join("");
+      const cr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(t => `<div style="text-align:center;padding:6px 10px">${tierBadge(t, 52)}<div style="font:800 12px var(--body)">Bậc ${t}</div></div>`).join("");
+      return `<div class="scr" style="padding:16px"><div style="display:flex;flex-wrap:wrap;justify-content:center">${fr}</div><div style="display:flex;flex-wrap:wrap;justify-content:center;margin-top:16px;background:#fff;border-radius:20px;padding:12px">${cr}</div></div>`; } },
+  { id: "play-queue8", sec: "screens", title: "Chơi · hàng đợi 8 bàn", desc: "flex-wrap: đủ 5 thẻ một hàng thì xuống hàng 2, cả hai hàng đều thấy hết", kind: "screen",
+    html: () => { lvState(13, st => { staffed(st); });
+      const sh = busyShift(); sh.seats = [...sh.seats, cust("Bé Bin", NA(), 1, 1, 25), cust("Chị Mơ", MAI(), 2, 0, 18), null, cust("Cô Hạnh", TUNG(), 0, 2, 40)] as typeof sh.seats; _setShift(sh);
+      return playHTML(sh, { states: ["", "", "low", "", "", "", "", ""] }); } },
   { id: "play-many", sec: "screens", title: "Chơi · nhiều nguyên liệu", desc: "Lv 24, đã ký cả 3 nhà cung cấp: mỗi hàng có tới 5 nguyên liệu", kind: "screen",
     html: () => { lvState(24, s => { staffed(s); s.suppliers = ["alpine", "berry", "cacao"]; STOCK_KEYS.forEach(k => s.stock[k].fill(8)); }); const sh = busyShift(); _setShift(sh); return playHTML(sh, { states: ["", "", "low", ""] }); } },
   { id: "play-tiers", sec: "screens", title: "Chơi · bánh 3 tầng", desc: "Đơn bánh tuỳ chỉnh 3 tầng: thanh chọn tầng, đã xem công thức; tầng 1 xong, đang chọn tầng 2", kind: "screen",

@@ -73,7 +73,7 @@ export function prepHTML() {
     body = `<div class="sh2"><b>Bánh</b><span class="lav">${rs.length} món</span></div><div class="pcakes">${rs.map(r => {
       const viral = r.id === feat.id;
       return `<div class="pcake ${viral ? "viral" : ""}"><div class="pck">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up }, { size: 54, still: true })}</div>
-        <div class="pi"><b>${esc(r.n)}</b>${viral ? `<span class="vtag">✦ Viral hôm nay</span>` : `<small>${fmtN(r.price)} xu</small>`}
+        <div class="pi"><b>${esc(r.n)}</b><small class="pprice">${fmtN(r.price)} xu${viral ? ` <span class="vtag">✦ Viral hôm nay</span>` : ""}</small>
         <div class="pings">${partsOfRecipe(r).map(p => `<span title="${CATS[p.k][p.i][0]}" class="${stockOf(p.k, p.i) === 0 ? "out" : ""}">${ingSVG(p.k, p.i, 16)}</span>`).join("")}</div></div></div>`;
     }).join("")}</div>`;
   } else if (prepTab === "stock") {

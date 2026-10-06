@@ -107,12 +107,14 @@ describe("thú cưng làm nhân viên", () => {
     expect(S.food).toMatchObject({ kibble: 0, pate: 0, chicken: 0 });
   });
 
-  it("nâng tối đa bậc 5 (Cá hồi, Bò bít tết); linh thú Gacha đã có thuê được như bé thợ bánh", () => {
-    lvUp(2); S.coins = 100000; hire("dog");
-    for (let i = 0; i < 6; i++) train("dog");
-    expect(S.staff.dog.lv).toBe(5);
+  it("nâng tối đa bậc 10 (mỗi bậc một món, bậc 10 ăn Nấm truffle); linh thú Gacha đã có thuê được như bé thợ bánh", () => {
+    lvUp(2); S.coins = 1000000; hire("dog");
+    for (let i = 0; i < 12; i++) train("dog");
+    expect(S.staff.dog.lv).toBe(10);
     expect(trainCost("dog")).toBe(0);
-    expect(mealOf("dog")).toBe("steak");
+    expect(mealOf("dog")).toBe("truffle");
+    S.staff.dog.lv = 5; expect(mealOf("dog")).toBe("steak");
+    S.staff.dog.lv = 10;
     expect(staffIds()).toEqual(["dog", "gold", "white"]);
     S.gacha.owned.m_xiem = 1;
     expect(staffIds()).not.toContain("m_xiem");        // có linh thú nhưng chưa thuê thì chưa là thợ
@@ -139,7 +141,7 @@ describe("thú cưng làm nhân viên", () => {
     const { pay } = beginShift();
     expect(pay.fed.some(x => x.id === "m_baoden")).toBe(true);
     expect(mascotBonus("m_baoden").price).toBeCloseTo(.16, 5);
-    S.staff.m_baoden.lv = 5; expect(mascotBonus("m_baoden").price).toBeCloseTo(.45, 5);
+    S.staff.m_baoden.lv = 10; expect(mascotBonus("m_baoden").price).toBeCloseTo(.60, 5);
     const b0 = S.gacha.bond?.m_baoden ?? 0; S.food.pate = 1;
     expect(treat("m_baoden", "pate")).toBe(true);
     expect(S.gacha.bond!.m_baoden).toBeGreaterThan(b0);

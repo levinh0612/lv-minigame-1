@@ -8,8 +8,9 @@ import { S, save } from "./state";
 import { recipeReady } from "./suppliers";
 import { DAY, today, ymd } from "./util";
 
+export const MAX_LV = 100;     // cấp người chơi tối đa
 export const xpFor = (L: number) => 40 * (L - 1) * (L - 1);
-export const lvl = () => Math.min(99, Math.floor(Math.sqrt(S.xp / 40)) + 1);
+export const lvl = () => Math.min(MAX_LV, Math.floor(Math.sqrt(S.xp / 40)) + 1);
 /* bánh tuỳ chỉnh đã lưu của người chơi (đủ nguyên liệu mới bán được) */
 export const customRecipes = (): Recipe[] => S.custom.map(customRecipe);
 /* món đang bán: đủ cấp (hoặc đã có công thức Gacha) VÀ đủ nguyên liệu (đã ký nhà cung cấp); bánh tuỳ chỉnh đứng trước món Gacha */

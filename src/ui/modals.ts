@@ -231,7 +231,7 @@ const TUT = [
   { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}</div>`,
     t: "Chuẩn bị ca", d: "Trước ca, màn Chuẩn bị có 4 tab: Nhân viên (chạm thẻ để chọn ai đi làm), Bánh (món đang bán và món Viral hôm nay), Nguyên liệu (nhập hàng, hết hàng là không làm được) và Mục tiêu (dự đoán khách, thu chi ước tính). Bấm Chuẩn bị nhanh để tự nhập đủ." },
   { art: () => `<div class="tart">${petSVG({ ...PETS.dog, mood: "wink" }, 70)}${petSVG({ ...PETS.white, mood: "happy" }, 70)}</div>`,
-    t: "Thú cưng đi làm", d: "Lên cấp thì Milo, Siro, Cacao xin vào làm thợ bánh và tự nhận đơn. Mỗi ca mỗi bé ăn một phần theo bậc (Hạt, Pate, Ức gà, Cá hồi, Bò bít tết), hết đồ ăn thì bé nghỉ. Cho ăn thưởng thì bé thân thiết hơn, lên bậc thì làm nhanh hơn. Vào mục Đội ngũ để chăm các bé." },
+    t: "Thú cưng đi làm", d: "Lên cấp thì Milo, Siro, Cacao xin vào làm thợ bánh và tự nhận đơn. Mỗi ca mỗi bé ăn một phần theo bậc (từ Hạt, Pate tới Tôm hùm, Nấm truffle), hết đồ ăn thì bé nghỉ. Cho ăn thưởng thì bé thân thiết hơn, lên bậc (tối đa bậc 10) thì làm nhanh hơn. Vào mục Đội ngũ để chăm các bé." },
   { art: () => `<div class="tart"><div class="gift"><span class="coin-i big"></span><b>×10</b></div></div>`,
     t: "Triệu hồi Gacha", d: "Dùng xu mua vé để triệu hồi quản lý, linh thú, khách quen và công thức đặc biệt. Quản lý và linh thú đặt ở từng tầng để cộng buff; linh thú còn thuê làm thợ bánh được. Có bảo hiểm: 10 lần chắc có Hiếm, 50 lần chắc có Cực hiếm." },
   { art: () => `<div class="tart"><div class="env big"></div></div>`,

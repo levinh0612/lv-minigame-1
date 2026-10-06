@@ -199,7 +199,7 @@ function staffChip() {
   const mg = staffPlaced("mgr"), ms = staffPlaced("mascot"), lead = mg[0] ?? ms[0]; if (!lead) return "";
   const pc = (k: "price" | "tip" | "pat") => Math.round(gachaFx(k) * 100), cu = gachaFx("cust");
   const bits = [pc("price") && `giá +${pc("price")}%`, pc("tip") && `tip +${pc("tip")}%`, pc("pat") && `chờ +${pc("pat")}%`, cu && `+${cu} khách`].filter(Boolean).slice(0, 2).join(" · ");
-  return `<div class="cm mas">${gachaArt(lead, 30)}<div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
+  return `<div class="cm mas">${gachaArt(lead, 34)}<div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
 }
 export function crewHTML(sh: Shift) {
   const ids = staffIds().filter(id => sh.working.includes(id));
@@ -209,7 +209,7 @@ export function crewHTML(sh: Shift) {
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
-    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${staffAvatar(id, 30, b ? "happy" : sh.lack[id] ? "impatient" : "open")}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
+    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${staffAvatar(id, 38, b ? "happy" : sh.lack[id] ? "impatient" : "open")}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}${staffChip()}</div>`;
 }
 /* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
@@ -365,7 +365,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
     <div id="comboBox">${comboHTML(sh)}</div>
     <div id="mouseBox">${mouseChip(sh)}</div>
-    <div class="queue" style="--n:${Math.min(6, sh.seats.length)}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
+    <div class="queue" style="--c:${Math.max(1, Math.min(5, sh.seats.length))}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
       <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeAnySVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
