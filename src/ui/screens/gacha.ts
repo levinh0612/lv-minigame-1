@@ -7,7 +7,7 @@ import { fmtN } from "../../engine/util";
 import { render } from "../app";
 import { navigate } from "../router";
 import { coinPill, confirmSpend, esc, modal, toast } from "../dom";
-import { rarityIcon, rarityText } from "../badges";
+import { rarityIcon } from "../badges";
 import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
 import { mountTurntable } from "../../scene/glbview";
@@ -79,7 +79,7 @@ function detail(id: string) {
   const it = gachaItem(id); if (!it) return;
   unmount();
   const own = hasItem(id), R = RARITY[it.rarity], model = it.mascot?.model ?? it.mgr?.model, live = model && !it.mascot?.art, both = !!(it.full && model);       // có tranh full thì hiện tranh, không thì model 3D xoay
-  modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag rlock">${rarityText(it.rarity, 112)}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
+  modal(`<div class="gdet r-${it.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${rarityIcon(it.rarity, 12)}${R.n}</span>${it.full ? `<img class="gfull" src="/gacha/full-${it.full}.webp" alt="" draggable="false">` : `<div class="gimg big ${own ? "" : "dim"}" ${live ? `style="position:relative;width:200px;height:200px;margin:auto"` : ""}>${live ? gachaArt(it, 200, true) : gachaArt(it, 130, true)}</div>`}</div>
     <h2>${esc(it.n)}</h2><p class="sub">${KIND_NAME[it.kind]} · ${R.n} · ${own ? `đã có x${countOf(id)}` : "chưa có"}</p>
     ${own && it.mascot ? bondHTML(it.id) : ""}${roleTags(it)}<p class="gdesc">${esc(it.desc)}${it.recipe ? ` Trùng thêm thì thành thạo (tối đa +${Math.round(MASTERY_STEP * MASTERY_MAX * 100)}% giá).` : ""}${it.decor ? " Dùng ở Cửa hàng, mục Trang trí." : ""}${own && it.recipe ? ` Thành thạo ${masteryOf(id)}/${MASTERY_MAX}.` : ""}</p>
     <div class="mbtns">${own ? staffBtns(it) : ""}${fromPool ? `<button class="b3" data-gact="pool:${it.rarity}">← Danh sách</button>` : ""}${it.char && !it.full ? `<button class="b3" data-gact="view3d:${id}">🔄 Xem model 3D</button>` : ""}<button class="b3" data-gact="try:${id}">▶ Xem hiệu ứng triệu hồi</button><button class="b3 w" data-close>Đóng</button></div>`);

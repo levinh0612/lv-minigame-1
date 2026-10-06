@@ -2026,3 +2026,8 @@ button.pcrew{width:100%;text-align:left;font:inherit}
 .itm-chips .rar .rar-ic{margin:-2px 3px -2px 0;filter:none}
 .grates span .rar-ic{margin:-3px 4px -3px 0}
 .gr3-tt .rar-tx{filter:drop-shadow(0 0 3px rgba(0,0,0,.75)) drop-shadow(0 2px 8px rgba(0,0,0,.55))}
+
+/* màn mở thẻ: tiêu đề độ hiếm ở giữa; khối thông tin có nền mờ để đọc rõ trên cảnh sáng */
+.gr3-tt.gr3-rl{left:0;right:0;display:flex;justify-content:center}
+.gr3-info{padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,rgba(8,12,28,.4),rgba(8,12,28,.72));-webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);border:1px solid rgba(255,255,255,.12)}
+.gtag .rar-ic{margin:-3px 3px -3px 0;filter:none}

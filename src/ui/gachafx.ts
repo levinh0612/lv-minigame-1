@@ -61,7 +61,7 @@ async function itemImageURL(it: GachaItem): Promise<{ url: string | null; full: 
   if (it.full) return { url: `/gacha/full-${it.full}.webp`, full: true };
   if (it.mascot || it.mgr) return { url: itemImg(it), full: false };
   if (it.char) { try { const m = await import("../scene/portrait3d"); return { url: await m.portrait3d(it.char.sprite, LOOK), full: false }; } catch { return { url: null, full: false }; } }
-  if (it.recipe) return { url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(cakeSVG({ base: it.recipe.base, cream: it.recipe.cream, top: it.recipe.top, sweet: 1 }, { size: 300, still: true })), full: false };
+  if (it.recipe) return { url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(cakeSVG({ base: it.recipe.base, cream: it.recipe.cream, top: it.recipe.top, sweet: 1 }, { size: 300, still: true }).replace("<svg ", "<svg xmlns=\"http://www.w3.org/2000/svg\" ")), full: false };
   return { url: null, full: false };
 }
 
