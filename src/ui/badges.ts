@@ -25,12 +25,15 @@ const grad = (id: string, t: Tier) => `<linearGradient id="${id}" x1="0" y1="0" 
 
 /* ===== Số cấp người chơi: khiên lục giác tối, viền sáng theo hạng ===== */
 const lvTier = (lv: number) => Math.max(0, Math.min(TIERS.length - 1, Math.floor(lv / 10)));
-export function levelBadge(lv: number, size = 34) {
-  const i = lvTier(lv), t = TIERS[i]!, id = "bd" + uid++, txt = String(lv), fs = txt.length > 2 ? 15 : txt.length > 1 ? 21 : 26;
+/** màu viền theo hạng của cấp người chơi (dùng cho chip, nhãn nhỏ) */
+export const levelColor = (lv: number) => TIERS[lvTier(lv)]!.b;
+/** label: ghi thêm chữ "LV" nhỏ phía trên số (dùng ở cỡ từ 40px trở lên cho dễ nhận ra là cấp) */
+export function levelBadge(lv: number, size = 34, label = false) {
+  const i = lvTier(lv), t = TIERS[i]!, id = "bd" + uid++, txt = String(lv), fs = label ? (txt.length > 2 ? 14 : txt.length > 1 ? 19 : 23) : (txt.length > 2 ? 15 : txt.length > 1 ? 21 : 26);
   return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true" style="display:block;overflow:visible"><defs>${grad(id, t)}<linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${BASE2}"/><stop offset="1" stop-color="${BASE}"/></linearGradient></defs>
 <path d="M32 4L53 15V39L32 60 11 39V15Z" fill="url(#${id}f)" stroke="url(#${id})" stroke-width="2.4" stroke-linejoin="miter"/>
 <path d="M32 10L48 18V37L32 53 16 37V18Z" fill="none" stroke="${t.b}" stroke-opacity=".55" stroke-width="1"/>${diamond(32, 4, 3.4, t.a, t.c)}
-<text x="32" y="${txt.length > 2 ? 36 : 39}" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="${fs}" fill="#fff" stroke="${t.c}" stroke-width=".6" paint-order="stroke">${txt}</text></svg>`;
+${label ? `<text x="32" y="22" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="10" letter-spacing="1" fill="${t.a}">LV</text>` : ""}<text x="32" y="${label ? 46 : txt.length > 2 ? 36 : 39}" text-anchor="middle" font-family="Baloo 2,Nunito,sans-serif" font-weight="800" font-size="${fs}" fill="#fff" stroke="${t.c}" stroke-width=".6" paint-order="stroke">${txt}</text></svg>`;
 }
 
 /* ===== Bậc nhân viên / linh thú (1 đến 10): crest có cánh bằng ảnh public/badges/crest-N.webp (170x94, số La Mã nằm sẵn trong ảnh).
@@ -54,3 +57,10 @@ type RarityId = "common" | "rare" | "ultra";
 export const rarityIcon = (r: RarityId, w = 22) => `<img class="rar-ic" src="/gacha/rarity/icon-${r}.webp" alt="" width="${w}" height="${Math.round(w * 1.333)}" decoding="async" draggable="false">`;
 /** chữ độ hiếm có hoa văn và sao nhỏ (ảnh tỉ lệ 300:211), alt là tên độ hiếm */
 export const rarityText = (r: RarityId, w = 120) => `<img class="rar-tx" src="/gacha/rarity/text-${r}.webp" alt="${{ common: "Thường", rare: "Hiếm", ultra: "Cực hiếm" }[r]}" width="${w}" height="${Math.round(w * 0.703)}" decoding="async" draggable="false">`;
+
+/** huy hiệu cấp nhỏ dùng chính bộ khung ảnh theo hạng, số cấp nằm giữa lỗ khung (HUD trong ca, chip, danh sách).
+ *  size: đường kính vòng khung hiển thị; ảnh khung to hơn một chút để thấy cánh. */
+export function levelMedal(lv: number, size = 44) {
+  const i = lvTier(lv), txt = String(lv), fs = Math.round(size * (txt.length > 2 ? .3 : txt.length > 1 ? .38 : .46));
+  return `<span class="lvm" role="img" aria-label="Cấp ${lv}" style="--s:${size}px;--lvc:${TIERS[i]!.b}"><img class="lvm-f" src="/badges/frame-${i}.webp" alt="" decoding="async" draggable="false"><b style="font-size:${fs}px">${txt}</b></span>`;
+}

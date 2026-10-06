@@ -1,5 +1,6 @@
 /* Tiện ích DOM dùng chung: hộp thoại, thông báo, hiệu ứng tim bay */
 import { ic } from "./icons";
+import { levelColor } from "./badges";
 import { S } from "../engine/state";
 import { fmtN, pick, rnd } from "../engine/util";
 
@@ -107,7 +108,7 @@ export const coinPill = (sm = false, id = "", plus = false) => `<button class="p
 export const backBtn = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">←</button>`;
 /* huy hiệu cấp tiệm + thanh kinh nghiệm */
 export const levelChip = (L: number, cur: number, need: number) =>
-  `<button class="lvchip" data-go="/muc-tieu" aria-label="Tiệm cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lvb">Lv ${L}</span><span class="lvt"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button>`;
+  `<button class="lvchip" data-go="/muc-tieu" aria-label="Tiệm cấp ${L}, ${cur}/${need} kinh nghiệm"><span class="lvb" style="--lvc:${levelColor(L)}">Lv ${L}</span><span class="lvt"><i style="width:${Math.min(100, cur / need * 100)}%"></i></span><small>${cur}/${need}</small></button>`;
 export const hearts = (n: number) => { const k = Math.min(5, Math.floor(n / 10)); return "♥".repeat(k) + "♡".repeat(5 - k); };
 /* 5 trái tim thân thiết (10 điểm = 1 tim) */
 export const heartRow = (n: number, S = 15) => { const k = Math.min(5, Math.floor(n / 10));

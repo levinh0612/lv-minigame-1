@@ -6,19 +6,18 @@
 import { sfx } from "../audio/sound";
 import type { PetId } from "../content/couple";
 import { BAKE_TIME, FOODS, MAX_STAFF_LV, PETS } from "../content/game";
-import { GACHA_ITEMS, KIND_NAME, RARITY, asManager, fxLine, gachaItem, mgrFx, roleOf, type GachaItem } from "../content/gacha";
+import { GACHA_ITEMS, KIND_NAME, RARITY, asManager, fxLine, gachaItem, mgrFx, type GachaItem } from "../content/gacha";
 import { buyFood, foodDef, foodOf, hire, hireFee, isMascotStaff, mascotBonus, mealChoices, mealOf, onDuty, plannedMeal, setMeal, staffIds, staffState, toggleDuty, train, trainCost, treat } from "../engine/economy";
 import { clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, type StaffKind } from "../engine/gacha";
 import { S, petName, petState, save } from "../engine/state";
 import { fmtN, roman } from "../engine/util";
 import { render } from "./app";
-import { rarityIcon, tierBadge } from "./badges";
+import { entityHero, entityInfo, entityRow } from "./components/entity";
 import { petSVG, foodSVG } from "./art";
 import { bump, confirmSpend, dropModal, esc, floatHearts, heartRow, modal, toast } from "./dom";
 import { gachaArt } from "./gachafx";
 import { navigate } from "./router";
 import { openInGacha } from "./screens/gacha";
-import { staffAvatar } from "./staffav";
 
 export type TeamTab = "bake" | "place";
 let team: TeamTab = "bake", floor = 0, listKind: StaffKind = "mgr", dlg = "";
@@ -28,7 +27,6 @@ const BREED: Record<PetId, string> = { dog: "Cún trắng xù", gold: "Mèo Anh 
 const bake = (lv: number) => `${String(BAKE_TIME[Math.min(BAKE_TIME.length, Math.max(1, lv)) - 1]).replace(".", ",")} giây/bánh`;
 const itemsOf = (k: StaffKind) => GACHA_ITEMS.filter(i => k === "mgr" ? asManager(i) : i.kind === "mascot").sort((a, b) => +!!b.mgr - +!!a.mgr || (b.rarity > a.rarity ? 1 : b.rarity < a.rarity ? -1 : 0));
 const fxOf = (it: GachaItem) => it.mascot ? fxLine(it.mascot.fx) : fxLine(mgrFx(it));
-const roleTag = (it: GachaItem) => { const r = roleOf(it); return r ? `<u class="role ${r.c}">${r.n}</u>` : ""; };
 
 /** mở màn Đội ngũ (từ Menu hoặc từ nơi khác) */
 export function openTeam(tab: TeamTab = "bake", kind?: StaffKind) { team = tab; if (kind) listKind = kind; navigate("/cua-hang/thu-cung"); }
@@ -36,13 +34,8 @@ export const staffSheet = (k?: StaffKind) => openTeam("place", k);
 
 /* ============ thẻ thợ bánh ============ */
 function staffCard(id: string) {
-  const st = staffState(id), on = onDuty(id), mas = isMascotStaff(id), tier = st.lv, meal = on ? plannedMeal(id) : null, hungry = on && !meal;
-  const eat = foodDef(mealOf(id)), mb = mascotBonus(id);
-  const status = hungry ? `<span class="ptg bad">Đói</span>` : on ? `<span class="ptg w">Đi làm</span>` : `<span class="ptg o">Nghỉ</span>`;
-  return `<button class="tm-card ${on ? "on" : ""}" data-sd="open:${id}"><span class="tm-av">${staffAvatar(id, 54, on ? "happy" : "open")}</span>
-    <span class="tm-main"><span class="tm-name"><b>${esc(petName(id))}</b>${tierBadge(tier, 22)}${status}</span>
-      <span class="tm-meta">${bake(tier)} · ${foodSVG(eat.id, 15)}${eat.n}</span>
-      ${mas ? `<span class="tm-chips"><i>+${Math.round(mb.price * 100)}% giá</i><i>+${Math.round(mb.tip * 100)}% tip</i></span>` : ""}</span><span class="tm-go" aria-hidden="true">›</span></button>`;
+  const i = entityInfo(id)!;
+  return entityRow(i, { attrs: `data-sd="open:${id}"`, cls: i.onDuty ? "on" : "", px: 52, mood: i.onDuty ? "happy" : "open" });
 }
 const section = (title: string, n: string) => `<div class="tm-sec"><b>${title}</b><i></i><span>${n}</span></div>`;
 
@@ -77,11 +70,8 @@ function placeTab() {
   const n = floorCount(), col = Array.from({ length: n }, (_, i) => n - 1 - i).map(f => `<button class="${f === floor ? "on" : ""}" data-tm="floor:${f}">T${f + 1}</button>`).join("");
   const own = (k: StaffKind) => itemsOf(k).filter(i => hasItem(i.id)).length;
   const rows = itemsOf(listKind).map(it => {
-    const has = hasItem(it.id), R = RARITY[it.rarity], at = floorOfStaff(listKind, it.id), hired = it.mascot && staffState(it.id).hired;
-    return `<button class="tm-item r-${it.rarity} ${has ? "own" : "lock"}" style="--rc:${R.c}" data-tm="item:${it.id}" ${has ? `draggable="true" data-drag="${it.id}"` : ""}>
-      <span class="tm-iart ${has ? "" : "dim"}">${gachaArt(it, 46)}</span>
-      <span class="tm-imain"><span class="tm-iname"><b>${esc(it.n)}</b><i class="gdot" style="--rc:${R.c}">${R.n}</i></span><span class="tm-imeta">${roleTag(it)}${esc(fxOf(it))}</span></span>
-      <span class="tm-istat ${at >= 0 ? "on" : ""}">${has ? (hired ? "Thợ bánh" : at >= 0 ? `Tầng ${at + 1}` : "Rảnh") : "Chưa có"}</span></button>`;
+    const i = entityInfo(it.id)!;
+    return entityRow(i, { attrs: `data-tm="item:${it.id}" ${i.owned ? `draggable="true" data-drag="${it.id}"` : ""}`, px: 48, meta: "", chips: i.fxChips });
   }).join("");
   return `<div class="tp-wrap"><div class="tf-col" role="group" aria-label="Chọn tầng"><small>TẦNG</small>${col}</div>
       <div class="tp-card"><div class="tp-h">Tầng ${floor + 1}</div>${slotRow("mgr")}${slotRow("mascot")}</div></div>
@@ -109,16 +99,15 @@ function foodTiles(id: string) {
 }
 function staffBody(id: string) {
   const st = staffState(id), on = onDuty(id), mas = isMascotStaff(id), tier = st.lv, meal = on ? plannedMeal(id) : null, eat = foodDef(mealOf(id));
-  const fed = petState(id).fedDay === S.daily.day, mb = mascotBonus(id), it = gachaItem(id), fee = hireFee(id);
-  const art = mas ? staffAvatar(id, 112, on ? "happy" : "open") : `<button class="sd-pet" data-sd="pet:${id}" aria-label="Vuốt ve ${esc(petName(id))}">${petSVG({ ...PETS[id as PetId], mood: fed ? "love" : "happy", ledge: false }, 118)}</button>`;
+  const fed = petState(id).fedDay === S.daily.day, mb = mascotBonus(id), fee = hireFee(id);
+  const ei = entityInfo(id)!;
+  const petArt = mas ? undefined : `<button class="sd-pet" data-sd="pet:${id}" aria-label="Vuốt ve ${esc(petName(id))}">${petSVG({ ...PETS[id as PetId], mood: fed ? "love" : "happy", ledge: false }, 118)}</button>`;
   const stat = (k: string, v: string) => `<div><small>${k}</small><b>${v}</b></div>`;
   const meals = mealChoices(id);
   const pick = meals.length > 1 ? `<div class="sd-pick"><small>Bữa ăn mỗi ca</small><div>${meals.map(f => `<button class="${f.id === eat.id ? "on" : ""}" data-sd="meal:${id}:${f.id}">${foodSVG(f.id, 18)}${f.n}</button>`).join("")}</div></div>` : "";
   const act = !st.hired ? `<button class="b3" data-sd="hire:${id}" ${S.coins < fee ? "disabled" : ""}>${mas ? `Thuê · ${fmtN(fee)} xu` : "Nhận vào làm"}</button>` :
     `<button class="b3 ${on ? "w" : ""}" data-sd="duty:${id}">${on ? "Cho nghỉ ca này" : "Cho đi làm"}</button>${trainCost(id) ? `<button class="b3 up2" data-sd="train:${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${roman(tier + 1)} · ${fmtN(trainCost(id))} xu<small>${bake(tier)} → ${bake(tier + 1)}</small></button>` : `<div class="sd-max">Đã đạt bậc tối đa</div>`}`;
-  return `<div class="sd"><div class="sd-top"><div class="sd-art">${art}${st.hired ? tierBadge(tier, 34) : ""}</div>
-    <div class="sd-id"><b>${esc(petName(id))}</b><span>${mas ? `Linh thú · ${it ? RARITY[it.rarity].n : ""}` : BREED[id as PetId]}</span>${on ? `<span class="ptg w">Đi làm</span>` : st.hired ? `<span class="ptg o">Nghỉ</span>` : ""}
-      ${!mas ? `<small>Chạm vào bé để vuốt ve</small>` : ""}</div></div>
+  return `<div class="sd">${entityHero(ei, { px: 104, art: petArt, extra: mas ? `<span class="eh-sub">Linh thú · thuê một lần, đứng tầng được</span>` : `<span class="eh-sub">${BREED[id as PetId]} · chạm vào bé để vuốt ve</span>` })}
     <div class="sd-stats">${stat("Tốc độ", bake(tier))}${stat("Bữa ăn", `${foodSVG(eat.id, 16)} ${eat.n}`)}${stat("Thân thiết", heartRow(petState(id).aff, 13))}${mas ? stat("Buff", `+${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip`) : stat("Bậc", `${roman(tier)} / ${roman(MAX_STAFF_LV)}`)}</div>
     ${on && !meal ? `<p class="sd-warn">Hết đồ ăn cho bữa này, bé sẽ nghỉ ca. Mua thêm ở tủ bên dưới.</p>` : ""}
     <div class="sd-acts">${act}</div>${pick}
@@ -128,7 +117,7 @@ function staffBody(id: string) {
 }
 export function openStaffDialog(id: string) {
   dlg = id;
-  modal(`<h2>${esc(petName(id))}</h2><p class="sub">Thợ bánh${isMascotStaff(id) ? " · Linh thú" : ""}</p><div id="sdBody">${staffBody(id)}</div><div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`, () => { dlg = ""; });
+  modal(`<h2>Thợ bánh</h2><p class="sub">${isMascotStaff(id) ? "Linh thú đồng hành" : "Thú cưng của tiệm"}</p><div id="sdBody">${staffBody(id)}</div><div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`, () => { dlg = ""; });
 }
 const refreshStaff = () => { const b = document.getElementById("sdBody"); if (b && dlg) b.innerHTML = staffBody(dlg); render(true); };
 
@@ -140,8 +129,7 @@ function itemBody(id: string) {
   const tags = [gender, ...(it.mgr?.tags ?? [])].filter(Boolean).map(t => `<span>${esc(t)}</span>`).join("");
   const place = has ? `<div class="itm-sec"><h4>Đặt vào tầng</h4><div class="itm-floors">${Array.from({ length: n }, (_, f) => `<button class="${f === at ? "on" : ""}" data-tm="put:${id}:${f}">Tầng ${f + 1}</button>`).join("")}${at >= 0 ? `<button class="off" data-tm="clear:${id}">Cất</button>` : ""}</div></div>` : "";
   const hire = it.mascot && has ? (hired ? `<div class="itm-ok"><b>✓ Đang làm thợ bánh</b><span>Bậc ${roman(staffState(id).lv)} · xem ở tab Thợ bánh</span></div>` : `<button class="b3 itm-hire" data-tm="hire:${id}" ${S.coins < hireFee(id) ? "disabled" : ""}>Thuê làm thợ bánh · ${fmtN(hireFee(id))} xu<small>không bắt buộc, bé vẫn đứng tầng được</small></button>`) : "";
-  return `<div class="itm" style="--rc:${R.c}"><div class="itm-hero"><div class="itm-art">${gachaArt(it, 96)}</div>
-      <div class="itm-id"><b>${esc(it.n)}</b><div class="itm-chips"><span class="rar">${rarityIcon(it.rarity, 12)}${R.n}</span>${roleTag(it)}${tags}</div></div></div>
+  return `<div class="itm" style="--rc:${R.c}">${entityHero(entityInfo(id)!, { px: 100, extra: tags ? `<span class="eh-tags">${tags}</span>` : "" })}
     <div class="itm-buff"><i aria-hidden="true">✦</i><div><small>Chỉ số khi đứng tầng</small><b>${esc(fxOf(it))}</b></div></div>
     <div class="itm-src"><i aria-hidden="true">🎁</i><div><small>Nguồn</small><b>Triệu hồi Gacha</b><span>Nhóm ${R.n} · ${has ? `đã có x${S.gacha.owned[id] ?? 1}` : "chưa có"}</span></div>
       <button data-tm="gacha:${id}">${has ? "Xem" : "Triệu hồi"}</button></div>

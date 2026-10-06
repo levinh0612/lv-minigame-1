@@ -8,6 +8,7 @@ import { render } from "../app";
 import { navigate } from "../router";
 import { coinPill, confirmSpend, esc, modal, toast } from "../dom";
 import { rarityIcon } from "../badges";
+import { entityInfo, entityTile } from "../components/entity";
 import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
 import { mountTurntable } from "../../scene/glbview";
@@ -41,10 +42,9 @@ function bagHTML() {
   const kinds: (GachaKind | "all")[] = ["all", "recipe", "decor", "char", "mascot", "manager"], items = GACHA_ITEMS.filter(i => filter === "all" || i.kind === filter);
   return `<div class="gbag"><div class="gfil">${kinds.map(k => `<button class="${filter === k ? "on" : ""}" data-gact="filter:${k}">${k === "all" ? `Tất cả ${ownedCount()}/${GACHA_ITEMS.length}` : KIND_NAME[k]}</button>`).join("")}</div>
     <div class="gitems">${items.map(it => {
-      const own = hasItem(it.id), R = RARITY[it.rarity], fl = asManager(it) ? floorOfStaff("mgr", it.id) : it.mascot ? floorOfStaff("mascot", it.id) : -1;
-      return `<button class="gi r-${it.rarity} ${own ? "own" : "lock"}" style="--rc:${R.c};--rc2:${R.c2}" data-gact="card:${it.id}">
-        <div class="gimg ${own ? "" : "dim"}">${gachaArt(it, 56)}</div><b>${esc(it.n)}</b>
-        <small>${roleTag(it)}${own ? (it.recipe ? `thành thạo ${masteryOf(it.id)}/${MASTERY_MAX}` : fl >= 0 ? `${it.char ? "Quản lý " : ""}tầng ${fl + 1}` : `x${countOf(it.id)}`) : "Chưa có"}</small><i class="gdot">${R.n}</i></button>`;
+      const i = entityInfo(it.id)!, own = i.owned;
+      const sub = own ? (it.recipe ? `thành thạo ${masteryOf(it.id)}/${MASTERY_MAX}` : i.floor >= 0 ? `${it.char ? "Quản lý " : ""}tầng ${i.floor + 1}` : `x${i.count}`) : "";
+      return entityTile(i, { attrs: `data-gact="card:${it.id}"`, cls: "gi2", px: 60, sub });
     }).join("")}</div></div>`;
 }
 export function gachaHTML() {
@@ -68,7 +68,6 @@ function staffBtns(it: GachaItem) {
   return `<div class="gfl"><small>${k === "mgr" ? (it.char ? "Cho làm quản lý" : "Quản lý") : "Linh vật"} tầng nào?</small><div>${Array.from({ length: n }, (_, f) => `<button class="${f === at ? "on" : ""}" data-gact="place:${k}:${it.id}:${f}">Tầng ${f + 1}</button>`).join("")}${at >= 0 ? `<button class="off" data-gact="clear:${k}:${it.id}:${at}">Cất</button>` : ""}</div>${n === 1 ? `<small>Xây thêm lầu để có thêm chỗ đứng.</small>` : ""}</div>`;
 }
 /** nhãn vai nhỏ trên thẻ: khách quen hay quản lý */
-const roleTag = (it: GachaItem) => { const r = roleOf(it); return r ? `<u class="role ${r.c}">${r.n}</u> ` : ""; };
 /** hàng nhãn ở chi tiết: vai, giới tính, nghề (quản lý), và ghi chú khách quen Hiếm trở lên làm được quản lý */
 function roleTags(it: GachaItem) {
   const r = roleOf(it); if (!r) return "";

@@ -6,6 +6,7 @@ import { goalText, shiftGoals } from "../../engine/shift";
 import { availableIdx } from "../../engine/suppliers";
 import { staffAvatar } from "../staffav";
 import { tierBadge } from "../badges";
+import { entityInfo, entityRow } from "../components/entity";
 import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { cakeAnySVG, foodSVG, ingSVG } from "../art";
@@ -38,19 +39,17 @@ export type PrepTab = "crew" | "cakes" | "stock" | "goals";
 let prepTab: PrepTab = "crew";
 export const setPrepTab = (t: PrepTab) => { prepTab = t; };
 
-/* thẻ gọn của một bé: chạm cả thẻ để chọn/bỏ chọn đi làm */
+/* thẻ gọn của một bé: chạm cả thẻ để chọn/bỏ chọn đi làm (dùng thành phần chung entityRow) */
 function crewCard(id: string) {
-  const d = staffDef(id), st = S.staff[id], on = onDuty(id);
+  const st = S.staff[id];
   if (!st.hired) return bakerTile(id);
-  const tier = st.lv, need = foodDef(mealOf(id)), meal = plannedMeal(id), hungry = on && !meal, eat = meal ? foodDef(meal) : need;
-  const mb = isMascotStaff(id) ? mascotBonus(id) : null;
-  const line = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 16)}Bậc ${tier} · ${eat.n}`;
-  const buff = mb ? `<small><span class="mtag">Linh thú</span> +${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip</small>` : `<small>${esc(d.role)}</small>`;
-  const act = `<i class="pc-chk" aria-hidden="true">${on ? "✓" : ""}</i>`;
-  if (hungry) return `<div class="pcwrap"><button class="pcrew hun" data-duty="${id}" role="switch" aria-checked="${on}"><div class="av">${staffAvatar(id, 60, "impatient", true)}</div><div class="pi"><b class="pn">${esc(petName(id))}${tierBadge(tier, 22)}</b><div class="bs">${line}</div>${buff}</div></button><button class="pc-buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button></div>`;
-  return `<button class="pcrew ${on ? "on" : ""} ${hungry ? "hun" : ""}" data-duty="${id}" role="switch" aria-checked="${on}">
-    <div class="av">${staffAvatar(id, 60, on && !hungry ? "happy" : hungry ? "impatient" : "open", true)}</div>
-    <div class="pi"><b class="pn">${esc(petName(id))}${tierBadge(tier, 22)}</b><div class="bs">${line}</div>${buff}</div>${act}</button>`;
+  const i = entityInfo(id)!, on = onDuty(id), need = foodDef(mealOf(id)), meal = plannedMeal(id), hungry = on && !meal, eat = meal ? foodDef(meal) : need;
+  const line = hungry ? `<span class="bad">Đói · hết ${need.n}</span>` : `${foodSVG(eat.id, 16)}Bậc ${st.lv} · ${eat.n}`;
+  const row = entityRow(i, {
+    attrs: `data-duty="${id}" role="switch" aria-checked="${on}"`, cls: `crew ${on ? "on" : ""} ${hungry ? "hun" : ""}`, px: 52, mood: on && !hungry ? "happy" : hungry ? "impatient" : "open",
+    meta: line, trail: `<i class="pc-chk" aria-hidden="true">${on ? "✓" : ""}</i>`
+  });
+  return hungry ? `<div class="pcwrap">${row}<button class="pc-buy" data-food-buy="${need.id}:1" data-for="${id}" ${S.coins < need.cost ? "disabled" : ""}>Mua ${need.n} · ${need.cost} xu</button></div>` : row;
 }
 
 export function prepHTML() {

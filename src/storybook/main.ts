@@ -157,6 +157,11 @@ const STORIES: Story[] = [
       const fr = [5, 15, 25, 35, 45, 55, 65, 75, 85, 100].map(l => `<div style="text-align:center"><div class="pc-av" style="--p:${l + 20};margin:30px 20px 22px">${levelFrame(l)}<span style="font:900 26px var(--display)">🙂</span><span class="pc-lv bdg">${levelBadge(l, 34)}</span></div><small style="font:800 12px var(--body)">Lv ${l} · ${frameName(l)}</small></div>`).join("");
       const cr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(t => `<div style="text-align:center;padding:6px 10px">${tierBadge(t, 52)}<div style="font:800 12px var(--body)">Bậc ${t}</div></div>`).join("");
       return `<div class="scr" style="padding:16px"><div style="display:flex;flex-wrap:wrap;justify-content:center">${fr}</div><div style="display:flex;flex-wrap:wrap;justify-content:center;margin-top:16px;background:#fff;border-radius:20px;padding:12px">${cr}</div></div>`; } },
+  { id: "play-reg", sec: "screens", title: "Chơi · khách quen nổi bật", desc: "Khách quen Thường/Hiếm/Cực hiếm có viền sáng theo độ hiếm và nhãn Quen", kind: "screen",
+    html: () => { lvState(13, st => { staffed(st); }); const sh = busyShift();
+      const ids = GACHA_ITEMS.filter(i => i.char), by = (r: string) => ids.find(i => i.rarity === r)!.id;
+      sh.seats = [{ ...sh.seats[0]!, reg: by("common"), perkPrice: .05, perkTip: .05 }, { ...sh.seats[1]!, reg: by("rare"), perkPrice: .1 }, sh.seats[2]!, { ...sh.seats[3]!, reg: by("ultra"), perkPrice: .15, perkTip: .1 }] as typeof sh.seats; _setShift(sh);
+      return playHTML(sh, { states: ["", "", "", ""] }); } },
   { id: "play-queue8", sec: "screens", title: "Chơi · hàng đợi 8 bàn", desc: "flex-wrap: đủ 5 thẻ một hàng thì xuống hàng 2, cả hai hàng đều thấy hết", kind: "screen",
     html: () => { lvState(13, st => { staffed(st); });
       const sh = busyShift(); sh.seats = [...sh.seats, cust("Bé Bin", NA(), 1, 1, 25), cust("Chị Mơ", MAI(), 2, 0, 18), null, cust("Cô Hạnh", TUNG(), 0, 2, 40)] as typeof sh.seats; _setShift(sh);

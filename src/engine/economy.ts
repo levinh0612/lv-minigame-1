@@ -163,7 +163,7 @@ export const plannedMeal = (id: StaffId): FoodId | null => (onDuty(id) ? crewPla
 export const trainCost = (id: StaffId) => (S.staff[id].lv < MAX_STAFF_LV ? staffDef(id).train[S.staff[id].lv - 1] ?? 0 : 0);
 
 export function hire(id: StaffId) {
-  if (!canHire(id) || S.staff[id].hired) return false;
+  if (!canHire(id) || staffState(id).hired) return false;
   const fee = hireFee(id); if (fee > S.coins) return false;
   if (fee) spend("hire", fee, `Thuê ${petName(id)}`);
   S.staff[id] = { ...S.staff[id], hired: true, onDuty: true }; save(); return true;

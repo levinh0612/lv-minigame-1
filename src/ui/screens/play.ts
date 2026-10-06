@@ -2,6 +2,9 @@
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
 import { gachaFx, staffPlaced } from "../../engine/gacha";
 import { gachaArt } from "../gachafx";
+import { gachaItem } from "../../content/gacha";
+import { entityAvatar, entityInfo } from "../components/entity";
+import { levelMedal, rarityIcon } from "../badges";
 import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
@@ -133,7 +136,7 @@ function loop(now: number) {
     SH.seats.forEach((c, i) => { if (c && !c.gone) updatePatience(c, i); });
     updateBaking();
     const left = remaining(SH);
-    if (leftShown !== left) { leftShown = left; const e = $("#shLeft"); if (e) e.textContent = `Ca ${S.shifts + 1} · còn ${left} khách`; }
+    if (leftShown !== left) { leftShown = left; const e = $("#shLeft"); if (e) e.textContent = `Hàng đợi: còn ${left} khách`; }
     if (isOver(SH)) return endShift();
   }
   raf = requestAnimationFrame(loop);
@@ -170,7 +173,6 @@ const faceSize = (sh: Shift) => ({ 3: 70, 4: 60, 5: 52, 6: 46 } as Record<number
 const cakeOf = (c: Customer, size: number) => cakeAnySVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, up: c.r.up, sweet: c.sweet }, { size, still: true });
 /* tầng đang chọn nguyên liệu (chỉ khác 0 với bánh nhiều tầng) */
 let curTier = 0;
-const LV_BADGE = `<svg width="44" height="44" viewBox="0 0 46 46" aria-hidden="true"><path d="M23 1 L28 5.5 L34.5 4 L36.5 10.5 L42.5 13 L41 19.5 L45 25 L40 29.5 L40.5 36 L34 37 L30.5 43 L24.5 40.5 L18 43 L15 37 L8.5 36 L9 29.5 L4 25 L8 19.5 L6.5 13 L12.5 10.5 L14.5 4 L21 5.5 Z" fill="#FF7FA1" stroke="#E0567A" stroke-width="2" stroke-linejoin="round"/><circle cx="23" cy="23" r="13.5" fill="#FFF3F6"/></svg>`;
 const BOX = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4A3438" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8 L12 3.5 L21 8 V17 L12 21.5 L3 17 Z" fill="#F6D59A"/><path d="M3 8 L12 12.5 L21 8 M12 12.5 V21.5"/><path d="M7.5 5.8 L16.5 10.3" stroke-width="1.8"/></svg>`;
 const CHEV = (up: boolean) => `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="${up ? "M3 9 L7 5 L11 9" : "M3 5 L7 9 L11 5"}" stroke="#C07A8C" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const TICK = `<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 L5 9 L10 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -184,11 +186,13 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
   const who = c.by ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
-  return `${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
+  const rg = c.reg ? gachaItem(c.reg) : null, perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");
+  const vip = rg ? `<i class="vtag vt-${rg.rarity}" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>` : "";
+  return `${vip}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
     <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${who}`;
 }
-const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (extra ? " " + extra : ""); };
+const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (c?.reg ? " reg reg-" + (gachaItem(c.reg)?.rarity ?? "common") : "") + (extra ? " " + extra : ""); };
 const slotLabel = (sh: Shift, i: number) => { const c = sh.seats[i]; return !c ? "Bàn trống" : c.by ? `${petName(c.by)} đang làm cho ${c.who}` : `Nhận đơn của ${c.who}`; };
 const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
   `<button class="${slotClass(sh, i, st === "low" ? "low" : "")}" id="seat${i}" data-seat="${i}" aria-label="${esc(slotLabel(sh, i))}">${slotHTML(sh, i, st)}</button>`;
@@ -209,7 +213,7 @@ export function crewHTML(sh: Shift) {
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
-    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${staffAvatar(id, 38, b ? "happy" : sh.lack[id] ? "impatient" : "open")}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
+    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${(() => { const ei = entityInfo(id); return ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"); })()}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}${staffChip()}</div>`;
 }
 /* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
@@ -356,13 +360,13 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
   const low = lowCount();
   return `<div class="scr play ${m >= 0 ? "has" : "free"} ${open ? "up" : ""}" id="play">
     <div class="ptop">
-      <div class="lvbadge">${LV_BADGE}<b>Lv${L}</b></div>
-      <div class="pbar"><small id="shLeft">Ca ${S.shifts + 1} · còn ${remaining(sh)} khách</small><div class="track"><i id="xpBar" style="width:${Math.min(100, cur / need * 100)}%"></i></div></div>
+      <div class="lvbadge">${levelMedal(L, 46)}</div>
+      <div class="pbar"><small>Ca ${S.shifts + 1}</small><div class="track"><i id="xpBar" style="width:${Math.min(100, cur / need * 100)}%"></i></div></div>
       ${coinPill(true, "shCoins")}
       <button class="rbtn box" data-act="stock" aria-label="Kho nguyên liệu">${BOX}<span class="dot" id="lowDot" ${low ? "" : "hidden"}>${low}</span></button>
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
-    <div class="qhead"><b>Hàng đợi</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
+    <div class="qhead"><b id="shLeft">Hàng đợi: còn ${remaining(sh)} khách</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
     <div id="comboBox">${comboHTML(sh)}</div>
     <div id="mouseBox">${mouseChip(sh)}</div>
     <div class="queue" style="--c:${Math.max(1, Math.min(5, sh.seats.length))}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>

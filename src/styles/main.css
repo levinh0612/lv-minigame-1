@@ -2036,3 +2036,81 @@ button.pcrew{width:100%;text-align:left;font:inherit}
 .pcrew .pn{display:flex;align-items:center;gap:6px}.pcrew .pn .tbg,.tm-name .tbg{position:static;flex:none;filter:none;margin:0}
 .tm-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .gr3-rate{display:flex;margin:-2px 0 2px}.gr3-rate .rar-ic{margin:0;filter:drop-shadow(0 0 6px var(--g))}
+/* hàng đợi flex-wrap: mọi ô trong cùng hàng cao bằng nhau (ô trống không thấp hơn ô có khách) */
+.queue{align-items:stretch;align-content:flex-start}
+.queue>.slot{height:auto;min-height:150px}
+.queue[style*="--c:5"]>.slot{min-height:140px}
+.queue>.slot.empty{min-height:inherit}
+.queue .who.by{max-width:100%}
+
+/* ===== Thành phần đối tượng dùng chung (ui/components/entity.ts) ===== */
+/* khung ảnh theo độ hiếm: viền kim loại vát góc, nền tối cho Hiếm/Cực hiếm để ảnh nổi bật; Cực hiếm có ánh quét */
+.cf{--a:#DCE6F2;--b:#8FA3BD;--in1:#fff;--in2:#EEF4FB;position:relative;display:inline-grid;flex:none;padding:3px;background:linear-gradient(145deg,var(--a),var(--b));
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px)}
+.cf .cfi{display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 35%,var(--in1),var(--in2));
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+.cf .cfi>*{max-width:100%;max-height:100%}
+.cf-pet{--a:#CFEBDD;--b:#93CDB3;--in1:#fff;--in2:#E2F5EC}
+.cf-rare{--a:#B8C8FF;--b:#5A6FE0;--in1:#2A3470;--in2:#0E1233;filter:drop-shadow(0 0 5px rgba(110,130,255,.55))}
+.cf-ultra{--a:#FFE9A6;--b:#D79A22;--in1:#4A3513;--in2:#14100A;filter:drop-shadow(0 0 7px rgba(255,200,80,.7))}
+.cf-ultra::after,.cf-rare::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%);background-size:250% 100%;background-position:150% 0;animation:cfsheen 3.6s ease-in-out infinite;pointer-events:none}
+@keyframes cfsheen{60%,100%{background-position:-60% 0}}
+@media (prefers-reduced-motion:reduce){.cf-ultra::after,.cf-rare::after{animation:none}}
+.cf.dim{filter:grayscale(.85) opacity(.6)}.cf.dim::after{display:none}
+/* chip chỉ số */
+.ec-chips{display:flex;flex-wrap:wrap;gap:4px}
+.ec-chips i{font:800 11.5px var(--body);font-style:normal;padding:2px 8px;border-radius:99px;background:#EEF1F7;color:#5B6478}
+.ec-price{background:#FFF0D2!important;color:#8A5A00!important}.ec-tip{background:#DDF4E8!important;color:#2A7A59!important}.ec-pat{background:#E4EBFF!important;color:#3A4FB0!important}.ec-cust{background:#F1E6FF!important;color:#6A3FB0!important}
+.ec-bond{font-style:normal;font:800 11px var(--body);color:#E0567A;letter-spacing:1px}
+/* nhãn độ hiếm và trạng thái */
+.er-rar{display:inline-flex;align-items:center;gap:2px;font:800 11px var(--body);font-style:normal;padding:1px 8px 1px 5px;border-radius:99px;background:#EAF0F8;color:#5B7391}
+.er-rar-rare{background:#E3E9FF;color:#3F52C9}.er-rar-ultra{background:#FFF0C8;color:#9A6400}
+.er-rar .rar-ic{margin:-2px 2px -2px 0;filter:none}
+.er-st{font:800 11.5px var(--body);font-style:normal;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.er-st-on{background:#DDF4E8;color:#2A7A59}.er-st-off{background:#ECEFF4;color:#7A8498}.er-st-bad{background:#FDE0E4;color:#C43D5B}
+.er-st-free{background:#EEF1F7;color:#6B7487}.er-st-lock{background:#F1F2F5;color:#9AA2B3}.er-st-work{background:#E3E9FF;color:#3F52C9}
+/* thẻ dạng dòng */
+.er{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border-radius:22px;padding:10px 12px;box-shadow:0 3px 0 var(--sh);border:2px solid transparent;cursor:pointer;transition:transform .12s}
+.er:active{transform:scale(.985)}
+.er.lock{opacity:.9}.er-rare{border-color:#C9D4FF}.er-ultra{border-color:#FFE29A;background:linear-gradient(180deg,#fffdf6,#fff)}
+.er-av{flex:none}.er-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.er-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.er-name>b{font:800 16px var(--display);color:var(--ink2)}
+.er-name .tbg{position:static;flex:none;filter:none;margin:0}
+.er-meta{display:flex;align-items:center;gap:4px;font:700 12.5px var(--body);color:var(--soft2)}
+.er-trail{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}.er-go{font:800 22px var(--body);color:#9AA7C3;line-height:1}
+/* thẻ ô vuông */
+.et{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px 10px;border-radius:20px;background:#fff;box-shadow:0 3px 0 var(--sh);text-align:center;border:2px solid transparent;cursor:pointer;min-width:0}
+.et-rare{border-color:#C9D4FF}.et-ultra{border-color:#FFE29A;background:linear-gradient(180deg,#fffdf6,#fff)}
+.et>b{font:800 14px/1.15 var(--display);color:var(--ink2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.et>small{font:700 11.5px var(--body);color:var(--soft2);display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:14px}
+.et .ec-chips{justify-content:center}
+.er.crew.on{border-color:#9CD9B8}.er.crew:not(.on){background:var(--k-fbf4f6);opacity:.88}.er.crew.hun{border-color:#F3B6C4}
+.er.crew .er-meta .bad{color:var(--k-d14e73)}.pcwrap .er{width:100%}
+
+/* khách quen / khách có buff: viền sáng theo độ hiếm và nhãn "Quen" */
+.slot.reg{border-color:var(--rg,#8FB4D9);box-shadow:0 0 0 2px color-mix(in srgb,var(--rg,#8FB4D9) 35%,transparent),0 3px 0 var(--sh);background:linear-gradient(180deg,color-mix(in srgb,var(--rg,#8FB4D9) 14%,#fff),#fff 60%)}
+.slot.reg-common{--rg:#8FB4D9}.slot.reg-rare{--rg:#6F86F5}.slot.reg-ultra{--rg:#F2B84B}
+.slot.reg-ultra{animation:regglow 2.4s ease-in-out infinite alternate}@keyframes regglow{to{box-shadow:0 0 0 2px color-mix(in srgb,#F2B84B 55%,transparent),0 0 14px rgba(242,184,75,.7),0 3px 0 var(--sh)}}
+@media (prefers-reduced-motion:reduce){.slot.reg-ultra{animation:none}}
+.slot .vtag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:2px;padding:1px 7px 1px 4px;border-radius:99px;font:900 10.5px/16px var(--body);font-style:normal;color:#fff;background:var(--rg,#8FB4D9);box-shadow:0 2px 0 rgba(0,0,0,.15);white-space:nowrap}
+.slot .vtag .rar-ic{margin:-2px 1px -2px 0;filter:none}
+.er.crew.on .pc-chk{background:#3F9C78;border-color:#3F9C78}.er.crew .er-trail{justify-content:center}
+
+/* phần đầu hộp thoại chi tiết (entityHero) */
+.eh{display:flex;align-items:center;gap:14px;text-align:left}.eh-av{flex:none}
+.eh-id{min-width:0;display:flex;flex-direction:column;gap:6px}.eh-id>b{font:800 24px/1.05 var(--display);color:var(--ink2)}
+.eh-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.eh-line .tbg{position:static;filter:none}
+.eh-sub{font:700 12px var(--body);color:var(--soft2)}.eh-tags{display:flex;flex-wrap:wrap;gap:5px}.eh-tags span{padding:2px 9px;border-radius:99px;background:var(--pink-l);color:var(--pink-d);font:800 11.5px var(--body)}
+.sd .eh,.itm .eh{margin:6px 0 4px}
+
+/* cấp người chơi ở các chỗ nhỏ: khiên tối viền theo hạng (HUD trong ca) và chip tối viền sáng */
+.lvbadge{width:48px;height:48px}.lvbadge svg{position:static;width:48px;height:48px;filter:drop-shadow(0 2px 3px rgba(20,24,43,.35))}
+.lvb{background:#12182B;color:#fff;box-shadow:inset 0 0 0 2px var(--lvc,#8696AE);text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.lvbadge{width:44px;height:44px}.lvbadge svg{width:44px;height:44px}
+
+/* huy hiệu cấp bằng khung ảnh: vòng khung rộng đúng --s, số nằm giữa lỗ khung */
+.lvm{position:relative;display:inline-grid;place-items:center;width:var(--s);height:var(--s);flex:none}
+.lvm-f{position:absolute;left:50%;top:50%;width:calc(var(--s) * 1.7);max-width:none;height:auto;transform:translate(-50%,-48.8%);pointer-events:none}
+.lvm::before{content:"";position:absolute;width:calc(var(--s) * .72);height:calc(var(--s) * .72);border-radius:50%;background:radial-gradient(circle,#1C2540,#0B1020);box-shadow:0 0 0 1px color-mix(in srgb,var(--lvc) 60%,transparent)}
+.lvm>b{position:relative;z-index:1;font-family:var(--display);font-weight:800;line-height:1;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.lvbadge:has(.lvm){width:46px;height:46px}.lvbadge:has(.lvm) .lvm{width:46px;height:46px}
