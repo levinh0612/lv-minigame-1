@@ -54,6 +54,17 @@ export const CFG = {
     "Nhớ ăn sáng nha. Bánh matcha không tính là bữa sáng đâu!",
     "Ngủ ngon nha chủ tiệm. Mai lại mở cửa tiếp."
   ],
+  // Thông báo đẩy mỗi sáng (7:00) và tối (23:00), {her} là tên người nhận
+  morning: [
+    "Thư hôm nay đã đến tiệm rồi, Milo đang đợi {her} mở cửa nè ☀️",
+    "Dậy thôi {her} ơi, Siro nướng xong mẻ bánh matcha đầu tiên rồi 🍵",
+    "Chào buổi sáng! Cacao giữ chỗ đẹp nhất trong tiệm cho {her} rồi đó 💌"
+  ],
+  night: [
+    "11 giờ rồi, đi ngủ thôi {her}. Milo tắt đèn tiệm nha 🌙",
+    "Tiệm đóng cửa rồi, Siro cuộn tròn ngủ trên tủ bánh. {her} cũng ngủ ngon nha 💤",
+    "Cất điện thoại đi ngủ thôi, mai tiệm còn đông khách lắm đó ✨"
+  ],
   eventNotes: {
     anniversary: "Chúc mừng {n} năm mình yêu nhau!\nCảm ơn Em đã ở bên Anh suốt {d} ngày qua. Năm nay mình đi ăn bánh matcha thật nha.",
     monthly: "Tròn {n} tháng bên nhau rồi đó!\nMỗi tháng Anh lại thương Em thêm một chút.",
@@ -66,5 +77,5 @@ export const CFG = {
   }
 } as {
   herName: string; hisName: string; shopName: string; metDate: string; herBirthday: string; hisBirthday: string;
-  pets: PetCfg[]; girlNames: string; boyNames: string; notes: string[]; eventNotes: Record<EventKey, string>;
+  pets: PetCfg[]; girlNames: string; boyNames: string; notes: string[]; morning: string[]; night: string[]; eventNotes: Record<EventKey, string>;
 };

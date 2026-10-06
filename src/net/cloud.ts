@@ -3,6 +3,7 @@
    - Tiến trình tự lưu lên server khi có thay đổi; mở app thì tải bản mới hơn (máy khác chơi) về.
    - Không có mạng vẫn chơi được, có mạng lại thì tự đẩy lên. */
 import { lvl } from "../engine/progress";
+import type { GameConfig } from "../content/gameconfig";
 import type { VisitShop } from "../engine/visit";
 import { KEY, S, loadState, replaceState, save, whenSaved, type State } from "../engine/state";
 
@@ -15,6 +16,9 @@ export function keepUnlock() { try { if (unlocked) sessionStorage.setItem("tiem-
 const store = () => { try { if (A) localStorage.setItem(AUTH, JSON.stringify(A)); else localStorage.removeItem(AUTH); } catch { /* riêng tư */ } };
 
 export const account = () => A?.user ?? "";
+/* admin: tài khoản duy nhất được chỉnh cấu hình game (server cũng kiểm tra lại) */
+export const ADMIN_USER = "levinh";
+export const isAdmin = () => account() === ADMIN_USER;
 export const loggedIn = () => !!A?.token;
 
 /* PIN chỉ lưu dạng băm trên máy (để mở khoá khi không có mạng) */
@@ -200,3 +204,8 @@ export async function disablePush() {
   } catch { /* bỏ qua */ }
   S.cloud.push = false; save();
 }
+
+/* ===== Cấu hình game dùng chung (admin chỉnh, mọi máy tự tải) ===== */
+export interface RemoteCfg { rev: number; config?: GameConfig; same?: boolean; updatedAt?: string | null }
+export const fetchGameConfig = (since?: number) => api<RemoteCfg>("config" + (since == null ? "" : "?since=" + since));
+export const pushGameConfig = (config: GameConfig) => post<RemoteCfg>("config", { config });

@@ -3,7 +3,9 @@ import { FIXED_GUESTS, RECIPES, SPRITES } from "../src/content/game";
 import { coinMult, daysTogether, events, todayEvents } from "../src/engine/dates";
 import { goals, rollDay } from "../src/engine/progress";
 import { closeEarly, createShift, makeCustomer, mineIdx, peek, serve, take, tick, type Customer } from "../src/engine/shift";
-import { S, fresh, loadState, resetState } from "../src/engine/state";
+import { S, fresh, loadState, petName, resetState } from "../src/engine/state";
+import { CFG } from "../src/content/couple";
+import { applyGameConfig, cleanGameConfig } from "../src/content/gameconfig";
 
 const at = (y: number, m: number, d: number) => vi.setSystemTime(new Date(y, m - 1, d, 10, 0, 0));
 const customer = (over: Partial<Customer> = {}): Customer => ({
@@ -54,7 +56,7 @@ describe("dữ liệu lưu", () => {
     expect(s.refund).toBe(410);
     expect(s.coins).toBe(100 + 60 + 350);
     expect(s.decor).toEqual([]);
-    expect(s.names.pets).toEqual({ dog: "Milo", gold: "Siro", white: "Cacao" });
+    expect(petName("dog")).toBe("Milo");
   });
 
   it("bản 2.0 lỗi: đồ cũ sót lại được hoàn xu, đồ trùng tên giữ lại, đánh giá hình cũ bỏ đi", () => {
@@ -113,10 +115,16 @@ describe("dữ liệu lưu", () => {
     expect(s.refund).toBeUndefined();
   });
 
-  it("giữ tên thú cưng người chơi tự đặt", () => {
-    const s = loadState(JSON.stringify({ v: 2, names: { pets: { dog: "Bơ" } } }));
-    expect(s.names.pets.dog).toBe("Bơ");
-    expect(s.names.pets.gold).toBe("Siro");
+  it("tên thú cưng, người gửi, khách do cấu hình admin quyết định và khôi phục được mặc định", () => {
+    applyGameConfig({ his: "Bin", pets: { dog: "Bơ" }, girls: "A, B" });
+    expect(petName("dog")).toBe("Bơ"); expect(petName("gold")).toBe("Siro"); expect(CFG.hisName).toBe("Bin"); expect(CFG.girlNames).toBe("A, B");
+    applyGameConfig({});
+    expect(petName("dog")).toBe("Milo"); expect(CFG.hisName).toBe("Anh");
+  });
+  it("làm sạch cấu hình: cắt độ dài, bỏ thẻ HTML, bỏ trường rỗng", () => {
+    const c = cleanGameConfig({ his: "  <b>Bin</b>  ", pets: { dog: "x".repeat(40), cat: "no" }, notes: ["ok", "", 5], morning: [] , lạ: 1 });
+    expect(c.his).toBe("bBin/b"); expect(c.pets?.dog).toHaveLength(16); expect(c.pets).not.toHaveProperty("cat");
+    expect(c.notes).toEqual(["ok", "5"]); expect(c.morning).toBeUndefined(); expect(c).not.toHaveProperty("lạ");
   });
 
   it("dữ liệu hỏng thì bắt đầu lại", () => {

@@ -17,7 +17,8 @@ import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
 import { askVisit } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
-import { accountPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, adminPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
 import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { customAct, openCustom } from "./ui/custom";
@@ -70,6 +71,7 @@ document.addEventListener("click", e => {
     case "settings": return settings();
     case "profile": return profileSheet();
     case "account": return accountPanel();
+    case "admin": return adminPanel();
     case "menu": return menuSheet();
     case "more": return moreSheet();
     case "buff": return buffSheet();
@@ -164,7 +166,7 @@ setInterval(() => {
   const inShift = !!SH; if (inShift) pause();
   sfx("bell"); coinModal(() => { if (inShift) resume(); else render(); });
 }, 1000);
-/* thưởng thụ động: đền bù một lần và 10% số xu cho lần đăng nhập đầu tiên mỗi ngày (qua ngày mới giữa lúc đang mở app cũng nhận) */
+/* thưởng thụ động: đền bù một lần và thưởng theo cấp + chuỗi ngày cho lần đăng nhập đầu tiên mỗi ngày (qua ngày mới giữa lúc đang mở app cũng nhận) */
 function passive() {
   if (document.hidden || isLocked() || SH || hasModal() || !S.tut || !S.welcome) return;     // người mới: xem hướng dẫn và quà khai trương trước
   const c = claimPassive(); if (!c.daily && !c.comp) return;
@@ -188,6 +190,10 @@ setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) vo
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", () => render());
 
+loadCachedConfig();            // tên, thư, tên khách do admin cấu hình: dùng bản đã lưu trên máy ngay, rồi hỏi server có bản mới không
+void syncGameConfig();
+addEventListener("cfg:synced", () => { if (!SH && !hasModal()) render(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) void syncGameConfig(); });
 render();
 Sound.play("home");
 /* vào tiệm (mở khoá / đăng nhập xong): tải bản mới nhất, rồi hướng dẫn và quà khai trương nếu là lần đầu */

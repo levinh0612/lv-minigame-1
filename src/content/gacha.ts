@@ -114,6 +114,6 @@ export const GACHA_ITEMS: GachaItem[] = [
 /* tranh minh hoạ do người chơi cung cấp */
 for (const [id, full] of Object.entries({ c_n3: "lynae", m_phuonghoang: "phoenix", m_baizhi: "baizhi" })) { const it = GACHA_ITEMS.find(i => i.id === id); if (it) it.full = full; }
 /** ảnh thẻ nhỏ của vật phẩm có model 3D (chụp từ model): linh vật dùng mascot-<img>, quản lý dùng mgr-<tên> */
-export const itemImg = (it: GachaItem) => it.mascot ? `/gacha/mascot-${it.mascot.img}.webp` : `/gacha/mgr-${it.mgr!.model.replace(/^g_/, "")}.webp`;
+export const itemImg = (it: GachaItem) => it.mascot ? `/gacha/mascot-${it.mascot.img}.webp` : it.mgr ? `/gacha/mgr-${it.mgr.model.replace(/^g_/, "")}.webp` : "";   // khách quen (char) không có ảnh riêng: dùng gachaArt
 export const gachaItem = (id: string) => GACHA_ITEMS.find(i => i.id === id);
 export const itemsOf = (r: Rarity) => GACHA_ITEMS.filter(i => i.rarity === r);

@@ -16,10 +16,10 @@ import { createShift, type Customer, type Shift } from "../engine/shift";
 import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
-import { claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
+import { adminPanel, claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
-import { openStaffDialog, setDDOpen, setTeamTab } from "../ui/team";
+import { openItemDialog, openStaffDialog, setDDOpen, setTeamTab } from "../ui/team";
 import { ingredientSheet } from "../ui/ingredients";
 import { openCustom } from "../ui/custom";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, recipeFilter } from "../ui/sheets";
@@ -179,7 +179,11 @@ const STORIES: Story[] = [
   { id: "team", sec: "screens", title: "Đội ngũ · Thợ bánh", desc: "Gộp thợ bánh và linh thú Gacha: huy hiệu bậc I-V, linh thú không ăn, phí thuê và buff", kind: "screen", long: true,
     html: () => { lvState(13, st => { buffed(st); st.coins = 30000; st.gacha.owned.m_xiem = 1; st.gacha.owned.m_baoden = 1; st.gacha.owned.m_cacao = 1; st.pets.dog.aff = 32; st.food = { kibble: 4, pate: 2, chicken: 0, salmon: 0, steak: 0 }; st.staff.dog = { hired: true, lv: 4, onDuty: true }; st.staff.gold = { hired: true, lv: 2, onDuty: true }; st.staff.m_xiem = { hired: true, lv: 3, onDuty: true }; }); setTeamTab("bake"); return shopHTML("pets"); } },
   { id: "team-place", sec: "screens", title: "Đội ngũ · Quản lý và Linh thú", desc: "Cột tầng, ô chọn quản lý và linh thú, danh sách bên dưới", kind: "screen", long: true,
-    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; }); setTeamTab("place"); setDDOpen((new URLSearchParams(location.search).get("dd") as "mgr" | null)); return shopHTML("pets"); } },
+    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; if (location.search.includes("many")) GACHA_ITEMS.filter(i => i.mgr).forEach(i => { st.gacha.owned[i.id] = 1; }); }); setTeamTab("place"); setDDOpen((new URLSearchParams(location.search).get("dd") as "mgr" | null)); return shopHTML("pets"); } },
+  { id: "m-teamitem", sec: "modals", title: "Đội ngũ · Chi tiết linh thú", desc: "Hộp thoại: chỉ số, nguồn Gacha, đặt vào tầng, thuê làm thợ", kind: "modal",
+    html: () => { lvState(13, st => { buffed(st); st.gacha.owned.c_m2 = 1; st.coins = 30000; }); setTeamTab("place"); return modalOver(shopHTML("pets"), () => openItemDialog("c_m2")); } },
+  { id: "m-admin", sec: "modals", title: "Quản trị game (admin)", desc: "Tên, khách, thư, thông báo; chỉ levinh thấy trong Cài đặt", kind: "modal",
+    html: () => { lvState(13, st => { st.coins = 100; }); return modalOver(shopHTML("pets"), () => adminPanel(true)); } },
   { id: "m-teamdlg", sec: "modals", title: "Đội ngũ · Chi tiết thợ bánh", desc: "Hộp thoại: thông tin, đi làm, lên bậc, đồ ăn đề xuất và tủ đồ ăn", kind: "modal",
     html: () => { lvState(13, st => { buffed(st); st.coins = 30000; st.food = { kibble: 4, pate: 2, chicken: 0, salmon: 0, steak: 0 }; st.staff.dog = { hired: true, lv: 3, onDuty: true }; }); setTeamTab("bake"); return modalOver(shopHTML("pets"), () => openStaffDialog("dog")); } },
   { id: "shop-pets", sec: "screens", title: "Thú cưng (kiêm nhân viên)", desc: "Tủ đồ ăn; Milo đi làm bậc 2, Siro chờ nhận vào làm, Cacao chưa đủ cấp; thưởng đồ ăn mỗi ngày", kind: "screen", long: true,

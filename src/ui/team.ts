@@ -14,7 +14,7 @@ import { fmtN, roman } from "../engine/util";
 import { render } from "./app";
 import { tierBadge } from "./badges";
 import { petSVG, foodSVG } from "./art";
-import { bump, dropModal, esc, floatHearts, heartRow, modal, toast } from "./dom";
+import { bump, confirmSpend, dropModal, esc, floatHearts, heartRow, modal, toast } from "./dom";
 import { gachaArt } from "./gachafx";
 import { navigate } from "./router";
 import { openInGacha } from "./screens/gacha";
@@ -55,11 +55,13 @@ function bakeTab() {
 }
 
 /* ============ tab Quản lý và Linh thú ============ */
+/** kéo thả HTML5 chỉ chạy với chuột; màn cảm ứng dùng ô chọn và nút trong chi tiết */
+const CAN_DRAG = typeof matchMedia === "function" && matchMedia("(hover:hover) and (pointer:fine)").matches;
 let ddOpen: StaffKind | null = null;
 export const setDDOpen = (k: StaffKind | null) => { ddOpen = k; };
 const slotInfo = (k: StaffKind) => {
   const it = staffAt(k, floor);
-  return { it, art: it ? gachaArt(it, 46) : `<span class="tp-empty">+</span>`, name: it ? esc(it.n) : "Chưa đặt", fx: it ? esc(fxOf(it)) : "Chọn ở ô bên phải hoặc kéo từ danh sách" };
+  return { it, art: it ? gachaArt(it, 46) : `<span class="tp-empty">+</span>`, name: it ? esc(it.n) : "Chưa đặt", fx: it ? esc(fxOf(it)) : `Chọn ở ô bên dưới${CAN_DRAG ? " hoặc kéo từ danh sách" : ""}` };
 };
 function slotRow(k: StaffKind) {
   const { it, art, name, fx } = slotInfo(k), own = itemsOf(k).filter(i => hasItem(i.id));
@@ -67,8 +69,8 @@ function slotRow(k: StaffKind) {
   const opts = [`<button class="dd-o ${it ? "" : "on"}" data-ddv="${k}:" role="option" aria-selected="${!it}"><span class="dd-n">— Trống —</span></button>`,
     ...own.map(i => `<button class="dd-o ${it?.id === i.id ? "on" : ""}" data-ddv="${k}:${i.id}" role="option" aria-selected="${it?.id === i.id}">${gachaArt(i, 26)}<span class="dd-n">${label(i)}</span>${it?.id === i.id ? "<i>✓</i>" : ""}</button>`)].join("");
   return `<div class="tp-row" data-drop="${k}"><div class="tp-art">${art}</div><div class="tp-info"><small>${k === "mgr" ? "Quản lý" : "Linh thú"}</small><b>${name}</b><em>${fx}</em></div>
-    <button class="dd-btn ${isOpen ? "open" : ""}" data-dd="${k}" aria-haspopup="listbox" aria-expanded="${isOpen}" aria-label="${k === "mgr" ? "Chọn quản lý" : "Chọn linh thú"} tầng ${floor + 1}"><span>${it ? esc(it.n) : "— Trống —"}</span><i aria-hidden="true">▾</i></button>
-    ${isOpen ? `<div class="dd-list" role="listbox">${opts}</div>` : ""}</div>`;
+    <div class="dd"><button class="dd-btn ${isOpen ? "open" : ""}" data-dd="${k}" aria-haspopup="listbox" aria-expanded="${isOpen}" aria-label="${k === "mgr" ? "Chọn quản lý" : "Chọn linh thú"} tầng ${floor + 1}"><span>${it ? esc(it.n) : "— Trống —"}</span><i aria-hidden="true">▾</i></button>
+    ${isOpen ? `<div class="dd-list" role="listbox">${opts}</div>` : ""}</div></div>`;
 }
 function placeTab() {
   floor = Math.max(0, Math.min(floor, floorCount() - 1));
@@ -83,7 +85,7 @@ function placeTab() {
   }).join("");
   return `<div class="tp-wrap"><div class="tf-col" role="group" aria-label="Chọn tầng"><small>TẦNG</small>${col}</div>
       <div class="tp-card"><div class="tp-h">Tầng ${floor + 1}</div>${slotRow("mgr")}${slotRow("mascot")}</div></div>
-    <p class="hint5">Chọn trong ô bên phải, hoặc kéo một dòng ở danh sách thả vào ô. Chạm một dòng để xem chi tiết.</p>
+    <p class="hint5">${CAN_DRAG ? "Chọn trong ô trên, hoặc kéo một dòng ở danh sách thả vào ô." : "Chạm ô chọn để đổi quản lý hoặc linh thú."} Chạm một dòng trong danh sách để xem chi tiết và đặt vào tầng.</p>
     <div class="gtabs stf-tabs tm-kind"><button class="${listKind === "mgr" ? "on" : ""}" data-tm="kind:mgr">Quản lý · ${own("mgr")}/${itemsOf("mgr").length}</button><button class="${listKind === "mascot" ? "on" : ""}" data-tm="kind:mascot">Linh thú · ${own("mascot")}/${itemsOf("mascot").length}</button></div>
     <div class="tm-items">${rows}</div>`;
 }
@@ -136,17 +138,18 @@ function itemBody(id: string) {
   const kind: StaffKind = it.mascot ? "mascot" : "mgr", hired = !!it.mascot && staffState(id).hired;
   const gender = it.mgr ? (it.mgr.gender === "girl" ? "♀ Nữ" : "♂ Nam") : it.char ? (it.char.gender === "girl" ? "♀ Nữ" : "♂ Nam") : "";
   const tags = [gender, ...(it.mgr?.tags ?? [])].filter(Boolean).map(t => `<span>${esc(t)}</span>`).join("");
-  const place = has ? `<div class="sd-floors"><small>Đặt vào tầng</small><div>${Array.from({ length: n }, (_, f) => `<button class="${f === at ? "on" : ""}" data-tm="put:${id}:${f}">Tầng ${f + 1}</button>`).join("")}${at >= 0 ? `<button class="off" data-tm="clear:${id}">Cất</button>` : ""}</div></div>` : "";
-  const hire = it.mascot && has ? (hired ? `<div class="sd-note ok">Đang làm thợ bánh · bậc ${roman(staffState(id).lv)}. Xem ở tab Thợ bánh.</div>` : `<button class="b3" data-tm="hire:${id}" ${S.coins < hireFee(id) ? "disabled" : ""}>Thuê làm thợ bánh · ${fmtN(hireFee(id))} xu<small>không bắt buộc, bé vẫn đứng tầng được</small></button>`) : "";
-  return `<div class="sd"><div class="sd-top"><div class="sd-art" style="--rc:${R.c}">${gachaArt(it, 104)}</div><div class="sd-id"><b>${esc(it.n)}</b><span>${KIND_NAME[it.kind]} · ${R.n}</span><div class="gtags">${roleTag(it)}${tags}</div></div></div>
-    <div class="sd-stats one"><div><small>Chỉ số khi đứng tầng</small><b>${esc(fxOf(it))}</b></div></div>
-    <div class="sd-src"><small>Nguồn</small><b>Triệu hồi Gacha</b><span>Nhóm ${R.n} · ${has ? `đã có x${S.gacha.owned[id] ?? 1}` : "chưa có"}</span>
-      <button class="b3 ${has ? "w" : ""}" data-tm="gacha:${id}">${has ? "Xem trong Gacha" : "Đi triệu hồi"}</button></div>
+  const place = has ? `<div class="itm-sec"><h4>Đặt vào tầng</h4><div class="itm-floors">${Array.from({ length: n }, (_, f) => `<button class="${f === at ? "on" : ""}" data-tm="put:${id}:${f}">Tầng ${f + 1}</button>`).join("")}${at >= 0 ? `<button class="off" data-tm="clear:${id}">Cất</button>` : ""}</div></div>` : "";
+  const hire = it.mascot && has ? (hired ? `<div class="itm-ok"><b>✓ Đang làm thợ bánh</b><span>Bậc ${roman(staffState(id).lv)} · xem ở tab Thợ bánh</span></div>` : `<button class="b3 itm-hire" data-tm="hire:${id}" ${S.coins < hireFee(id) ? "disabled" : ""}>Thuê làm thợ bánh · ${fmtN(hireFee(id))} xu<small>không bắt buộc, bé vẫn đứng tầng được</small></button>`) : "";
+  return `<div class="itm" style="--rc:${R.c}"><div class="itm-hero"><div class="itm-art">${gachaArt(it, 96)}</div>
+      <div class="itm-id"><b>${esc(it.n)}</b><div class="itm-chips"><span class="rar">${R.n}</span>${roleTag(it)}${tags}</div></div></div>
+    <div class="itm-buff"><i aria-hidden="true">✦</i><div><small>Chỉ số khi đứng tầng</small><b>${esc(fxOf(it))}</b></div></div>
+    <div class="itm-src"><i aria-hidden="true">🎁</i><div><small>Nguồn</small><b>Triệu hồi Gacha</b><span>Nhóm ${R.n} · ${has ? `đã có x${S.gacha.owned[id] ?? 1}` : "chưa có"}</span></div>
+      <button data-tm="gacha:${id}">${has ? "Xem" : "Triệu hồi"}</button></div>
     ${place}${hire}${kind === "mgr" && it.char ? `<p class="phint">Khách quen Hiếm trở lên làm được quản lý, cộng chỉ số nhẹ hơn quản lý thật.</p>` : ""}</div>`;
 }
-function openItemDialog(id: string) {
+export function openItemDialog(id: string) {
   const it = gachaItem(id); if (!it) return;
-  modal(`<h2>${esc(it.n)}</h2><p class="sub">${it.mascot ? "Linh thú" : asManager(it) ? "Quản lý" : KIND_NAME[it.kind]}</p><div id="tdBody">${itemBody(id)}</div><div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`);
+  modal(`<h2>${it.mascot ? "Linh thú" : asManager(it) ? "Quản lý" : KIND_NAME[it.kind]}</h2><div id="tdBody">${itemBody(id)}</div><div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`);
   dlg = "";
   (document.getElementById("modal") as HTMLElement | null)!.dataset.item = id;
 }
@@ -161,8 +164,8 @@ export function staffDialogAct(act: string, el: HTMLElement) {
   if (a === "treat") { const id = x!, f = foodDef(y as never); if (treat(id, f.id)) { const r = el.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop"); toast(`${petName(id)} ăn ${f.n} ngon lành! +${f.aff} ♥`); } else toast("Không đủ xu để mua đồ ăn"); return refreshStaff(); }
   if (a === "meal") { setMeal(x!, y as never); sfx("click"); return refreshStaff(); }
   if (a === "duty") { toggleDuty(x!); sfx("click"); return refreshStaff(); }
-  if (a === "train") { if (train(x!)) { sfx("level"); toast(`${petName(x!)} lên bậc ${roman(staffState(x!).lv)}!`); } return refreshStaff(); }
-  if (a === "hire") { if (hire(x!)) { sfx("level"); toast(`${petName(x!)} đã vào làm!`); } else if (hireFee(x!)) toast(`Cần ${fmtN(hireFee(x!))} xu để thuê ${petName(x!)}`); return refreshStaff(); }
+  if (a === "train") return confirmSpend(trainCost(x!), `Lên bậc cho ${petName(x!)}?`, () => { if (train(x!)) { sfx("level"); toast(`${petName(x!)} lên bậc ${roman(staffState(x!).lv)}!`); } refreshStaff(); });
+  if (a === "hire") return confirmSpend(hireFee(x!), `Thuê ${petName(x!)} làm thợ bánh?`, () => { if (hire(x!)) { sfx("level"); toast(`${petName(x!)} đã vào làm!`); } else if (hireFee(x!)) toast(`Cần ${fmtN(hireFee(x!))} xu để thuê ${petName(x!)}`); refreshStaff(); });
   if (a === "pet") {
     const st = petState(x!), r = el.getBoundingClientRect();
     if (st.petDay !== S.daily.day) { st.petDay = S.daily.day; st.pets = 0; }
@@ -180,7 +183,7 @@ export function teamAct(act: string) {
   if (a === "gacha") { sfx("click"); dropModal(); return openInGacha(x!); }
   if (a === "put") { const it = gachaItem(x!)!; const k: StaffKind = it.mascot ? "mascot" : "mgr"; if (placeStaff(k, x!, +y!)) { sfx("level"); toast(`${it.n} đã vào tầng ${+y! + 1}`); } return refreshItem(x!); }
   if (a === "clear") { const it = gachaItem(x!)!; const k: StaffKind = it.mascot ? "mascot" : "mgr"; const f = floorOfStaff(k, x!); if (f >= 0) { clearStaff(k, f); sfx("click"); toast(`Đã cất ${it.n}`); } return refreshItem(x!); }
-  if (a === "hire") { if (hire(x!)) { sfx("level"); toast(`${petName(x!)} đã vào làm thợ bánh!`); } else toast(`Cần ${fmtN(hireFee(x!))} xu để thuê`); return refreshItem(x!); }
+  if (a === "hire") return confirmSpend(hireFee(x!), `Thuê ${petName(x!)} làm thợ bánh?`, () => { if (hire(x!)) { sfx("level"); toast(`${petName(x!)} đã vào làm thợ bánh!`); } else toast(`Cần ${fmtN(hireFee(x!))} xu để thuê`); refreshItem(x!); });
 }
 /** đặt bằng ô chọn hoặc kéo thả vào ô của tầng đang xem */
 function assign(k: StaffKind, id: string) {

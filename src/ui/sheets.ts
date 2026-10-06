@@ -1,6 +1,6 @@
 /* Các bảng trượt lên từ cảnh tiệm ở màn chính: Menu, Tủ bánh (carousel), Ngày kỷ niệm, Ảnh treo tường */
 import { CFG } from "../content/couple";
-import { CATS, CUSTOM_LV, MAX_CUSTOM, RECIPES, customRecipe, partsOfRecipe, tiersOf } from "../content/game";
+import { CATS, CUSTOM_LV, MAX_CUSTOM, RECIPES, SEASON_LV, customRecipe, seasonalNow, partsOfRecipe, tiersOf } from "../content/game";
 import { GACHA_ITEMS, MASTERY_MAX, RARITY } from "../content/gacha";
 import { daysTogether, events } from "../engine/dates";
 import { hasItem, masteryOf, specialRecipes } from "../engine/gacha";
@@ -31,6 +31,8 @@ function recipeBody() {
     ? tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim")
     : !recipeReady(r) ? tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`)
     : tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", r.id === f.id ? `<em class="rstar">★ nổi bật</em>` : "")).join("");
+  const se = seasonalNow(), seasonTile = tile(se, se.n, se.price, L < SEASON_LV ? `<span class="st soon">Mở ở Lv ${SEASON_LV}</span>` : recipeReady(se) ? `<span class="st ok">Chỉ bán tháng ${se.month}</span>` : `<span class="st need">Thiếu nguyên liệu ›</span>`,
+    L < SEASON_LV ? "dim" : se.id === f.id ? "star" : "", se.id === f.id ? `<em class="rstar">★ nổi bật</em>` : "", L >= SEASON_LV && !recipeReady(se) ? `data-act="ings"` : "");
   const sp = new Map(specialRecipes().map(r => [r.id, r]));
   const gacha = GACHA_ITEMS.filter(i => i.recipe).map(i => hasItem(i.id)
     ? tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`)
@@ -43,6 +45,7 @@ function recipeBody() {
   const nShop = RECIPES.filter(r => r.lv <= L && recipeReady(r)).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
   return `<div class="gfil rfil">${([["all", "Tất cả"], ["shop", "Của tiệm"], ["gacha", "Gacha"], ["custom", "Tuỳ chỉnh"]] as const).map(([k, n]) => `<button class="${rfil === k ? "on" : ""}" data-rfil="${k}">${n}</button>`).join("")}</div>
     ${rfil === "all" || rfil === "shop" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} bán được</span></div><div class="rb5">${shop}</div>` : ""}
+    ${rfil === "all" || rfil === "shop" ? `<div class="sh2"><b>Bánh theo mùa</b><span class="lav">Tháng ${se.month} · ${se.season}</span></div><div class="rb5">${seasonTile}</div>` : ""}
     ${rfil === "all" || rfil === "gacha" ? `<div class="sh2"><b>Công thức Gacha</b><span class="lav">${nG}/${tG} đã có</span></div><div class="rb5">${gacha}</div>` : ""}
     ${rfil === "all" || rfil === "custom" ? `<div class="sh2"><b>Bánh tuỳ chỉnh</b><span class="lav">${S.custom.length}/${MAX_CUSTOM} mẫu</span></div><div class="rb5">${cus}</div>` : ""}
     <p class="phint">Món mờ chưa có: chạm để sang Gacha và xem món đó.</p>`;
@@ -97,7 +100,7 @@ export function daysSheet() {
     <div class="dlist">${ev.map(e => `<div class="drow ${e.in === 0 ? "today" : ""}"><span class="di">${icon[e.key] || "✨"}</span><div><b>${esc(e.t)}</b><small>${full(e.date)}</small></div><em>${e.in === 0 ? "Hôm nay 🎉" : `còn ${e.in} ngày`}</em></div>`).join("")}</div>
     <h3 class="csec">Đã cùng nhau đi qua</h3>
     <div class="dlist">${past.slice(0, 8).map(p => `<div class="drow past"><span class="di">💗</span><div><b>${esc(p.t)}</b><small>${full(p.date)}</small></div></div>`).join("") || `<p class="sub small">Mốc đầu tiên sắp tới rồi đó!</p>`}</div>
-    <p class="sub small">Sinh nhật ${esc(S.names.her)}: ${fmtD(parse(CFG.herBirthday))} · Sinh nhật ${esc(S.names.his)}: ${fmtD(parse(CFG.hisBirthday))}</p>
+    <p class="sub small">Sinh nhật ${esc(S.names.her)}: ${fmtD(parse(CFG.herBirthday))} · Sinh nhật ${esc(CFG.hisName)}: ${fmtD(parse(CFG.hisBirthday))}</p>
     <div class="mbtns"><button class="b3" data-close>Thương ghê</button></div>`);
 }
 

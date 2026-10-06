@@ -2,18 +2,9 @@
    Gửi thông báo đẩy cho các máy đã bật nhắc; đăng ký hết hạn (404/410) thì xoá. */
 import webpush from "web-push";
 import { CFG, type EventKey } from "../src/content/couple.js";
+import { applyGameConfig } from "../src/content/gameconfig.js";
 import { bad, db, json } from "./_lib.js";
 
-const MORNING = [
-  "Thư hôm nay đã đến tiệm rồi, Milo đang đợi {her} mở cửa nè ☀️",
-  "Dậy thôi {her} ơi, Siro nướng xong mẻ bánh matcha đầu tiên rồi 🍵",
-  "Chào buổi sáng! Cacao giữ chỗ đẹp nhất trong tiệm cho {her} rồi đó 💌"
-];
-const NIGHT = [
-  "11 giờ rồi, đi ngủ thôi {her}. Milo tắt đèn tiệm nha 🌙",
-  "Tiệm đóng cửa rồi, Siro cuộn tròn ngủ trên tủ bánh. {her} cũng ngủ ngon nha 💤",
-  "Cất điện thoại đi ngủ thôi, mai tiệm còn đông khách lắm đó ✨"
-];
 const fill = (s: string, her: string) => s.replace(/\{her\}/g, her || "Em");
 
 /* ngày đặc biệt hôm nay theo giờ Việt Nam (chỉ đọc cấu hình cặp đôi, không kéo cả engine của game) */
@@ -41,6 +32,7 @@ export async function GET(req: Request) {
   const slot = new URL(req.url).searchParams.get("slot") === "night" ? "night" : "morning";
   webpush.setVapidDetails("mailto:noreply@lv-minigame-1.vercel.app", process.env.VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
   const sql = db();
+  try { const c = await sql`SELECT value FROM app_config WHERE key = 'game'`; if (c.length) applyGameConfig(c[0].value); } catch { /* chưa có bảng: dùng mẫu mặc định */ }
   const subs = slot === "morning"
     ? await sql`SELECT endpoint, sub, her FROM push_subs WHERE morning`
     : await sql`SELECT endpoint, sub, her FROM push_subs WHERE night`;
@@ -51,7 +43,7 @@ export async function GET(req: Request) {
     const her = String(s.her || "Em");
     const payload = ev
       ? { title: `${ev.t.replace(/\bEm\b/g, her)} 🎉`, body: ev.note.replace(/\bEm\b/g, her), tag: "event" }
-      : { title: slot === "morning" ? `Chào buổi sáng ${her} ☀️` : `Ngủ ngon ${her} 🌙`, body: fill((slot === "morning" ? MORNING : NIGHT)[day % 3], her), tag: slot };
+      : { title: slot === "morning" ? `Chào buổi sáng ${her} ☀️` : `Ngủ ngon ${her} 🌙`, body: fill((slot === "morning" ? CFG.morning : CFG.night)[day % (slot === "morning" ? CFG.morning : CFG.night).length], her), tag: slot };
     try { await webpush.sendNotification(s.sub as webpush.PushSubscription, JSON.stringify({ ...payload, url: "/" }), { TTL: 3600 }); sent++; }
     catch (e) {
       const code = (e as { statusCode?: number }).statusCode;

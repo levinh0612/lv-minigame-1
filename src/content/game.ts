@@ -32,6 +32,18 @@ const MORE_RECIPES: Recipe[] = ([
   ["Mochi Socola Mâm xôi", 2, 4, 4, 22, 52], ["Croissant Socola Việt quất", 3, 4, 3, 24, 56]
 ] as [string, number, number, number, number, number][]).map(([n, base, cream, top, lv, price], i) => ({ id: "r" + (BASIC_RECIPES.length + i + 1), n, base, cream, top, lv, price }));
 export const RECIPES: Recipe[] = [...BASIC_RECIPES, ...MORE_RECIPES];
+/* Bánh theo mùa: mỗi tháng một món riêng (chỉ bán trong tháng đó), dùng lại nguyên liệu và hình bánh có sẵn, giá cao hơn món thường.
+   Cột: tháng, tên mùa, đế, kem, topping, giá. Cần đủ cấp SEASON_LV và đủ nguyên liệu (nhà cung cấp) như món thường. */
+export const SEASON_LV = 8;
+const SEASONS: [number, string, number, number, number, number][] = [
+  [1, "Tết", 2, 2, 1, 62], [2, "Valentine", 0, 1, 4, 64], [3, "8/3", 1, 1, 2, 60], [4, "Hoa anh đào", 2, 0, 0, 62],
+  [5, "Hè sớm", 0, 0, 3, 64], [6, "Mùa hè", 3, 0, 0, 66], [7, "Mưa ngâu", 4, 0, 3, 70], [8, "Mùa thu", 4, 2, 2, 70],
+  [9, "Trung thu", 2, 3, 2, 72], [10, "20/10", 1, 3, 1, 72], [11, "Mùa lạnh", 0, 4, 2, 76], [12, "Noel", 3, 4, 0, 80]
+];
+export const SEASONAL: (Recipe & { month: number; season: string })[] = SEASONS.map(([month, season, base, cream, top, price]) => ({
+  id: "s" + month, n: `${CATS.base[base][0]} ${CATS.cream[cream][0]} ${CATS.top[top][0]} · ${season}`, base, cream, top, lv: SEASON_LV, price, month, season
+}));
+export const seasonalNow = (month = new Date().getMonth() + 1) => SEASONAL.find(r => r.month === month)!;
 // Lv 1 mở sẵn 4 công thức, sau đó mỗi cấp mở thêm 1 (tới Lv 6)
 
 /* Nhân vật */
@@ -162,7 +174,7 @@ export const SHOP = {
   wideCost: (built: number) => 2000 * 2 ** built        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
 };
 export type StaffId = string;     // 3 bé thợ bánh (PetId) hoặc id linh thú Gacha đã thuê
-/* Linh thú Gacha làm nhân viên: không ăn, trả phí thuê một lần (đắt) và đổi lại mỗi bánh bé làm ra bán được giá hơn + tip.
+/* Linh thú Gacha làm nhân viên: ăn và nhận thưởng như các bé, trả phí thuê một lần (đắt) và đổi lại mỗi bánh bé làm ra bán được giá hơn + tip.
    price/tip: [bậc I, bậc V], nội suy theo bậc */
 export const MASCOT_HIRE = {
   common: { fee: 2000, price: [.06, .18], tip: .03 },

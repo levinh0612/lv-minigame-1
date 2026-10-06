@@ -89,7 +89,7 @@ export function createShift(): Shift {
 function makeGuest(): { who: string; look: Look } {
   const girl = Math.random() < 0.5;
   return {
-    who: pick(nameList(girl ? S.names.girls : S.names.boys)),
+    who: pick(nameList(girl ? CFG.girlNames : CFG.boyNames)),
     look: { gender: girl ? "girl" : "boy", sprite: pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
   };
 }
@@ -99,7 +99,7 @@ export function makeCustomer(sh: Shift): Customer {
   const L = lvl(), rs = unlocked();
   if (!sh.boyDone && ((sh.spawned >= 2 && Math.random() < 0.35) || sh.spawned === sh.total - 1)) {
     sh.boyDone = true; S.daily.boy = true; save();
-    return { who: S.names.his, look: { ...HIM }, him: true, r: RECIPES[0], sweet: 0, max: 70, pat: 70 };
+    return { who: CFG.hisName, look: { ...HIM }, him: true, r: RECIPES[0], sweet: 0, max: 70, pat: 70 };
   }
   const g = makeGuest();
   const r0 = Math.random() < 0.25 ? featured() : Math.random() < 0.3 ? rs[rs.length - 1] : pick(rs);

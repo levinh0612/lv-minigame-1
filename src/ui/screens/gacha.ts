@@ -1,12 +1,12 @@
 /* Màn Gacha: triệu hồi (1 hoặc 10 lần), vé, bảo hiểm, bộ sưu tập. Lợi ích của từng loại đồ nằm ở engine/gacha.ts */
 import { sfx } from "../../audio/sound";
 import { DUST_PER_TICKET, GACHA_ITEMS, itemsOf, KIND_NAME, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, asManager, gachaItem, roleOf, type GachaItem, type GachaKind, type Rarity } from "../../content/gacha";
-import { BOND_AT, BOND_STEP, bondLevel, bondOf, buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, floorCount, floorOfStaff, placeStaff, clearStaff, untilRare, untilUltra } from "../../engine/gacha";
+import { BOND_AT, BOND_STEP, packCost, bondLevel, bondOf, buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, floorCount, floorOfStaff, placeStaff, clearStaff, untilRare, untilUltra } from "../../engine/gacha";
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { render } from "../app";
 import { navigate } from "../router";
-import { coinPill, esc, modal, toast } from "../dom";
+import { coinPill, confirmSpend, esc, modal, toast } from "../dom";
 import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
 import { mountTurntable } from "../../scene/glbview";
@@ -132,7 +132,7 @@ export async function gachaAct(act: string) {
   if (a === "place") { const [, k, id, f] = act.split(":"); if (placeStaff(k as "mgr" | "mascot", id!, +f!)) { sfx("level"); toast(`Đã đặt ở tầng ${+f! + 1}`); } render(); return detail(id!); }
   if (a === "clear") { const [, k, id, f] = act.split(":"); clearStaff(k as "mgr" | "mascot", +f!); sfx("click"); toast("Đã cất"); render(); return detail(id!); }
   if (a === "free") { if (claimFreeTicket()) { sfx("coin"); toast("+1 vé triệu hồi"); } return render(); }
-  if (a === "buy1" || a === "buy10") { if (buyTickets(a === "buy1" ? 1 : 10)) { sfx("coin"); toast(`+${a === "buy1" ? 1 : 10} vé`); } else toast("Không đủ xu"); return render(); }
+  if (a === "buy1" || a === "buy10") { const n = a === "buy1" ? 1 : 10; return confirmSpend(packCost(n), `Mua ${n} vé triệu hồi?`, () => { if (buyTickets(n)) { sfx("coin"); toast(`+${n} vé`); } else toast("Không đủ xu"); render(); }); }
   if (a === "dust") { if (exchangeDust()) { sfx("coin"); toast("+1 vé"); } return render(); }
   if (a === "pull1" || a === "pull10") {
     if (busy) return; const n = a === "pull1" ? 1 : 10, res = pull(n);

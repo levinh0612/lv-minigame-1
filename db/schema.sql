@@ -59,3 +59,12 @@ CREATE TABLE IF NOT EXISTS visits (
   UNIQUE (visitor_id, host_id, day)
 );
 CREATE INDEX IF NOT EXISTS visits_host_idx ON visits (host_id, claimed);
+
+-- cấu hình game do admin (levinh) chỉnh, mọi máy tự tải (api/config.ts cũng tự tạo bảng này nếu chưa có)
+CREATE TABLE IF NOT EXISTS app_config (
+  key        text        PRIMARY KEY,
+  value      jsonb       NOT NULL DEFAULT '{}'::jsonb,
+  rev        integer     NOT NULL DEFAULT 0,
+  updated_by text        NOT NULL DEFAULT '',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);

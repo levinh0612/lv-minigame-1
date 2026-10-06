@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GAP, INCIDENTS, LEVELS, LOSE_CHANCE, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, tickIncident, tossCoin } from "../src/engine/incident";
-import { COMP_COINS, DAILY_MAX, claimPassive, dayKey } from "../src/engine/passive";
+import { COMP_COINS, DAILY_MAX, claimPassive, dailyReward, dayKey } from "../src/engine/passive";
 import { S, resetState } from "../src/engine/state";
 
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 27, 10)); resetState(); resetIncidentClock(); S.shifts = 5; S.coins = 1000; });
@@ -59,13 +59,14 @@ describe("đồng xu sự cố", () => {
 });
 
 describe("khoản cộng thụ động", () => {
-  it("lần đầu: thưởng đăng nhập 10% xu (tính trước khi cộng đền bù) và đền bù 3000 xu", () => {
+  it("lần đầu: thưởng đăng nhập theo cấp và đền bù 3000 xu", () => {
     S.coins = 1000; S.shifts = 5;
     const c = claimPassive();
-    expect(c).toEqual({ daily: 100, comp: COMP_COINS });
-    expect(S.coins).toBe(1000 + 100 + 3000);
+    const d = dailyReward();
+    expect(c).toEqual({ daily: d, comp: COMP_COINS });
+    expect(S.coins).toBe(1000 + d + 3000);
     expect(S.loginDay).toBe(dayKey()); expect(S.comp).toBe(1);
-    expect(S.book.in.daily).toBe(100); expect(S.book.in.comp).toBe(3000);
+    expect(S.book.in.daily).toBe(d); expect(S.book.in.comp).toBe(3000);
   });
 
   it("đền bù chỉ một lần; thưởng ngày chỉ một lần mỗi ngày, qua ngày mới nhận lại", () => {
@@ -73,18 +74,19 @@ describe("khoản cộng thụ động", () => {
     const coins = S.coins;
     expect(claimPassive()).toEqual({ daily: 0, comp: 0 }); expect(S.coins).toBe(coins);
     vi.setSystemTime(new Date(2026, 8, 28, 9));
-    const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(Math.floor(coins * 0.1)); expect(S.coins).toBe(coins + c.daily);
+    const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(dailyReward()); expect(S.coins).toBe(coins + c.daily);
   });
 
-  it("thưởng đăng nhập mỗi ngày tối đa 2.000 xu", () => {
-    S.coins = 50000; S.shifts = 5; S.comp = 1;
-    expect(claimPassive().daily).toBe(DAILY_MAX); expect(DAILY_MAX).toBe(2000);
-    vi.setSystemTime(new Date(2026, 8, 28, 9)); S.coins = 20000; expect(claimPassive().daily).toBe(2000);
-    vi.setSystemTime(new Date(2026, 8, 29, 9)); S.coins = 15000; expect(claimPassive().daily).toBe(1500);      // dưới trần thì vẫn 10%
+  it("thưởng đăng nhập tăng theo cấp (tối đa 1.500) và theo chuỗi ngày (tối đa +70%), không phụ thuộc số xu đang có", () => {
+    expect(dailyReward(1, 1)).toBe(125); expect(dailyReward(10, 1)).toBe(350);
+    expect(dailyReward(10, 4)).toBe(Math.round(350 * 1.3)); expect(dailyReward(10, 99)).toBe(Math.round(350 * 1.7));
+    expect(dailyReward(99, 1)).toBe(DAILY_MAX); expect(DAILY_MAX).toBe(1500);
+    S.coins = 5; S.comp = 1; S.streak = 1; expect(claimPassive().daily).toBe(dailyReward());
+    S.coins = 900000; vi.setSystemTime(new Date(2026, 8, 28, 9)); expect(claimPassive().daily).toBe(dailyReward());
   });
 
   it("người chơi mới (chưa chơi ca nào) không nhận đền bù nhưng vẫn được đánh dấu để không nhận lẻ sau này", () => {
     S.shifts = 0; S.coins = 40;
-    const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(4); expect(S.comp).toBe(1);
+    const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(dailyReward()); expect(S.comp).toBe(1);
   });
 });

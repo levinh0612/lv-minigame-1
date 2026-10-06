@@ -7,7 +7,7 @@ import { lvl } from "../engine/progress";
 import { availableIdx, ingsOf, signState, signSupplier } from "../engine/suppliers";
 import { fmtN } from "../engine/util";
 import { render } from "./app";
-import { $, esc, modal, toast } from "./dom";
+import { $, confirmSpend, esc, modal, toast } from "./dom";
 import { ingSVG } from "./art";
 
 function supplierCard(id: string, n: string, desc: string, cost: number, lv: number) {
@@ -43,10 +43,14 @@ export function ingAct(act: string) {
     if (buy(k, i, 5)) { sfx("tap"); toast(`+5 ${CATS[k][i][0]} · ${packPrice(k, i, 5)} xu`); } else toast("Không đủ xu");
     render(true);
   } else if (a === "sign") {
-    const s = SUPPLIERS.find(x => x.id === v)!, r = signSupplier(v!, lvl());
-    if (r === "ok") { sfx("level"); toast(`Đã ký hợp đồng ${s.n}`); render(true); }
-    else if (r === "coin") toast(`Chưa đủ xu: cần ${fmtN(s.cost)} xu`);
-    else if (r === "lv") toast(`Cần đạt Lv ${s.lv}`);
+    const s = SUPPLIERS.find(x => x.id === v)!;
+    return confirmSpend(s.cost, `Ký hợp đồng ${s.n}?`, () => {
+      const r = signSupplier(v!, lvl());
+      if (r === "ok") { sfx("level"); toast(`Đã ký hợp đồng ${s.n}`); render(true); }
+      else if (r === "coin") toast(`Chưa đủ xu: cần ${fmtN(s.cost)} xu`);
+      else if (r === "lv") toast(`Cần đạt Lv ${s.lv}`);
+      const h2 = $("#ingBody"); if (h2) h2.innerHTML = body();
+    });
   }
   const h = $("#ingBody"); if (h) h.innerHTML = body();
 }

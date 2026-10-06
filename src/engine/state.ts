@@ -16,7 +16,7 @@ export interface StaffState { hired: boolean; lv: number; onDuty: boolean; food?
 export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
 export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
-  names: { her: string; his: string; girls: string; boys: string; pets: Record<PetId, string> };
+  names: { her: string };     // chỉ tên chủ tiệm là của riêng mỗi người; tên người gửi, thú cưng, khách do admin cấu hình (CFG)
   pets: Record<string, PetState>;   // thân thiết của 3 bé và của linh thú Gacha đã thuê (tạo khi cần)
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; suppliers: string[]; custom: CustomCake[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
@@ -50,7 +50,7 @@ const petMap = <T>(f: (id: PetId, i: number) => T) => Object.fromEntries(CFG.pet
 export function fresh(): State {
   return {
     v: 6, coins: 40, xp: 0, decor: [], reviews: [], letters: [], served: 0, shifts: 0,
-    names: { her: CFG.herName, his: CFG.hisName, girls: CFG.girlNames, boys: CFG.boyNames, pets: petMap((_, i) => CFG.pets[i].name) },
+    names: { her: CFG.herName },
     pets: petMap(() => ({ aff: 0, petDay: "", pets: 0, fedDay: "" })),
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map((_, i) => i < 3 ? STARTER_STOCK : 0)])) as Record<StockKey, number[]>, suppliers: [], custom: [],
@@ -118,7 +118,6 @@ export function loadState(raw: string | null): State {
   s.reviews = (s.reviews || []).flatMap(r => { const look = upgradeLook(r.look); return look ? [{ ...r, look }] : []; });
   s.v = 6; s.coins += refund; if (refund) s.refund = refund;
   s.names = Object.assign(fresh().names, s.names || {});
-  s.names.pets = Object.assign(fresh().names.pets, s.names.pets || {});
   s.pets = Object.assign(fresh().pets, s.pets || {});
   s.staff = Object.assign(fresh().staff, s.staff || {});
   s.stock = Object.assign(fresh().stock, s.stock || {});
@@ -138,7 +137,6 @@ export function loadState(raw: string | null): State {
   s.book = Object.assign(freshBook(), s.book || {});
   s.me = Object.assign({ ...DEFAULT_ME }, s.me || {}); if (!(s.me.sprite in SPRITES)) s.me = { ...DEFAULT_ME };
   s.shop = typeof s.shop === "string" ? s.shop : ""; s.theme = typeof s.theme === "string" ? s.theme : "pink"; s.scene3d = s.scene3d !== false;
-  ["Bông", "Mơ", "Tuyết"].forEach((old, i) => { const id = CFG.pets[i].id; if (!s.names.pets[id] || s.names.pets[id] === old) s.names.pets[id] = CFG.pets[i].name; });
   return s;
 }
 
@@ -156,4 +154,4 @@ export function resetState() { S = fresh(); save(); }
 export function replaceState(s: State) { S = s; save(); }
 /** trạng thái thân thiết / thưởng của một nhân viên (tạo mặc định cho linh thú Gacha) */
 export const petState = (id: string): PetState => (S.pets[id] ??= { aff: 0, petDay: "", pets: 0, fedDay: "" });
-export const petName = (id: string) => S.names.pets[id as PetId] || CFG.pets.find(p => p.id === id)?.name || gachaItem(id)?.n || id;
+export const petName = (id: string) => CFG.pets.find(p => p.id === id)?.name || gachaItem(id)?.n || id;

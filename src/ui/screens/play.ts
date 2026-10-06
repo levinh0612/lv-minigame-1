@@ -1,7 +1,7 @@
 /* Màn Chơi và màn Kết quả: phần hiển thị. Luật chơi nằm ở engine/shift.ts.
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
 import { gachaFx, staffPlaced } from "../../engine/gacha";
-import { itemImg } from "../../content/gacha";
+import { gachaArt } from "../gachafx";
 import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
 import type { PetId } from "../../content/couple";
@@ -199,7 +199,7 @@ function staffChip() {
   const mg = staffPlaced("mgr"), ms = staffPlaced("mascot"), lead = mg[0] ?? ms[0]; if (!lead) return "";
   const pc = (k: "price" | "tip" | "pat") => Math.round(gachaFx(k) * 100), cu = gachaFx("cust");
   const bits = [pc("price") && `giá +${pc("price")}%`, pc("tip") && `tip +${pc("tip")}%`, pc("pat") && `chờ +${pc("pat")}%`, cu && `+${cu} khách`].filter(Boolean).slice(0, 2).join(" · ");
-  return `<div class="cm mas"><img src="${itemImg(lead)}" alt="" width="30" height="30"><div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
+  return `<div class="cm mas">${gachaArt(lead, 30)}<div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
 }
 export function crewHTML(sh: Shift) {
   const ids = staffIds().filter(id => sh.working.includes(id));

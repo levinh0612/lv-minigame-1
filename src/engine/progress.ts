@@ -1,5 +1,5 @@
 /* Cấp, mục tiêu ngày, hiệu ứng đồ trang trí */
-import { RECIPES, customRecipe, partsOfRecipe, type FxKey, type Recipe, type StockKey } from "../content/game";
+import { RECIPES, SEASON_LV, customRecipe, partsOfRecipe, seasonalNow, type FxKey, type Recipe, type StockKey } from "../content/game";
 import { mgrFx, type GachaItem } from "../content/gacha";
 import { ROOM_CATS, isDefault, roomItem, type RoomItem } from "../content/room";
 import { daysTogether } from "./dates";
@@ -13,7 +13,9 @@ export const lvl = () => Math.min(99, Math.floor(Math.sqrt(S.xp / 40)) + 1);
 /* bánh tuỳ chỉnh đã lưu của người chơi (đủ nguyên liệu mới bán được) */
 export const customRecipes = (): Recipe[] => S.custom.map(customRecipe);
 /* món đang bán: đủ cấp (hoặc đã có công thức Gacha) VÀ đủ nguyên liệu (đã ký nhà cung cấp); bánh tuỳ chỉnh đứng trước món Gacha */
-export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeReady(r)), ...customRecipes().filter(recipeReady), ...specialRecipes()];
+/* bánh theo mùa: chỉ món của tháng này, đủ cấp và đủ nguyên liệu */
+export const seasonalRecipes = (): Recipe[] => { const r = seasonalNow(); return lvl() >= SEASON_LV && recipeReady(r) ? [r] : []; };
+export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeReady(r)), ...seasonalRecipes(), ...customRecipes().filter(recipeReady), ...specialRecipes()];
 /** chỉ số nguyên liệu mà các món đang bán dùng tới (màn làm bánh và kho giữa ca chỉ hiện những món này) */
 export const usedIdx = (k: StockKey) => [...new Set(unlocked().flatMap(r => partsOfRecipe(r).filter(p => p.k === k).map(p => p.i)))].sort((a, b) => a - b);
 export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k);
@@ -48,7 +50,8 @@ export function rollDay() {
   save();
 }
 
-export const featured = () => RECIPES.find(r => r.id === S.daily.featId) || RECIPES[0];
+/* món Viral được chọn từ các món đang bán (gồm bánh tự làm và công thức Gacha), nên phải tìm trong cả hai */
+export const featured = (): Recipe => unlocked().find(r => r.id === S.daily.featId) ?? RECIPES.find(r => r.id === S.daily.featId) ?? RECIPES[0];
 export interface Goal { t: string; cur: number; need: number; bool?: boolean; fail?: boolean }
 export function goals(): Goal[] {
   const L = lvl(), d = S.daily;

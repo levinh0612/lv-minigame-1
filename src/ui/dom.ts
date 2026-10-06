@@ -118,3 +118,20 @@ export const twinkles = (cols: string[], n: number) => `<div class="twk" aria-hi
 /** Hàng 3 số thống kê của tiệm, dùng chung cho màn của mình và màn ghé thăm để hai màn giống nhau */
 export const shopStatsHTML = (earned: number, served: number, recipes: number) =>
   `<div class="vstats"><div><b>${fmtN(earned)}</b><small>xu bán được</small></div><div><b>${fmtN(served)}</b><small>khách đã phục vụ</small></div><div><b>${recipes}</b><small>món bánh</small></div></div>`;
+
+/* Hỏi lại trước khi chi khoản lớn (từ CONFIRM_MIN xu): lớp nhỏ phủ lên trên, không đụng tới hộp thoại đang mở bên dưới */
+export const CONFIRM_MIN = 500;
+export function confirmSpend(cost: number, what: string, ok: () => void) {
+  if (cost < CONFIRM_MIN) return ok();
+  document.getElementById("cfm")?.remove();
+  const el = document.createElement("div"); el.id = "cfm"; el.className = "cfm";
+  el.innerHTML = `<div class="cfm-box" role="alertdialog" aria-modal="true" aria-label="Xác nhận chi xu"><b>${esc(what)}</b>
+    <p>Sẽ trừ <strong>${fmtN(cost)} xu</strong>${S.coins >= cost ? `, còn lại ${fmtN(S.coins - cost)} xu` : ""}.</p>
+    <div class="cfm-btns"><button type="button" data-cfm="no">Để sau</button><button type="button" class="yes" data-cfm="yes">Đồng ý · ${fmtN(cost)} xu</button></div></div>`;
+  el.addEventListener("click", e => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-cfm]");
+    if (!b && e.target !== el) return;
+    e.stopPropagation(); el.remove(); if (b?.dataset.cfm === "yes") ok();
+  });
+  document.body.appendChild(el);
+}

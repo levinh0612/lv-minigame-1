@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BAKE_TIME, MAX_CUSTOM, RECIPES, TIER_BAKE_SLOW, TIER_HAND_BONUS, customCost, customMult, customPrice, customRecipe, customValue, partsOfRecipe, tiersOf, type CustomCake, type Recipe } from "../src/content/game";
 import { buyFood, hire } from "../src/engine/economy";
-import { rollDay, unlocked, usedIdx } from "../src/engine/progress";
+import { featured, rollDay, unlocked, usedIdx } from "../src/engine/progress";
 import { beginShift, buildPicked, buildTotal, emptyBuild, isComplete, matches, partAt, partsOfBuild, serve, setPartAt, shortage, tick, type Customer } from "../src/engine/shift";
 import { S, fresh, loadState, resetState } from "../src/engine/state";
 
@@ -129,5 +129,36 @@ describe("lưu và mở bánh tuỳ chỉnh", () => {
   it("save cũ không có custom thì là danh sách rỗng", () => {
     const old = { ...fresh() } as Record<string, unknown>; delete old.custom;
     expect(loadState(JSON.stringify(old)).custom).toEqual([]);
+  });
+});
+
+describe("món Viral", () => {
+  it("món Viral là bánh tự làm thì featured() trả đúng món đó, không rơi về món đầu", () => {
+    lvUp(10); S.custom = [TOWER]; S.daily.featId = TOWER.id;
+    expect(featured().id).toBe(TOWER.id);
+    expect(unlocked().some(r => r.id === featured().id)).toBe(true);
+  });
+});
+
+describe("bánh theo mùa và trần khách", () => {
+  it("12 món mùa, mỗi tháng một món, không trùng thành phần với món thường", async () => {
+    const { SEASONAL, seasonalNow, RECIPES } = await import("../src/content/game");
+    expect(SEASONAL.map(r => r.month)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    const key = (r: { base: number; cream: number; top: number }) => `${r.base}-${r.cream}-${r.top}`;
+    const taken = new Set(RECIPES.map(key)); SEASONAL.forEach(r => expect(taken.has(key(r))).toBe(false));
+    expect(new Set(SEASONAL.map(key)).size).toBe(12);
+    expect(seasonalNow(12).season).toBe("Noel");
+  });
+  it("món của tháng này chỉ bán khi đủ cấp và đủ nguyên liệu", async () => {
+    const { seasonalNow } = await import("../src/content/game");
+    const now = seasonalNow();      // tháng 10 trong test: Tart + Phô mai + Đậu đỏ
+    lvUp(7); expect(unlocked().some(r => r.id === now.id)).toBe(false);
+    lvUp(30); expect(unlocked().some(r => r.id === now.id)).toBe(false);         // chưa ký Lò sữa Alpine (Phô mai)
+    S.coins = 5000; const { signSupplier } = await import("../src/engine/suppliers"); signSupplier("alpine", 30);
+    expect(unlocked().some(r => r.id === now.id)).toBe(true);
+  });
+  it("trần khách: 30 khi mới nổi, tăng 6 mỗi bậc nổi tiếng từ bậc 2, tối đa 56", async () => {
+    const { customerCap } = await import("../src/engine/economy");
+    expect([0, 1, 2, 3, 4, 5, 6].map(f => customerCap(f))).toEqual([30, 30, 32, 38, 44, 50, 56]);
   });
 });

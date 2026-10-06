@@ -582,3 +582,10 @@ describe("combo phục vụ", () => {
     expect(sh.comboPaid).toBe(bank); expect(S.coins).toBeGreaterThanOrEqual(before + bank); expect(led.revenue).toBeGreaterThanOrEqual(bank);
   });
 });
+
+describe("ảnh vật phẩm Gacha", () => {
+  it("itemImg không văng lỗi với khách quen làm quản lý (không có mgr/mascot)", async () => {
+    const { GACHA_ITEMS, itemImg } = await import("../src/content/gacha");
+    GACHA_ITEMS.forEach(it => expect(() => itemImg(it)).not.toThrow());
+  });
+});

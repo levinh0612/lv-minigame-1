@@ -1,6 +1,6 @@
 /* Các hộp thoại: thư, quà, cài đặt, tạm dừng, Anh ghé tiệm */
 import { Sound, sfx, songName } from "../audio/sound";
-import { CFG } from "../content/couple";
+import { CFG, type EventKey, type PetId } from "../content/couple";
 import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
 import { buyVenue, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, upgradeOptions } from "../engine/economy";
 import { addTickets } from "../engine/gacha";
@@ -8,21 +8,23 @@ import { claimWelcome } from "../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
 import { giftReady } from "../engine/progress";
 import { closeEarly, type Customer } from "../engine/shift";
-import { S, petName, resetState, save } from "../engine/state";
+import { S, resetState, save } from "../engine/state";
 import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, petSVG, foodSVG, guestSVG } from "./art";
-import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
+import { $, closeModal, confirmSpend, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
 import { LEVELS, applyIncident, tossCoin, type Incident, type Level } from "../engine/incident";
-import { account, changePin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
+import { ADMIN_USER, account, changePin, isAdmin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
+import { currentCfg, EVENT_KEYS, PET_IDS, type GameConfig } from "../content/gameconfig";
+import { cfgRev, publishGameConfig } from "../net/gamecfg";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
 import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
 import { goalsBody } from "./screens/goals";
 import { giftBody } from "./screens/shop";
 
-const paper = (txt: string) => `<div class="paper">${esc(txt)}<span class="sig">${esc(S.names.his)}</span></div>`;
+const paper = (txt: string) => `<div class="paper">${esc(txt)}<span class="sig">${esc(CFG.hisName)}</span></div>`;
 
 export function openLetter() {
   const day = S.daily.day;
@@ -52,7 +54,7 @@ export function claimGoals() {
 
 export function himNote(c: Customer) {
   modal(`<div style="display:flex;justify-content:center">${guestSVG({ ...HIM, mood: "love" }, 120)}</div>
-    <h2>${esc(S.names.his)} ghé tiệm nè!</h2><p class="sub">Mua bánh ít ngọt, để lại lời nhắn cho chủ tiệm:</p>
+    <h2>${esc(CFG.hisName)} ghé tiệm nè!</h2><p class="sub">Mua bánh ít ngọt, để lại lời nhắn cho chủ tiệm:</p>
     ${paper(c.note || pick(CFG.notes))}<div class="mbtns"><button class="b3" data-close>Bán tiếp thôi</button></div>`, resume);
 }
 
@@ -71,11 +73,7 @@ export function settings() {
   resetArm = false;
   modal(`<h2>Cài đặt tiệm</h2>
     <form id="setForm">
-      <label class="field">Tên chủ tiệm (bạn nữ)<input id="fHer" value="${esc(S.names.her)}" maxlength="20"></label>
-      <label class="field">Tên người gửi thư (bạn nam)<input id="fHis" value="${esc(S.names.his)}" maxlength="20"></label>
-      ${CFG.pets.map(p => `<label class="field">Tên bé ${p.id === "dog" ? "cún trắng" : p.id === "gold" ? "mèo vàng" : "mèo trắng"}<input id="fPet_${p.id}" value="${esc(petName(p.id))}" maxlength="16"></label>`).join("")}
-      <label class="field">Tên khách nữ (${nameList(S.names.girls).length}) · cách nhau bằng dấu phẩy<textarea id="fGirls" rows="2">${esc(S.names.girls)}</textarea></label>
-      <label class="field">Tên khách nam (${nameList(S.names.boys).length})<textarea id="fBoys" rows="2">${esc(S.names.boys)}</textarea></label>
+      <label class="field">Tên chủ tiệm (tên bạn trong thư và thông báo)<input id="fHer" value="${esc(S.names.her)}" maxlength="20"></label>
       <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
       <button type="button" class="b3 w cloudbtn" data-act="profile">🎨 Hồ sơ · nhân vật · tên tiệm · màu giao diện</button>
       <button type="button" class="b3 w cloudbtn" data-act="music">🎵 Chọn bài · ${esc(songName())}</button>
@@ -83,7 +81,8 @@ export function settings() {
       <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
       ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
       <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
-      <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)} · build ${__BUILD__.slice(6, 8)}/${__BUILD__.slice(4, 6)} ${__BUILD__.slice(8, 10)}:${__BUILD__.slice(10, 12)} UTC</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button><button type="button" class="mini" data-act="hardreload">Tải lại bản mới nhất</button></div>
+      ${isAdmin() ? `<button type="button" class="b3 w cloudbtn" data-act="admin">🛠 Quản trị game · tên, khách, thư, thông báo</button>` : ""}
+      <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)} · build ${__BUILD__.slice(6, 8)}/${__BUILD__.slice(4, 6)} ${__BUILD__.slice(8, 10)}:${__BUILD__.slice(10, 12)} UTC</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button></div>
       <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button></div>
       <div class="verrow" style="font-size:11px;opacity:.7"><span>Nhân vật nam 3D: “Basemesh_sd_boy” của phurit2014 (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Nữ anime 3D: “cute anime girl” của udream studio (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Nhân vật nữ 3D: “Cute Hiking Girl 3D Character” (<a href="https://www.cgtrader.com/items/7623397" target="_blank" rel="noopener">CGTrader</a>). Xương và chuyển động từ Mixamo.</span></div>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
@@ -91,9 +90,7 @@ export function settings() {
   const v = (id: string) => $<HTMLInputElement>(id)!.value.trim();
   $("#setForm")!.addEventListener("submit", e => {
     e.preventDefault();
-    S.names.her = v("#fHer") || CFG.herName; S.names.his = v("#fHis") || CFG.hisName;
-    S.names.girls = v("#fGirls") || CFG.girlNames; S.names.boys = v("#fBoys") || CFG.boyNames;
-    CFG.pets.forEach(p => { S.names.pets[p.id] = v("#fPet_" + p.id) || p.name; });
+    S.names.her = v("#fHer") || CFG.herName;
     S.scene3d = $<HTMLInputElement>("#fScene")!.checked; S.sound = $<HTMLInputElement>("#fSound")!.checked; const vb = $<HTMLInputElement>("#fVibe"); if (vb) S.vibe = vb.checked;
     const m = $<HTMLInputElement>("#fMusic")!.checked; if (m !== S.music) Sound.setMusic(m);
     save(); closeModal(); toast("Đã lưu");
@@ -101,6 +98,53 @@ export function settings() {
   $("#resetBtn")!.addEventListener("click", e => {
     if (!resetArm) { resetArm = true; (e.target as HTMLElement).textContent = "Bấm lần nữa để xoá hết tiến trình"; return; }
     resetState(); closeModal(); toast("Đã chơi lại từ đầu");
+  });
+}
+
+/* ===== Quản trị game (chỉ levinh): tên, khách, thư, thông báo. Lưu lên server, mọi máy tự tải ===== */
+const EVENT_LABEL: Record<EventKey, string> = { anniversary: "Kỷ niệm yêu nhau", monthly: "Kỷ niệm hằng tháng", herBirthday: "Sinh nhật người nhận", hisBirthday: "Sinh nhật người gửi", milestone: "Mốc 100 ngày", valentine: "Valentine 14/2", women83: "8/3", women2010: "20/10" };
+const lines = (a: string[]) => a.join("\n");
+const toLines = (id: string) => ($<HTMLTextAreaElement>(id)!.value).split("\n").map(x => x.trim()).filter(Boolean);
+export function adminPanel(preview = false) {
+  if (!preview && !isAdmin()) { toast("Chỉ admin mới vào được"); return; }
+  const c = currentCfg();
+  const ta = (id: string, label: string, val: string, rows = 3, hint = "") => `<label class="field">${label}${hint ? `<small class="adm-h">${hint}</small>` : ""}<textarea id="${id}" rows="${rows}">${esc(val)}</textarea></label>`;
+  modal(`<h2>Quản trị game</h2><p class="sub">Chỉ tài khoản <b>${ADMIN_USER}</b> chỉnh được. Lưu xong, mọi máy tự tải bản mới khi mở app.</p>
+    <form id="admForm" class="adm">
+      <details open><summary>Tên</summary>
+        <label class="field">Người gửi thư<input id="aHis" value="${esc(c.his)}" maxlength="20"></label>
+        <label class="field">Người nhận mặc định<input id="aHer" value="${esc(c.her)}" maxlength="20"></label>
+        ${CFG.pets.map(p => `<label class="field">Thú cưng: ${esc(p.desc.split(",")[0]!)}<input id="aPet_${p.id}" value="${esc(c.pets[p.id])}" maxlength="16"></label>`).join("")}
+      </details>
+      <details><summary>Tên khách</summary>
+        ${ta("aGirls", `Khách nữ (${nameList(c.girls).length})`, c.girls, 3, "cách nhau bằng dấu phẩy")}${ta("aBoys", `Khách nam (${nameList(c.boys).length})`, c.boys, 3, "cách nhau bằng dấu phẩy")}
+      </details>
+      <details><summary>Thư hằng ngày (${c.notes.length})</summary>${ta("aNotes", "Mỗi dòng một lá thư", lines(c.notes), 10, "mỗi ngày mở một lá, hết thì quay vòng")}</details>
+      <details><summary>Thông báo ngày đặc biệt</summary>
+        ${EVENT_KEYS.map(k => ta("aEv_" + k, EVENT_LABEL[k], c.events[k] ?? "", 3, "chèn được {her} {his} {n} {d} {age}")).join("")}
+      </details>
+      <details><summary>Thông báo đẩy sáng và tối</summary>
+        ${ta("aMorning", "Buổi sáng 7:00 (mỗi dòng một mẫu)", lines(c.morning), 4, "{her} là tên người nhận; mẫu đổi theo ngày")}${ta("aNight", "Buổi tối 23:00", lines(c.night), 4)}
+      </details>
+      <p class="sub small" id="admMsg">Bản đang dùng: #${cfgRev()}</p>
+      <div class="mbtns"><button class="b3" type="submit" id="admSave">Lưu và đồng bộ</button><button class="b3 w" type="button" id="admReset" style="font-size:16px;color:var(--red)">Khôi phục mặc định</button></div>
+    </form>`);
+  const val = (id: string) => $<HTMLInputElement>(id)!.value.trim(), msg = (t: string) => { const m = $("#admMsg"); if (m) m.textContent = t; };
+  const run = async (cfg: GameConfig, ok: string) => {
+    const b = $<HTMLButtonElement>("#admSave")!; b.disabled = true; msg("Đang đồng bộ…");
+    try { const r = await publishGameConfig(cfg); toast(ok); msg(`Đã đồng bộ, bản #${r.rev}`); } catch (e) { msg((e as Error).message || "Không lưu được"); toast("Chưa lưu được"); }
+    b.disabled = false;
+  };
+  $("#admForm")!.addEventListener("submit", e => {
+    e.preventDefault();
+    const pets: Partial<Record<PetId, string>> = {}; PET_IDS.forEach(id => { pets[id] = val("#aPet_" + id); });
+    const events: Partial<Record<EventKey, string>> = {}; EVENT_KEYS.forEach(k => { events[k] = val("#aEv_" + k); });
+    void run({ his: val("#aHis"), her: val("#aHer"), pets, girls: val("#aGirls"), boys: val("#aBoys"), notes: toLines("#aNotes"), events, morning: toLines("#aMorning"), night: toLines("#aNight") }, "Đã lưu và đồng bộ");
+  });
+  let arm = false;
+  $("#admReset")!.addEventListener("click", ev => {
+    if (!arm) { arm = true; (ev.target as HTMLElement).textContent = "Bấm lần nữa để khôi phục mặc định"; return; }
+    void run({}, "Đã khôi phục mặc định").then(() => adminPanel());
   });
 }
 
@@ -181,13 +225,19 @@ export function refundModal() {
 /* ===== Hướng dẫn lần đầu ===== */
 const TUT = [
   { art: () => `<div class="tart">${petSVG(PETS.dog, 64)}${petSVG({ ...PETS.gold, mood: "love" }, 72)}${petSVG({ ...PETS.white, mood: "open", wave: true }, 64)}</div>`,
-    t: "Chào chủ tiệm!", d: "Mỗi ngày tiệm mở cửa, khách ghé mua bánh. Thẻ gọi món ghi rõ tên bánh, thành phần và độ ngọt khách muốn." },
+    t: "Chào chủ tiệm!", d: "Mỗi ca, khách ghé tiệm gọi bánh. Thẻ gọi món ghi rõ tên bánh, thành phần và độ ngọt khách muốn. Phục vụ nhanh và đúng thì được nhiều sao và tip." },
   { art: () => `<div class="tart">${cakeSVG({ base: 0, cream: 0, top: 0, sweet: 0 }, { size: 150 })}</div>`,
-    t: "Ghép bánh", d: "Chạm Đế → Kem → Topping → Độ ngọt. Dấu ✓ xanh là đúng, ✕ đỏ là sai. Đủ rồi thì bấm Giao bánh. Giao nhanh được nhiều sao và tip." },
-  { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}${petSVG({ ...PETS.dog, mood: "wink" }, 70)}</div>`,
-    t: "Đi chợ & thú cưng đi làm", d: "Mỗi bánh dùng 1 đế, 1 kem, 1 topping trong kho, nhớ nhập hàng trước ca. Lên cấp thì Milo, Siro, Cacao xin vào làm thợ bánh, tự nhận đơn làm bánh cho khách. Lương của các bé là Hạt, Pate, Ức gà, mua ở mục Thú cưng." },
+    t: "Ghép bánh", d: "Chạm Đế, Kem, Topping rồi Độ ngọt. Dấu ✓ xanh là đúng, ✕ đỏ là sai. Đủ rồi thì bấm Giao bánh. Chưa nhớ công thức thì chạm xem, nhưng tự nhớ được thì có thưởng." },
+  { art: () => `<div class="tart">${cakeSVG({ base: RECIPES[1].base, cream: RECIPES[1].cream, top: RECIPES[1].top, sweet: 1 }, { size: 110, still: true })}</div>`,
+    t: "Chuẩn bị ca", d: "Trước ca, màn Chuẩn bị có 4 tab: Nhân viên (chạm thẻ để chọn ai đi làm), Bánh (món đang bán và món Viral hôm nay), Nguyên liệu (nhập hàng, hết hàng là không làm được) và Mục tiêu (dự đoán khách, thu chi ước tính). Bấm Chuẩn bị nhanh để tự nhập đủ." },
+  { art: () => `<div class="tart">${petSVG({ ...PETS.dog, mood: "wink" }, 70)}${petSVG({ ...PETS.white, mood: "happy" }, 70)}</div>`,
+    t: "Thú cưng đi làm", d: "Lên cấp thì Milo, Siro, Cacao xin vào làm thợ bánh và tự nhận đơn. Mỗi ca mỗi bé ăn một phần theo bậc (Hạt, Pate, Ức gà, Cá hồi, Bò bít tết), hết đồ ăn thì bé nghỉ. Cho ăn thưởng thì bé thân thiết hơn, lên bậc thì làm nhanh hơn. Vào mục Đội ngũ để chăm các bé." },
+  { art: () => `<div class="tart"><div class="gift"><span class="coin-i big"></span><b>×10</b></div></div>`,
+    t: "Triệu hồi Gacha", d: "Dùng xu mua vé để triệu hồi quản lý, linh thú, khách quen và công thức đặc biệt. Quản lý và linh thú đặt ở từng tầng để cộng buff; linh thú còn thuê làm thợ bánh được. Có bảo hiểm: 10 lần chắc có Hiếm, 50 lần chắc có Cực hiếm." },
   { art: () => `<div class="tart"><div class="env big"></div></div>`,
-    t: "Mỗi ngày một lá thư", d: "Mở thư mỗi ngày, xong 3 mục tiêu để nhận thêm thư bí mật. Ngày đặc biệt được nhân đôi xu." }
+    t: "Tiệm đông, tiệm lớn", d: "Càng nổi tiếng càng đông khách. Khách đông hơn ghế thì nâng cấp: mua bàn, nâng bàn, xây lầu, mở rộng. Ghế còn dư thì có thể gặp giờ vàng, khách đổ về thêm. Món Viral mỗi ngày được khách gọi nhiều hơn và tính vào mục tiêu ngày." },
+  { art: () => `<div class="tart"><div class="env big"></div></div>`,
+    t: "Mục tiêu, thư và bạn bè", d: "Mỗi ngày có 3 mục tiêu và một lá thư. Xong hết thì nhận quà. Bạn có thể ghé thăm tiệm hàng xóm, nhận tiền mừng khi có người ghé tiệm mình, và leo bảng xếp hạng tuần." }
 ];
 export function tutorial(step = 0) {
   const x = TUT[step], last = step === TUT.length - 1;
@@ -244,7 +294,7 @@ export function coinModal(onClose?: () => void) {
 
 /** Thông báo thưởng đăng nhập mỗi ngày và khoản đền bù */
 export function rewardModal(c: { daily: number; comp: number }) {
-  const rows = [c.comp ? `<div class="rwrow"><span>🎁 Đền bù vì trừ xu quá tay</span><b>+${fmtN(c.comp)} xu</b></div>` : "", c.daily ? `<div class="rwrow"><span>☀️ Thưởng đăng nhập hôm nay (10% số xu, tối đa 2.000)</span><b>+${fmtN(c.daily)} xu</b></div>` : ""].join("");
+  const rows = [c.comp ? `<div class="rwrow"><span>🎁 Đền bù vì trừ xu quá tay</span><b>+${fmtN(c.comp)} xu</b></div>` : "", c.daily ? `<div class="rwrow"><span>☀️ Thưởng đăng nhập hôm nay (theo cấp, thêm theo chuỗi ngày)</span><b>+${fmtN(c.daily)} xu</b></div>` : ""].join("");
   modal(`<h2>${c.comp ? "Xin lỗi vì trừ hơi ghê!" : "Chào ngày mới!"}</h2><p class="sub">${c.comp ? "Tiệm gửi bạn món quà đền bù và quà đăng nhập." : "Quà cho lần đăng nhập đầu tiên trong ngày."}</p>
     <div class="rwbox">${rows}</div><div class="inccost"><small>Số xu hiện có ${fmtN(S.coins)} xu · xem ở Ví</small></div>
     <div class="mbtns"><button class="b3" data-close>Nhận luôn</button></div>`);
@@ -276,6 +326,11 @@ export function upgradeModal(forced = false) {
 }
 /** mua xong: còn thiếu bàn thì giữ hộp thoại bắt buộc, đủ rồi thì đóng */
 export function venueBuy(id: string, forced: boolean) {
+  const o = upgradeOptions().find(x => x.id === id), v = VENUE_OPT[id as keyof typeof VENUE_OPT];
+  if (o && v) return confirmSpend(o.cost, `${v.n}?`, () => doVenueBuy(id, forced));
+  doVenueBuy(id, forced);
+}
+function doVenueBuy(id: string, forced: boolean) {
   if (!buyVenue(id as "table" | "up" | "floor" | "wide")) { toast("Không đủ xu"); return; }
   sfx("level"); render(true);                           // trừ xu và dựng lại cảnh tiệm ngay, hộp thoại vẫn mở
   toast(id === "table" ? "Đã thêm bàn!" : id === "up" ? "Đã nâng cấp bàn!" : id === "floor" ? "Đã xây thêm lầu!" : "Đã mở rộng cửa hàng!");

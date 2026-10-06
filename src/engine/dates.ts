@@ -21,7 +21,7 @@ export function events(): SpecialDay[] {
   const hb = nextOn(her.getMonth() + 1, her.getDate());
   list.push({ key: "herBirthday", date: hb, t: "Sinh nhật " + S.names.her, v: { age: hb.getFullYear() - her.getFullYear() } });
   const sb = nextOn(his.getMonth() + 1, his.getDate());
-  list.push({ key: "hisBirthday", date: sb, t: "Sinh nhật " + S.names.his, v: { age: sb.getFullYear() - his.getFullYear() } });
+  list.push({ key: "hisBirthday", date: sb, t: "Sinh nhật " + CFG.hisName, v: { age: sb.getFullYear() - his.getFullYear() } });
   // tròn tháng (cùng ngày với ngày quen), bỏ qua tháng trùng kỷ niệm năm
   let mo = new Date(t.getFullYear(), t.getMonth(), met.getDate());
   if (mo < t) mo = new Date(t.getFullYear(), t.getMonth() + 1, met.getDate());
@@ -36,4 +36,4 @@ export function events(): SpecialDay[] {
 }
 export const todayEvents = () => events().filter(e => e.in === 0);
 export const coinMult = () => (todayEvents().length ? 2 : 1);
-export const eventNote = (e: SpecialDay) => fill(CFG.eventNotes[e.key] || "", { ...e.v, d: daysTogether(), her: S.names.her, his: S.names.his });
+export const eventNote = (e: SpecialDay) => fill(CFG.eventNotes[e.key] || "", { ...e.v, d: daysTogether(), her: S.names.her, his: CFG.hisName });
