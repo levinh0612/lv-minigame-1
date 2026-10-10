@@ -11,7 +11,10 @@ const AUTH = "tiem-auth";
 interface Auth { user: string; token: string; pin: string; fails: number; dirty: boolean }
 let A: Auth | null = (() => { try { return JSON.parse(localStorage.getItem(AUTH) || "null"); } catch { return null; } })();
 /* vừa mở khoá rồi tự cập nhật (tải lại trang) thì không hỏi PIN lại trong 2 phút */
-let unlocked = (() => { try { return Number(sessionStorage.getItem("tiem-unlock") || 0) > Date.now(); } catch { return false; } })();
+/* iOS hay giết app nền rồi tải lại giữa ca: nhớ mốc "lần cuối đang dùng" trên máy, rời chưa quá 10 phút thì không hỏi PIN lại */
+const ACTIVE = "tiem-active", LOCK_MS = 600000;
+const stamp = () => { try { if (unlocked) localStorage.setItem(ACTIVE, String(Date.now())); } catch { /* bỏ qua */ } };
+let unlocked = (() => { try { return Number(sessionStorage.getItem("tiem-unlock") || 0) > Date.now() || Date.now() - Number(localStorage.getItem(ACTIVE) || 0) < LOCK_MS; } catch { return false; } })();
 export function keepUnlock() { try { if (unlocked) sessionStorage.setItem("tiem-unlock", String(Date.now() + 120000)); } catch { /* bỏ qua */ } }
 const store = () => { try { if (A) localStorage.setItem(AUTH, JSON.stringify(A)); else localStorage.removeItem(AUTH); } catch { /* riêng tư */ } };
 
@@ -42,7 +45,7 @@ const post = <T>(path: string, data: unknown) => api<T>(path, { method: "POST", 
 export const checkName = (username: string) => post<{ free: boolean; error?: string }>("auth", { action: "check", username });
 
 async function signedIn(user: string, token: string, pin: string, state?: unknown, rev?: number) {
-  A = { user, token, pin: await pinHash(user, pin), fails: 0, dirty: false }; store(); unlocked = true;
+  A = { user, token, pin: await pinHash(user, pin), fails: 0, dirty: false }; store(); unlocked = true; stamp();
   if (state) adopt(state, rev ?? 0);
   S.cloud.name = user; S.cloud.named = true; S.cloud.at = new Date().toISOString(); save();
 }
@@ -72,7 +75,8 @@ export async function changePin(pin: string) {
 export async function logout() {
   await cloudSave().catch(() => {});
   await post("auth", { action: "logout" }).catch(() => {});
-  A = null; store();
+  A = null; store(); unlocked = false;
+  try { localStorage.removeItem(ACTIVE); } catch { /* bỏ qua */ }
   try { localStorage.removeItem(KEY); } catch { /* bỏ qua */ }
 }
 
@@ -81,17 +85,20 @@ let hiddenAt = 0;
 export const isLocked = () => loggedIn() && !unlocked;
 export async function unlock(pin: string): Promise<"ok" | "wrong" | "out"> {
   if (!A) return "out";
-  if ((await pinHash(A.user, pin)) === A.pin) { A.fails = 0; store(); unlocked = true; return "ok"; }
+  if ((await pinHash(A.user, pin)) === A.pin) { A.fails = 0; store(); unlocked = true; stamp(); return "ok"; }
   A.fails++; store();
   if (A.fails >= 5) { A.token = ""; store(); return "out"; }       // sai 5 lần: đăng nhập lại
   return "wrong";
 }
 export const pinTriesLeft = () => 5 - (A?.fails ?? 0);
-/* rời app quá 10 phút thì khoá lại */
+/* rời app quá 10 phút thì khoá lại; đang trong ca thì không bao giờ khoá */
 export function trackHidden(hidden: boolean) {
-  if (hidden) hiddenAt = Date.now();
-  else if (hiddenAt && Date.now() - hiddenAt > 600000) unlocked = false;
+  if (hidden) { hiddenAt = Date.now(); stamp(); return; }
+  const away = hiddenAt ? Date.now() - hiddenAt : 0;
+  hiddenAt = 0;                                   // sự kiện "hiện" bắn thêm lần nữa (iOS) thì không tính lại mốc cũ
+  if (away > LOCK_MS && !inShift()) unlocked = false; else stamp();
 }
+setInterval(() => { if (!document.hidden) stamp(); }, 30000);
 
 /* ===== Lưu tiến trình ===== */
 function adopt(state: unknown, rev: number) {
