@@ -2,12 +2,13 @@
    Thêm màn mới: thêm một dòng vào ROUTES. */
 export type ShopTab = "decor" | "pets" | "gift";
 export type Route =
-  | { name: "home" } | { name: "goals" } | { name: "roadmap" } | { name: "prep" }
+  | { name: "home" } | { name: "goals" } | { name: "progress" } | { name: "roadmap" } | { name: "prep" }
   | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" } | { name: "rank" } | { name: "visit"; user: string } | { name: "gacha" };
 
 const ROUTES: [string, Route][] = [
   ["/", { name: "home" }],
   ["/muc-tieu", { name: "goals" }],
+  ["/thanh-tich", { name: "progress" }],
   ["/cua-hang", { name: "shop", tab: "decor" }],
   ["/cua-hang/thu-cung", { name: "shop", tab: "pets" }],
   ["/cua-hang/qua-tang", { name: "shop", tab: "gift" }],

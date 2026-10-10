@@ -14,6 +14,13 @@ export interface PetState { aff: number; petDay: string; pets: number; fedDay: s
 export interface GachaState { tickets: number; dust: number; pulls: number; sinceRare: number; sinceUltra: number; owned: Record<string, number>; mascot: string; freeDay: string; bond?: Record<string, number>; mgrs?: string[]; mascots?: string[]; refund?: number }   // mgrs/mascots: id quản lý, linh vật đứng ở từng tầng (theo thứ tự tầng); refund: số lượt quay vừa được bù (hiện dialog một lần rồi xoá); mascot: dữ liệu cũ, đã chuyển sang mascots[0]   // bond: số ca đã đồng hành của từng linh vật (tăng độ thân thiết)
 export interface StaffState { hired: boolean; lv: number; onDuty: boolean; food?: FoodId; prio?: number }   // prio: lúc bấm mua đồ ăn cho bé này, bé mua sau cùng được chia phần trước
 export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
+/** tiến trình nội dung cày: số bánh từng món (tay nghề), bộ đếm thành tích, bậc đã nhận, nâng cấp tiệm, nhiệm vụ tuần */
+export interface Prog {
+  made: Record<string, number>; stat: Record<string, number>; ach: Record<string, number>; up: Record<string, number>;
+  weekly: { week: string; missions: { key: string; n: number; coins: number }[]; prog: Record<string, number>; claimed: string[]; chest: boolean };
+  bestStreak: number;
+}
+export const freshProg = (): Prog => ({ made: {}, stat: {}, ach: {}, up: {}, weekly: { week: "", missions: [], prog: {}, claimed: [], chest: false }, bestStreak: 0 });
 export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
   names: { her: string };     // chỉ tên chủ tiệm là của riêng mỗi người; tên người gửi, thú cưng, khách do admin cấu hình (CFG)
@@ -36,6 +43,7 @@ export interface State {
   comp?: number;                  // đã nhận khoản đền bù một lần chưa
   loginDay?: string;              // ngày (YYYY-MM-DD) đã nhận thưởng đăng nhập gần nhất
   incAt?: number;                 // số ca đã chơi lúc gặp sự cố gần nhất (để cách nhau vài ca)
+  prog: Prog;                     // tay nghề, thành tích, nhiệm vụ tuần, nâng cấp tiệm cao cấp
   cloud: Cloud;
 }
 /* Lưu trên mây: mã tiệm (bí mật, dùng để khôi phục), tên trên bảng xếp hạng, giờ nhắc */
@@ -56,7 +64,7 @@ export function fresh(): State {
     stock: Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map((_, i) => i < 3 ? STARTER_STOCK : 0)])) as Record<StockKey, number[]>, suppliers: [], custom: [],
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0, salmon: 0, steak: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
-    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
+    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, prog: freshProg(), book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
 }
@@ -133,6 +141,9 @@ export function loadState(raw: string | null): State {
   if (s.me && isFixedChar(s.me.sprite)) s.gacha.owned["c_" + s.me.sprite] ||= 1;        // người đang dùng nhân vật làm sẵn: tặng luôn làm khách quen
   s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});
   s.owned = s.owned || [];
+  s.prog = { ...freshProg(), ...(s.prog || {}) };
+  s.prog.weekly = { ...freshProg().weekly, ...s.prog.weekly };
+  (["made", "stat", "ach", "up"] as const).forEach(k => { s.prog[k] = { ...(s.prog[k] || {}) }; });
   s.cloud = Object.assign(fresh().cloud, s.cloud || {});
   s.book = Object.assign(freshBook(), s.book || {});
   s.me = Object.assign({ ...DEFAULT_ME }, s.me || {}); if (!(s.me.sprite in SPRITES)) s.me = { ...DEFAULT_ME };

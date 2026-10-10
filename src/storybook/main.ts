@@ -2,6 +2,7 @@
    Dùng chính code vẽ của game nên luôn khớp. Mở /storybook.html, hoặc ?story=<id> để xem một mục.
    `npm run capture` chụp từng mục ra design-kit/ để gửi Claude Design. */
 import "../styles/main.css";
+import "../styles/tailwind.css";
 import "../styles/themes.css";
 import "./sb.css";
 import { CFG } from "../content/couple";
@@ -25,12 +26,15 @@ import { ingredientSheet } from "../ui/ingredients";
 import { openCustom } from "../ui/custom";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, recipeFilter } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
+import { progressHTML, setProgTab } from "../ui/screens/progress";
+import { ensureWeek } from "../engine/weekly";
 import { goalsHTML } from "../ui/screens/goals";
 import { homeHTML } from "../ui/screens/home";
 import { playReveal } from "../ui/gachafx";
 import { visitHTML } from "../ui/screens/visit";
 import { setVisiting } from "../engine/visit";
-import { _setResult, _setShift, playHTML, resultHTML, slotHTML } from "../ui/screens/play";
+import { _setShift, playHTML, slotHTML } from "../ui/screens/play";
+import { _setResult, resultHTML } from "../ui/screens/result";
 import { prepHTML, setPrepTab, type PrepTab } from "../ui/screens/prep";
 import { roadmapHTML } from "../ui/screens/roadmap";
 import { shopHTML, tryDecor } from "../ui/screens/shop";
@@ -198,6 +202,9 @@ const STORIES: Story[] = [
     } },
   { id: "goals", sec: "screens", title: "Mục tiêu", desc: "Mục tiêu ngày, ngày sắp tới, công thức, đánh giá", kind: "screen", long: true,
     html: () => { lvState(4, s => { s.reviews = REVIEWS as State["reviews"]; }); S.daily.served = 5; S.daily.feat = 1; return goalsHTML(); } },
+  ...(["weekly", "ach", "craft", "shop"] as const).map((tab, i) => ({ id: "progress-" + tab, sec: "screens", title: "Thành tích · " + ["Nhiệm vụ tuần", "Danh hiệu", "Tay nghề", "Nâng cấp tiệm"][i], desc: "Nội dung cày sau Lv 24 (viết bằng Tailwind)", kind: "screen" as const, long: true,
+    html: () => { lvState(34, s => { s.coins = 25000; s.served = 620; s.earned = 80000; s.shifts = 60; s.prog.stat.perfect = 340; s.prog.made = { r1: 130, r2: 20, r10: 600, r13: 260 }; s.prog.up = { oven: 2, coffee: 1 }; s.prog.ach = { serve: 1 }; }); setProgTab(tab);
+      ensureWeek(34); S.prog.weekly.prog = Object.fromEntries(S.prog.weekly.missions.map((m, j) => [m.key, j === 0 ? m.n : Math.floor(m.n / 3)])); return progressHTML(); } })),
   { id: "shop-decor", sec: "screens", title: "Trang trí tiệm", desc: "Đang dùng Rèm ren và Đèn mây; đang thử tường Sọc bạc hà", kind: "screen",
     html: () => { lvState(4, s => { s.room.curtain = "1"; s.room.lamp = "1"; s.room.plant = "1"; s.owned = ["curtain:1", "lamp:1", "plant:1"]; }); tryDecor("wall", "mint"); const h = shopHTML("decor"); tryDecor("wall", "pink"); return h; } },
   { id: "team", sec: "screens", title: "Đội ngũ · Thợ bánh", desc: "Gộp thợ bánh và linh thú Gacha: huy hiệu bậc I-V, linh thú không ăn, phí thuê và buff", kind: "screen", long: true,

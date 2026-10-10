@@ -6,6 +6,9 @@ import { daysTogether } from "./dates";
 import { bondMul, floorCount, gachaFx, specialRecipes, staffAt } from "./gacha";
 import { S, save } from "./state";
 import { recipeReady } from "./suppliers";
+import { upgradeFx, upgradeLv } from "./upgrades";
+import { ensureWeek } from "./weekly";
+import { SHOP_UPGRADES } from "../content/progression";
 import { DAY, today, ymd } from "./util";
 
 export const MAX_LV = 100;     // cấp người chơi tối đa
@@ -19,9 +22,9 @@ export const seasonalRecipes = (): Recipe[] => { const r = seasonalNow(); return
 export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeReady(r)), ...seasonalRecipes(), ...customRecipes().filter(recipeReady), ...specialRecipes()];
 /** chỉ số nguyên liệu mà các món đang bán dùng tới (màn làm bánh và kho giữa ca chỉ hiện những món này) */
 export const usedIdx = (k: StockKey) => [...new Set(unlocked().flatMap(r => partsOfRecipe(r).filter(p => p.k === k).map(p => p.i)))].sort((a, b) => a - b);
-export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k);
+export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k) + upgradeFx(k);
 /* Buff đang có đến từ đâu: quản lý và linh thú từng tầng, đồ trang trí. Cộng các dòng lại đúng bằng fx(k). */
-export interface BuffRow { src: "mgr" | "mascot" | "decor"; name: string; sub: string; fx: Partial<Record<FxKey, number>>; item?: GachaItem; decor?: RoomItem }
+export interface BuffRow { src: "mgr" | "mascot" | "decor" | "shop"; name: string; sub: string; fx: Partial<Record<FxKey, number>>; item?: GachaItem; decor?: RoomItem }
 export function buffSources(): BuffRow[] {
   const rows: BuffRow[] = [];
   for (let f = 0; f < floorCount(); f++) {
@@ -31,6 +34,7 @@ export function buffSources(): BuffRow[] {
       fx: Object.fromEntries(Object.entries(a.mascot!.fx).map(([k, v]) => [k, k === "cust" ? v : v! * bondMul(a.id)])) });
   }
   ROOM_CATS.forEach(c => { const it = roomItem(c.k, S.room[c.k]); if (it.fx && Object.keys(it.fx).length) rows.push({ src: "decor", name: it.n, sub: c.n, fx: { ...it.fx }, decor: it }); });
+  SHOP_UPGRADES.filter(u => upgradeLv(u.id) > 0).forEach(u => rows.push({ src: "shop", name: u.n, sub: `Nâng cấp tiệm · cấp ${upgradeLv(u.id)}/${u.max}`, fx: { [u.fx]: u.per * upgradeLv(u.id) } }));
   return rows;
 }
 /* số món trang trí đang dùng (không tính kiểu mặc định) */
@@ -48,6 +52,7 @@ export function rollDay() {
     S.streak = S.lastDay === y ? S.streak + 1 : 1;
     S.lastDay = t;
   }
+  ensureWeek(lvl());
   save();
 }
 

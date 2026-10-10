@@ -1,5 +1,7 @@
 /* Luật của một ca bán: khách vào, chờ, giao bánh, tính thưởng. Không đụng DOM để test được. */
 import { CFG } from "../content/couple";
+import { craftBonus } from "./craft";
+import { trackServe, trackShift } from "./track";
 import {
   BOY_SPRITES, CATS, COAT, EYES, GIRL_SPRITES, SHIRT, GUEST_LINES, HAIR, HIM, KEYS, LABELS, RECIPES, SKIN,
   type Build, type Look, type Mood, type PartKey, type Recipe
@@ -205,7 +207,7 @@ export function release(sh: Shift) { sh.mine = -1; sh.peek = false; }
 export function peek(sh: Shift) { sh.peek = true; }
 
 export type ServeResult =
-  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; tierBonus: number; perfect: boolean; combo: number; comboAdd: number }
+  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; tierBonus: number; perfect: boolean; combo: number; comboAdd: number; craftUp?: { star: number; reward: number } }
   | { ok: false; msg: string; broke?: number };
 
 const tiersOfBuild = (b: Build) => 1 + (b.up?.length ?? 0);
@@ -250,7 +252,7 @@ function deliver(sh: Shift, idx: number, byStaff: boolean, staffId?: StaffId): E
   const c = sh.seats[idx]!; c.gone = true;
   const f = c.pat / c.max, stars = f > 0.55 ? 3 : f > 0.3 ? 2 : 1, mult = coinMult();
   const mb = staffId ? mascotBonus(staffId) : { price: 0, tip: 0 };   // linh thú thuê: bánh bé làm bán được giá hơn
-  const price = Math.round(c.r.price * (1 + fx("price")) * (1 + (c.perkPrice ?? 0)) * (1 + mb.price)) * mult;
+  const price = Math.round(c.r.price * (1 + fx("price")) * (1 + (c.perkPrice ?? 0)) * (1 + mb.price) * (1 + craftBonus(c.r.id))) * mult;
   const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0)) * (1 + mb.tip)) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
@@ -265,8 +267,9 @@ function deliver(sh: Shift, idx: number, byStaff: boolean, staffId?: StaffId): E
   if (byStaff) sh.helped++;
   if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
+  const craftUp = trackServe(c.r, price + tip, stars, perfect);
   addReview(c, stars); save();
-  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, tierBonus, perfect, combo: sh.combo, comboAdd };
+  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, tierBonus, perfect, combo: sh.combo, comboAdd, ...(craftUp ? { craftUp } : {}) };
 }
 
 export function leaveCustomer(sh: Shift, i: number) {
@@ -308,7 +311,7 @@ export function beginShift() {
 /* Hết ca: tính lãi */
 export function finishShift(sh: Shift) {
   sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
-  earn("goal", sh.goalCoins); S.shifts++;
+  earn("goal", sh.goalCoins); S.shifts++; trackShift();
   if (sh.goals.every(g => goalDone(sh, g))) { sh.ticket = true; addTickets(1); }
   sh.bondUp = addBond();
   if (sh.comboBank > 0) { earn("combo", sh.comboBank); sh.comboPaid = sh.comboBank; }

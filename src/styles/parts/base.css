@@ -1,0 +1,51 @@
+/* Biến màu, reset, nút 3D, pill: nền tảng dùng ở mọi màn */
+/* Thiết kế 1a "Kẹo dâu phồng" từ Claude Design: một giao diện sáng, cố ý không đổi theo chế độ tối */
+:root{color-scheme:light;
+  --bg:#FFF3F6;--ink:#5B3A45;--ink2:#4A3438;--soft:#B0707F;--soft2:#8C6A75;--soft3:#A07A86;
+  --pink:#FF7FA1;--pink-d:#E0567A;--pink-m:#FF8FAB;--pink-l:#FFE3EA;--pink-b:#F6DCE3;--sh:#F6CBD7;
+  --mint:#8FD9B6;--mint-d:#3F9C78;--mint-l:#DDF4E8;--mint-m:#BFE8D3;--mint-bg:#E3F6EC;
+  --gold:#FFD66B;--gold-d:#E8AE2E;--gold-t:#8A6A1F;--cream:#FFF8EC;--lav:#EDE6FF;--lav-d:#7A62C9;--red:#FF6F91;
+  --display:"Baloo 2",system-ui,sans-serif;--body:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;
+
+  /* màu nhóm hồng của giao diện, đổi theo theme (xem themes.css, tạo bằng npm run themes) */
+  --k-4a3438:#4A3438;--k-a0848c:#A0848C;--k-b84a63:#B84A63;--k-b99aa3:#B99AA3;--k-b9a0a8:#B9A0A8;--k-c4b5ba:#C4B5BA;--k-c9aeb6:#C9AEB6;--k-d14e73:#D14E73;--k-d9c7cd:#D9C7CD;--k-d9cdd1:#D9CDD1;--k-dccdd3:#DCCDD3;--k-e2d3d8:#E2D3D8;--k-e3b3c0:#E3B3C0;--k-e3d6da:#E3D6DA;--k-e8afbe:#E8AFBE;--k-e8d7dc:#E8D7DC;--k-ebcfd7:#EBCFD7;--k-efe2e6:#EFE2E6;--k-efe7ea:#EFE7EA;--k-f0bfcb:#F0BFCB;--k-f0d2da:#F0D2DA;--k-f1e7ea:#F1E7EA;--k-f2d3db:#F2D3DB;--k-f3a9bc:#F3A9BC;--k-f3d5dd:#F3D5DD;--k-f3dde3:#F3DDE3;--k-f4c3cf:#F4C3CF;--k-f6e6ea:#F6E6EA;--k-f6eef1:#F6EEF1;--k-f7bfcd:#F7BFCD;--k-fbf4f6:#FBF4F6;--k-fbf5f7:#FBF5F7;--k-ff4f7a:#FF4F7A;--k-ffb3c7:#FFB3C7;--k-ffd1dc:#FFD1DC;--k-ffd9e3:#FFD9E3;--k-ffdce5:#FFDCE5;--k-ffe0e8:#FFE0E8;--k-ffe3ea:#FFE3EA;--k-ffe9ef:#FFE9EF;--k-fff0f3:#FFF0F3;--k-fff0f4:#FFF0F4;--k-fff3f6:#FFF3F6;--k-fff7f9:#FFF7F9;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;
+  -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+button{touch-action:manipulation}
+svg,img{-webkit-user-drag:none}
+/* vẫn cho chọn / dán chữ ở ô nhập và mã sao lưu */
+input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--pink-m);outline-offset:2px}
+.scr{max-width:430px;margin:0 auto;min-height:100%;position:relative;display:flex;flex-direction:column;overflow-x:hidden}
+.twk{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.twk i{position:absolute;font-style:normal;font-family:Arial,sans-serif;animation:dcTwinkle 3s ease-in-out infinite}
+@keyframes dcTwinkle{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes dcFall{0%{transform:translateY(-30px) rotate(0)}100%{transform:translateY(110vh) rotate(620deg)}}
+@keyframes dcBurst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.1);opacity:0}}
+@keyframes dcPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes cakeDrop{0%{transform:translateY(-38px);opacity:0}55%{transform:translateY(0) scale(1.08,.86);opacity:1}78%{transform:scale(.96,1.05)}100%{transform:none}}
+@keyframes cakeIdle{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
+@keyframes cakeTw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+@keyframes cakeHop{0%,100%{transform:translateY(0)}30%{transform:translateY(-10px) scale(1.03,.97)}60%{transform:translateY(0) scale(1.05,.94)}}
+@keyframes critHeart{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(-5px);opacity:.75}}
+@keyframes guyBlink{0%,91%,100%{opacity:0}94%,97%{opacity:1}}
+.blk{opacity:0;animation:guyBlink 4.2s infinite}
+
+/* nút 3D nảy */
+.b3{border-radius:24px;background:var(--pink);color:#fff;font:800 24px var(--display);box-shadow:0 6px 0 var(--pink-d),0 14px 24px -10px rgba(224,86,122,.6);transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .15s,opacity .2s}
+.b3:active{transform:translateY(5px) scale(.98);box-shadow:0 1px 0 var(--pink-d)}
+.b3.w{background:#fff;color:var(--pink-d);box-shadow:0 5px 0 var(--sh)}
+.b3.w:active{box-shadow:0 1px 0 var(--sh)}
+.b3:disabled{opacity:.45;cursor:default}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:99px;padding:6px 14px 6px 8px;box-shadow:0 3px 0 var(--sh);font:800 14px var(--body);white-space:nowrap}
+.pill.love{color:var(--pink-d)}
+.pill.love span{width:24px;height:24px;border-radius:50%;background:var(--pink-l);display:grid;place-items:center;font-family:Arial,sans-serif}
+.pill.coin{color:var(--gold-t);font-variant-numeric:tabular-nums}
+.coin-i{width:22px;height:22px;border-radius:50%;background:var(--gold);box-shadow:inset 0 -3px 0 var(--gold-d);flex:none}
+.rbtn{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 0 var(--sh);display:grid;place-items:center;font:800 15px Arial,sans-serif;color:var(--soft);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+.rbtn:active{transform:translateY(3px)}

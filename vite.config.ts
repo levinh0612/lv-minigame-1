@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import pkg from "./package.json" with { type: "json" };
 
@@ -16,6 +17,7 @@ export default defineConfig({
   build: { rollupOptions: { input: { main: "index.html", storybook: "storybook.html" } } },
   define: { __APP_VERSION__: JSON.stringify(VERSION), __BUILD__: JSON.stringify(BUILD) },
   plugins: [
+    tailwindcss(),
     versionFile(),
     VitePWA({
       registerType: "prompt",

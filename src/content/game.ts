@@ -31,7 +31,25 @@ const MORE_RECIPES: Recipe[] = ([
   ["Bông lan Socola Dâu tây", 0, 4, 0, 20, 48], ["Tart Socola Hạt dẻ", 1, 4, 2, 21, 50],
   ["Mochi Socola Mâm xôi", 2, 4, 4, 22, 52], ["Croissant Socola Việt quất", 3, 4, 3, 24, 56]
 ] as [string, number, number, number, number, number][]).map(([n, base, cream, top, lv, price], i) => ({ id: "r" + (BASIC_RECIPES.length + i + 1), n, base, cream, top, lv, price }));
-export const RECIPES: Recipe[] = [...BASIC_RECIPES, ...MORE_RECIPES];
+/* Món cao cấp (Lv 26–46): ghép nguyên liệu đã có theo tổ hợp mới, giá cao dần. Tên tự sinh từ CATS nên luôn khớp nguyên liệu.
+   Cột: đế, kem, topping, cấp mở, giá bán. Mỗi tổ hợp là duy nhất (không trùng món thường và món theo mùa, có test kiểm tra). */
+const ELITE_RECIPES: Recipe[] = ([
+  [1, 3, 3, 26, 58], [2, 3, 4, 27, 60], [3, 1, 4, 28, 62], [4, 4, 0, 30, 66], [4, 4, 3, 32, 70], [3, 0, 3, 33, 72], [1, 2, 3, 34, 74],
+  [2, 3, 3, 35, 76], [0, 3, 4, 36, 78], [4, 0, 1, 38, 82], [3, 4, 4, 40, 88], [4, 4, 4, 42, 92], [4, 4, 2, 44, 96], [2, 4, 3, 46, 100]
+] as [number, number, number, number, number][]).map(([base, cream, top, lv, price], i) => ({
+  id: "r" + (BASIC_RECIPES.length + MORE_RECIPES.length + i + 1), n: `${CATS.base[base][0]} ${CATS.cream[cream][0]} ${CATS.top[top][0]}`, base, cream, top, lv, price
+}));
+/* Bánh tầng đặc trưng (Lv 50–60): công thức cố định 2–3 tầng, bán đắt nhất tiệm. Cột: tên, đế, kem, topping, các tầng trên [đế, kem], cấp mở, giá bán */
+const TOWER_RECIPES: Recipe[] = ([
+  ["Tháp đôi Matcha Mâm xôi", 0, 0, 4, [[2, 1]], 50, 150], ["Tháp đôi Tart Việt quất", 1, 4, 3, [[3, 4]], 52, 170],
+  ["Tháp đôi Croissant Mâm xôi", 3, 3, 4, [[4, 3]], 54, 185], ["Tháp ba Hoàng gia", 4, 3, 4, [[3, 3], [2, 2]], 56, 220],
+  ["Tháp ba Vườn Berry", 0, 1, 3, [[2, 0], [1, 2]], 58, 250], ["Tháp ba Cacao Tối thượng", 4, 4, 1, [[3, 4], [1, 4]], 60, 280]
+] as [string, number, number, number, [number, number][], number, number][]).map(([n, base, cream, top, up, lv, price], i) => ({
+  id: "r" + (BASIC_RECIPES.length + MORE_RECIPES.length + ELITE_RECIPES.length + i + 1), n, base, cream, top, up, lv, price
+}));
+export const RECIPES: Recipe[] = [...BASIC_RECIPES, ...MORE_RECIPES, ...ELITE_RECIPES, ...TOWER_RECIPES];
+/** cấp của món mở khoá muộn nhất (hiện ở Lộ trình/hướng dẫn: nội dung công thức đến Lv này) */
+export const LAST_RECIPE_LV = Math.max(...RECIPES.map(r => r.lv));
 /* Bánh theo mùa: mỗi tháng một món riêng (chỉ bán trong tháng đó), dùng lại nguyên liệu và hình bánh có sẵn, giá cao hơn món thường.
    Cột: tháng, tên mùa, đế, kem, topping, giá. Cần đủ cấp SEASON_LV và đủ nguyên liệu (nhà cung cấp) như món thường. */
 export const SEASON_LV = 8;

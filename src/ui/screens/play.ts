@@ -5,32 +5,29 @@ import { gachaArt } from "../gachafx";
 import { gachaItem } from "../../content/gacha";
 import { entityAvatar, entityInfo } from "../components/entity";
 import { levelMedal, rarityIcon } from "../badges";
-import { T_FINE, T_PERFECT, T_WARN, catchMouse, mouseFine, mousePay, mouseRank, mouseStage, payMouse } from "../../engine/mouse";
 import { Sound, sfx } from "../../audio/sound";
-import type { PetId } from "../../content/couple";
 import { staffAvatar } from "../staffav";
-import { CATS, KEYS, LABELS, PETS, RECIPES, STAFF, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
-import { daysTogether } from "../../engine/dates";
+import { CATS, KEYS, LABELS, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
 import { usedIdx } from "../../engine/progress";
 import { REFILL, staffIds, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
-import { giftReady, lvl, xpFor } from "../../engine/progress";
+import { lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
-  beginShift, buildPicked, buildTotal, finishShift, freshBuild, goalDone, goalProgress, goalText, isComplete, isOver, ledger, matches, mineIdx, needAt, needOf, partAt, partsOfBuild, peek, release, remaining, serve, setPartAt, summary, take, tick,
+  beginShift, buildPicked, buildTotal, finishShift, freshBuild, goalDone, goalProgress, goalText, isComplete, isOver, matches, mineIdx, needAt, needOf, partAt, partsOfBuild, peek, release, remaining, serve, setPartAt, take, tick,
   COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { cakeAnySVG, charSVG, petSVG, ingSVG } from "../art";
-import { $, bump, coinPill, dropModal, esc, floatText, haptic, hasModal, modal, toast } from "../dom";
+import { cakeAnySVG, charSVG, ingSVG } from "../art";
+import { $, bump, coinPill, esc, floatText, haptic, hasModal, modal, toast } from "../dom";
 import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
+import { doCatchMouse, doMousePay as payMouseFor, mouseChip, moveRat, openMouseDlg as openMouseDlgFor, removeRat, renderMouse } from "./play-mouse";
+import { setResult } from "./result";
 
 export let SH: Shift | null = null;
 let raf = 0, lastT = 0, leftShown = -1, drop: PartKey | null = null, stageDrop: PartKey | null = null, stageFree = 0, lastComboLost = 0;
-type Result = { sh: Shift; lv: number; led: ReturnType<typeof ledger> };
-let result: Result | null = null;
 
 // phần tử DOM của từng khách trong hàng, cache để vòng lặp không phải tìm lại mỗi khung hình
 interface SlotView { el: HTMLElement; bar: HTMLElement; art: HTMLElement; cls: string }
@@ -47,72 +44,19 @@ async function keepAwake(on: boolean) {
 document.addEventListener("visibilitychange", () => { if (!document.hidden && SH) { wake = null; void keepAwake(true); } });
 
 export function startShift() {
-  const { sh, pay } = beginShift(); SH = sh; result = null;
+  const { sh, pay } = beginShift(); SH = sh; setResult(null);
   navigate("/choi", true);
   if (pay.hungry.length) setTimeout(() => toast(`${pay.hungry.map(petName).join(", ")} đói nên nghỉ ca này. Nhớ mua đồ ăn nha!`), 400);
   sfx("open"); Sound.play("shift"); void keepAwake(true);
 }
-export const hasResult = () => !!result;
 export function resume() { if (SH) { SH.paused = false; lastT = performance.now(); } }
 export function pause() { if (SH) SH.paused = true; }
 
-/* ===== Chuột vào tiệm (luật ở engine/mouse.ts) ===== */
-interface Rat { el: HTMLElement; x: number; y: number; a: number; turn: number }
-let rat: Rat | null = null, mouseUiAt = 0;
-function removeRat() { rat?.el.remove(); rat = null; if ($("#ratArena")) dropModal(); const b = $("#mouseBox"); if (b) b.innerHTML = ""; }
-/* chuột chạy trong khung của hộp thoại; nhanh lúc mới vào rồi chậm dần theo thời gian */
-function moveRat(dt: number) {
-  if (!SH?.mouse) { if (rat) removeRat(); return; }
-  const arena = $("#ratArena"); if (!arena) { rat = null; return; }
-  const box = arena.getBoundingClientRect(), SZ = 64;
-  if (!rat || !rat.el.isConnected) {
-    const el = document.createElement("button"); el.id = "rat"; el.className = "rat"; el.setAttribute("aria-label", "Bắt chuột"); el.textContent = "🐭"; arena.appendChild(el);
-    el.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); doCatchMouse(); });
-    rat = { el, x: -SZ + 1, y: box.height * (.2 + Math.random() * .5), a: -.2 + Math.random() * .4, turn: 0 };
-  }
-  const k = box.width / 390, age = SH.mouse.age, speed = Math.max(55, 420 - age * 12) * k;
-  rat.turn -= dt; if (rat.turn <= 0) { rat.a += (Math.random() - .5) * 2.2; rat.turn = .35 + Math.random() * .8; }
-  rat.x += Math.cos(rat.a) * speed * dt; rat.y += Math.sin(rat.a) * speed * dt;
-  const W = box.width - SZ, H = box.height - SZ;
-  if (rat.x < 0 && rat.x > -SZ + 2) { rat.x = 0; rat.a = Math.PI - rat.a; } else if (rat.x > W) { rat.x = W; rat.a = Math.PI - rat.a; }
-  if (rat.y < 0) { rat.y = 0; rat.a = -rat.a; } else if (rat.y > H) { rat.y = H; rat.a = -rat.a; }
-  rat.el.style.transform = `translate(${rat.x.toFixed(1)}px,${rat.y.toFixed(1)}px) scaleX(${Math.cos(rat.a) < 0 ? -1 : 1})`;
-}
-function mouseInfo(sh: Shift) {
-  const m = sh.mouse; if (!m) return "";
-  const st = mouseStage(m), r = mouseRank(), pay = mousePay(), fine = mouseFine();
-  const btn = m.age >= T_PERFECT ? `<button class="b3 mpay" data-act="mousepay" ${S.coins >= pay ? "" : "disabled"}>Xử lý nhanh · ${fmtN(pay)} xu</button>` : "";
-  const left = (t: number) => Math.max(0, Math.ceil(t - m.age));
-  const text = st === "fast" ? `Chạm vào chuột trong ${left(T_PERFECT)}s để ${r.name ? "lên hạng" : "được hạng Vua diệt chuột"}!`
-    : st === "ok" ? `Chuột còn chạy quanh. Bắt nó hoặc trả tiền xử lý nhanh`
-    : st === "faint" ? `${m.fainted ? `😵 ${esc(petName(m.fainted))} ngất xỉu, nghỉ hết ca.` : "😟 Khách sốt ruột hơn."} Còn ${left(T_WARN)}s tới cảnh báo`
-    : `⚠ Khách bắt đầu nghi ngờ! Còn ${left(T_FINE)}s là bị báo sở y tế, đóng ca và phạt ${fmtN(fine)} xu`;
-  return `<div class="mhud s-${st}"><div class="mt">${text}</div><div class="mb"><i style="width:${Math.min(100, m.age / T_FINE * 100)}%"></i></div>${btn}</div>`;
-}
-/* thanh nhỏ trên màn ca để mở lại hộp thoại nếu lỡ đóng */
-const mouseChip = (sh: Shift) => sh.mouse ? `<button class="mhud chip s-${mouseStage(sh.mouse)}" data-act="mouseopen">🐭 Chuột đang chạy trong tiệm · chạm để bắt (${Math.max(0, Math.ceil(T_FINE - sh.mouse.age))}s)</button>` : "";
-export function openMouseDlg() {
-  if (!SH?.mouse) return;
-  modal(`<h2>🐭 Chuột vào tiệm!</h2><div id="mouseInfo">${mouseInfo(SH)}</div><div class="arena" id="ratArena"></div>`);
-}
-function renderMouse() {
-  if (!SH) return;
-  const i = $("#mouseInfo"); if (i) i.innerHTML = mouseInfo(SH);
-  const b = $("#mouseBox"); if (b) b.innerHTML = mouseChip(SH);
-}
-function doCatchMouse() {
-  if (!SH?.mouse) return;
-  const r = rat?.el.getBoundingClientRect(), res = catchMouse(SH); removeRat(); if (!res) return;
-  if (res.kind === "perfect") {
-    sfx("level"); haptic([30, 30, 60]); if (r) floatText(r.left, r.top - 6, `+${res.reward}`);
-    toast(`Bắt kịp chuột! Vua diệt chuột hạng ${res.rank}${res.rankUp ? " (vừa lên hạng!)" : ""} · +${res.reward} xu`); refreshCoins();
-  } else { sfx("coin"); toast("Bắt được chuột rồi, may mà chưa ai thấy"); }
-}
-export function doMousePay() {
-  if (!SH?.mouse) return; const c = payMouse(SH);
-  if (c == null) return toast(SH.mouse.age < T_PERFECT ? "Cố bắt chuột trước đã nha" : "Không đủ xu để xử lý nhanh");
-  removeRat(); sfx("coin"); refreshCoins(); toast(`Đã gọi người xử lý chuột nhanh: −${fmtN(c)} xu`);
-}
+/* Chuột vào tiệm: phần vẽ nằm ở play-mouse.ts, ở đây chỉ nối với ca đang chạy (SH) */
+let mouseUiAt = 0;
+export const openMouseDlg = () => openMouseDlgFor(SH);
+export const doMousePay = () => payMouseFor(SH, refreshCoins);
+const catchRat = () => doCatchMouse(SH, refreshCoins);
 
 function loop(now: number) {
   if (!SH) return;
@@ -124,8 +68,8 @@ function loop(now: number) {
     if (ev.mouse.fainted) { renderCrew(); sfx("wrong"); }
     if (ev.mouse.warn) { sfx("wrong"); haptic([60, 40, 60]); toast("⚠ Khách bắt đầu nghi ngờ có chuột!"); }
     if (ev.mouse.shutdown) { removeRat(); sfx("wrong"); haptic([80, 50, 80]); toast(`Sở y tế đóng cửa tiệm vì có chuột. Phạt ${fmtN(SH.mouseFine)} xu`); }
-    moveRat(dt);
-    if (SH.mouse && now - mouseUiAt > 250) { mouseUiAt = now; renderMouse(); }
+    moveRat(SH, dt, catchRat);
+    if (SH.mouse && now - mouseUiAt > 250) { mouseUiAt = now; renderMouse(SH); }
     if (ev.spawned >= 0) { renderSlot(ev.spawned, true); sfx("bell"); }
     ev.left.forEach(onLeave);
     ev.claimed.forEach(b => renderSlot(b.seat));
@@ -546,6 +490,7 @@ export function doServe() {
   renderCombo();
   renderBuild(true);
   if (res.bonus) toast(`Nhớ công thức giỏi quá! +${res.bonus} xu thưởng`);
+  if (res.craftUp) toast(`Tay nghề ${"★".repeat(res.craftUp.star)} · ${res.c.r.n}! +${res.craftUp.reward} xu`);
   if (res.tierBonus) toast(`Bánh ${tiersOf(res.c.r)} tầng tự tay làm! +${res.tierBonus} xu thưởng`);
   const sh = SH;
   setTimeout(() => { if (SH !== sh) return; resetBuild(); if (mineIdx(sh) >= 0) sheetOpen = true; renderBuild(); }, 900);
@@ -587,69 +532,14 @@ export function endShift() {
   if (!SH) return;
   cancelAnimationFrame(raf); void keepAwake(false);
   const sh = SH, led = finishShift(sh);
-  result = { sh, lv: lvl(), led }; SH = null;
+  const res = { sh, lv: lvl(), led }; setResult(res); SH = null;
   navigate("/ket-qua", true);
-  sfx(result.lv > sh.lv0 ? "level" : "end");
+  sfx(res.lv > sh.lv0 ? "level" : "end");
   void cloudSave();
   Sound.play("home");
 }
 
-/* ================= Màn Kết quả: tấm bảng giơ lên ================= */
-const STAR = (on: boolean, w: number, y: number, r: number, d: number) =>
-  `<svg width="${w}" height="${w}" viewBox="0 0 40 40" style="transform:translateY(${y}px) rotate(${r}deg);animation-delay:${d}s" aria-hidden="true"><path d="M20 3.5 L24.6 13.4 L35.5 14.7 L27.4 22.1 L29.6 32.9 L20 27.5 L10.4 32.9 L12.6 22.1 L4.5 14.7 L15.4 13.4 Z" fill="${on ? "#FFC53D" : "#FFFFFF"}" stroke="${on ? "#E08A1E" : "#3E3A4A"}" stroke-width="2.6" stroke-linejoin="round"/>${on ? `<path d="M20 9 L22.6 14.8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>` : ""}</svg>`;
-const FACE = (happy: boolean) => `<svg class="sface" width="74" height="74" viewBox="0 0 74 74" aria-hidden="true"><circle cx="37" cy="37" r="33" fill="${happy ? "#FFD84D" : "#F25C5C"}" stroke="#3E3A4A" stroke-width="3"/><path d="M18 24 Q24 20 30 25" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".6"/>${happy
-  ? `<path d="M22 34 Q27 27 32 34 M42 34 Q47 27 52 34" stroke="#3E3A4A" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M19 42 Q37 44 55 42 Q53 60 37 60 Q21 60 19 42 Z" fill="#fff" stroke="#3E3A4A" stroke-width="3" stroke-linejoin="round"/><path d="M24 52 Q37 56 50 52" stroke="#FF8FAB" stroke-width="5" stroke-linecap="round" fill="none"/><ellipse cx="16" cy="44" rx="4.5" ry="3" fill="#FF9FB6" opacity=".8"/><ellipse cx="58" cy="44" rx="4.5" ry="3" fill="#FF9FB6" opacity=".8"/>`
-  : `<circle cx="27" cy="33" r="3.8" fill="#3E3A4A"/><circle cx="47" cy="33" r="3.8" fill="#3E3A4A"/><path d="M21 24 L31 27 M53 24 L43 27" stroke="#3E3A4A" stroke-width="3" stroke-linecap="round"/><path d="M26 54 Q37 44 48 54" stroke="#3E3A4A" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M52 40 C49 45 49 49 52 49 C55 49 55 45 52 40 Z" fill="#9FD8F5" stroke="#3E3A4A" stroke-width="2"/>`}</svg>`;
-const SIGN = [
-  null,
-  { bg: "#F58E8E", sh: "#D96A6A", r: 4, page: "#F2E9EC", t: "Cố lên nha!" },
-  { bg: "#9FE0C0", sh: "#62BD93", r: -3, page: "#E3F6EC", t: "Giỏi lắm!" },
-  { bg: "#8FCFF2", sh: "#5FAED8", r: -4, page: "#CFEAF2", t: "Tuyệt vời!" }
-];
-export function resultHTML(r: Result | null = result) {
-  if (!r) return "";
-  const { sh, lv, led } = r, { total, stars } = summary(sh), sg = SIGN[stars]!, good = stars >= 2;
-  const newR = RECIPES.filter(x => x.lv > sh.lv0 && x.lv <= lv);
-  const conf = good ? `<div class="conf" aria-hidden="true">${Array.from({ length: 34 }, (_, i) => {
-    const d = 3.5 + Math.random() * 3;
-    return `<i style="left:${Math.random() * 100}%;width:${7 + Math.random() * 6}px;height:${10 + Math.random() * 8}px;background:${["#FF8FAB", "#8FD9B6", "#FFD66B", "#FFFFFF", "#C9B8F0"][i % 5]};border-radius:${Math.random() > 0.6 ? "50%" : "3px"};animation-duration:${d}s;animation-delay:${-Math.random() * d}s"></i>`;
-  }).join("")}</div>` : "";
-  const sparks = [[-18, 20, 14, 1.8], [258, 34, 18, 2.3], [-8, 150, 12, 2.1], [262, 150, 14, 1.6], [228, -10, 12, 2.6]]
-    .map(([x, y, s2, d]) => `<svg class="spk" width="${s2}" height="${s2}" viewBox="0 0 20 20" style="left:${x}px;top:${y}px;animation-duration:${d}s" aria-hidden="true"><path d="M10 0 C11 7 13 9 20 10 C13 11 11 13 10 20 C9 13 7 11 0 10 C7 9 9 7 10 0 Z" fill="#fff"/></svg>`).join("");
-  const done = sh.goals.filter(g => goalDone(sh, g)).length;
-  const row = (n: string, v: number, plus: boolean) => v ? `<div class="lg"><span>${n}</span><b class="${plus ? "p" : "m"}">${plus ? "+" : "−"}${fmtN(v)}</b></div>` : "";
-  const mood = good ? "love" : "open";
-  const note = giftReady() ? unlockCard()
-    : lv > sh.lv0 ? `<div class="rnote"><span class="env"></span><div>Lên Lv ${lv}!${newR.length ? " Mở khoá: " + newR.map(x => esc(x.n)).join(", ") : ""}${STAFF.filter(d => d.unlock > sh.lv0 && d.unlock <= lv).map(d => ` · ${esc(petName(d.id))} xin vào làm`).join("")}</div></div>`
-    : !good ? `<div class="rnote soft"><span class="env"></span><div>Mai thử bấm "Xem công thức" trước khi giao nhé, Milo tin em mà!</div></div>`
-    : unlockCard() || `<div class="rnote"><span class="env"></span><div>Ngày ${fmtN(daysTogether())} bên nhau · tiệm vẫn đông khách nè</div></div>`;
-  return `<div class="scr res" style="--page:${sg.page}">
-    ${conf}
-    <div class="sign-wrap"><small>Kết thúc ca ${S.shifts}</small>
-      <div class="sign" style="transform:rotate(${sg.r}deg)"><div class="stick"></div>
-        <div class="board" style="background:${sg.bg};box-shadow:0 6px 0 ${sg.sh}">
-          <div class="stars">${[0, 1, 2].map(i => STAR(i < stars, i === 1 ? 54 : 44, i === 1 ? -6 : 0, (i - 1) * 10, 0.25 + i * 0.15)).join("")}</div>
-          ${FACE(good)}<b>${sg.t}</b></div>${sparks}</div></div>
-    <div class="rcard">
-      <div class="pets">${(["dog", "gold", "white"] as PetId[]).map((id, i) => petSVG({ ...PETS[id], mood, ledge: false }, i === 1 ? 80 : 70)).join("")}</div>
-      <div class="rbanner"><span>Lãi ca này</span><b class="${led.profit >= 0 ? "p" : "m"}">${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b><small>${done}/${sh.goals.length} mục tiêu${sh.goalCoins ? ` · +${fmtN(sh.goalCoins)} xu thưởng` : ""}${sh.ticket ? " · 🎟 +1 vé" : ""}${sh.bestCombo >= 3 ? ` · 🔥 ×${sh.bestCombo}` : ""}</small></div>
-      <div class="kp"><div class="k1"><b>${sh.served}/${total}</b><small>Khách vui</small></div><div class="k2"><b>${sh.memo}</b><small>Tự nhớ công thức</small></div><div class="k3"><b>${sh.helped}</b><small>Bé làm hộ</small></div></div>
-      <div class="ledger"><h4>Sổ lãi hôm nay</h4>
-        ${row("Tiền bánh", sh.coins, true)}${row("Tip", sh.tips, true)}${row("Thưởng tự nhớ (+50%)", sh.bonus, true)}${sh.tierBonus ? row("Thưởng bánh nhiều tầng", sh.tierBonus, true) : ""}${row(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true)}
-        ${row("Nhập nguyên liệu", led.ingUsed + led.quick, false)}${row("Lương các bé", led.wages, false)}
-        <div class="lg tot ${led.profit >= 0 ? "" : "neg"}"><span>Lãi</span><b>${led.profit >= 0 ? "+" : "−"}${fmtN(Math.abs(led.profit))} xu</b></div>
-      </div>
-      ${sh.ticket ? `<p class="rticket">🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi</p>` : ""}${sh.shutdown ? `<p class="rticket bad">🚨 Sở y tế đóng cửa tiệm vì có chuột: phạt ${fmtN(sh.mouseFine)} xu. Lần sau nhớ bắt chuột sớm nha</p>` : ""}${sh.mouseKills ? `<p class="rticket">🐭 Vua diệt chuột hạng ${mouseRank().name}: +${sh.mouseReward} xu${mouseRank().next ? ` · cần ${mouseRank().next} lần để lên hạng` : ""}</p>` : ""}${sh.mousePaid ? `<p class="rticket">Đã chi ${fmtN(sh.mousePaid)} xu xử lý chuột nhanh</p>` : ""}${sh.comboPaid ? `<p class="rticket">🔥 Combo dài nhất ×${sh.bestCombo}: +${fmtN(sh.comboPaid)} xu thưởng${sh.comboLost ? ` (mất ${fmtN(sh.comboLost)} xu vì đứt chuỗi)` : ""}</p>` : sh.comboLost ? `<p class="rticket">Đứt combo: mất ${fmtN(sh.comboLost)} xu thưởng dồn, ca sau giữ chuỗi nha</p>` : ""}${sh.bondUp ? `<p class="rticket">💞 Linh vật thân thiết cấp ${sh.bondUp}: chỉ số linh vật tăng thêm 12%</p>` : ""}${note}
-    </div>
-    <div class="rbtns"><button class="b3 w" style="flex:1" data-go="/">Về tiệm</button><button class="b3" style="flex:1.6" data-go="/chuan-bi" data-replace>${good ? "Ca tiếp theo" : "Chơi lại ca"}</button></div>
-  </div>`;
-}
-export const unlockCard = () => giftReady()
-  ? `<button class="unlock" data-act="claim"><div class="env"></div><div><b>Mở khoá thư tình mới</b><small>Chạm để nhận quà hôm nay</small></div></button>`
-  : S.daily.claimed ? `<div class="unlock"><div class="env"></div><div><b>Đã mở thư tình hôm nay</b><small>Đọc lại ở mục Quà tặng</small></div></div>` : "";
-
-/* cho Storybook: đặt kết quả mẫu */
-export const _setResult = (r: Result | null) => { result = r; };
+/* cho Storybook: đặt ca mẫu */
 export const _setShift = (sh: Shift | null) => { SH = sh; };
 
 /* chỉ khi chạy dev: móc để kiểm tra giao diện trong ca bằng tay */

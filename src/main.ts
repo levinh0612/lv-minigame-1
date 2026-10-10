@@ -1,4 +1,5 @@
 import "./styles/main.css";
+import "./styles/tailwind.css";
 import "./styles/themes.css";
 import { registerSW } from "virtual:pwa-register";
 import { Sound, sfx } from "./audio/sound";
@@ -27,6 +28,7 @@ import { fmtN } from "./engine/util";
 import { initTeam, setTeamTab, staffDialogAct, staffSheet, teamAct, type TeamTab } from "./ui/team";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
 import { setPrepTab, type PrepTab } from "./ui/screens/prep";
+import { progressAct } from "./ui/screens/progress";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
@@ -119,6 +121,8 @@ document.addEventListener("click", e => {
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
   if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
+  if (d.progtab) return progressAct("tab", d.progtab);
+  if (d.pact) return progressAct("act", d.pact);
   if (d.ptab) { setPrepTab(d.ptab as PrepTab); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }
   if (d.train) { if (train(d.train as PetId)) { sfx("level"); toast(`${petName(d.train as PetId)} lên bậc ${S.staff[d.train as PetId].lv}!`); } return render(); }

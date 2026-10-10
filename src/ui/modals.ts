@@ -20,7 +20,8 @@ import { ADMIN_USER, account, changePin, isAdmin, disablePush, enablePush, isSta
 import { currentCfg, EVENT_KEYS, PET_IDS, type GameConfig } from "../content/gameconfig";
 import { cfgRev, publishGameConfig } from "../net/gamecfg";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
-import { SH, endShift, pause, resume, unlockCard } from "./screens/play";
+import { SH, endShift, pause, resume } from "./screens/play";
+import { unlockCard } from "./screens/result";
 import { goalsBody } from "./screens/goals";
 import { giftBody } from "./screens/shop";
 

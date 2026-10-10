@@ -1,5 +1,5 @@
-/* Sinh src/styles/themes.css: bản màu của từng theme cho mọi màu nhóm hồng trong :root của main.css
-   (các biến --pink*, --bg, --ink*, --soft*, --sh, --red và --k-xxxxxx). Thêm màu hồng mới vào main.css thì chạy lại: npm run themes */
+/* Sinh src/styles/themes.css: bản màu của từng theme cho mọi màu nhóm hồng trong :root của parts/base.css
+   (các biến --pink*, --bg, --ink*, --soft*, --sh, --red và --k-xxxxxx). Thêm màu hồng mới vào parts/base.css thì chạy lại: npm run themes */
 import { readFileSync, writeFileSync } from "node:fs";
 
 /* hue: màu chủ đạo mới; sat: nhân độ đậm màu (1 = giữ nguyên). Hồng là bản gốc nên không cần ở đây. */
@@ -17,7 +17,7 @@ export const THEMES = [
   { id: "black", hue: 230, sat: .1, dark: { "--pink": .22, "--pink-d": .12, "--pink-m": .32 } }
 ];
 const BASE_HUE = 346;
-const css = readFileSync("src/styles/main.css", "utf8");
+const css = readFileSync("src/styles/parts/base.css", "utf8");
 const root = css.slice(css.indexOf(":root{"), css.indexOf("}", css.indexOf(":root{")));
 const vars = [...root.matchAll(/(--[\w-]+):\s*(#[0-9A-Fa-f]{6})\b/g)].map(m => [m[1], m[2]]);
 

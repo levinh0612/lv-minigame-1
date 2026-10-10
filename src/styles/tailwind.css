@@ -1,0 +1,27 @@
+/* Tailwind v4 (qua plugin Vite). KHÔNG nạp preflight để không làm đổi giao diện các màn đang dùng CSS thủ công;
+   chỉ nạp theme + utilities. Màn/thành phần mới viết bằng class Tailwind, màu lấy từ biến CSS của theme (đổi theo theme hồng/xanh). */
+@layer theme, base, legacy, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-soft: var(--soft);
+  --color-pink: var(--pink);
+  --color-pink-d: var(--pink-d);
+  --color-pink-l: var(--pink-l);
+  --color-mint: var(--mint);
+  --color-mint-d: var(--mint-d);
+  --color-mint-l: var(--mint-l);
+  --color-gold: var(--gold);
+  --color-gold-d: var(--gold-d);
+  --color-gold-t: var(--gold-t);
+  --color-lav: var(--lav);
+  --color-lav-d: var(--lav-d);
+  --color-cream: var(--cream);
+  --color-line: var(--sh);
+  --color-red: var(--red);
+  --font-display: var(--display);
+  --font-body: var(--body);
+}
