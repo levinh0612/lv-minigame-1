@@ -56,6 +56,7 @@ export function resultHTML(r: Result | null = result) {
   });
   const extras = [
     sh.ticket ? "🎟 Đạt hết mục tiêu ca: +1 vé triệu hồi" : "",
+    sh.ticketCapped ? "🎟 Hôm nay đã nhận đủ vé từ mục tiêu ca, mai nhận tiếp nha" : "",
     sh.shutdown ? `🚨 Sở y tế đóng cửa tiệm vì có chuột: phạt ${fmtN(sh.mouseFine)} xu. Lần sau nhớ bắt chuột sớm nha` : "",
     sh.mouseKills ? `🐭 Vua diệt chuột hạng ${mouseRank().name}: +${sh.mouseReward} xu${mouseRank().next ? ` · cần ${mouseRank().next} lần để lên hạng` : ""}` : "",
     sh.mousePaid ? `Đã chi ${fmtN(sh.mousePaid)} xu xử lý chuột nhanh` : "",

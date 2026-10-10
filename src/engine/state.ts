@@ -13,7 +13,7 @@ export interface PetState { aff: number; petDay: string; pets: number; fedDay: s
 /** gacha: vé, Bụi sao, bộ đếm bảo hiểm, đồ đã có (id → số lần trúng), linh vật đang đồng hành, ngày đã nhận vé miễn phí */
 export interface GachaState { tickets: number; dust: number; pulls: number; sinceRare: number; sinceUltra: number; owned: Record<string, number>; mascot: string; freeDay: string; bond?: Record<string, number>; mgrs?: string[]; mascots?: string[]; refund?: number }   // mgrs/mascots: id quản lý, linh vật đứng ở từng tầng (theo thứ tự tầng); refund: số lượt quay vừa được bù (hiện dialog một lần rồi xoá); mascot: dữ liệu cũ, đã chuyển sang mascots[0]   // bond: số ca đã đồng hành của từng linh vật (tăng độ thân thiết)
 export interface StaffState { hired: boolean; lv: number; onDuty: boolean; food?: FoodId; prio?: number }   // prio: lúc bấm mua đồ ăn cho bé này, bé mua sau cùng được chia phần trước
-export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string }
+export interface Daily { day: string; served: number; earned: number; feat: number; angry: number; claimed: boolean; boy: boolean; featId: string; goalTickets?: number }
 /** tiến trình nội dung cày: số bánh từng món (tay nghề), bộ đếm thành tích, bậc đã nhận, nâng cấp tiệm, nhiệm vụ tuần */
 export interface Prog {
   made: Record<string, number>; stat: Record<string, number>; ach: Record<string, number>; up: Record<string, number>;

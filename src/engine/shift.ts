@@ -39,7 +39,7 @@ export interface Shift {
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
   memo: number;        // số đơn giao đúng mà không xem công thức
   helped: number;      // số đơn các bé làm hộ
-  goals: ShiftGoal[]; goalCoins: number; ticket: boolean; bondUp: number;
+  goals: ShiftGoal[]; goalCoins: number; ticket: boolean; ticketCapped: boolean; bondUp: number;
   combo: number; bestCombo: number; comboBank: number; comboLost: number; comboPaid: number;
   mouse: MouseEvt | null; mousePlan: number; mouseDone: boolean; fainted: StaffId[]; patMul: number; shutdown: boolean; mouseFine: number; mouseReward: number; mouseKills: number; mousePaid: number;   // chuột vào tiệm (xem mouse.ts)   // combo: số bánh Hoàn hảo liên tiếp; comboBank: thưởng dồn chờ cuối ca (đứt chuỗi thì mất nửa)
   // bondUp: cấp thân thiết mới của linh vật nếu vừa lên cấp; ticket: đạt hết mục tiêu ca nên được 1 vé triệu hồi
@@ -84,7 +84,7 @@ export function createShift(): Shift {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
     boyDone: !!S.daily.boy, lv0: L, xp0: S.xp, wk0: { ...S.prog.weekly.prog }, ups: [], record: false, mine: -1, peek: false, bonus: 0, tierBonus: 0, lack: {},
-    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
+    ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, ticketCapped: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
   };
   sh.mousePlan = planMouse(sh.total);
   return sh;
@@ -311,11 +311,18 @@ export function beginShift() {
   sh.wages = pay.cost; sh.working = pay.fed.map(x => x.id); pay.fed.forEach(x => { sh.meals[x.id] = x.meal; });
   return { sh, pay };
 }
+/** Vé triệu hồi nhận từ mục tiêu ca tối đa mỗi ngày (vé trị giá 300 xu nên không để mỗi ca đều ra vé) */
+export const GOAL_TICKETS_PER_DAY = 3;
+export const goalTicketsLeft = () => Math.max(0, GOAL_TICKETS_PER_DAY - (S.daily.goalTickets ?? 0));
+
 /* Hết ca: tính lãi */
 export function finishShift(sh: Shift) {
   sh.goalCoins = sh.goals.filter(g => goalDone(sh, g)).reduce((a, g) => a + g.reward, 0);
   earn("goal", sh.goalCoins); S.shifts++; trackShift();
-  if (sh.goals.every(g => goalDone(sh, g))) { sh.ticket = true; addTickets(1); }
+  if (sh.goals.every(g => goalDone(sh, g))) {
+    if (goalTicketsLeft() > 0) { sh.ticket = true; S.daily.goalTickets = (S.daily.goalTickets ?? 0) + 1; addTickets(1); }
+    else sh.ticketCapped = true;
+  }
   sh.bondUp = addBond();
   if (sh.comboBank > 0) { earn("combo", sh.comboBank); sh.comboPaid = sh.comboBank; }
   const led = ledger(sh); S.earned += led.revenue;
