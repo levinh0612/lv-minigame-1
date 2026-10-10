@@ -77,3 +77,14 @@ describe("nâng cấp tiệm cao cấp", () => {
     expect(upgradeCost(u, 1)).toBeGreaterThan(upgradeCost(u, 0));
   });
 });
+
+describe("Bạch Chi là nhân vật (quản lý), không phải linh thú", () => {
+  it("vật phẩm là quản lý, dữ liệu cũ của linh thú chuyển sang", async () => {
+    const { gachaItem } = await import("../src/content/gacha");
+    const { loadState } = await import("../src/engine/state");
+    expect(gachaItem("g_baizhi")?.kind).toBe("manager"); expect(gachaItem("m_baizhi")).toBeUndefined();
+    const s = loadState(JSON.stringify({ v: 6, gacha: { owned: { m_baizhi: 2 }, mascots: ["m_baizhi"], mgrs: [], bond: { m_baizhi: 5 } }, pets: { m_baizhi: { aff: 3, petDay: "", pets: 0, fedDay: "" } } }));
+    expect(s.gacha.owned).toMatchObject({ g_baizhi: 2 }); expect(s.gacha.owned.m_baizhi).toBeUndefined();
+    expect(s.gacha.mgrs?.[0]).toBe("g_baizhi"); expect(s.gacha.mascots?.[0]).toBe(""); expect(s.gacha.bond?.g_baizhi).toBe(5); expect(s.pets.g_baizhi.aff).toBe(3);
+  });
+});

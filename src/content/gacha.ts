@@ -90,6 +90,8 @@ export const GACHA_ITEMS: GachaItem[] = [
   mg("elaina", "ultra", "Elaina", "girl", ["Phù thủy", "Lữ khách"], { price: 0.1, pat: 0.12, tip: 0.08 }),
   mg("tsubasa", "rare", "Tsubasa", "boy", ["Cầu thủ", "Bền bỉ"], { pat: 0.12 }),
   mg("ryo", "rare", "Ryo", "boy", ["Lặng lẽ", "Bí ẩn"], { pat: 0.1, tip: 0.04 }),
+  /* Bạch Chi là nhân vật (không phải linh thú): làm quản lý, model 3D baizhi.glb, thẻ dùng tranh minh hoạ */
+  { ...mg("baizhi", "rare", "Bạch Chi", "girl", ["Hộ vệ", "Điềm tĩnh"], { price: 0.08, pat: 0.1 }), mgr: { model: "baizhi", gender: "girl", tags: ["Hộ vệ", "Điềm tĩnh"], fx: { price: 0.08, pat: 0.1 } } },
   /* linh vật: chọn một bé đồng hành, hưởng lợi ích khi đi cùng */
   { id: "m_bong", kind: "mascot", rarity: "common", n: "Chó Corgi", desc: "Đồng hành 3D trong tiệm: tip +5%", mascot: { img: "corgi", model: "pet_corgi", fx: { tip: 0.05 } } },
   { id: "m_anhdao", kind: "mascot", rarity: "rare", n: "Mèo Xám", desc: "Đồng hành 3D trong tiệm: tip +5%, giá bánh +5%", mascot: { img: "gray", model: "pet_graycat", fx: { tip: 0.05, price: 0.05 } } },
@@ -97,7 +99,6 @@ export const GACHA_ITEMS: GachaItem[] = [
   { id: "m_thienthan", kind: "mascot", rarity: "ultra", n: "Mèo Thiên Thần", desc: "Linh vật 3D trong tiệm: giá +10%, tip +8%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "angel", model: "pet_angel", fx: { price: 0.1, tip: 0.08, pat: 0.1, cust: 1 } } },
   { id: "m_cacao", kind: "mascot", rarity: "common", n: "Mèo Béo", desc: "Đồng hành 3D trong tiệm: tip +5%", mascot: { img: "cacao_cat", model: "cacao_cat", fx: { tip: 0.05 } } },
   { id: "m_xiem", kind: "mascot", rarity: "rare", n: "Mèo Xiêm", desc: "Đồng hành 3D trong tiệm: tip +5%, giá bánh +5%", mascot: { img: "siamese", model: "siamese", fx: { tip: 0.05, price: 0.05 } } },
-  { id: "m_baizhi", kind: "mascot", rarity: "rare", n: "Bạch Chi", desc: "Hộ vệ: giá bánh +8%, khách chờ lâu hơn 10%", mascot: { img: "baizhi", model: "baizhi", art: true, fx: { price: 0.08, pat: 0.1 } } },
   { id: "m_ga", kind: "mascot", rarity: "common", n: "Gà Trống", desc: "Đồng hành 3D trong tiệm: tip +5%", mascot: { img: "chicken", model: "pet_chicken", fx: { tip: 0.05 } } },
   { id: "m_ech", kind: "mascot", rarity: "common", n: "Ếch Xanh", desc: "Đồng hành 3D trong tiệm: tip +5%", mascot: { img: "frog", model: "pet_frog", fx: { tip: 0.05 } } },
   { id: "m_chuot", kind: "mascot", rarity: "common", n: "Chuột Vàng", desc: "Đồng hành 3D trong tiệm: khách chờ lâu hơn 6%", mascot: { img: "mouse", model: "pet_mouse", fx: { pat: 0.06 } } },
@@ -112,7 +113,7 @@ export const GACHA_ITEMS: GachaItem[] = [
   { id: "m_phuonghoang", kind: "mascot", rarity: "ultra", n: "Phượng Hoàng", desc: "Linh vật bay 3D trong tiệm: giá +10%, tip +10%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "phoenix", model: "phoenix", art: true, fx: { price: 0.1, tip: 0.1, pat: 0.1, cust: 1 } } }
 ];
 /* tranh minh hoạ do người chơi cung cấp */
-for (const [id, full] of Object.entries({ c_n3: "lynae", m_phuonghoang: "phoenix", m_baizhi: "baizhi" })) { const it = GACHA_ITEMS.find(i => i.id === id); if (it) it.full = full; }
+for (const [id, full] of Object.entries({ c_n3: "lynae", m_phuonghoang: "phoenix", g_baizhi: "baizhi" })) { const it = GACHA_ITEMS.find(i => i.id === id); if (it) it.full = full; }
 /** ảnh thẻ nhỏ của vật phẩm có model 3D (chụp từ model): linh vật dùng mascot-<img>, quản lý dùng mgr-<tên> */
 export const itemImg = (it: GachaItem) => it.mascot ? `/gacha/mascot-${it.mascot.img}.webp` : it.mgr ? `/gacha/mgr-${it.mgr.model.replace(/^g_/, "")}.webp` : "";   // khách quen (char) không có ảnh riêng: dùng gachaArt
 export const gachaItem = (id: string) => GACHA_ITEMS.find(i => i.id === id);

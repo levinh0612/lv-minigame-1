@@ -96,6 +96,17 @@ function migrateGacha(g: GachaState) {
   g.mascots = g.mascots.map(x => REMOVED_GACHA.includes(x) ? "" : x);
   if (n) { g.tickets += n; g.refund = (g.refund ?? 0) + n; }
 }
+/** vật phẩm đổi loại/id: dữ liệu cũ chuyển sang id mới (Bạch Chi từ linh thú thành quản lý) */
+const RENAMED_GACHA: Record<string, string> = { m_baizhi: "g_baizhi" };
+function migrateRenamed(s: State) {
+  const g = s.gacha, mascots = g.mascots ?? [], mgrs = (g.mgrs ??= []);
+  for (const [from, to] of Object.entries(RENAMED_GACHA)) {
+    if (g.owned[from]) { g.owned[to] = (g.owned[to] ?? 0) + g.owned[from]; delete g.owned[from]; }
+    if (g.bond?.[from] != null) { g.bond[to] = g.bond[from]; delete g.bond[from]; }
+    for (const m of [s.pets, s.staff] as Record<string, unknown>[]) if (m[from]) { m[to] ??= m[from]; delete m[from]; }
+    mascots.forEach((id, f) => { if (id !== from) return; mascots[f] = ""; if (!mgrs[f]) mgrs[f] = to; });   // đang đồng hành ở tầng nào thì làm quản lý tầng đó (nếu còn trống)
+  }
+}
 export function loadState(raw: string | null): State {
   let saved: Partial<State>;
   try { saved = JSON.parse(raw || "{}"); } catch { saved = {}; }
@@ -137,7 +148,7 @@ export function loadState(raw: string | null): State {
   s.venue = Object.assign(fresh().venue, s.venue || {});
   s.mouse = { ...fresh().mouse!, ...(s.mouse || {}) };
   s.gacha = Object.assign(fresh().gacha, s.gacha || {}); s.gacha.owned = { ...(s.gacha.owned || {}) };
-  migrateGacha(s.gacha);
+  migrateGacha(s.gacha); migrateRenamed(s);
   if (s.me && isFixedChar(s.me.sprite)) s.gacha.owned["c_" + s.me.sprite] ||= 1;        // người đang dùng nhân vật làm sẵn: tặng luôn làm khách quen
   s.room = Object.assign({ ...DEFAULT_ROOM }, s.room || {});
   s.owned = s.owned || [];
