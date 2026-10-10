@@ -81,6 +81,7 @@ function loop(now: number) {
       showServed(x.res, x.baker.id);
       const a = autoService(SH!, x.res.c, x.res.price, x.baker.id);
       if (a) { refreshCoins(); toast(`${petName(x.baker.id)} ${a.msg}`); }
+      else if (x.res.c.svc) offerService(x.res.c, x.res.price);
     });
     ev.restock.forEach(r => toast(`${petName(r.id)} nhập nhanh ${r.what}`));
     if (ev.assigned >= 0) { sheetOpen = true; renderTicket(); sfx("click"); }
@@ -146,7 +147,7 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
     
   const rg = c.reg ? gachaItem(c.reg) : null, perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");
-  const svc = c.svc && !c.by ? `<i class="stag" title="Khách xin ${svcLabel(c.svc).toLowerCase()}">${c.svc === "ship" ? ic.right(11, 2.8) : ic.gift(11, 2.4)}${svcLabel(c.svc)}</i>` : "";
+  const svc = c.svc ? `<i class="stag" title="Khách xin ${svcLabel(c.svc).toLowerCase()}">${c.svc === "ship" ? ic.right(11, 2.8) : ic.gift(11, 2.4)}${svcLabel(c.svc)}</i>` : "";
   const vip = rg ? `<i class="vtag vt-${rg.rarity}" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>` : "";
   
   return `${vip}${svc}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
@@ -526,19 +527,33 @@ export function doServe() {
   if (res.craftUp) toast(`Tay nghề ${"★".repeat(res.craftUp.star)} · ${res.c.r.n}! +${res.craftUp.reward} xu`);
   if (res.tierBonus) toast(`Bánh ${tiersOf(res.c.r)} tầng tự tay làm! +${res.tierBonus} xu thưởng`);
   const sh = SH;
-  if (res.c.svc) {
-    pause();
-    setTimeout(() => {
-      if (SH !== sh) return;
-      runService(res.c, res.price, (fee, ok, complaint) => {
-        if (SH !== sh) return;
-        applyService(sh, fee, ok); refreshCoins(); resume();
-        if (ok) { sfx("coin"); toast(`${svcLabel(res.c.svc!)} xuất sắc! +${fmtN(fee)} xu thưởng`); }
-        else { sfx("wrong"); toast(`${res.c.who} phàn nàn: "${complaint}" · mất thưởng`); }
-      });
-    }, 700);
-  }
+  if (res.c.svc) offerService(res.c, res.price);
   setTimeout(() => { if (SH !== sh) return; resetBuild(); if (mineIdx(sh) >= 0) sheetOpen = true; renderBuild(); }, 900);
+}
+
+/* khách xin gói quà / giao hàng: tạm dừng ca, người chơi tự làm minigame (bánh do bé làm mà bé chưa thạo kỹ năng thì bạn làm phần gói/giao) */
+const svcQueue: { sh: Shift; c: Customer; price: number }[] = []; let svcBusy = false;
+function offerService(c: Customer, price: number) {
+  if (!SH) return;
+  svcQueue.push({ sh: SH, c, price }); pause(); nextService();
+}
+function nextService() {
+  if (svcBusy) return;
+  const q = svcQueue.shift(); if (!q) return;
+  if (SH !== q.sh) return nextService();
+  svcBusy = true;
+  setTimeout(() => {
+    if (SH !== q.sh) { svcBusy = false; return nextService(); }
+    runService(q.c, q.price, (fee, ok, complaint) => {
+      svcBusy = false;
+      if (SH === q.sh) {
+        applyService(q.sh, fee, ok); refreshCoins();
+        if (ok) { sfx("coin"); toast(`${svcLabel(q.c.svc!)} xuất sắc! +${fmtN(fee)} xu thưởng`); }
+        else { sfx("wrong"); toast(`${q.c.who} phàn nàn: "${complaint}" · mất thưởng`); }
+        if (svcQueue.length) nextService(); else resume();
+      }
+    });
+  }, 700);
 }
 
 /* hiệu ứng giao bánh (chủ tiệm hoặc bé thợ bánh): bong bóng thành xu, khách thả tim, bắn tim */
