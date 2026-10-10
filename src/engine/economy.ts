@@ -153,6 +153,12 @@ export const mealFor = (id: StaffId, have: (f: FoodId) => number = foodOf): Food
 };
 /* ăn món kém hơn bậc của mình thì làm chậm thêm 25% mỗi bậc */
 export const mealSlow = (id: StaffId, meal: FoodId) => 1 + 0.25 * Math.max(0, tierIdx(id) - FOODS.findIndex(f => f.id === meal));
+/** bữa ca tới của một bé so với món đã chọn: để giao diện nói rõ bé sẽ ăn gì, chậm bao nhiêu, đắt hơn bao nhiêu */
+export function mealOutlook(id: StaffId) {
+  const want = mealOf(id), actual = plannedMeal(id);
+  const wi = FOODS.findIndex(f => f.id === want), ai = actual ? FOODS.findIndex(f => f.id === actual) : -1;
+  return { want, actual, kind: !actual ? "none" as const : ai === wi ? "same" as const : ai < wi ? "lower" as const : "higher" as const, slow: actual ? mealSlow(id, actual) : 1, extra: actual ? foodDef(actual).cost - foodDef(want).cost : 0 };
+}
 /** bữa ăn dự kiến của các bé đi làm: kho dùng chung nên mỗi bé lấy phần của mình trước khi tới bé sau (giống lúc mở ca) */
 export function crewPlan() {
   const left = Object.fromEntries(FOODS.map(f => [f.id, foodOf(f.id)])) as Record<FoodId, number>;

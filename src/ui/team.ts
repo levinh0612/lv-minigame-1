@@ -7,7 +7,7 @@ import { sfx } from "../audio/sound";
 import type { PetId } from "../content/couple";
 import { BAKE_TIME, FOODS, MAX_STAFF_LV, PETS } from "../content/game";
 import { GACHA_ITEMS, KIND_NAME, RARITIES, RARITY, asManager, fxLine, gachaItem, mgrFx, type GachaItem } from "../content/gacha";
-import { buyFood, foodDef, foodOf, hire, hireFee, isMascotStaff, mascotBonus, mealChoices, mealOf, onDuty, plannedMeal, setMeal, staffIds, staffState, toggleDuty, train, trainCost, treat } from "../engine/economy";
+import { buyFood, foodDef, foodOf, hire, hireFee, isMascotStaff, mascotBonus, mealChoices, mealOf, mealOutlook, mealSlow, onDuty, setMeal, staffIds, staffState, toggleDuty, train, trainCost, treat } from "../engine/economy";
 import { clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, type StaffKind } from "../engine/gacha";
 import { SKILLS, SKILL_FEE, SKILL_NAME, SKILL_SHIFTS, canTeach, knows, progressOf, teach } from "../engine/skills";
 import { S, petName, petState, save } from "../engine/state";
@@ -111,31 +111,39 @@ export function teamHTML(pageHead: (t: string) => string) {
 
 /* ============ hộp thoại chi tiết thợ bánh ============ */
 function foodTiles(id: string) {
-  const rec = mealOf(id), fedToday = petState(id).fedDay === S.daily.day, choices = mealChoices(id).map(f => f.id);
+  const fedToday = petState(id).fedDay === S.daily.day;
   return FOODS.map(f => {
-    const can = choices.includes(f.id), n = foodOf(f.id), isRec = f.id === rec;
-    return `<div class="sd-food ${isRec ? "rec" : ""} ${can ? "" : "lock"}">${isRec ? `<em>Đề xuất</em>` : ""}${foodSVG(f.id, 34)}<b>${f.n}</b><small>còn ${n}</small>
+    const n = foodOf(f.id), need = !n && S.coins < f.cost;
+    return `<div class="sd-food"><span class="aff">+${f.aff} ♥</span>${foodSVG(f.id, 34)}<b>${f.n}</b><small>còn ${n}</small>
       <button class="pk" data-sd="buy:${f.id}:5" ${S.coins < f.cost * 5 ? "disabled" : ""}>+5 · ${fmtN(f.cost * 5)} xu</button>
-      <button class="pk give" data-sd="treat:${id}:${f.id}" ${fedToday || !can || (!n && S.coins < f.cost) ? "disabled" : ""}>${fedToday ? "Đã thưởng" : can ? "Cho ăn" : "Chưa ăn được"}</button></div>`;
+      <button class="pk give" data-sd="treat:${id}:${f.id}" ${fedToday || need ? "disabled" : ""}>${fedToday ? "Mai tặng tiếp" : n ? "Tặng" : `Mua và tặng · ${fmtN(f.cost)}`}</button></div>`;
   }).join("");
 }
+/* bữa ăn mỗi ca: món đã chọn, món bé sẽ ăn thật ở ca tới và hệ quả (chậm hơn / đắt hơn / nghỉ ca) */
+function mealHTML(id: string) {
+  const meals = mealChoices(id), want = foodDef(mealOf(id)), o = mealOutlook(id), on = onDuty(id);
+  const pick = meals.length > 1 ? `<div class="sd-pick"><div>${meals.map(f => { const sl = mealSlow(id, f.id); return `<button class="${f.id === want.id ? "on" : ""}" data-sd="meal:${id}:${f.id}">${foodSVG(f.id, 18)}<span>${f.n}<small>${fmtN(f.cost)} xu${sl > 1 ? ` · chậm +${Math.round((sl - 1) * 100)}%` : ""}</small></span></button>`; }).join("")}</div></div>` : "";
+  const a = o.actual ? foodDef(o.actual) : null;
+  const msg = o.kind === "none" ? `<p class="sd-warn">Kho hết đồ ăn nên ${on ? "bé sẽ nghỉ ca tới" : "bé sẽ không đi làm được"}. Mua thêm bên dưới.</p>`
+    : o.kind === "same" ? `<p class="sd-meal">Ca tới ăn <b>${a!.n}</b>${o.slow > 1 ? `, làm chậm +${Math.round((o.slow - 1) * 100)}% vì thấp hơn bậc` : ", tốc độ bình thường"}.</p>`
+    : o.kind === "lower" ? `<p class="sd-warn">Hết ${want.n}, ca tới bé ăn ${a!.n} nên làm chậm +${Math.round((o.slow - 1) * 100)}%.</p>`
+    : `<p class="sd-warn">Hết ${want.n} và các món kém hơn, ca tới bé phải ăn ${a!.n} (đắt hơn ${fmtN(o.extra)} xu). Nên mua thêm ${want.n}.</p>`;
+  return `<div class="sh2"><b>Bữa ăn mỗi ca (lương)</b><span class="lav">ăn lúc mở ca, trừ vào kho</span></div>${pick}${msg}
+    <div class="sd-rec"><div>${foodSVG(want.id, 40)}<span><b>${want.n}</b><small>còn ${foodOf(want.id)} phần trong kho</small></span></div><button class="pk" data-sd="buy:${want.id}:5" ${S.coins < want.cost * 5 ? "disabled" : ""}>Mua 5 · ${fmtN(want.cost * 5)} xu</button></div>`;
+}
 function staffBody(id: string) {
-  const st = staffState(id), on = onDuty(id), mas = isMascotStaff(id), tier = st.lv, meal = on ? plannedMeal(id) : null, eat = foodDef(mealOf(id));
+  const st = staffState(id), on = onDuty(id), mas = isMascotStaff(id), tier = st.lv, eat = foodDef(mealOf(id));
   const fed = petState(id).fedDay === S.daily.day, mb = mascotBonus(id), fee = hireFee(id);
   const ei = entityInfo(id)!;
   const petArt = mas ? undefined : `<button class="sd-pet" data-sd="pet:${id}" aria-label="Vuốt ve ${esc(petName(id))}">${petSVG({ ...PETS[id as PetId], mood: fed ? "love" : "happy", ledge: false }, 118)}</button>`;
   const stat = (k: string, v: string) => `<div><small>${k}</small><b>${v}</b></div>`;
-  const meals = mealChoices(id);
-  const pick = meals.length > 1 ? `<div class="sd-pick"><small>Bữa ăn mỗi ca</small><div>${meals.map(f => `<button class="${f.id === eat.id ? "on" : ""}" data-sd="meal:${id}:${f.id}">${foodSVG(f.id, 18)}${f.n}</button>`).join("")}</div></div>` : "";
   const act = !st.hired ? `<button class="b3" data-sd="hire:${id}" ${S.coins < fee ? "disabled" : ""}>${mas ? `Thuê · ${fmtN(fee)} xu` : "Nhận vào làm"}</button>` :
     `<button class="b3 ${on ? "w" : ""}" data-sd="duty:${id}">${on ? "Cho nghỉ ca này" : "Cho đi làm"}</button>${trainCost(id) ? `<button class="b3 up2" data-sd="train:${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${roman(tier + 1)} · ${fmtN(trainCost(id))} xu<small>${bake(tier)} → ${bake(tier + 1)}</small></button>` : `<div class="sd-max">Đã đạt bậc tối đa</div>`}`;
   return `<div class="sd">${entityHero(ei, { px: 104, art: petArt, extra: mas ? `<span class="eh-sub">Linh thú · thuê một lần, đứng tầng được</span>` : `<span class="eh-sub">${BREED[id as PetId]} · chạm vào bé để vuốt ve</span>` })}
     <div class="sd-stats">${stat("Tốc độ", bake(tier))}${stat("Bữa ăn", `${foodSVG(eat.id, 16)} ${eat.n}`)}${stat("Thân thiết", heartRow(petState(id).aff, 13))}${mas ? stat("Buff", `+${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip`) : stat("Bậc", `${roman(tier)} / ${roman(MAX_STAFF_LV)}`)}</div>
-    ${on && !meal ? `<p class="sd-warn">Hết đồ ăn cho bữa này, bé sẽ nghỉ ca. Mua thêm ở tủ bên dưới.</p>` : ""}
-    <div class="sd-acts">${act}</div>${st.hired ? skillsHTML(id) : ""}${pick}
-    <div class="sh2"><b>Đồ ăn đề xuất</b><span class="lav">hợp bậc ${roman(tier)}</span></div>
-    <div class="sd-rec">${(() => { const f = eat, n = foodOf(f.id); return `<div>${foodSVG(f.id, 40)}<span><b>${f.n}</b><small>${n ? `còn ${n} phần` : "đã hết, nên mua thêm"}</small></span></div><button class="pk" data-sd="buy:${f.id}:5" ${S.coins < f.cost * 5 ? "disabled" : ""}>Mua 5 · ${fmtN(f.cost * 5)} xu</button>`; })()}</div>
-    <div class="sh2"><b>Tủ đồ ăn</b><span class="lav">thưởng mỗi ngày một lần</span></div><div class="sd-food-grid">${foodTiles(id)}</div></div>`;
+    <div class="sd-acts">${act}</div>${st.hired ? skillsHTML(id) : ""}
+    ${mealHTML(id)}
+    <div class="sh2"><b>Quà thân thiết</b><span class="lav">mỗi ngày tặng 1 món · lấy từ cùng kho</span></div><div class="sd-food-grid">${foodTiles(id)}</div>`;
 }
 /* kỹ năng gói quà / giao hàng: dạy được khi chủ tiệm đạt SSS, bé đi làm vài ca là tự làm được */
 function skillsHTML(id: string) {
@@ -182,7 +190,7 @@ const refreshItem = (id: string) => { const b = document.getElementById("tdBody"
 export function staffDialogAct(act: string, el: HTMLElement) {
   const [a, x, y] = act.split(":");
   if (a === "open") { sfx("click"); return openStaffDialog(x!); }
-  if (a === "buy") { const f = foodDef(x as never); if (buyFood(f.id, +y!)) { sfx("tap"); toast(`+${y} ${f.n} · ${fmtN(f.cost * +y!)} xu`); } else toast("Không đủ xu"); return refreshStaff(); }
+  if (a === "buy") { const f = foodDef(x as never); if (buyFood(f.id, +y!)) { if (dlg && S.staff[dlg]) S.staff[dlg].prio = Date.now(); save(); sfx("tap"); toast(`+${y} ${f.n} · ${fmtN(f.cost * +y!)} xu`); } else toast("Không đủ xu"); return refreshStaff(); }
   if (a === "treat") { const id = x!, f = foodDef(y as never); if (treat(id, f.id)) { const r = el.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop"); toast(`${petName(id)} ăn ${f.n} ngon lành! +${f.aff} ♥`); } else toast("Không đủ xu để mua đồ ăn"); return refreshStaff(); }
   if (a === "meal") { setMeal(x!, y as never); sfx("click"); return refreshStaff(); }
   if (a === "duty") { toggleDuty(x!); sfx("click"); return refreshStaff(); }

@@ -108,3 +108,14 @@ describe("kỹ năng nhân viên", () => {
     expect(staffService("x", "gift", 100, 1, () => 0.99)!.ok).toBe(false);
   });
 });
+
+import { mealOutlook } from "../src/engine/economy";
+describe("bữa ăn ca tới", () => {
+  it("hết món đã chọn thì báo món thay thế; hết hết thì none", () => {
+    S.staff["y"] = { hired: true, lv: 3, onDuty: false }; S.food = { chicken: 1 };
+    expect(mealOutlook("y").kind).toBe("same");
+    S.food = { pate: 1 }; const o = mealOutlook("y"); expect(o.kind).toBe("lower"); expect(o.slow).toBeGreaterThan(1);
+    S.food = { salmon: 1 }; expect(mealOutlook("y").kind).toBe("higher");
+    S.food = {}; expect(mealOutlook("y").kind).toBe("none");
+  });
+});
