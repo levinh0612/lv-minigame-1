@@ -22,7 +22,7 @@ import { S, resetState, setPersist, type State } from "../engine/state";
 import { cakeSVG, petSVG, foodSVG, guestSVG, ingSVG } from "../ui/art";
 import { coinPill, esc, levelChip } from "../ui/dom";
 import { frameName, levelBadge, levelFrame, tierBadge } from "../ui/badges";
-import { adminPanel, claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
+import { adminPanel, claimGoals, coinModal, conflictModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
 import { setListFilter } from "../ui/components/listtools";
@@ -51,6 +51,9 @@ import { loadSprites } from "../ui/sprite";
 import { fitRooms, roomHTML } from "../ui/room";
 import { fitAllQueues } from "../ui/screens/queue-fit";
 import { ROOM_CATS } from "../content/room";
+import { mountGift } from "../ui/minigames/gift";
+import { mountShip } from "../ui/minigames/ship";
+import { RIBBONS, ADDRESSES } from "../content/minigames";
 
 setPersist(false);   // không bao giờ ghi vào tiến trình thật
 
@@ -128,6 +131,7 @@ interface Story { id: string; sec: string; title: string; desc: string; kind: Ki
 const SECTIONS: [string, string, string][] = [
   ["screens", "Màn hình", "Khung 390×844 (iPhone 14). Màn dài hơn một trang được bày nguyên chiều cao."],
   ["modals", "Hộp thoại", "Hộp thoại hiện đè lên màn hình."],
+  ["minigames", "Minigame", "Gói quà và giao hàng: chạy được thật (bấm Bắt đầu), dùng đúng component sẽ gắn vào ca. Giá bánh mẫu 100 xu."],
   ["cakes", "Bánh", "Bánh có mặt cười: 3 đế × 3 kem × 3 topping, độ ngọt, các bước ghép."],
   ["chars", "Nhân vật", "Khách nam, khách nữ và ba bé nhà mình ở mọi biểu cảm."],
   ["ui", "Nút & thành phần", "Nút, chip nguyên liệu, thẻ gọi món, thẻ thông tin."],
@@ -351,6 +355,17 @@ const STORIES: Story[] = [
       <div class="lvup">Lên Lv 5! Mở khoá: Mochi Matcha Đậu đỏ</div>
       <div class="toast" style="position:static;transform:none;align-self:center">Sai độ ngọt rồi: Chị Na gọi Ít ngọt, không phải Vừa</div></div>` },
 
+  { id: "m-conflict", sec: "modals", title: "Chọn bản lưu · mây tiến xa hơn", desc: "Hai máy cùng đổi: hai thẻ so sánh, thẻ tiến xa hơn có nhãn xanh. Chạm bản thấp hơn sẽ nhắc mất gì, bấm lần nữa mới giữ", kind: "modal",
+    html: () => { lvState(8, st => { st.coins = 420; st.earned = 5200; st.shifts = 18; }); return modalOver(homeHTML(), () => conflictModal({ xp: 40 * 11 * 11, coins: 1800, earned: 21800, shifts: 52, cloud: { at: new Date(Date.now() - 3 * 3600000).toISOString() } }, () => {})); } },
+  { id: "m-conflict2", sec: "modals", title: "Chọn bản lưu · máy này tiến xa hơn", desc: "Bản máy này có nhãn xanh; thẻ trên mây là bản cũ hơn", kind: "modal",
+    html: () => { lvState(12, st => { st.coins = 2600; st.earned = 30100; st.shifts = 70; }); return modalOver(homeHTML(), () => conflictModal({ xp: 40 * 5 * 5, coins: 300, earned: 4000, shifts: 12, cloud: { at: new Date(Date.now() - 2 * 86400000).toISOString() } }, () => {})); } },
+  /* ---------- Minigame ---------- */
+  ...([["gift", 0, "D"], ["gift", 3, "A"], ["gift", 6, "SSS"], ["ship", 0, "D"], ["ship", 3, "A"], ["ship", 6, "SSS"]] as const).map(([k, tier, nm]) => ({
+    id: `mg-${k}-${nm.toLowerCase()}`, sec: "minigames", kind: "comp" as const,
+    title: (k === "gift" ? "Gói quà" : "Giao hàng") + " · bậc " + nm,
+    desc: k === "gift" ? "3 bước: đóng hộp, chọn ruy băng, cố định hộp. Có nút bỏ qua (mất thưởng)." : "3 làn, 3 mạng, né chướng ngại. Chạm nửa trái/phải, vuốt hoặc dùng mũi tên.",
+    html: () => `<div class="sbmg" data-mg="${k}" data-tier="${tier}"></div>` })),
+
   /* ---------- Trang trí ---------- */
   { id: "c-room", sec: "decor", title: "Cảnh tiệm với đủ đồ", desc: "Tường kem, sàn gỗ, quầy matcha, rèm caro, dây đèn sao, đồng hồ mèo, monstera, thảm dâu", kind: "comp",
     html: () => { lvState(9); return `<div class="board w390" style="padding:20px 16px">${roomHTML({ wall: "cream", floor: "wood", counter: "mint", curtain: "2", lamp: "2", wallItem: "2", plant: "2", rug: "2" }, { recipes: 9, giftDot: true })}</div>`; } },
@@ -364,6 +379,17 @@ await loadSprites();
 if (new URLSearchParams(location.search).has("force")) { Object.defineProperty(document, "hidden", { get: () => false }); window.requestAnimationFrame = cb => window.setTimeout(() => cb(performance.now()), 34); }
 const q = new URLSearchParams(location.search), one = q.get("story"), root = document.getElementById("sb")!;
 applyTheme(q.get("theme") || "pink");   // ?theme=blue|green|purple|orange|slate để xem từng theme
+function hydrateMinigames() {
+  document.querySelectorAll<HTMLElement>("[data-mg]").forEach((h, i) => {
+    const tier = Number(h.dataset.tier), ribbon = RIBBONS[i % RIBBONS.length]!, addr = ADDRESSES[(i * 5) % ADDRESSES.length]!;
+    const again = () => {
+      (h as HTMLElement & { _mg?: () => void })._mg?.(); h.innerHTML = "";
+      if (h.dataset.mg === "gift") mountGift(h, { tier, price: 100, ribbon, onDone: again, onSkip: again });
+      else mountShip(h, { tier, price: 100, addr, onDone: again, onSkip: again });
+    };
+    again();
+  });
+}
 const wrap = (s: Story) => s.kind === "comp" ? s.html() : `<div class="frame ${s.long ? "long" : ""} ${s.resBg ? "res-bg" : ""}">${s.html()}${/^(home|gacha|shop)/.test(s.id) ? `<div id="gnav" style="position:absolute">${navHTML(s.id.startsWith("home") ? "home" : s.id.startsWith("gacha") ? "gacha" : "shop")}</div>` : ""}</div>`;
 
 if (q.has("list")) {
@@ -376,6 +402,7 @@ if (q.has("list")) {
   fitRooms();
   fitAllQueues();
   hydratePortraits();
+  hydrateMinigames();
   if (q.has("live")) void mountRooms();   // ?live=1: dựng cảnh 3D thật cho story có cảnh tiệm
   // báo kích thước thật cho script chụp ảnh
   void document.fonts.ready.then(() => setTimeout(() => {
@@ -392,6 +419,7 @@ if (q.has("list")) {
     </div></section>`).join("")}
   </div>`;
   fitRooms();
+  hydrateMinigames();
   document.getElementById("sbexp")!.onclick = exportBook;
 }
 _setShift(null);

@@ -23,7 +23,7 @@ import { askVisit, visitStatsDialog } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
 import { accountPanel, adminPanel, claimGoals, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
-import { flushSave, isLocked, loggedIn, pull, resolveConflict, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
+import { flushSave, isLocked, loggedIn, pull, peekCloud, resolveConflict, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
@@ -195,7 +195,7 @@ async function visitGifts() {
 }
 setInterval(() => void visitGifts(), 45000); setTimeout(() => void visitGifts(), 4000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
-addEventListener("cloud:conflict", () => { if (SH || hasModal()) return void setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); conflictModal(keep => void resolveConflict(keep)); });
+addEventListener("cloud:conflict", () => { if (SH || hasModal()) return void setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); void peekCloud().then(c => { if (hasModal()) return setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); conflictModal(c, keep => void resolveConflict(keep, c)); }); });
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", () => render());
 

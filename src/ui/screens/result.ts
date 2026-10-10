@@ -86,7 +86,7 @@ export function resultHTML(r: Result | null = result) {
     <details class="group mt-3 rounded-3xl bg-white px-3.5 shadow-[0_3px_0_var(--color-line)]">
       <summary class="flex cursor-pointer list-none items-center justify-between py-3 text-sm font-extrabold [&::-webkit-details-marker]:hidden"><span>Sổ lãi hôm nay</span>
         <span class="flex items-center gap-2"><b class="${profit >= 0 ? "text-mint-d" : "text-red"}">${profit >= 0 ? "+" : "−"}${fmtN(Math.abs(profit))}</b><span class="text-xs text-pink-d group-open:hidden">Xem chi tiết ▾</span><span class="hidden text-xs text-pink-d group-open:inline">Thu gọn ▴</span></span></summary>
-      ${ledgerRow("Thu", thu, true)}${ledgerRow("Tiền bánh", sh.coins, true, true)}${ledgerRow("Tip", sh.tips, true, true)}${ledgerRow("Thưởng tự nhớ (+50%)", sh.bonus, true, true)}${ledgerRow("Thưởng bánh nhiều tầng", sh.tierBonus, true, true)}${ledgerRow(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true, true)}
+      ${ledgerRow("Thu", thu, true)}${ledgerRow("Tiền bánh", sh.coins, true, true)}${ledgerRow("Tip", sh.tips, true, true)}${ledgerRow("Thưởng tự nhớ (+50%)", sh.bonus, true, true)}${ledgerRow("Thưởng bánh nhiều tầng", sh.tierBonus, true, true)}${ledgerRow(`Gói quà, giao hàng (${sh.svcDone})`, sh.svcFee, true, true)}${ledgerRow(`Mục tiêu ca (${done}/${sh.goals.length})`, sh.goalCoins, true, true)}
       ${ledgerRow("Chi", chi, false)}${ledgerRow("Nhập nguyên liệu", led.ingUsed + led.quick, false, true)}${ledgerRow("Lương các bé", led.wages, false, true)}
     </details>
     <div class="mt-3 grid gap-2">${extras}${note}</div>

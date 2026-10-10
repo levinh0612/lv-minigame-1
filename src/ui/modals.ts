@@ -1,4 +1,5 @@
 /* Các hộp thoại: thư, quà, cài đặt, tạm dừng, Anh ghé tiệm */
+import { ahead, lossLines, snapOf, type Snap } from "../engine/conflict";
 import { Sound, sfx, songName } from "../audio/sound";
 import { CFG, type EventKey, type PetId } from "../content/couple";
 import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
@@ -16,7 +17,7 @@ import { render } from "./app";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
 import { LEVELS, applyIncident, incidentCost, tossCoin, type Incident, type Level } from "../engine/incident";
-import { ADMIN_USER, account, changePin, isAdmin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
+import { ADMIN_USER, account, getBackup, restoreBackup, changePin, isAdmin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { currentCfg, EVENT_KEYS, PET_IDS, type GameConfig } from "../content/gameconfig";
 import { cfgRev, publishGameConfig } from "../net/gamecfg";
 import { IN_LABEL, OUT_LABEL, totalIn, totalOut } from "../engine/wallet";
@@ -161,6 +162,7 @@ export function accountPanel() {
     <label class="tg"><input id="cMorning" type="checkbox" ${S.cloud.morning ? "checked" : ""}>7:00 · chào buổi sáng, thư mới</label>
     <label class="tg"><input id="cNight" type="checkbox" ${S.cloud.night ? "checked" : ""}>23:00 · nhắc đi ngủ</label>
     ${pushNote}
+    ${(() => { const b = getBackup(); return b ? `<h3 class="csec">Bản lưu đã bỏ</h3><p class="sub small">Còn giữ bản ${b.from === "mine" ? "của máy này" : "trên mây"} (lúc bạn chọn giữa hai bản). Khôi phục sẽ thay bản hiện tại.</p><button class="b3 w cloudbtn" type="button" id="cRestore">Khôi phục bản đã bỏ</button>` : ""; })()}
     <button class="b3 w cloudbtn" type="button" id="cPush">${S.cloud.push ? "Cập nhật giờ nhắc" : "🔔 Bật thông báo"}</button>
     ${S.cloud.push ? `<button type="button" class="alink" id="cOff">Tắt thông báo</button>` : ""}
     <div class="mbtns"><button class="b3" data-close>Xong</button><button class="b3 w" type="button" id="acOut" style="color:var(--red)">Đăng xuất</button></div>`, render);
@@ -177,6 +179,11 @@ export function accountPanel() {
     const err = await enablePush().catch((e: Error) => e.message);
     if (err) return toast(err);
     closeModal(); toast(`Đã bật nhắc ${[S.cloud.morning ? "7:00" : "", S.cloud.night ? "23:00" : ""].filter(Boolean).join(" và ")} ✓`);
+  });
+  let rarm = false;
+  $("#cRestore")?.addEventListener("click", e => {
+    if (!rarm) { rarm = true; (e.target as HTMLElement).textContent = "Chạm lần nữa để thay bản hiện tại"; return; }
+    if (restoreBackup()) { closeModal(); toast("Đã khôi phục bản đã bỏ ✓"); render(); } else toast("Không còn bản để khôi phục");
   });
   $("#cOff")?.addEventListener("click", async () => { await disablePush(); closeModal(); toast("Đã tắt thông báo"); });
   let arm = false;
@@ -271,11 +278,30 @@ export function incidentModal(i: Incident, cost: number, onClose?: () => void, l
     <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose, !!level);
 }
 
-/** Hai máy cùng lưu thay đổi: hỏi giữ bản nào (cấm đóng bằng cách bấm ra ngoài) */
-export function conflictModal(pick: (keepMine: boolean) => void) {
-  modal(`<h2>Tiệm đã lưu ở máy khác</h2><p class="sub">Máy này cũng có thay đổi chưa lưu. Chọn bản muốn giữ, bản còn lại sẽ bị thay thế.</p>
-    <div class="mbtns"><button class="b3" id="cfMine">Giữ bản máy này</button><button class="b3" id="cfCloud">Dùng bản trên mây</button></div>`, undefined, true);
-  for (const [id, keep] of [["#cfMine", true], ["#cfCloud", false]] as const) $(id)?.addEventListener("click", () => { closeModal(); pick(keep); });
+/** Hai máy cùng lưu thay đổi: so hai bản cạnh nhau, gợi ý bản tiến xa hơn, cảnh báo nếu chọn bản thấp hơn (cấm đóng bằng cách bấm ra ngoài) */
+export function conflictModal(cloud: unknown | null, pick: (keepMine: boolean) => void, mine: unknown = S) {
+  const m = snapOf(mine as Record<string, unknown>)!, c = snapOf(cloud as Record<string, unknown> | null);
+  const lead = c ? ahead(m, c) : "same";
+  const when = (a: string) => { const t = +new Date(a); if (!a || !t) return "chưa rõ"; const x = Math.round((Date.now() - t) / 60000); return x < 1 ? "vừa xong" : x < 60 ? `${x} phút trước` : x < 1440 ? `${Math.round(x / 60)} giờ trước` : `${Math.round(x / 1440)} ngày trước`; };
+  const card = (id: string, title: string, sn: Snap | null, win: boolean) => `<button type="button" class="cfcard ${win ? "lead" : ""}" id="${id}">
+      <b>${title}</b>${win ? `<em>Tiến xa hơn</em>` : ""}
+      ${sn ? `<dl><dt>Cấp</dt><dd>Lv ${sn.lv}</dd><dt>Xu</dt><dd>${fmtN(sn.coins)}</dd><dt>Đã kiếm</dt><dd>${fmtN(sn.earned)}</dd><dt>Số ca</dt><dd>${sn.shifts}</dd><dt>Lưu</dt><dd>${id === "cfMine" ? "máy này" : when(sn.at)}</dd></dl>` : `<p>Chưa tải được, kiểm tra mạng</p>`}
+      <span>Giữ bản này</span></button>`;
+  modal(`<h2>Tiệm đã lưu ở máy khác</h2><p class="sub">Máy này cũng có thay đổi chưa lưu. Chọn bản muốn giữ. Bản còn lại sẽ bị thay thế, nhưng được cất 7 ngày, khôi phục ở Tài khoản.</p>
+    <div class="cfcards">${card("cfMine", "Máy này", m, lead === "mine")}${card("cfCloud", "Trên mây", c, lead === "cloud")}</div>
+    ${lead === "same" ? "" : `<p class="cfnote" id="cfNote"></p>`}`, undefined, true);
+  const note = $("#cfNote"), losses = (keep: Snap, lose: Snap) => lossLines(keep, lose).join(", ");
+  for (const [id, keep] of [["#cfMine", true], ["#cfCloud", false]] as const) {
+    let warned = false;
+    $(id)?.addEventListener("click", () => {
+      const low = c && lead !== "same" && lead !== (keep ? "mine" : "cloud");
+      if (low && !warned) {            // chọn bản thấp hơn: nhắc một lần, bấm lại mới đồng ý
+        warned = true; $(id)?.classList.add("warn"); const l = keep ? losses(m, c!) : losses(c!, m);
+        if (note) note.innerHTML = `Bản này thấp hơn${l ? `, sẽ mất ${esc(l)}` : ""}. Bấm lần nữa nếu vẫn muốn giữ.`; return;
+      }
+      closeModal(); pick(keep);
+    });
+  }
 }
 
 /** Đồng xu may rủi: người chơi tự bấm. 70% bình an, 30% gặp sự cố (trừ khoản cố định theo cấp tiệm, tối đa 25% số xu có). */

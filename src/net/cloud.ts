@@ -142,13 +142,37 @@ let pulling = false, asking = false;
 /** hai máy cùng có thay đổi: báo giao diện hỏi người chơi (chỉ một lần cho tới khi có lựa chọn) */
 function askConflict() { if (asking) return; asking = true; dispatchEvent(new Event("cloud:conflict")); }
 /** người chơi chọn: giữ bản máy này (ghi đè bản trên mây) hoặc dùng bản trên mây (bỏ thay đổi chưa lưu ở máy này) */
-export async function resolveConflict(keepMine: boolean) {
+export async function resolveConflict(keepMine: boolean, cloudState?: unknown) {
   asking = false;
   if (!A?.token) return;
+  backup(keepMine ? "cloud" : "mine", keepMine ? cloudState : S);       // bản bị bỏ vẫn cứu lại được ở Tài khoản
   if (!keepMine) { A.dirty = false; store(); await pull(true); return; }
   try { const r = await api<{ rev: number }>("sync?since=999999999"); muted = true; S.cloud.rev = r.rev; save(); muted = false; }
   catch { muted = false; return; }
   await cloudSave();
+}
+/** lấy bản trên mây để so (không đổi gì ở máy này); lỗi mạng thì null */
+export async function peekCloud(): Promise<unknown | null> {
+  if (!A?.token || !navigator.onLine) return null;
+  try { return (await api<{ state?: unknown }>("sync")).state ?? null; } catch { return null; }
+}
+/* Bản sao lưu của bản bị bỏ khi chọn giữa máy này và trên mây (giữ 7 ngày, chỉ một bản gần nhất) */
+const BACKUP = "tiem-backup", BACKUP_MS = 7 * 86400000;
+export interface Backup { at: number; from: "mine" | "cloud"; state: unknown }
+function backup(from: "mine" | "cloud", state: unknown) {
+  if (!state) return;
+  try { localStorage.setItem(BACKUP, JSON.stringify({ at: Date.now(), from, state } satisfies Backup)); } catch { /* đầy bộ nhớ: bỏ qua */ }
+}
+export function getBackup(): Backup | null {
+  try { const b = JSON.parse(localStorage.getItem(BACKUP) || "null") as Backup | null; return b && Date.now() - b.at < BACKUP_MS ? b : null; } catch { return null; }
+}
+/** khôi phục bản đã bỏ làm bản hiện tại (rồi tự gửi lên mây như một thay đổi mới); bản đang dùng được sao lưu lại để đổi ngược */
+export function restoreBackup(): boolean {
+  const b = getBackup(); if (!b) return false;
+  const cur = S, s = loadState(JSON.stringify(b.state)); s.cloud.rev = cur.cloud.rev;
+  backup(b.from === "mine" ? "cloud" : "mine", cur);
+  replaceState(s);
+  return true;
 }
 /* đang trong ca thì không thay tiến trình (main.ts cho biết) */
 let inShift = () => false;

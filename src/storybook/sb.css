@@ -36,3 +36,5 @@ body.one .frame{box-shadow:none;border-radius:0}
 /* trang storybook luôn cuộn được, kể cả khi game khoá cuộn */
 html:has(body.sb){height:auto;overflow:auto!important;position:static!important}
 body.sb{height:auto;overflow:visible!important;overscroll-behavior:auto}
+
+.sbmg{width:390px;padding:16px;border-radius:28px;background:var(--bg);box-shadow:0 4px 0 var(--sh)}

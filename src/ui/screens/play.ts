@@ -14,7 +14,7 @@ import { lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
   beginShift, buildPicked, buildTotal, finishShift, freshBuild, goalDone, goalProgress, goalText, isComplete, isOver, matches, mineIdx, needAt, needOf, partAt, partsOfBuild, peek, release, remaining, serve, setPartAt, take, tick,
-  COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift
+  COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift, applyService
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
@@ -27,6 +27,7 @@ import { navigate } from "../router";
 import { applyQueue, queueHTML } from "./queue-fit";
 import { doCatchMouse, doMousePay as payMouseFor, mouseChip, moveRat, openMouseDlg as openMouseDlgFor, removeRat, renderMouse } from "./play-mouse";
 import { setResult } from "./result";
+import { runService, svcLabel } from "../minigames/session";
 
 export let SH: Shift | null = null;
 let raf = 0, lastT = 0, leftShown = -1, drop: PartKey | null = null, stageDrop: PartKey | null = null, stageFree = 0, lastComboLost = 0;
@@ -140,9 +141,10 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
     
   const rg = c.reg ? gachaItem(c.reg) : null, perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");
+  const svc = c.svc && !c.by ? `<i class="stag" title="Khách xin ${svcLabel(c.svc).toLowerCase()}">${c.svc === "ship" ? ic.right(11, 2.8) : ic.gift(11, 2.4)}${svcLabel(c.svc)}</i>` : "";
   const vip = rg ? `<i class="vtag vt-${rg.rarity}" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>` : "";
   
-  return `${vip}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
+  return `${vip}${svc}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
     <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${whoTag}`;
 }
@@ -519,6 +521,18 @@ export function doServe() {
   if (res.craftUp) toast(`Tay nghề ${"★".repeat(res.craftUp.star)} · ${res.c.r.n}! +${res.craftUp.reward} xu`);
   if (res.tierBonus) toast(`Bánh ${tiersOf(res.c.r)} tầng tự tay làm! +${res.tierBonus} xu thưởng`);
   const sh = SH;
+  if (res.c.svc) {
+    pause();
+    setTimeout(() => {
+      if (SH !== sh) return;
+      runService(res.c, res.price, (fee, ok, complaint) => {
+        if (SH !== sh) return;
+        applyService(sh, fee, ok); refreshCoins(); resume();
+        if (ok) { sfx("coin"); toast(`${svcLabel(res.c.svc!)} xuất sắc! +${fmtN(fee)} xu thưởng`); }
+        else { sfx("wrong"); toast(`${res.c.who} phàn nàn: "${complaint}" · mất thưởng`); }
+      });
+    }, 700);
+  }
   setTimeout(() => { if (SH !== sh) return; resetBuild(); if (mineIdx(sh) >= 0) sheetOpen = true; renderBuild(); }, 900);
 }
 

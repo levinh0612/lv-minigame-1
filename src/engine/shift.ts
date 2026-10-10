@@ -15,6 +15,8 @@ import { featured, fx, lvl, newestRecipe, pickMenu, unlocked } from "./progress"
 import { S, save } from "./state";
 import { earn, note, spend } from "./wallet";
 import { nameList, pick, rnd } from "./util";
+import { pickAddress, pickRibbon, pickService, serviceQuota } from "./minigame";
+import type { Address, Ribbon } from "../content/minigames";
 
 export interface Customer {
   who: string; look: Look; r: Recipe; sweet: number; max: number; pat: number;
@@ -22,6 +24,7 @@ export interface Customer {
   by?: StaffId;          // thú cưng đang làm đơn này (người chơi không chọn được)
   reg?: string;        // khách quen từ gacha (id vật phẩm)
   perkPrice?: number; perkTip?: number;   // lợi ích riêng của khách quen: giá bánh và tip cộng thêm
+  svc?: "gift" | "ship" | "both"; ribbon?: Ribbon; addr?: Address;   // khách muốn gói quà / giao tận nhà (minigame)
   seatLv?: number;     // cấp bàn khách đang ngồi (1..3)
 }
 /* một bé thợ bánh trong ca: đang làm cho ghế nào, được bao nhiêu */
@@ -34,6 +37,7 @@ export interface Shift {
   ups: { n: string; star: number }[]; record: boolean;   // món lên sao tay nghề trong ca; lãi ca này phá kỷ lục
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
+  svcPlan: number[]; svcFee: number; svcDone: number; svcFail: number;   // svcPlan: thứ tự khách xin gói/giao; svcFee: xu thưởng từ minigame
   bonus: number; tierBonus: number; lack: Partial<Record<StaffId, string>>;
   ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: StaffId[]; meals: Partial<Record<StaffId, FoodId>>;
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
@@ -83,11 +87,19 @@ export function createShift(): Shift {
   const sh: Shift = {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
-    boyDone: !!S.daily.boy, lv0: L, xp0: S.xp, wk0: { ...S.prog.weekly.prog }, ups: [], record: false, mine: -1, peek: false, bonus: 0, tierBonus: 0, lack: {},
+    boyDone: !!S.daily.boy, lv0: L, xp0: S.xp, wk0: { ...S.prog.weekly.prog }, ups: [], record: false, mine: -1, peek: false, svcPlan: [], svcFee: 0, svcDone: 0, svcFail: 0, bonus: 0, tierBonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, ticketCapped: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
   };
   sh.mousePlan = planMouse(sh.total);
+  sh.svcPlan = planService(sh.total);
   return sh;
+}
+
+/* chọn ngẫu nhiên thứ tự các khách xin gói quà / giao hàng: 25% số khách, ít nhất 1, nhiều nhất 1/3 */
+export function planService(total: number): number[] {
+  const idx = Array.from({ length: Math.max(0, total) }, (_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j]!, idx[i]!]; }
+  return idx.slice(0, serviceQuota(total));
 }
 
 function makeGuest(): { who: string; look: Look } {
@@ -130,6 +142,7 @@ export function tick(sh: Shift, dt: number): TickOut {
   const free = sh.seats.findIndex(s => !s);
   if (sh.spawned < sh.total && sh.t >= sh.next && free >= 0) {
     const c = makeCustomer(sh), lv = sh.seatLv[free] ?? 1; c.seatLv = lv; c.max *= comfortPat(lv); c.pat = c.max;     // bàn cao cấp: khách kiên nhẫn hơn
+    if (!c.him && sh.svcPlan.includes(sh.spawned)) { c.svc = pickService(Math.random); if (c.svc !== "ship") c.ribbon = pickRibbon(Math.random); if (c.svc !== "gift") c.addr = pickAddress(Math.random); }
     sh.seats[free] = c; sh.spawned++; out.spawned = free;
     sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv] * (sh.t < sh.rushUntil ? 0.55 : 1);
   }
@@ -333,7 +346,7 @@ export function finishShift(sh: Shift) {
   return led;
 }
 export const ledger = (sh: Shift) => {
-  const revenue = sh.coins + sh.tips + sh.bonus + sh.tierBonus + sh.goalCoins + sh.comboPaid;
+  const revenue = sh.coins + sh.tips + sh.bonus + sh.tierBonus + sh.svcFee + sh.goalCoins + sh.comboPaid;
   return { revenue, ingUsed: sh.ingUsed, quick: sh.quickCost, wages: sh.wages, profit: revenue - sh.ingUsed - sh.quickCost - sh.wages };
 };
 
@@ -352,3 +365,10 @@ export const shiftGoals = (total = expectedCustomers()): ShiftGoal[] => [
 export const goalText = (g: ShiftGoal) => g.id === "serve" ? `Phục vụ ${g.n} khách` : g.id === "memo" ? `Tự nhớ ${g.n} công thức` : "Không để khách nào giận";
 export const goalProgress = (sh: Shift, g: ShiftGoal) => g.id === "serve" ? sh.served : g.id === "memo" ? sh.memo : sh.left;
 export const goalDone = (sh: Shift, g: ShiftGoal) => g.id === "calm" ? sh.left === 0 && sh.served > 0 : goalProgress(sh, g) >= g.n;
+
+/* Kết quả minigame gói quà / giao hàng: cộng xu thưởng, hoặc khách phàn nàn (mất thưởng, tính khách giận) */
+export function applyService(sh: Shift, fee: number, ok: boolean) {
+  if (ok && fee > 0) { earn("svc", fee); sh.svcFee += fee; sh.svcDone++; }
+  else { sh.svcFail++; S.daily.angry++; breakCombo(sh); }
+  save();
+}

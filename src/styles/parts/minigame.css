@@ -1,0 +1,69 @@
+/* Minigame gói quà và giao hàng (ui/minigames/). Tên class bắt đầu bằng mg- */
+.mg-gift,.mg-ship{display:flex;flex-direction:column;gap:10px;padding:2px 2px 4px;font-family:var(--body);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.mg-steps{display:flex;gap:6px;justify-content:center}
+.mg-steps span{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#fff;font-weight:800;font-size:11.5px;color:var(--soft);box-shadow:0 2px 0 var(--sh)}
+.mg-steps em{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--pink-l,#FFE3EC);font-style:normal;font-size:10.5px}
+.mg-steps .on{background:var(--pink-d);color:#fff}.mg-steps .on em{background:#fff;color:var(--pink-d)}
+.mg-steps .ok{background:#5DBE95;color:#fff}.mg-steps .ok em{background:#fff;color:#3E9A74}
+.mg-stage{display:grid;place-items:center;height:150px;border-radius:20px;background:linear-gradient(#FFF6EA,#FFE9F0);box-shadow:inset 0 -6px 0 rgba(0,0,0,.04)}
+.mg-box{position:relative;transition:transform .2s}
+.mg-box[data-fx=miss]{animation:mg-shake .4s}.mg-box[data-fx=perfect],.mg-box[data-fx=good]{animation:mg-hop .4s}
+.mg-box.pop{animation:mg-pop .6s}.mg-box.sad{animation:mg-shake .6s;filter:saturate(.5)}
+.mg-fx{position:absolute;left:50%;top:-6px;transform:translateX(-50%);font-weight:900;font-size:17px;padding:2px 10px;border-radius:999px;background:#fff;box-shadow:0 2px 0 var(--sh);animation:mg-up .6s forwards;white-space:nowrap}
+.mg-fx.perfect{color:#E3A100}.mg-fx.good{color:#3E9A74}.mg-fx.miss{color:#E0475C}
+.mg-hint{margin:0;text-align:center;font-weight:700;font-size:13px;color:var(--soft)}
+.mg-wish{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:13px;color:var(--soft)}
+.mg-wish b{padding:3px 12px;border-radius:999px;color:var(--ink);box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.mg-lv{text-align:center;font-weight:800;font-size:12.5px;color:var(--soft)}.mg-lv b{color:var(--pink-d)}
+.mg-bar{position:relative;height:46px;border-radius:14px;background:#fff;box-shadow:0 2px 0 var(--sh);padding:7px}
+.mg-cells{display:flex;gap:3px;height:100%}
+.mg-cells i{flex:1;border-radius:5px;background:#EFE6EB}.mg-cells i.zone{background:#7FD6A8;box-shadow:0 0 0 2px #fff inset}
+.mg-ptr{position:absolute;top:-7px;bottom:-7px;width:6px;margin-left:-3px;border-radius:4px;background:var(--ink);box-shadow:0 0 0 2px #fff}
+.mg-ptr::before{content:"";position:absolute;left:50%;top:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.mg-go{height:48px;border:0;border-radius:999px;background:var(--pink-d);color:#fff;font:900 16px var(--body);box-shadow:0 4px 0 rgba(0,0,0,.18);cursor:pointer}
+.mg-go:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.mg-ribs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.mg-rib{display:flex;flex-direction:column;align-items:center;gap:2px;width:84px;padding:8px 4px 6px;border:2.5px solid transparent;border-radius:16px;background:#fff;box-shadow:0 2px 0 var(--sh);font:800 12px var(--body);color:var(--ink);cursor:pointer}
+.mg-rib.right{border-color:#5DBE95;background:#EAFBF2}.mg-rib.wrong{border-color:#E0475C;background:#FFEDEF}
+.mg-time{height:8px;border-radius:99px;background:#EFE6EB;overflow:hidden}.mg-time i{display:block;height:100%;background:var(--pink-d);transform-origin:left}
+.mg-foot{display:flex;align-items:center;justify-content:center;gap:10px}
+.mg-skip{border:0;background:none;padding:8px 12px;font:800 12.5px var(--body);color:var(--soft);text-decoration:underline;cursor:pointer}
+.mg-res{align-items:center;text-align:center}.mg-res .mg-stage{width:100%}.mg-res h3{margin:0;font:900 20px var(--body)}
+.mg-res.ok h3{color:#3E9A74}.mg-res.bad h3{color:#E0475C}.mg-res .mg-go{width:100%}
+.mg-fee{margin:0;font-weight:800;font-size:14px}.mg-fee b{color:#E3A100;font-size:18px}
+.mg-hits{display:flex;gap:6px}.mg-hits span{padding:3px 10px;border-radius:999px;font-weight:800;font-size:12px;background:#fff;box-shadow:0 2px 0 var(--sh)}
+.mg-hits .perfect{color:#E3A100}.mg-hits .good{color:#3E9A74}.mg-hits .miss{color:#E0475C}
+/* giao hàng */
+.mg-addr{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px;border-radius:16px;background:#fff;box-shadow:0 2px 0 var(--sh)}
+.mg-addr span{font-weight:800;font-size:11.5px;color:var(--soft)}.mg-addr b{font:900 17px var(--body)}.mg-addr small{font-weight:700;font-size:11.5px;color:var(--soft)}
+.mg-road{position:relative;height:340px;border-radius:20px;overflow:hidden;background:#C9BDC3;box-shadow:inset 0 0 0 3px var(--ink)}
+.mg-lanes{position:absolute;inset:0;background:
+  linear-gradient(90deg,transparent calc(33.33% - 2px),#fff calc(33.33% - 2px),#fff calc(33.33% + 2px),transparent calc(33.33% + 2px),transparent calc(66.66% - 2px),#fff calc(66.66% - 2px),#fff calc(66.66% + 2px),transparent calc(66.66% + 2px));
+  -webkit-mask:repeating-linear-gradient(#000 0 32px,transparent 32px 64px);mask:repeating-linear-gradient(#000 0 32px,transparent 32px 64px);-webkit-mask-size:100% 64px;mask-size:100% 64px}
+.mg-edge{position:absolute;top:0;bottom:0;width:10px;background:#A8F0C8}.mg-edge.l{left:0}.mg-edge.r{right:0}
+.mg-house{position:absolute;left:50%;top:4px;transform:translateX(-50%);z-index:1;opacity:.95}
+.mg-car{position:absolute;top:82%;width:104px;margin:-70px 0 0 -52px;transition:left .12s;z-index:3}
+.mg-car.hurt{animation:mg-shake .45s}
+.mg-row{position:absolute;left:0;right:0;top:0;height:0;z-index:2}.mg-row span{position:absolute;top:0;margin-left:-29px}
+.mg-row.hit{opacity:.35}
+.mg-ready{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 24px;background:rgba(255,255,255,.82);text-align:center}
+.mg-ready p{margin:0;font-weight:800;font-size:14px}.mg-ready .mg-go{width:100%}
+.mg-hud{display:flex;align-items:center;gap:12px}.mg-hearts{display:flex;gap:3px}.mg-hearts i{display:flex}.mg-hearts i.off{opacity:.25;filter:grayscale(1)}
+.mg-prog{flex:1;height:10px;border-radius:99px;background:#EFE6EB;overflow:hidden}.mg-prog i{display:block;height:100%;background:#5DBE95;transform-origin:left;transform:scaleX(0)}
+.mg-arrow{display:grid;place-items:center;width:52px;height:44px;border:0;border-radius:14px;background:#fff;box-shadow:0 3px 0 var(--sh);cursor:pointer}
+.mg-ship .mg-foot{justify-content:space-between}
+@keyframes mg-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes mg-hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-12px) scale(1.04)}}
+@keyframes mg-pop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes mg-up{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-26px)}}
+
+/* hộp thoại chọn bản lưu (conflictModal) */
+.cfcards{display:flex;gap:10px}
+.cfcard{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px 10px;border:2.5px solid transparent;border-radius:18px;background:#fff;box-shadow:0 3px 0 var(--sh);font-family:var(--body);color:var(--ink);text-align:left;cursor:pointer}
+.cfcard.lead{border-color:#5DBE95;background:#F2FCF7}.cfcard.warn{border-color:#E0475C;background:#FFEDEF}
+.cfcard>b{font:900 15px var(--body)}.cfcard>em{align-self:flex-start;padding:2px 8px;border-radius:999px;background:#5DBE95;color:#fff;font:800 11px var(--body);font-style:normal}
+.cfcard dl{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;margin:0;font-size:12.5px}.cfcard dt{color:var(--soft);font-weight:700}.cfcard dd{margin:0;font-weight:900;text-align:right}
+.cfcard>span{margin-top:2px;padding:8px;border-radius:999px;background:var(--pink-d);color:#fff;text-align:center;font:900 13px var(--body)}
+.cfnote{margin:8px 0 0;min-height:18px;text-align:center;font:800 12.5px var(--body);color:#E0475C}
+/* nhãn "khách xin gói quà / giao hàng" trên khách trong ca */
+.slot .stag{position:absolute;top:-9px;right:2px;z-index:4;display:inline-flex;align-items:center;gap:2px;padding:1px 7px 1px 4px;border-radius:99px;font:900 10.5px/16px var(--body);font-style:normal;color:#fff;background:var(--pink-d);box-shadow:0 2px 0 rgba(0,0,0,.15);white-space:nowrap}

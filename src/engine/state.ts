@@ -31,6 +31,7 @@ export interface State {
   food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean;
   pins?: string[];                // món ruột ghim ở màn Chuẩn bị (tối đa MAX_PINS): khách gọi các món này nhiều hơn để dễ tự nhớ công thức
   gacha: GachaState;
+  mg?: { gift: number; ship: number };   // điểm kinh nghiệm minigame gói quà / giao hàng (hạng D → SSS)
   mouse?: { king: number; last: number };   // king: số lần diệt chuột kịp trong 10 giây (hạng Vua diệt chuột); last: ca gần nhất có chuột
   venue: { tbl: number[]; floors: number; wide: number; tables?: number };   // cấp từng bàn ([] = chưa đặt: người chơi cũ được tặng theo độ nổi tiếng), số lầu, số lần mở rộng ngang; tables = số ghế của bản 2.52
   room: Room; owned: string[];    // đồ trang trí đang dùng / đã mua ("nhóm:kiểu")
