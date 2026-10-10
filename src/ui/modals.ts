@@ -15,7 +15,7 @@ import { $, closeModal, confirmSpend, dropModal, esc, floatHearts, modal, toast 
 import { render } from "./app";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
-import { LEVELS, applyIncident, tossCoin, type Incident, type Level } from "../engine/incident";
+import { LEVELS, applyIncident, incidentCost, tossCoin, type Incident, type Level } from "../engine/incident";
 import { ADMIN_USER, account, changePin, isAdmin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { currentCfg, EVENT_KEYS, PET_IDS, type GameConfig } from "../content/gameconfig";
 import { cfgRev, publishGameConfig } from "../net/gamecfg";
@@ -266,16 +266,23 @@ export function incidentArt(i: Incident, px = 84) {
 }
 export function incidentModal(i: Incident, cost: number, onClose?: () => void, level?: Level) {
   modal(`${incidentArt(i)}<h2>${esc(i.title)}</h2><p class="sub">${esc(i.text)}</p>
-    ${level ? `<div class="inclv ${level}">Mức ${esc(LEVELS[level].name.toLowerCase())} · −${Math.round(LEVELS[level].pct * 100)}% số xu</div>` : ""}
+    ${level ? `<div class="inclv ${level}">Mức ${esc(LEVELS[level].name.toLowerCase())} · khoản trừ cố định theo cấp tiệm</div>` : ""}
     <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
     <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose, !!level);
 }
 
-/** Đồng xu may rủi: người chơi tự bấm. 70% bình an, 30% gặp sự cố (trừ 3%, 6% hoặc 8% số xu đang có). */
+/** Hai máy cùng lưu thay đổi: hỏi giữ bản nào (cấm đóng bằng cách bấm ra ngoài) */
+export function conflictModal(pick: (keepMine: boolean) => void) {
+  modal(`<h2>Tiệm đã lưu ở máy khác</h2><p class="sub">Máy này cũng có thay đổi chưa lưu. Chọn bản muốn giữ, bản còn lại sẽ bị thay thế.</p>
+    <div class="mbtns"><button class="b3" id="cfMine">Giữ bản máy này</button><button class="b3" id="cfCloud">Dùng bản trên mây</button></div>`, undefined, true);
+  for (const [id, keep] of [["#cfMine", true], ["#cfCloud", false]] as const) $(id)?.addEventListener("click", () => { closeModal(); pick(keep); });
+}
+
+/** Đồng xu may rủi: người chơi tự bấm. 70% bình an, 30% gặp sự cố (trừ khoản cố định theo cấp tiệm, tối đa 25% số xu có). */
 export function coinModal(onClose?: () => void) {
   modal(`<div class="coinwrap"><button type="button" class="tosscoin" id="coinBtn" aria-label="Tung đồng xu"><span class="cf cfa"><i>xu</i></span></button></div>
     <h2>Tung đồng xu!</h2><p class="sub">Bấm vào đồng xu. Có 30% gặp sự cố bị trừ xu, 70% bình an.</p>
-    <div class="coinodds"><span>Thấp −3%</span><span>Trung bình −6%</span><span>Cao −8%</span></div>`, onClose, true);
+    <div class="coinodds">${(["low", "mid", "high"] as const).map(l => `<span>${LEVELS[l].name} −${fmtN(incidentCost(S.coins, l))} xu</span>`).join("")}</div>`, onClose, true);
   const btn = $<HTMLButtonElement>("#coinBtn"); if (!btn) return;
   btn.addEventListener("click", () => {
     btn.disabled = true; btn.classList.add("flip"); sfx("tap");

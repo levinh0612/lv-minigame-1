@@ -29,6 +29,7 @@ export interface State {
   stock: Record<StockKey, number[]>; suppliers: string[]; custom: CustomCake[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
   staff: Record<string, StaffState>; tut: boolean;   // khoá: PetId của 3 bé thợ bánh hoặc id linh thú Gacha đã thuê
   food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean;
+  pins?: string[];                // món ruột ghim ở màn Chuẩn bị (tối đa MAX_PINS): khách gọi các món này nhiều hơn để dễ tự nhớ công thức
   gacha: GachaState;
   mouse?: { king: number; last: number };   // king: số lần diệt chuột kịp trong 10 giây (hạng Vua diệt chuột); last: ca gần nhất có chuột
   venue: { tbl: number[]; floors: number; wide: number; tables?: number };   // cấp từng bàn ([] = chưa đặt: người chơi cũ được tặng theo độ nổi tiếng), số lầu, số lần mở rộng ngang; tables = số ghế của bản 2.52
@@ -63,7 +64,7 @@ export function fresh(): State {
     daily: { day: "" } as Daily, streak: 0, lastDay: "", sound: true, music: true, vibe: true,
     stock: Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map((_, i) => i < 3 ? STARTER_STOCK : 0)])) as Record<StockKey, number[]>, suppliers: [], custom: [],
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
-    food: { kibble: 0, pate: 0, chicken: 0, salmon: 0, steak: 0 }, welcome: false, autoTake: true, venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
+    food: { kibble: 0, pate: 0, chicken: 0, salmon: 0, steak: 0 }, welcome: false, autoTake: true, pins: [], venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
     room: { ...DEFAULT_ROOM }, owned: [], earned: 0, prog: freshProg(), book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };

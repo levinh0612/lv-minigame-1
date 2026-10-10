@@ -11,7 +11,7 @@ import { addBond, addTickets, regulars } from "./gacha";
 import { comfortPat, comfortTip, dutyLv, mascotBonus, staffIds, expectedCustomers, fame, mealOf, mealSlow, payCrew, quickPrice, seatLevels, seatsNow, spareSeats, stockOf, unitCost } from "./economy";
 import { coinMult } from "./dates";
 import { planMouse, tickMouse, type MouseEvt, type MouseOut } from "./mouse";
-import { featured, fx, lvl, unlocked } from "./progress";
+import { featured, fx, lvl, newestRecipe, pickMenu, unlocked } from "./progress";
 import { S, save } from "./state";
 import { earn, note, spend } from "./wallet";
 import { nameList, pick, rnd } from "./util";
@@ -106,9 +106,9 @@ export function makeCustomer(sh: Shift): Customer {
     return { who: CFG.hisName, look: { ...HIM }, him: true, r: RECIPES[0], sweet: 0, max: 70, pat: 70 };
   }
   const g = makeGuest();
-  const r0 = Math.random() < 0.25 ? featured() : Math.random() < 0.3 ? rs[rs.length - 1] : pick(rs);
+  const r0 = Math.random() < 0.25 ? featured() : Math.random() < 0.3 ? newestRecipe(rs) : pickMenu(rs);
   const x = Math.random(), max = Math.max(26, 44 - L * 1.5) * (1 + fx("pat"));
-  const base: Customer = { ...g, r: r0.lv <= L ? r0 : pick(rs), sweet: x < 0.5 ? 0 : x < 0.8 ? 1 : 2, max, pat: max };
+  const base: Customer = { ...g, r: r0.lv <= L ? r0 : pickMenu(rs), sweet: x < 0.5 ? 0 : x < 0.8 ? 1 : 2, max, pat: max };
   /* khách quen từ gacha: nhân vật đã trúng thỉnh thoảng ghé tiệm, mang lợi ích riêng */
   const regs = regulars();
   if (regs.length && Math.random() < Math.min(0.4, 0.12 + regs.length * 0.03)) {

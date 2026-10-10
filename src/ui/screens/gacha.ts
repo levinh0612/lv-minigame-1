@@ -11,7 +11,7 @@ import { rarityIcon } from "../badges";
 import { entityInfo, entityTile } from "../components/entity";
 import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
-import { mountTurntable } from "../../scene/glbview";
+import { mountTurntableLazy as mountTurntable } from "../../scene/turntable";
 
 let unmount = () => { }, fromPool = false;
 let tab: "summon" | "bag" = "summon", filter: GachaKind | "all" = "all", busy = false, poolR: Rarity = "common";

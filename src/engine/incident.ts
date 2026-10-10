@@ -1,7 +1,10 @@
 /* Sự cố bất ngờ: trong lúc app đang mở (cả khi đang trong ca), cứ 3 phút chơi lại có một đồng xu để người chơi tự bấm tung.
-   70% bình an, 30% gặp sự cố và bị trừ xu theo ba mức: thấp 3%, trung bình 6%, cao 8% số xu đang có.
-   Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện. */
+   70% bình an, 30% gặp sự cố và bị trừ một khoản CỐ ĐỊNH theo cấp tiệm (không theo % xu đang có, để người nhiều xu không bị "đánh thuế"):
+   thấp 10%, trung bình 20%, cao 30% doanh thu một ca ước tính ở cấp đó, và không quá 25% số xu đang có.
+   Không xảy ra với người mới hoặc khi còn quá ít xu. Đồng hồ chỉ chạy khi app đang hiện; đồng xu không bao giờ hiện giữa ca hoặc
+   trên màn Kết quả (tới giờ thì chờ, hết ca rồi mới hiện). */
 import type { PetId } from "../content/couple";
+import { lvl } from "./progress";
 import { S } from "./state";
 import { spend } from "./wallet";
 
@@ -20,20 +23,26 @@ export const INCIDENTS: Incident[] = [
 
 export const MIN_SHIFTS = 3, MIN_COINS = 100, GAP = 180, RETRY = 60, LOSE_CHANCE = 0.3;   // giây: cứ 3 phút có một đồng xu
 export type Level = "low" | "mid" | "high";
-export const LEVELS: Record<Level, { name: string; pct: number }> = { low: { name: "Thấp", pct: 0.03 }, mid: { name: "Trung bình", pct: 0.06 }, high: { name: "Cao", pct: 0.08 } };
+/** mult: tỉ lệ so với doanh thu một ca ước tính (SHIFT_PER_LV xu mỗi cấp) */
+export const LEVELS: Record<Level, { name: string; mult: number }> = { low: { name: "Thấp", mult: 0.1 }, mid: { name: "Trung bình", mult: 0.2 }, high: { name: "Cao", mult: 0.3 } };
+export const SHIFT_PER_LV = 100, MAX_COIN_SHARE = 0.25;
 export interface Hit { inc: Incident; cost: number; level: Level }
 
-/** số xu bị trừ theo mức: thấp 3%, trung bình 6%, cao 8% số xu đang có (ít nhất 1, không vượt số xu có) */
-export const incidentCost = (coins: number, level: Level) => Math.min(coins, Math.max(1, Math.round(coins * LEVELS[level].pct)));
+/** doanh thu một ca ước tính theo cấp (số đo mô phỏng: Lv 10 ≈ 770, Lv 30 ≈ 2.600, Lv 60 ≈ 8.000) */
+export const shiftRevenue = (lv: number) => lv * SHIFT_PER_LV;
+/** khoản trừ cố định theo cấp và mức; không bao giờ quá 25% số xu đang có, ít nhất 1 */
+export const incidentCost = (coins: number, level: Level, lv = lvl()) =>
+  Math.min(coins, Math.max(1, Math.min(Math.round(shiftRevenue(lv) * LEVELS[level].mult), Math.round(coins * MAX_COIN_SHARE))));
 
 let left = -1;                                              // giây chơi còn lại tới đồng xu kế tiếp (-1 = chưa đặt)
 export const resetIncidentClock = () => { left = -1; };
 export const incidentLeft = () => left;
 
-/** gọi mỗi giây khi app đang hiện (không có hộp thoại khác): trả true khi tới lúc hiện đồng xu để người chơi tung */
-export function tickIncident(dt: number): boolean {
+/** gọi mỗi giây khi app đang hiện (không có hộp thoại khác): trả true khi tới lúc hiện đồng xu để người chơi tung.
+    blocked = đang trong ca hoặc ở màn Kết quả: tới giờ vẫn chờ, hết bận mới trả true */
+export function tickIncident(dt: number, blocked = false): boolean {
   if (left < 0) left = GAP;
-  left -= dt; if (left > 0) return false;
+  left = Math.max(0, left - dt); if (left > 0 || blocked) return false;
   if (S.shifts < MIN_SHIFTS || S.coins < MIN_COINS) { left = RETRY; return false; }    // chưa đủ điều kiện: xét lại sau ít phút
   left = GAP; return true;
 }

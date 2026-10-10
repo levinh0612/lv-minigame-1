@@ -81,7 +81,7 @@ function loop(now: number) {
     SH.seats.forEach((c, i) => { if (c && !c.gone) updatePatience(c, i); });
     updateBaking();
     const left = remaining(SH);
-    if (leftShown !== left) { leftShown = left; const e = $("#shLeft"); if (e) e.textContent = `Hàng đợi: còn ${left} khách`; }
+    if (leftShown !== left) { leftShown = left; const e = $("#shLeft"); if (e) e.textContent = `Hàng đợi: còn ${left} khách`; const pb = $("#shBar"); if (pb && SH) pb.style.transform = `scaleX(${shiftPct(SH).toFixed(3)})`; }
     if (isOver(SH)) return endShift();
   }
   raf = requestAnimationFrame(loop);
@@ -117,6 +117,8 @@ function updateBaking() {
 /** cỡ mặt khách cố định: hàng đợi tự co cả ô bằng transform (queue-fit.ts) nên không cần đổi cỡ theo số bàn */
 const faceSize = (_sh: Shift) => 62;
 const cakeOf = (c: Customer, size: number) => cakeAnySVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, up: c.r.up, sweet: c.sweet }, { size, still: true });
+/** tiến độ ca: phần khách đã phục vụ hoặc đã đi trên tổng số khách dự kiến */
+const shiftPct = (sh: Shift) => Math.min(1, (sh.served + sh.left) / Math.max(1, sh.total));
 /* tầng đang chọn nguyên liệu (chỉ khác 0 với bánh nhiều tầng) */
 let curTier = 0;
 const BOX = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4A3438" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8 L12 3.5 L21 8 V17 L12 21.5 L3 17 Z" fill="#F6D59A"/><path d="M3 8 L12 12.5 L21 8 M12 12.5 V21.5"/><path d="M7.5 5.8 L16.5 10.3" stroke-width="1.8"/></svg>`;
@@ -323,9 +325,10 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
     <div class="qhead"><b id="shLeft">Hàng đợi: còn ${remaining(sh)} khách</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
+    <div class="mx-[18px] mb-1.5 h-1.5 overflow-hidden rounded-full bg-pink-l" role="progressbar" aria-label="Tiến độ ca" aria-valuenow="${Math.round(shiftPct(sh) * 100)}" aria-valuemin="0" aria-valuemax="100"><i id="shBar" class="block h-full origin-left rounded-full bg-mint-d transition-transform duration-500" style="transform:scaleX(${shiftPct(sh).toFixed(3)})"></i></div>
     <div id="comboBox">${comboHTML(sh)}</div>
     <div id="mouseBox">${mouseChip(sh)}</div>
-    ${queueHTML(sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")), Math.min(innerWidth, 430) - 28, QUEUE_H0)}
+    ${queueHTML(sh.seats.map((c, i) => ({ html: slotBtn(sh, i, opts.states?.[i] ?? ""), off: !c })), Math.min(innerWidth, 430) - 28, QUEUE_H0)}
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
       <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeAnySVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
@@ -366,6 +369,8 @@ export function renderPlay() {
 function renderSlot(i: number, enter = false) {
   const el = $("#seat" + i); if (!el || !SH) return;
   const c = SH.seats[i];
+  el.closest(".cell")?.classList.toggle("off", !c);      // bàn trống thì ẩn, các khách còn lại được xếp lại và phóng to
+  scheduleFit();
   el.className = slotClass(SH, i, enter ? "enter" : "");
   el.innerHTML = slotHTML(SH, i);
   el.setAttribute("aria-label", slotLabel(SH, i));

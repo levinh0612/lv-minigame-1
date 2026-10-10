@@ -1,7 +1,7 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import { CATS, STOCK_KEYS, partsOfRecipe } from "../../content/game";
 import { canHire, hireFee, staffIds, capacity, demand, needUpgrade, spareSeats, crewPlan, estCostRows, estProfit, expectedCustomers, foodDef, mealOf, plannedMeal, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
-import { featured, unlocked } from "../../engine/progress";
+import { MAX_PINS, featured, isPinned, lvl, unlocked } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
 import { availableIdx } from "../../engine/suppliers";
 import { entityInfo, entityRow } from "../components/entity";
@@ -27,6 +27,11 @@ function lockedCard(id: string) {
 export type PrepTab = "crew" | "cakes" | "stock" | "goals";
 let prepTab: PrepTab = "crew";
 export const setPrepTab = (t: PrepTab) => { prepTab = t; };
+/* lọc danh sách bánh: tất cả, món ruột (ghim), mới mở (trong 5 cấp gần đây), thiếu nguyên liệu */
+export type CakeFil = "all" | "pin" | "new" | "low";
+const CAKE_FILS: [CakeFil, string][] = [["all", "Tất cả"], ["pin", "★ Món ruột"], ["new", "Mới mở"], ["low", "Thiếu hàng"]];
+let cakeFil: CakeFil = "all";
+export const setCakeFil = (f: CakeFil) => { cakeFil = f; };
 
 /* thẻ gọn của một bé: chạm cả thẻ để chọn/bỏ chọn đi làm (dùng thành phần chung entityRow) */
 function crewCard(id: string) {
@@ -57,13 +62,20 @@ export function prepHTML() {
       <div class="pcrews">${ids.map(crewCard).join("")}</div>
       <p class="phint">Chạm vào thẻ để chọn hoặc bỏ chọn đi làm.${hungry.length ? ` <b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>`;
   } else if (prepTab === "cakes") {
-    const rs = unlocked();
-    body = `<div class="sh2"><b>Bánh</b><span class="lav">${rs.length} món</span></div><div class="pcakes">${rs.map(r => {
-      const viral = r.id === feat.id;
+    const all = unlocked(), L = lvl(), lacks = (r: (typeof all)[number]) => partsOfRecipe(r).some(p => stockOf(p.k, p.i) === 0);
+    const test: Record<CakeFil, (r: (typeof all)[number]) => boolean> = { all: () => true, pin: r => isPinned(r.id), new: r => r.lv > L - 5 && r.lv <= L, low: lacks };
+    const rs = all.filter(test[cakeFil]).sort((x, y) => +isPinned(y.id) - +isPinned(x.id));
+    const nPin = all.filter(r => isPinned(r.id)).length;
+    body = `<div class="gfil rfil">${CAKE_FILS.map(([k, n]) => `<button class="${cakeFil === k ? "on" : ""}" data-pfil="${k}">${n}</button>`).join("")}</div>
+      <div class="sh2"><b>Bánh</b><span class="lav">${rs.length}/${all.length} món · ★ ${nPin}/${MAX_PINS}</span></div>
+      <div class="pcakes">${rs.map(r => {
+      const viral = r.id === feat.id, pin = isPinned(r.id);
       return `<div class="pcake ${viral ? "viral" : ""}"><div class="pck">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up }, { size: 54, still: true })}</div>
         <div class="pi"><b>${esc(r.n)}</b><small class="pprice">${fmtN(r.price)} xu${viral ? ` <span class="vtag">✦ Viral hôm nay</span>` : ""}</small>
-        <div class="pings">${partsOfRecipe(r).map(p => `<span title="${CATS[p.k][p.i][0]}" class="${stockOf(p.k, p.i) === 0 ? "out" : ""}">${ingSVG(p.k, p.i, 16)}</span>`).join("")}</div></div></div>`;
-    }).join("")}</div>`;
+        <div class="pings">${partsOfRecipe(r).map(p => `<span title="${CATS[p.k][p.i][0]}" class="${stockOf(p.k, p.i) === 0 ? "out" : ""}">${ingSVG(p.k, p.i, 16)}</span>`).join("")}</div></div>
+        <button class="pinbtn ${pin ? "on" : ""}" data-rpin="${r.id}" aria-pressed="${pin}" aria-label="${pin ? "Bỏ ghim" : "Ghim"} ${esc(r.n)}">${pin ? "★" : "☆"}</button></div>`;
+    }).join("") || `<p class="phint">Không có món nào trong mục này.</p>`}</div>
+      <p class="phint">Ghim tối đa ${MAX_PINS} món ruột: khách gọi các món này nhiều hơn (khoảng một nửa số khách) để bạn dễ tự nhớ công thức và nhận thưởng +50%.</p>`;
   } else if (prepTab === "stock") {
     const stock = STOCK_KEYS.map(k => availableIdx(k).map(i => {
       const nm = CATS[k][i][0], v = stockOf(k, i), p = packPrice(k, i, 5);

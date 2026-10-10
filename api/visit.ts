@@ -6,9 +6,8 @@
    Phí vé = 2% số xu của khách (tối thiểu 10, tối đa 100); chủ tiệm nhận 70% phí làm tiền mừng.
    Luật phí phải khớp src/engine/visit.ts */
 import { authUser, bad, body, db, json, normUser, validUser } from "./_lib.js";
+import { feeOf, GIFT_PCT, STAR5_AT } from "./limits.js";
 
-const FEE_PCT = 0.02, FEE_MIN = 10, FEE_MAX = 100, GIFT_PCT = 0.7;
-const feeOf = (coins: number) => Math.min(FEE_MAX, Math.max(FEE_MIN, Math.round(coins * FEE_PCT)));
 const TODAY = `(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`;
 
 const str = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, "").slice(0, max);
@@ -36,7 +35,7 @@ function publicShop(u: { username: string; lv: number; earned: unknown; state: u
   return {
     shifts: num(s.shifts), streak: Math.max(num(prog.bestStreak), num(s.streak)), made: made.reduce((a, b) => a + b, 0),
     perfect: num(stat.perfect), tower: num(stat.tower), elite: num(stat.elite),
-    mastered: made.filter(n => n >= 500).length,          // 500 = mốc sao 5 (CRAFT_AT cuối trong src/content/progression.ts)
+    mastered: made.filter(n => n >= STAR5_AT).length,
     upgrades: Object.values(prog.up ?? {}).reduce((a, b) => a + num(b), 0), collected: Object.keys(gacha.owned ?? {}).length,
     username: u.username, lv: u.lv, earned: Number(u.earned),
     shop: str(s.shop, 20), room: strMap(s.room, 24), me: strMap(s.me, 24),

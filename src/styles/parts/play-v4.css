@@ -15,7 +15,8 @@
 .qhead span{font:800 12px var(--body);color:var(--lav-d)}
 /* hàng đợi: ô đặt tuyệt đối bằng transform (queue-fit.ts), chiều cao do JS đặt */
 .queue{position:relative;margin:0 14px;flex:none;z-index:1;transition:height .45s cubic-bezier(.22,1,.36,1)}
-.cell{position:absolute;left:0;top:0;width:84px;height:152px;transform-origin:0 0;will-change:transform;transition:transform .45s cubic-bezier(.22,1,.36,1)}
+.cell{position:absolute;left:0;top:0;width:84px;height:152px;transform-origin:0 0;will-change:transform,opacity;transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .3s ease}
+.cell.off{opacity:0;pointer-events:none}
 .queue.nofx,.queue.nofx .cell{transition:none}
 .cell>.slot{width:100%;height:100%}
 @media (prefers-reduced-motion:reduce){.queue,.cell{transition:none}}

@@ -248,3 +248,6 @@
 .queue[style*="--c:5"]>.slot{min-height:140px}
 .queue>.slot.empty{min-height:inherit}
 .queue .who.by{max-width:100%}
+
+.pinbtn{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:#F4F1F7;color:#B9AEC6;font-size:19px;line-height:1;cursor:pointer}
+.pinbtn.on{background:var(--pink-l);color:#F2A93B}.pinbtn:active{transform:scale(.92)}

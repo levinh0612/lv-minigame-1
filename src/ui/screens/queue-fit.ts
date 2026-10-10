@@ -30,16 +30,27 @@ export function cellTransform(L: QueueLayout, W: number, i: number) {
   const c = i % L.cols, r = Math.floor(i / L.cols), x = Math.max(0, (W - L.w) / 2) + c * (SLOT_W * L.k + GAP), y = r * (SLOT_H * L.k + GAP);
   return `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${L.k.toFixed(4)})`;
 }
-/** HTML tĩnh của hàng đợi đã đặt sẵn vị trí (Storybook và lần vẽ đầu dùng được ngay, chạy tiếp thì applyQueue chỉnh lại theo khung thật) */
-export function queueHTML(cells: string[], W: number, H: number) {
-  const L = fitQueue(cells.length, W, H);
-  return `<div class="queue nofx" id="queue" data-mode="${modeOf(L.k)}" style="height:${Math.round(L.h)}px">${cells.map((c, i) => `<div class="cell" style="transform:${cellTransform(L, W, i)}">${c}</div>`).join("")}</div>`;
+/** một ô của hàng đợi: bàn trống (off) thì ẩn đi và không chiếm chỗ, để khách còn lại được phóng to */
+export interface QueueCell { html: string; off: boolean }
+/** transform của ô đang ẩn: nằm ở chỗ trống kế tiếp, thu nhỏ lại, để lúc có khách mới ô nở ra từ đó */
+const offTransform = (L: QueueLayout, W: number, i: number) => cellTransform({ ...L, k: L.k * 0.6 }, W, i);
+/** xếp mọi ô: ô hiện chia chỗ theo thứ tự ghế, ô ẩn đứng chờ. Trả về layout (0 ô hiện thì chiều cao bằng 0) */
+function place(cells: { off: boolean; set(transform: string, off: boolean): void }[], W: number, H: number) {
+  const vis = cells.filter(c => !c.off), L = fitQueue(vis.length, W, H);
+  let n = 0;
+  cells.forEach(c => { c.off ? c.set(offTransform(L, W, vis.length), true) : c.set(cellTransform(L, W, n++), false); });
+  return { L, visible: vis.length };
 }
-/** đặt lại từng .cell theo khung thật W × H; đổi k hoặc số cột thì CSS tự trượt và phóng mượt. Trả về layout để nơi gọi dùng tiếp */
+/** HTML tĩnh của hàng đợi đã đặt sẵn vị trí (Storybook và lần vẽ đầu dùng được ngay, chạy tiếp thì applyQueue chỉnh lại theo khung thật) */
+export function queueHTML(cells: QueueCell[], W: number, H: number) {
+  const tf: string[] = [], { L, visible } = place(cells.map((c, i) => ({ off: c.off, set: (t: string) => { tf[i] = t; } })), W, H);
+  return `<div class="queue nofx" id="queue" data-mode="${modeOf(L.k)}" style="height:${visible ? Math.round(L.h) : 0}px">${cells.map((c, i) => `<div class="cell${c.off ? " off" : ""}" ${c.off ? "inert" : ""} style="transform:${tf[i]}">${c.html}</div>`).join("")}</div>`;
+}
+/** đặt lại từng .cell theo khung thật W × H (ô có class .off là bàn trống); đổi k hoặc số cột thì CSS tự trượt và phóng mượt */
 export function applyQueue(queue: HTMLElement, W: number, H: number): QueueLayout {
-  const cells = queue.querySelectorAll<HTMLElement>(":scope > .cell"), L = fitQueue(cells.length, W, H);
-  cells.forEach((el, i) => { el.style.transform = cellTransform(L, W, i); });
-  queue.style.height = `${Math.round(L.h)}px`;
+  const els = [...queue.querySelectorAll<HTMLElement>(":scope > .cell")];
+  const { L, visible } = place(els.map(el => ({ off: el.classList.contains("off"), set(t: string, off: boolean) { el.style.transform = t; el.toggleAttribute("inert", off); } })), W, H);
+  queue.style.height = `${visible ? Math.round(L.h) : 0}px`;
   queue.dataset.mode = modeOf(L.k);
   return L;
 }

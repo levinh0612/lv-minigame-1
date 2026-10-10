@@ -1,7 +1,7 @@
 /* Khung xem 3D nhỏ (canvas riêng, nền trong) cho model GLB: xoay chậm, dùng ở màn hiện vật phẩm to. Trả về hàm dọn dẹp. */
 import * as THREE from "three";
 import { frameOf, glbProp, PROPS } from "./glbprop";
-import { webglOK } from "./shop3d";
+import { webglOK } from "./webgl";
 
 export function mountTurntable(host: HTMLElement, modelId: string, px: number): () => void {
   if (!webglOK()) return () => { };

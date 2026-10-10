@@ -20,22 +20,23 @@ import { myStats } from "./engine/stats";
 import { statsDialog } from "./ui/statsdlg";
 import { askVisit, visitStatsDialog } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
-import { accountPanel, adminPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, adminPanel, claimGoals, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
-import { flushSave, isLocked, loggedIn, pull, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
+import { flushSave, isLocked, loggedIn, pull, resolveConflict, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
 import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { fmtN } from "./engine/util";
 import { initTeam, setTeamTab, staffDialogAct, staffSheet, teamAct, type TeamTab } from "./ui/team";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
-import { setPrepTab, type PrepTab } from "./ui/screens/prep";
+import { setCakeFil, setPrepTab, type CakeFil, type PrepTab } from "./ui/screens/prep";
+import { MAX_PINS, togglePin } from "./engine/progress";
 import { progressAct } from "./ui/screens/progress";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, setDecorCat, tryDecor } from "./ui/screens/shop";
-import { SH, pause, resume, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
+import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleSheet, watchBaker } from "./ui/screens/play";
 
 initTeam();
 
@@ -126,6 +127,8 @@ document.addEventListener("click", e => {
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
   if (d.progtab) return progressAct("tab", d.progtab);
   if (d.pact) return progressAct("act", d.pact);
+  if (d.pfil) { setCakeFil(d.pfil as CakeFil); sfx("click"); return render(); }
+  if (d.rpin) { if (togglePin(d.rpin)) sfx("tap"); else toast(`Chỉ ghim được ${MAX_PINS} món, bỏ bớt một món trước nha`); return render(); }
   if (d.ptab) { setPrepTab(d.ptab as PrepTab); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }
   if (d.train) { if (train(d.train as PetId)) { sfx("level"); toast(`${petName(d.train as PetId)} lên bậc ${S.staff[d.train as PetId].lv}!`); } return render(); }
@@ -166,12 +169,11 @@ document.addEventListener("visibilitychange", () => {
 /* đồng bộ giữa các máy: app đang mở (không trong ca) thì 20 giây hỏi server một lần xem có bản mới hơn không */
 setInShift(() => !!SH);
 /* sự cố bất ngờ: đồng hồ chạy khi app đang hiện và không có hộp thoại nào mở. Tới giờ thì hiện đồng xu cho người chơi tự bấm;
-   đang trong ca thì tạm dừng ca khi hộp thoại hiện, đóng xong chơi tiếp */
+   không hiện giữa ca hay trên màn Kết quả: tới giờ thì chờ, về màn chính mới hiện */
 setInterval(() => {
   if (document.hidden || isLocked() || hasModal()) return;
-  if (!tickIncident(1)) return;
-  const inShift = !!SH; if (inShift) pause();
-  sfx("bell"); coinModal(() => { if (inShift) resume(); else render(); });
+  if (!tickIncident(1, !!SH || location.hash.startsWith("#/ket-qua"))) return;
+  sfx("bell"); coinModal(() => render());
 }, 1000);
 /* thưởng thụ động: đền bù một lần và thưởng theo cấp + chuỗi ngày cho lần đăng nhập đầu tiên mỗi ngày (qua ngày mới giữa lúc đang mở app cũng nhận) */
 function passive() {
@@ -194,6 +196,7 @@ async function visitGifts() {
 }
 setInterval(() => void visitGifts(), 45000); setTimeout(() => void visitGifts(), 4000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
+addEventListener("cloud:conflict", () => { if (SH || hasModal()) return void setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); conflictModal(keep => void resolveConflict(keep)); });
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", () => render());
 
@@ -251,5 +254,5 @@ if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) wh
   for (const ev of ["resize", "orientationchange", "pageshow", "focus"]) addEventListener(ev, fit);
   window.visualViewport?.addEventListener("resize", fit);
   document.addEventListener("visibilitychange", fit);
-  setInterval(fit, 600);
+  setInterval(() => { if (!document.hidden) fit(); }, 600);    // iOS có lúc không bắn sự kiện resize; app ẩn thì không cần đo
 }

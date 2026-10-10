@@ -46,5 +46,8 @@ export async function authUser(req: Request): Promise<{ id: number; username: st
   const r = await db()`UPDATE sessions s SET seen_at = now() FROM users u WHERE s.token_hash = ${sha(t)} AND u.id = s.user_id RETURNING u.id, u.username`;
   return r.length ? { id: Number(r[0].id), username: String(r[0].username) } : null;
 }
+/* IP máy khách (Vercel đặt sẵn header); không có thì gộp chung "?" */
+export const ipOf = (req: Request) =>
+  (req.headers.get("x-vercel-forwarded-for") || req.headers.get("x-forwarded-for") || "?").split(",")[0]!.trim().slice(0, 64);
 /* tuần hiện tại (thứ Hai) theo giờ Việt Nam */
 export const WEEK = `date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date`;

@@ -68,3 +68,13 @@ CREATE TABLE IF NOT EXISTS app_config (
   updated_by text        NOT NULL DEFAULT '',
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- chống dò PIN / khoá nhầm tài khoản người khác: mỗi lần nhập sai ghi một dòng (theo IP), dòng cũ bị xoá khi ghi mới
+ALTER TABLE users ADD COLUMN IF NOT EXISTS lock_level integer NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS auth_fails (
+  user_id  bigint      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ip       text        NOT NULL,
+  at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS auth_fails_user_idx ON auth_fails (user_id, at DESC);
+CREATE INDEX IF NOT EXISTS auth_fails_ip_idx ON auth_fails (ip, at DESC);

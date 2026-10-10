@@ -2,8 +2,9 @@
    GET ?since=N -> bản trên server chưa mới hơn N: {rev, same: true}; mới hơn: {state, rev, savedAt}
    POST {state, earned, lv, base} -> {rev, savedAt}
      base = phiên máy này đã biết; server đã có phiên mới hơn (máy khác lưu) thì trả 409 để máy này tải bản mới về,
-     không cho bản cũ đè bản mới. Tiền bán hàng tăng thêm được cộng vào bảng tuần */
+     không cho bản cũ đè bản mới. Tiền bán hàng tăng thêm (đã bị chặn theo thời gian) được cộng vào bảng tuần */
 import { authUser, bad, body, db, json, WEEK } from "./_lib.js";
+import { clampProgress } from "./limits.js";
 
 export async function GET(req: Request) {
   const me = await authUser(req);
@@ -24,12 +25,14 @@ export async function POST(req: Request) {
   const lv = Math.max(1, Math.min(100, Math.floor(Number(b.lv) || 1)));
   const base = b.base == null ? null : Math.floor(Number(b.base));
   const sql = db();
-  const old = await sql`SELECT earned, rev FROM users WHERE id = ${me.id}`;
+  const old = await sql`SELECT earned, lv, rev, extract(epoch FROM now() - updated_at) AS idle FROM users WHERE id = ${me.id}`;
   if (base !== null && old[0].rev > base) return json({ conflict: true, rev: old[0].rev }, 409);
-  const delta = Math.max(0, Math.min(50000, earned - Number(old[0].earned)));   // chặn số tăng bất thường
+  // earned/lv do máy khách tự báo: chỉ cho tăng theo thời gian đã trôi qua kể từ lần lưu trước (api/limits.ts)
+  const ok = clampProgress({ earned: Number(old[0].earned), lv: Number(old[0].lv) }, { earned, lv }, Number(old[0].idle));
+  const delta = ok.gain;
   // chỉ ghi nếu trong lúc đó không có máy khác vừa lưu (so rev)
   const r = await sql`
-    UPDATE users SET state = ${JSON.stringify(b.state)}::jsonb, earned = GREATEST(earned, ${earned}), lv = ${lv}, rev = rev + 1, updated_at = now()
+    UPDATE users SET state = ${JSON.stringify(b.state)}::jsonb, earned = ${ok.earned}, lv = ${ok.lv}, rev = rev + 1, updated_at = now()
     WHERE id = ${me.id} AND rev = ${old[0].rev} RETURNING rev, updated_at`;
   if (!r.length) return json({ conflict: true }, 409);
   if (delta > 0) await sql.query(

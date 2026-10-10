@@ -11,7 +11,7 @@ import { cakeSVG, guestSVG } from "./art";
 import { esc } from "./dom";
 import { createVFX, shake } from "./gachavfx";
 import { runWarp, WARP_MS } from "./gachawarp";
-import { mountTurntable } from "../scene/glbview";
+import { mountTurntableLazy as mountTurntable } from "../scene/turntable";
 import { hydratePortraits, portraitHTML } from "./portrait";
 import type { Reveal3d } from "./gachareveal3d";
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GAP, INCIDENTS, LEVELS, LOSE_CHANCE, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, tickIncident, tossCoin } from "../src/engine/incident";
+import { GAP, INCIDENTS, LEVELS, LOSE_CHANCE, RETRY, applyIncident, incidentCost, incidentLeft, resetIncidentClock, shiftRevenue, tickIncident, tossCoin } from "../src/engine/incident";
 import { COMP_COINS, DAILY_MAX, claimPassive, dailyReward, dayKey } from "../src/engine/passive";
 import { S, resetState } from "../src/engine/state";
 
@@ -7,13 +7,34 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 27, 10
 afterEach(() => vi.useRealTimers());
 
 describe("đồng xu sự cố", () => {
-  it("số xu bị trừ theo mức: thấp 3%, trung bình 6%, cao 8%", () => {
-    expect(incidentCost(1000, "low")).toBe(30);
-    expect(incidentCost(1000, "mid")).toBe(60);
-    expect(incidentCost(1000, "high")).toBe(80);
-    expect(incidentCost(10, "low")).toBe(1);               // ít nhất 1
-    expect(incidentCost(0, "high")).toBe(0);               // không vượt số xu có
-    expect(LEVELS.high.pct).toBeGreaterThan(LEVELS.mid.pct); expect(LEVELS.mid.pct).toBeGreaterThan(LEVELS.low.pct);
+  it("khoản trừ cố định theo cấp và mức, không phụ thuộc số xu đang có", () => {
+    expect(incidentCost(1e9, "low", 10)).toBe(100);        // 10% doanh thu ca Lv 10 (1.000)
+    expect(incidentCost(1e9, "mid", 10)).toBe(200);
+    expect(incidentCost(1e9, "high", 10)).toBe(300);
+    expect(incidentCost(1e6, "high", 60)).toBe(incidentCost(1e9, "high", 60));    // giàu hơn cũng không bị trừ nhiều hơn
+    expect(incidentCost(1e9, "high", 60)).toBeLessThan(shiftRevenue(60));         // luôn nhỏ hơn doanh thu một ca
+    expect(LEVELS.high.mult).toBeGreaterThan(LEVELS.mid.mult); expect(LEVELS.mid.mult).toBeGreaterThan(LEVELS.low.mult);
+  });
+
+  it("người ít xu: không quá 25% số xu đang có, ít nhất 1, không vượt số xu có", () => {
+    expect(incidentCost(400, "high", 60)).toBe(100);
+    expect(incidentCost(2, "low", 60)).toBe(1);
+    expect(incidentCost(0, "high", 60)).toBe(0);
+  });
+
+  it("chơi lâu không bị âm dần: kỳ vọng mất mỗi 3 phút nhỏ hơn 10% doanh thu một ca ở mọi cấp", () => {
+    for (const lv of [5, 10, 30, 60, 100]) {
+      const exp = LOSE_CHANCE * (["low", "mid", "high"] as const).reduce((a, l) => a + incidentCost(1e9, l, lv), 0) / 3;
+      expect(exp).toBeLessThan(shiftRevenue(lv) * 0.1);
+    }
+  });
+
+  it("đang bận (trong ca / màn Kết quả): tới giờ vẫn chờ, hết bận mới hiện", () => {
+    tickIncident(0); expect(tickIncident(GAP, true)).toBe(false);
+    expect(incidentLeft()).toBe(0);
+    expect(tickIncident(1, true)).toBe(false);
+    expect(tickIncident(1, false)).toBe(true);
+    expect(incidentLeft()).toBe(GAP);
   });
 
   it("đồng hồ: sau đúng 3 phút chơi mới hiện đồng xu, rồi đếm lại", () => {
@@ -41,7 +62,7 @@ describe("đồng xu sự cố", () => {
     const seq = (a: number, b: number, c: number) => { const v = [a, b, c]; let i = 0; return () => v[i++ % 3]!; };
     expect(tossCoin(seq(0.1, 0.0, 0.0))!.level).toBe("low");
     expect(tossCoin(seq(0.1, 0.5, 0.0))!.level).toBe("mid");
-    const hi = tossCoin(seq(0.1, 0.99, 0.0))!; expect(hi.level).toBe("high"); expect(hi.cost).toBe(80);
+    const hi = tossCoin(seq(0.1, 0.99, 0.0))!; expect(hi.level).toBe("high"); expect(hi.cost).toBe(incidentCost(S.coins, "high"));
   });
 
   it("áp dụng: trừ xu, ghi vào sổ chi 'Sự cố bất ngờ' kèm mức", () => {

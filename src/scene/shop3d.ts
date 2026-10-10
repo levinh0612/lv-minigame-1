@@ -37,7 +37,8 @@ export interface ShopScene {
 }
 
 let renderer: THREE.WebGLRenderer | null = null, quality = 0;   // quality: mức giảm chất lượng khi máy chậm (0 = đầy đủ), nhớ giữa các cảnh
-export const webglOK = () => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } };
+import { webglOK } from "./webgl";
+export { webglOK };
 function getRenderer() {
   if (!renderer) {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "low-power" });

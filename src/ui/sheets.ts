@@ -13,7 +13,7 @@ import { SONGS, Sound } from "../audio/sound";
 import { render } from "./app";
 import { cakeAnySVG, ingSVG } from "./art";
 import { $, closeModal, esc, modal, toast } from "./dom";
-import { buffSources } from "../engine/progress";
+import { FX_CAP, buffSources, fx, fxRaw } from "../engine/progress";
 import { gachaArt } from "./gachafx";
 import { ic } from "./icons";
 import { BUFF_LABEL, buffIcon, buffText } from "./screens/home";
@@ -175,6 +175,7 @@ export function buffSheet() {
   modal(`<h2>Buff đang có</h2><p class="sub">Tổng hợp từ quản lý, linh thú và trang trí</p>
     <div class="bftot">${(["price", "tip", "pat", "cust"] as const).map(k => `<div class="${k}">${buffIcon(k, 24)}<b>${buffText(k)}</b><small>${BUFF_LABEL[k]}</small></div>`).join("")}</div>
     ${group("mgr", "Quản lý")}${group("mascot", "Linh thú")}${group("decor", "Trang trí")}${group("shop", "Nâng cấp tiệm")}
+    ${(["price", "tip", "pat"] as const).some(k => fxRaw(k) > fx(k)) ? `<p class="phint">Trần buff: ${(["price", "tip", "pat"] as const).map(k => `${BUFF_SHORT[k]} +${Math.round(FX_CAP[k]! * 100)}%`).join(" · ")}. Phần vượt trần không được tính.</p>` : ""}
     ${rows.length ? "" : `<p class="phint">Chưa có buff nào. Đặt quản lý, linh thú hoặc dùng đồ trang trí có buff để tăng.</p>`}
     <div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
 }

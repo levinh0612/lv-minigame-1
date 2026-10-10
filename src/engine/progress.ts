@@ -22,7 +22,13 @@ export const seasonalRecipes = (): Recipe[] => { const r = seasonalNow(); return
 export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeReady(r)), ...seasonalRecipes(), ...customRecipes().filter(recipeReady), ...specialRecipes()];
 /** chỉ số nguyên liệu mà các món đang bán dùng tới (màn làm bánh và kho giữa ca chỉ hiện những món này) */
 export const usedIdx = (k: StockKey) => [...new Set(unlocked().flatMap(r => partsOfRecipe(r).filter(p => p.k === k).map(p => p.i)))].sort((a, b) => a - b);
-export const fx = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k) + upgradeFx(k);
+/** tổng buff chưa bị chặn trần (cộng mọi nguồn) */
+export const fxRaw = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k) + upgradeFx(k);
+/** trần buff: cộng nhiều tầng quản lý + linh thú không được kéo giá/tip/kiên nhẫn lên vô hạn (số khách cộng thêm không có trần) */
+export const FX_CAP: Partial<Record<FxKey, number>> = { price: 0.6, tip: 1, pat: 1 };
+export const fx = (k: FxKey) => Math.min(fxRaw(k), FX_CAP[k] ?? Infinity);
+/** món mở khoá gần nhất theo cấp (không tính món mùa, bánh tuỳ chỉnh, công thức Gacha: các món này nằm cuối danh sách unlocked) */
+export const newestRecipe = (rs: Recipe[]): Recipe => rs.reduce((best, r) => (RECIPES.includes(r) && r.lv >= best.lv ? r : best), rs.find(r => RECIPES.includes(r)) ?? rs[0]!);
 /* Buff đang có đến từ đâu: quản lý và linh thú từng tầng, đồ trang trí. Cộng các dòng lại đúng bằng fx(k). */
 export interface BuffRow { src: "mgr" | "mascot" | "decor" | "shop"; name: string; sub: string; fx: Partial<Record<FxKey, number>>; item?: GachaItem; decor?: RoomItem }
 export function buffSources(): BuffRow[] {
@@ -70,3 +76,20 @@ export function goals(): Goal[] {
 export const goalsDone = () => goals().every(g => g.cur >= g.need);
 export const letterNew = () => !S.letters.some(l => l.day === S.daily.day && !l.bonus);
 export const giftReady = () => goalsDone() && !S.daily.claimed;
+
+/* ===== Món ruột: ghim vài món để khách gọi nhiều hơn, dễ tự nhớ công thức (thưởng +50%) khi có hàng chục món ===== */
+export const MAX_PINS = 6, PIN_SHARE = 0.5;
+export const isPinned = (id: string) => !!S.pins?.includes(id);
+/** ghim / bỏ ghim; false nếu đã đủ MAX_PINS */
+export function togglePin(id: string): boolean {
+  const p = (S.pins ??= []), i = p.indexOf(id);
+  if (i >= 0) { p.splice(i, 1); save(); return true; }
+  if (p.length >= MAX_PINS) return false;
+  p.push(id); save(); return true;
+}
+/** chọn món cho khách: PIN_SHARE số khách gọi món ruột đang bán (nếu có), còn lại chọn đều */
+export function pickMenu(rs: Recipe[], rng: () => number = Math.random): Recipe {
+  const mine = rs.filter(r => isPinned(r.id));
+  const from = mine.length && rng() < PIN_SHARE ? mine : rs;
+  return from[Math.floor(rng() * from.length)]!;
+}

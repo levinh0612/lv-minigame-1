@@ -113,7 +113,8 @@ export async function cloudSave(): Promise<boolean> {
     const st = (e as ApiError).status;
     if (st === 401) { A.token = ""; store(); dispatchEvent(new Event("cloud:logout")); }
     // máy khác vừa lưu bản mới hơn: tải bản đó về (không đè lên)
-    if (st === 409 && !inShift()) { busy = false; A.dirty = false; store(); await pull(true); }
+    // nếu máy này cũng có thay đổi chưa lưu thì hỏi người chơi giữ bản nào, không tự đè
+    if (st === 409 && !inShift()) { busy = false; if (A.dirty) askConflict(); else await pull(true); }
     return false;
   } finally { busy = false; muted = false; }
 }
@@ -130,7 +131,18 @@ export function flushSave(force = false) { if (A?.dirty || force) { clearTimeout
 export function startAutoSave() { whenSaved(scheduleSave); }
 /* mở app / quay lại app / mỗi 20 giây: máy khác lưu mới hơn thì tải về (bản mới thắng);
    không có gì mới mà máy này có thay đổi chưa gửi thì gửi lên */
-let pulling = false;
+let pulling = false, asking = false;
+/** hai máy cùng có thay đổi: báo giao diện hỏi người chơi (chỉ một lần cho tới khi có lựa chọn) */
+function askConflict() { if (asking) return; asking = true; dispatchEvent(new Event("cloud:conflict")); }
+/** người chơi chọn: giữ bản máy này (ghi đè bản trên mây) hoặc dùng bản trên mây (bỏ thay đổi chưa lưu ở máy này) */
+export async function resolveConflict(keepMine: boolean) {
+  asking = false;
+  if (!A?.token) return;
+  if (!keepMine) { A.dirty = false; store(); await pull(true); return; }
+  try { const r = await api<{ rev: number }>("sync?since=999999999"); muted = true; S.cloud.rev = r.rev; save(); muted = false; }
+  catch { muted = false; return; }
+  await cloudSave();
+}
 /* đang trong ca thì không thay tiến trình (main.ts cho biết) */
 let inShift = () => false;
 export const setInShift = (f: () => boolean) => { inShift = f; };
@@ -139,6 +151,7 @@ export async function pull(adoptAnyway = false): Promise<boolean> {
   pulling = true;
   try {
     const r = await api<{ state?: unknown; rev: number; savedAt?: string; same?: boolean }>(`sync${adoptAnyway ? "" : `?since=${S.cloud.rev}`}`);
+    if (!r.same && r.state && !adoptAnyway && r.rev > S.cloud.rev && A.dirty) { askConflict(); return false; }
     if (!r.same && r.state && (adoptAnyway || r.rev > S.cloud.rev)) {
       clearTimeout(timer); A.dirty = false; store();
       muted = true; adopt(r.state, r.rev); S.cloud.at = r.savedAt ?? new Date().toISOString(); save(); muted = false;
