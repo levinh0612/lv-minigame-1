@@ -30,6 +30,8 @@ export interface Shift {
   total: number; spawned: number; served: number; left: number; coins: number; tips: number; stars: number[];
   seats: (Customer | null)[]; build: Build; t: number; next: number; paused: boolean;
   boyDone: boolean; lv0: number;
+  xp0: number; wk0: Record<string, number>;         // kinh nghiệm và tiến độ nhiệm vụ tuần lúc bắt đầu ca (màn Kết quả hiện phần tăng thêm)
+  ups: { n: string; star: number }[]; record: boolean;   // món lên sao tay nghề trong ca; lãi ca này phá kỷ lục
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
   bonus: number; tierBonus: number; lack: Partial<Record<StaffId, string>>;
@@ -81,7 +83,7 @@ export function createShift(): Shift {
   const sh: Shift = {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
-    boyDone: !!S.daily.boy, lv0: L, mine: -1, peek: false, bonus: 0, tierBonus: 0, lack: {},
+    boyDone: !!S.daily.boy, lv0: L, xp0: S.xp, wk0: { ...S.prog.weekly.prog }, ups: [], record: false, mine: -1, peek: false, bonus: 0, tierBonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
   };
   sh.mousePlan = planMouse(sh.total);
@@ -268,6 +270,7 @@ function deliver(sh: Shift, idx: number, byStaff: boolean, staffId?: StaffId): E
   if (!byStaff) release(sh);
   S.daily.served++; S.daily.earned += price + tip; if (c.r.id === S.daily.featId) S.daily.feat++;
   const craftUp = trackServe(c.r, price + tip, stars, perfect);
+  if (craftUp) sh.ups.push({ n: c.r.n, star: craftUp.star });
   addReview(c, stars); save();
   return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, tierBonus, perfect, combo: sh.combo, comboAdd, ...(craftUp ? { craftUp } : {}) };
 }
@@ -316,6 +319,8 @@ export function finishShift(sh: Shift) {
   sh.bondUp = addBond();
   if (sh.comboBank > 0) { earn("combo", sh.comboBank); sh.comboPaid = sh.comboBank; }
   const led = ledger(sh); S.earned += led.revenue;
+  const best = S.prog.stat.bestProfit ?? 0;                 // kỷ lục lãi một ca (ca đầu tiên không tính là phá kỷ lục)
+  if (led.profit > best) { sh.record = best > 0; S.prog.stat.bestProfit = led.profit; }
   note(`Ca ${S.shifts} · tiền bán bánh`, led.revenue); note(`Ca ${S.shifts} · nhập nhanh giữa ca`, -led.quick);
   save();
   return led;

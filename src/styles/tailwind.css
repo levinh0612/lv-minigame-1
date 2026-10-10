@@ -25,3 +25,6 @@
   --font-display: var(--display);
   --font-body: var(--body);
 }
+
+/* thanh tiến độ chạy từ --from tới --to (màn Kết quả); nằm ngoài layer nên keyframes luôn có hiệu lực */
+@keyframes prog-grow { from { width: var(--from); } to { width: var(--to); } }

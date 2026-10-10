@@ -23,6 +23,7 @@ import { $, bump, coinPill, esc, floatText, haptic, hasModal, modal, toast } fro
 import { himNote } from "../modals";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
+import { applyQueue, queueHTML } from "./queue-fit";
 import { doCatchMouse, doMousePay as payMouseFor, mouseChip, moveRat, openMouseDlg as openMouseDlgFor, removeRat, renderMouse } from "./play-mouse";
 import { setResult } from "./result";
 
@@ -113,7 +114,8 @@ function updateBaking() {
 }
 
 /* ================= HTML thuần ================= */
-const faceSize = (sh: Shift) => ({ 3: 70, 4: 60, 5: 52, 6: 46 } as Record<number, number>)[Math.min(6, sh.seats.length)] ?? 46;
+/** cỡ mặt khách cố định: hàng đợi tự co cả ô bằng transform (queue-fit.ts) nên không cần đổi cỡ theo số bàn */
+const faceSize = (_sh: Shift) => 62;
 const cakeOf = (c: Customer, size: number) => cakeAnySVG({ base: c.r.base, cream: c.r.cream, top: c.r.top, up: c.r.up, sweet: c.sweet }, { size, still: true });
 /* tầng đang chọn nguyên liệu (chỉ khác 0 với bánh nhiều tầng) */
 let curTier = 0;
@@ -201,15 +203,19 @@ const toggleHTML = () => `<button class="toggle ${S.autoTake ? "on" : ""}" data-
 function idleHTML(sh: Shift) {
   const busy = sh.seats.some(x => x && !x.gone && !x.by), any = sh.seats.some(x => x && !x.gone);
   const earned = sh.coins + sh.tips + sh.bonus;
+  /* mục tiêu ca: 3 ô ngang gọn (số tiến độ, tên, thanh, thưởng) thay cho danh sách dài */
   const goals = sh.goals.map(g => {
-    const done = goalDone(sh, g), calm = g.id === "calm", cur = goalProgress(sh, g);
+    const done = goalDone(sh, g), calm = g.id === "calm", cur = goalProgress(sh, g), fail = calm && sh.left > 0;
     const pct = calm ? (sh.left ? 0 : 100) : Math.min(100, Math.round(cur / g.n * 100));
-    const right = calm ? (sh.left ? `${sh.left} khách giận` : "✓ chưa ai giận") : `${Math.min(cur, g.n)}/${g.n}`;
-    return `<div class="ig ${done ? "done" : calm && sh.left ? "fail" : ""}"><div class="it"><span>${done ? "✓ " : ""}${goalText(g)}</span><em>${right}</em><b>+${g.reward}</b></div><i><u style="width:${pct}%"></u></i></div>`;
+    const num = calm ? (fail ? `${sh.left} giận` : "✓") : `${Math.min(cur, g.n)}/${g.n}`;
+    return `<div class="flex flex-col items-center gap-1 rounded-2xl bg-white px-2 pb-2 pt-2.5 text-center shadow-[0_2px_0_#EBD9C2] ${done ? "text-mint-d" : fail ? "text-red" : "text-ink"}">
+      <b class="font-display text-[15px] leading-none">${num}</b><small class="text-[11px] font-bold leading-tight text-soft">${goalText(g)}</small>
+      <i class="block h-1.5 w-full overflow-hidden rounded-full bg-[#F1E6DA]"><u class="block h-full rounded-full no-underline ${done ? "bg-[#7FD1AE]" : "bg-[#FFC94D]"} transition-[width] duration-500" style="width:${pct}%"></u></i>
+      <em class="text-[11px] font-black not-italic text-[#A77A0E]">+${g.reward}</em></div>`;
   }).join("");
   return `<div class="ihead"><div><b>Đang rảnh tay</b><small class="${busy ? "hint" : ""}">${busy ? "↑ Chạm vào khách để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small></div>${toggleHTML()}</div>
-    <div class="istats"><div><b>${sh.served}</b><small>khách vui</small></div><div><b>+${fmtN(earned)}</b><small>xu ca này</small></div><div><b>${sh.left}</b><small>khách giận</small></div></div>
-    <div class="igoals"><h4>Mục tiêu ca này</h4>${goals}</div>
+    <p class="text-center text-[13px] font-extrabold text-soft"><b class="text-ink">${sh.served}</b> khách vui · <b class="text-mint-d">+${fmtN(earned)}</b> xu · <b class="${sh.left ? "text-red" : "text-ink"}">${sh.left}</b> giận</p>
+    <div class="grid grid-cols-3 gap-2" aria-label="Mục tiêu ca này">${goals}</div>
     <p class="itip">💡 Không bấm "Xem công thức" mà giao đúng được thưởng +50%</p>`;
 }
 
@@ -319,7 +325,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     <div class="qhead"><b id="shLeft">Hàng đợi: còn ${remaining(sh)} khách</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
     <div id="comboBox">${comboHTML(sh)}</div>
     <div id="mouseBox">${mouseChip(sh)}</div>
-    <div class="queue" style="--c:${Math.max(1, Math.min(5, sh.seats.length))}">${sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")).join("")}</div>
+    ${queueHTML(sh.seats.map((_, i) => slotBtn(sh, i, opts.states?.[i] ?? "")), Math.min(innerWidth, 430) - 28, QUEUE_H0)}
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
       <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeAnySVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
@@ -334,12 +340,26 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
 
 /* ================= Cập nhật DOM trong ca ================= */
 let sheetOpen = true;
+/* ===== hàng đợi tự co (queue-fit.ts) ===== */
+const QUEUE_H0 = 330;      // chiều cao tạm cho lần vẽ đầu và Storybook, ngay sau đó fitQueueNow() tính lại theo khung thật
+let fitQ = 0;
+/** xếp lại hàng đợi: chiều cao cho phép = phần còn lại của màn trừ chỗ phiếu order (đang mở) hoặc dải thợ bánh + mục tiêu (đang rảnh) */
+function fitQueueNow() {
+  const p = $("#play"), q = $("#queue"); if (!p || !q || !SH) return;
+  const sheetH = () => ($("#ohead")?.offsetHeight ?? 90) + ($("#rows")?.scrollHeight ?? 220) + ($("#give")?.offsetHeight ?? 54) + 54;      // chiều cao tự nhiên của phiếu (không dùng scrollHeight của phiếu vì chiều cao đó phụ thuộc vào hàng đợi)
+  const below = p.classList.contains("up") ? sheetH() - 20 : ($("#crewBox")?.offsetHeight ?? 0) + ($("#idle")?.offsetHeight ?? 0) + 70;
+  const room = p.clientHeight - (q.getBoundingClientRect().top - p.getBoundingClientRect().top) - below - 12;
+  applyQueue(q, q.clientWidth, Math.max(120, Math.min(room, p.clientHeight * 0.55)));
+}
+/** gộp nhiều lần gọi trong một khung hình */
+const scheduleFit = () => { cancelAnimationFrame(fitQ); fitQ = requestAnimationFrame(fitQueueNow); };
 export function renderPlay() {
   if (!SH) return;
   leftShown = -1; views.length = 0; lastComboLost = SH.comboLost;
   $("#app")!.innerHTML = playHTML(SH);
   SH.seats.forEach((_, i) => renderSlot(i));
-  bindSheetDrag(); fitSheet();
+  bindSheetDrag(); fitSheet(); fitQueueNow();
+  requestAnimationFrame(() => $("#queue")?.classList.remove("nofx"));      // lần xếp đầu không trượt, các lần sau mới có chuyển động
   lastT = performance.now();
   cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
 }
@@ -362,7 +382,7 @@ export function renderTicket() {
   setHTML($("#oinfo")!, oinfoHTML(SH)); setHTML($("#idle")!, idleHTML(SH)); setHTML($("#mini")!, miniHTML(SH));
   $("#stage")!.innerHTML = stageHTML(SH);
   setHTML($("#rows")!, rowsHTML(SH));
-  renderCombo(); fitStage(); fitSheet();
+  renderCombo(); fitStage(); fitSheet(); scheduleFit();
   const g = $("#give")!; g.textContent = giveLabel(SH); g.classList.toggle("off", !isComplete(SH.build));
   SH.seats.forEach((c, i) => {
     const el = $("#seat" + i); if (!el || !c || c.gone) return;
@@ -398,7 +418,7 @@ function fitSheet() {
   }
   p.style.setProperty("--qb", Math.round(qb) + "px");
 }
-window.addEventListener("resize", () => { if (SH) { fitSheet(); fitStage(); } });
+window.addEventListener("resize", () => { if (SH) { fitSheet(); fitStage(); scheduleFit(); } });
 /* kéo phiếu xuống để thu gọn */
 function bindSheetDrag() {
   const h = $("#ohead"), sh = $("#osheet"); if (!h || !sh) return;

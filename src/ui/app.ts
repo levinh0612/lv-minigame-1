@@ -17,7 +17,7 @@ import { prepHTML } from "./screens/prep";
 import { visitHTML } from "./screens/visit";
 import { gachaHTML } from "./screens/gacha";
 import { SH, renderPlay } from "./screens/play";
-import { hasResult, resultHTML } from "./screens/result";
+import { animateResult, hasResult, resultHTML } from "./screens/result";
 import { roadmapHTML } from "./screens/roadmap";
 import { rankSheet } from "./screens/rank";
 import { shopHTML } from "./screens/shop";
@@ -43,7 +43,7 @@ export function render(keepModal?: boolean) {
   const y = scrollY;
   switch (r.name) {
     case "play": renderPlay(); break;
-    case "result": $("#app")!.innerHTML = resultHTML(); break;
+    case "result": $("#app")!.innerHTML = resultHTML(); animateResult(); break;
     case "home": $("#app")!.innerHTML = homeHTML(); void refreshRank(); break;
     case "goals": $("#app")!.innerHTML = goalsHTML(); break;
     case "progress": $("#app")!.innerHTML = progressHTML(); break;

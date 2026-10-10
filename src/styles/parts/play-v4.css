@@ -13,9 +13,15 @@
 .qhead{display:flex;align-items:center;padding:10px 18px 6px;flex:none}
 .qhead b{flex:1;font:800 15px var(--display);color:var(--soft2)}
 .qhead span{font:800 12px var(--body);color:var(--lav-d)}
-.queue{--g:8px;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:var(--g);padding:0 14px;flex:none;position:relative;z-index:1}
-.queue>.slot{flex:0 0 calc((100% - (var(--c) - 1) * var(--g)) / var(--c));min-width:0}   /* flex-wrap: đủ một hàng thì xuống hàng, tối đa 5 thẻ mỗi hàng */
-.slot{position:relative;height:152px;border-radius:18px;background:#fff;border:2.5px solid #fff;box-shadow:0 3px 0 var(--sh);padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s}
+/* hàng đợi: ô đặt tuyệt đối bằng transform (queue-fit.ts), chiều cao do JS đặt */
+.queue{position:relative;margin:0 14px;flex:none;z-index:1;transition:height .45s cubic-bezier(.22,1,.36,1)}
+.cell{position:absolute;left:0;top:0;width:84px;height:152px;transform-origin:0 0;will-change:transform;transition:transform .45s cubic-bezier(.22,1,.36,1)}
+.queue.nofx,.queue.nofx .cell{transition:none}
+.cell>.slot{width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){.queue,.cell{transition:none}}
+[data-mode=mid] .slot .nm,[data-mode=mini] .slot .nm{display:none}
+[data-mode=mini] .who.by span{display:none}
+.slot{position:relative;border-radius:18px;background:#fff;border:2.5px solid #fff;box-shadow:0 3px 0 var(--sh);padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s}
 .slot:active{transform:scale(.96)}
 .slot.mine{border-color:var(--pink);box-shadow:0 3px 0 var(--k-f3a9bc);transform:translateY(-3px)}
 .slot.taken{background:#F4F0FF;border-color:#F4F0FF;box-shadow:0 3px 0 #DCD2F7}
@@ -40,10 +46,12 @@
 .slot.enter .bub,.slot.enter .nm,.slot.enter .pat,.slot.enter .who{animation:dcPop .35s ease-out .55s both}
 .slot.low .fc svg{animation:fidget .3s ease-in-out infinite alternate}
 .slot.bye{animation:bye .5s ease-in forwards}
-.queue[style*="--c:5"]{--g:5px;padding:0 10px}
-.queue[style*="--c:5"] .slot{height:auto;min-height:140px;gap:3px;border-radius:15px}   /* cao theo nội dung: chip bé thú cưng không tràn ra đè hàng sau */
 .band{flex:1;min-height:0;margin-top:14px;background:var(--cream);border-top:12px solid #F3C7A4;box-shadow:inset 0 4px 0 #E2AE86;padding:16px 16px 0;display:flex;flex-direction:column;gap:14px}
-.crew{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px}
+/* đội ngũ: dải chip gọn tự xuống hàng, không còn thẻ to */
+.crew{display:flex;flex-wrap:wrap;gap:6px}
+.crew .cm{flex:0 1 auto;max-width:100%;border-radius:99px;padding:3px 12px 3px 3px;gap:6px}
+.crew .cm .cmk{display:none}
+.crew .cm.mas{border-radius:16px;padding-right:10px}
 .crew.none{display:block;text-align:center;font:700 13px var(--body);color:#9A7A5A}
 .cm{display:flex;align-items:center;gap:5px;background:#fff;border-radius:14px;padding:5px 7px 5px 4px;box-shadow:0 2px 0 #EBD9C2;min-width:0}
 .cm .ct{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -141,8 +149,6 @@
 .sft .b3{height:54px;border-radius:20px;font-size:19px;flex:1}
 .sft .b3.w{flex:none;padding:0 16px;font:800 15px var(--body);color:#9A7A5A;box-shadow:0 4px 0 #EBD9C2}
 @media (max-height:720px){
-  .slot{height:128px;gap:3px;padding-top:6px}
-  .slot .face{height:40px}
   .qhead{padding-top:6px}
   .band{margin-top:10px;padding-top:12px}
   .ocake{width:72px;height:64px}

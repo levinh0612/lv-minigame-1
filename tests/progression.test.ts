@@ -88,3 +88,19 @@ describe("Bạch Chi là nhân vật (quản lý), không phải linh thú", () 
     expect(s.gacha.mgrs?.[0]).toBe("g_baizhi"); expect(s.gacha.mascots?.[0]).toBe(""); expect(s.gacha.bond?.g_baizhi).toBe(5); expect(s.pets.g_baizhi.aff).toBe(3);
   });
 });
+
+describe("hàng đợi tự co", () => {
+  it("ít khách thì ô to (tới trần), đông thì nhỏ dần nhưng không nhỏ hơn mức chạm được", async () => {
+    const { fitQueue, K_MAX, K_MIN, SLOT_H } = await import("../src/ui/screens/queue-fit");
+    const W = 362, H = 330, k = (n: number) => fitQueue(n, W, H).k;
+    expect(k(3)).toBeCloseTo(K_MAX); expect(k(5)).toBeGreaterThan(k(12)); expect(k(12)).toBeGreaterThan(k(30));
+    for (let n = 1; n <= 40; n++) { const L = fitQueue(n, W, H); expect(L.k).toBeGreaterThanOrEqual(K_MIN); expect(L.cols * L.rows).toBeGreaterThanOrEqual(n); if (L.fits) expect(L.h).toBeLessThanOrEqual(H); }
+    expect(fitQueue(60, W, H).fits).toBe(false);                 // quá đông: khung cao hơn, vùng này cuộn
+    expect(SLOT_H * K_MIN).toBeGreaterThanOrEqual(44 * 0.9);
+  });
+  it("kích thước giảm liên tục khi thêm bàn (không nhảy cóc)", async () => {
+    const { fitQueue } = await import("../src/ui/screens/queue-fit");
+    let prev = Infinity;
+    for (let n = 3; n <= 30; n++) { const k = fitQueue(n, 362, 330).k; expect(k).toBeLessThanOrEqual(prev + 1e-9); prev = k; }
+  });
+});
