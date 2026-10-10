@@ -3,7 +3,7 @@
    - Icon hình khối (tim, sao, quà...) tô nhạt cùng màu bên trong (duotone) và có bóng đổ nhẹ cho bóng bẩy.
    - Nét mặc định 2.2, đầu và góc bo tròn. Style ở src/styles/parts/icons.css. */
 import {
-  Armchair, ArrowLeft, ArrowRight, ArrowUp, Bell, BookOpen, Building2, CakeSlice, CalendarDays, ChartColumn, Check,
+  Armchair, ArrowLeft, ArrowUpDown, ArrowRight, ArrowUp, Bell, BookOpen, Building2, CakeSlice, CalendarDays, ChartColumn, Check,
   ChefHat, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clover, Cloud, Coffee, Coins, CookingPot, Crown, Dices,
   DoorOpen, Droplet, Drumstick, Flame, Flower2, Gem, Gift, Handshake, Heart, Hourglass, Image, Layers, Lightbulb, Mail,
   Mars, Medal, Menu, Moon, Music, NotebookPen, Package, Palette, Pause, PawPrint, PartyPopper, Plus, Search, Settings,
@@ -30,7 +30,7 @@ export const ic = {
   /* thao tác */
   check: mk(Check, "mint"), x: mk(X, ""), up: mk(ArrowUp, ""), left: mk(ArrowLeft, ""), right: mk(ArrowRight, ""),
   chevL: mk(ChevronLeft, ""), chevR: mk(ChevronRight, ""), chevU: mk(ChevronUp, ""), chevD: mk(ChevronDown, ""),
-  pause: mk(Pause, "", true), search: mk(Search, ""), warn: mk(TriangleAlert, "gold", true), bell: mk(Bell, "gold", true),
+  pause: mk(Pause, "", true), search: mk(Search, ""), sort: mk(ArrowUpDown, ""), warn: mk(TriangleAlert, "gold", true), bell: mk(Bell, "gold", true),
   /* trang trí, trạng thái */
   sparkle: mk(Sparkles, "gold", true), gift: mk(Gift, "pink", true), ticket: mk(Ticket, "violet", true), gem: mk(Gem, "sky", true),
   bulb: mk(Lightbulb, "gold", true), bolt: mk(Zap, "gold", true), drop: mk(Droplet, "sky", true), clover: mk(Clover, "mint", true),

@@ -6,7 +6,7 @@
 import { sfx } from "../audio/sound";
 import type { PetId } from "../content/couple";
 import { BAKE_TIME, FOODS, MAX_STAFF_LV, PETS } from "../content/game";
-import { GACHA_ITEMS, KIND_NAME, RARITY, asManager, fxLine, gachaItem, mgrFx, type GachaItem } from "../content/gacha";
+import { GACHA_ITEMS, KIND_NAME, RARITIES, RARITY, asManager, fxLine, gachaItem, mgrFx, type GachaItem } from "../content/gacha";
 import { buyFood, foodDef, foodOf, hire, hireFee, isMascotStaff, mascotBonus, mealChoices, mealOf, onDuty, plannedMeal, setMeal, staffIds, staffState, toggleDuty, train, trainCost, treat } from "../engine/economy";
 import { clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, type StaffKind } from "../engine/gacha";
 import { S, petName, petState, save } from "../engine/state";
@@ -18,6 +18,8 @@ import { bump, confirmSpend, dropModal, esc, floatHearts, heartRow, modal, toast
 import { gachaArt } from "./gachafx";
 import { navigate } from "./router";
 import { openInGacha } from "./screens/gacha";
+import { byNum, byText } from "../engine/listview";
+import { listHTML, registerList } from "./components/listtools";
 
 export type TeamTab = "bake" | "place";
 let team: TeamTab = "bake", floor = 0, listKind: StaffKind = "mgr", dlg = "";
@@ -27,6 +29,29 @@ const BREED: Record<PetId, string> = { dog: "Cún trắng xù", gold: "Mèo Anh 
 const bake = (lv: number) => `${String(BAKE_TIME[Math.min(BAKE_TIME.length, Math.max(1, lv)) - 1]).replace(".", ",")} giây/bánh`;
 const itemsOf = (k: StaffKind) => GACHA_ITEMS.filter(i => k === "mgr" ? asManager(i) : i.kind === "mascot").sort((a, b) => +!!b.mgr - +!!a.mgr || (b.rarity > a.rarity ? 1 : b.rarity < a.rarity ? -1 : 0));
 const fxOf = (it: GachaItem) => it.mascot ? fxLine(it.mascot.fx) : fxLine(mgrFx(it));
+
+/* danh sách quản lý / linh thú bên dưới: tìm, lọc theo độ hiếm và đã có, sắp xếp */
+registerList<GachaItem>("team-items", {
+  placeholder: "Tìm quản lý hoặc linh thú",
+  items: () => itemsOf(listKind),
+  cfg: {
+    text: i => [i.n, i.desc, fxOf(i), ...(i.mgr?.tags ?? [])],
+    groups: {
+      own: { yes: i => hasItem(i.id), no: i => !hasItem(i.id), on: i => floorOfStaff(i.mascot ? "mascot" : "mgr", i.id) >= 0 },
+      rar: { common: i => i.rarity === "common", rare: i => i.rarity === "rare", ultra: i => i.rarity === "ultra" }
+    },
+    sorts: { rarity: byNum(i => RARITIES.indexOf(i.rarity)), name: byText(i => i.n) }
+  },
+  groups: [
+    { id: "own", opts: [{ id: "all", label: "Tất cả" }, { id: "yes", label: "Đã có" }, { id: "on", label: "Đang đứng" }, { id: "no", label: "Chưa có" }] },
+    { id: "rar", opts: [{ id: "all", label: "Tất cả" }, ...RARITIES.map(r => ({ id: r, label: RARITY[r].n }))] }
+  ],
+  sorts: [{ id: "", label: "Mặc định" }, { id: "rarity", label: "Độ hiếm" }, { id: "name", label: "Tên" }],
+  body: rows => `<div class="tm-items">${rows.map(it => {
+    const i = entityInfo(it.id)!;
+    return entityRow(i, { attrs: `data-tm="item:${it.id}" ${i.owned ? `draggable="true" data-drag="${it.id}"` : ""}`, px: 48, meta: "", chips: i.fxChips });
+  }).join("") || `<p class="pempty">Không tìm thấy ai.<br>Thử gõ tên khác hoặc bỏ bớt bộ lọc.</p>`}</div>`
+});
 
 /** mở màn Đội ngũ (từ Menu hoặc từ nơi khác) */
 export function openTeam(tab: TeamTab = "bake", kind?: StaffKind) { team = tab; if (kind) listKind = kind; navigate("/cua-hang/thu-cung"); }
@@ -69,15 +94,11 @@ function placeTab() {
   floor = Math.max(0, Math.min(floor, floorCount() - 1));
   const n = floorCount(), col = Array.from({ length: n }, (_, i) => n - 1 - i).map(f => `<button class="${f === floor ? "on" : ""}" data-tm="floor:${f}">T${f + 1}</button>`).join("");
   const own = (k: StaffKind) => itemsOf(k).filter(i => hasItem(i.id)).length;
-  const rows = itemsOf(listKind).map(it => {
-    const i = entityInfo(it.id)!;
-    return entityRow(i, { attrs: `data-tm="item:${it.id}" ${i.owned ? `draggable="true" data-drag="${it.id}"` : ""}`, px: 48, meta: "", chips: i.fxChips });
-  }).join("");
   return `<div class="tp-wrap"><div class="tf-col" role="group" aria-label="Chọn tầng"><small>TẦNG</small>${col}</div>
       <div class="tp-card"><div class="tp-h">Tầng ${floor + 1}</div>${slotRow("mgr")}${slotRow("mascot")}</div></div>
     <p class="hint5">${CAN_DRAG ? "Chọn trong ô trên, hoặc kéo một dòng ở danh sách thả vào ô." : "Chạm ô chọn để đổi quản lý hoặc linh thú."} Chạm một dòng trong danh sách để xem chi tiết và đặt vào tầng.</p>
     <div class="gtabs stf-tabs tm-kind"><button class="${listKind === "mgr" ? "on" : ""}" data-tm="kind:mgr">Quản lý · ${own("mgr")}/${itemsOf("mgr").length}</button><button class="${listKind === "mascot" ? "on" : ""}" data-tm="kind:mascot">Linh thú · ${own("mascot")}/${itemsOf("mascot").length}</button></div>
-    <div class="tm-items">${rows}</div>`;
+    ${listHTML("team-items")}`;
 }
 
 /** nội dung màn Đội ngũ (shop.ts gọi) */

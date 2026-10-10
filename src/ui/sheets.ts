@@ -15,6 +15,8 @@ import { cakeAnySVG, ingSVG } from "./art";
 import { $, closeModal, esc, modal, toast } from "./dom";
 import { FX_CAP, buffSources, fx, fxRaw } from "../engine/progress";
 import { gachaArt } from "./gachafx";
+import { byNum, byText } from "../engine/listview";
+import { listHTML, registerList } from "./components/listtools";
 import { ic } from "./icons";
 import { giftReady, goals } from "../engine/progress";
 import { weeklyPending } from "../engine/weekly";
@@ -24,39 +26,67 @@ import { BUFF_LABEL, buffIcon, buffText } from "./screens/home";
 const ingChips = (r: (typeof RECIPES)[number]) => partsOfRecipe(r).map(p => `<span>${ingSVG(p.k, p.i, 18)}${CATS[p.k][p.i][0]}</span>`).join("");
 
 /* Công thức (mở từ Menu hoặc chạm bảng Menu trong tiệm): công thức của tiệm, công thức Gacha (mờ nếu chưa có, chạm để sang Gacha) */
-let rfil: "all" | "shop" | "gacha" | "custom" = "all";
 const RAR_C: Record<string, string> = { common: "#8FB4D9", rare: "#7A8CFF", ultra: "#F2B84B" };
-function recipeBody() {
-  const L = lvl(), f = featured();
-  const tile = (r: { base: number; cream: number; top: number; up?: [number, number][] }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "") =>
-    `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
-  const shop = RECIPES.map(r => r.lv > L
-    ? tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim")
-    : !recipeReady(r) ? tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`)
-    : tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", r.id === f.id ? `<em class="rstar">★ nổi bật</em>` : "")).join("");
-  const se = seasonalNow(), seasonTile = tile(se, se.n, se.price, L < SEASON_LV ? `<span class="st soon">Mở ở Lv ${SEASON_LV}</span>` : recipeReady(se) ? `<span class="st ok">Chỉ bán tháng ${se.month}</span>` : `<span class="st need">Thiếu nguyên liệu ›</span>`,
-    L < SEASON_LV ? "dim" : se.id === f.id ? "star" : "", se.id === f.id ? `<em class="rstar">★ nổi bật</em>` : "", L >= SEASON_LV && !recipeReady(se) ? `data-act="ings"` : "");
+type RSec = "shop" | "season" | "gacha" | "custom";
+interface RItem { sec: RSec; n: string; price: number; lv: number; st: "ok" | "need" | "lock"; html: string }
+const tile = (r: { base: number; cream: number; top: number; up?: [number, number][] }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "") =>
+  `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
+
+/* mọi công thức (của tiệm, theo mùa, Gacha, tuỳ chỉnh) thành một danh sách phẳng để tìm, lọc, sắp xếp chung */
+function recipeItems(): RItem[] {
+  const L = lvl(), f = featured(), se = seasonalNow(), star = (id: string) => id === f.id ? `<em class="rstar">★ nổi bật</em>` : "";
+  const shop = RECIPES.map((r): RItem => r.lv > L
+    ? { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "lock", html: tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim") }
+    : !recipeReady(r) ? { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "need", html: tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`) }
+    : { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "ok", html: tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", star(r.id)) });
+  const seasonSt = L < SEASON_LV ? "lock" : recipeReady(se) ? "ok" : "need";
+  const season: RItem = { sec: "season", n: se.n, price: se.price, lv: SEASON_LV, st: seasonSt, html: tile(se, se.n, se.price,
+    seasonSt === "lock" ? `<span class="st soon">Mở ở Lv ${SEASON_LV}</span>` : seasonSt === "ok" ? `<span class="st ok">Chỉ bán tháng ${se.month}</span>` : `<span class="st need">Thiếu nguyên liệu ›</span>`,
+    seasonSt === "lock" ? "dim" : se.id === f.id ? "star" : "", star(se.id), seasonSt === "need" ? `data-act="ings"` : "") };
   const sp = new Map(specialRecipes().map(r => [r.id, r]));
-  const gacha = GACHA_ITEMS.filter(i => i.recipe).map(i => hasItem(i.id)
-    ? tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`)
-    : tile(i.recipe!, i.n, i.recipe!.price, `<span class="st gacha">Gacha ›</span>`, "dim", `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`, `data-rgacha="${i.id}"`)).join("");
-  const cus = S.custom.map(c => { const r = customRecipe(c);
-    return tile(r, r.n, r.price, recipeReady(r) ? `<span class="st ok">${tiersOf(r)} tầng</span>` : `<span class="st need">Thiếu nguyên liệu</span>`, "", "", `data-cedit="${c.id}"`); }).join("")
-    + (S.custom.length < MAX_CUSTOM ? (L >= CUSTOM_LV
+  const gacha = GACHA_ITEMS.filter(i => i.recipe).map((i): RItem => {
+    const rar = `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`;
+    return hasItem(i.id)
+      ? { sec: "gacha", n: i.n, price: sp.get(i.id)!.price, lv: 0, st: "ok", html: tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", rar) }
+      : { sec: "gacha", n: i.n, price: i.recipe!.price, lv: 0, st: "lock", html: tile(i.recipe!, i.n, i.recipe!.price, `<span class="st gacha">Gacha ›</span>`, "dim", rar, `data-rgacha="${i.id}"`) };
+  });
+  const custom = S.custom.map((c): RItem => { const r = customRecipe(c), ok = recipeReady(r);
+    return { sec: "custom", n: r.n, price: r.price, lv: 0, st: ok ? "ok" : "need", html: tile(r, r.n, r.price, ok ? `<span class="st ok">${tiersOf(r)} tầng</span>` : `<span class="st need">Thiếu nguyên liệu</span>`, "", "", `data-cedit="${c.id}"`) }; });
+  return [...shop, season, ...gacha, ...custom];
+}
+registerList<RItem>("recipes", {
+  placeholder: "Tìm công thức",
+  items: recipeItems,
+  cfg: {
+    text: r => [r.n],
+    groups: {
+      sec: { shop: r => r.sec === "shop" || r.sec === "season", gacha: r => r.sec === "gacha", custom: r => r.sec === "custom" },
+      st: { ok: r => r.st === "ok", need: r => r.st === "need", lock: r => r.st === "lock" }
+    },
+    sorts: { price: byNum(r => r.price), lv: byNum(r => r.lv), name: byText(r => r.n) }
+  },
+  groups: [
+    { id: "sec", opts: [{ id: "all", label: "Tất cả" }, { id: "shop", label: "Của tiệm" }, { id: "gacha", label: "Gacha" }, { id: "custom", label: "Tuỳ chỉnh" }] },
+    { id: "st", opts: [{ id: "all", label: "Tất cả" }, { id: "ok", label: "Sẵn sàng" }, { id: "need", label: "Thiếu hàng", alert: true }, { id: "lock", label: "Chưa mở" }] }
+  ],
+  sorts: [{ id: "", label: "Mặc định" }, { id: "price", label: "Giá" }, { id: "lv", label: "Cấp mở" }, { id: "name", label: "Tên" }],
+  body: (rows, _all, v) => {
+    const L = lvl(), se = seasonalNow(), of = (s: RSec) => rows.filter(r => r.sec === s).map(r => r.html).join("");
+    const filtered = !!v.q || !!v.f.st, secF = v.f.sec ?? "all";
+    const nShop = RECIPES.filter(r => r.lv <= L && recipeReady(r)).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
+    const sec = (title: string, note: string, tiles: string, show: boolean) => show && tiles ? `<div class="sh2"><b>${title}</b><span class="lav">${note}</span></div><div class="rb5">${tiles}</div>` : "";
+    const add = !filtered && (secF === "all" || secF === "custom") ? (S.custom.length < MAX_CUSTOM ? (L >= CUSTOM_LV
       ? `<button class="rc5 add" data-act="custom"><span class="plus">+</span><b>Tạo mẫu mới</b></button>`
-      : `<div class="rc5 add off"><span class="plus">+</span><b>Mở ở Lv ${CUSTOM_LV}</b></div>`) : "");
-  const nShop = RECIPES.filter(r => r.lv <= L && recipeReady(r)).length, nG = GACHA_ITEMS.filter(i => i.recipe && hasItem(i.id)).length, tG = GACHA_ITEMS.filter(i => i.recipe).length;
-  return `<div class="gfil rfil">${([["all", "Tất cả"], ["shop", "Của tiệm"], ["gacha", "Gacha"], ["custom", "Tuỳ chỉnh"]] as const).map(([k, n]) => `<button class="${rfil === k ? "on" : ""}" data-rfil="${k}">${n}</button>`).join("")}</div>
-    ${rfil === "all" || rfil === "shop" ? `<div class="sh2"><b>Công thức của tiệm</b><span class="lav">${nShop}/${RECIPES.length} bán được</span></div><div class="rb5">${shop}</div>` : ""}
-    ${rfil === "all" || rfil === "shop" ? `<div class="sh2"><b>Bánh theo mùa</b><span class="lav">Tháng ${se.month} · ${se.season}</span></div><div class="rb5">${seasonTile}</div>` : ""}
-    ${rfil === "all" || rfil === "gacha" ? `<div class="sh2"><b>Công thức Gacha</b><span class="lav">${nG}/${tG} đã có</span></div><div class="rb5">${gacha}</div>` : ""}
-    ${rfil === "all" || rfil === "custom" ? `<div class="sh2"><b>Bánh tuỳ chỉnh</b><span class="lav">${S.custom.length}/${MAX_CUSTOM} mẫu</span></div><div class="rb5">${cus}</div>` : ""}
+      : `<div class="rc5 add off"><span class="plus">+</span><b>Mở ở Lv ${CUSTOM_LV}</b></div>`) : "") : "";
+    const out = sec("Công thức của tiệm", `${nShop}/${RECIPES.length} bán được`, of("shop"), true) + sec("Bánh theo mùa", `Tháng ${se.month} · ${se.season}`, of("season"), true)
+      + sec("Công thức Gacha", `${nG}/${tG} đã có`, of("gacha"), true) + sec("Bánh tuỳ chỉnh", `${S.custom.length}/${MAX_CUSTOM} mẫu`, of("custom") + add, true);
+    return `${out || `<p class="pempty">Không tìm thấy công thức nào.<br>Thử gõ tên khác hoặc bỏ bớt bộ lọc.</p>`}
     <p class="phint">Món mờ chưa có: chạm để sang Gacha và xem món đó.</p>`;
-}
+  }
+});
 export function menuSheet() {
-  modal(`<h2>Công thức</h2><p class="sub">${unlocked().length} món đang bán · khách chọn độ ngọt riêng</p><div id="rcpBody">${recipeBody()}</div><div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
+  modal(`<h2>Công thức</h2><p class="sub">${unlocked().length} món đang bán · khách chọn độ ngọt riêng</p><div id="rcpBody">${listHTML("recipes")}</div><div class="mbtns"><button class="b3" data-close>Đóng</button></div>`);
 }
-export function recipeFilter(k: string) { rfil = k as typeof rfil; const h = $("#rcpBody"); if (h) h.innerHTML = recipeBody(); }
 
 /* Tủ bánh: carousel các bánh đang bán, vuốt ngang */
 export function cakesSheet() {

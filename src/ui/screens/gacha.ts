@@ -12,10 +12,12 @@ import { rarityIcon } from "../badges";
 import { entityInfo, entityTile } from "../components/entity";
 import { gachaArt, playReveal, LOOK } from "../gachafx";
 import { hydratePortraits } from "../portrait";
+import { byNum, byText } from "../../engine/listview";
+import { listHTML, registerList, setListFilter, viewOf } from "../components/listtools";
 import { mountTurntableLazy as mountTurntable } from "../../scene/turntable";
 
 let unmount = () => { }, fromPool = false;
-let tab: "summon" | "bag" = "summon", filter: GachaKind | "all" = "all", busy = false, poolR: Rarity = "common";
+let tab: "summon" | "bag" = "summon", busy = false, poolR: Rarity = "common";
 const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">${ic.chevL(18, 2.8, "none", "rose")}</button>`;
 
 function summonHTML() {
@@ -39,15 +41,31 @@ function summonHTML() {
       <div><b>🐾 Linh vật</b><span>Chọn một bé đồng hành để hưởng lợi ích</span></div></div>
     <p class="phint">Kiếm vé: vé miễn phí mỗi ngày, đạt hết mục tiêu ca, nhận quà mục tiêu ngày. Đồ trùng đổi Bụi sao nên quay nào cũng có ích.</p></div>`;
 }
-function bagHTML() {
-  const kinds: (GachaKind | "all")[] = ["all", "recipe", "decor", "char", "mascot", "manager"], items = GACHA_ITEMS.filter(i => filter === "all" || i.kind === filter);
-  return `<div class="gbag"><div class="gfil">${kinds.map(k => `<button class="${filter === k ? "on" : ""}" data-gact="filter:${k}">${k === "all" ? `Tất cả ${ownedCount()}/${GACHA_ITEMS.length}` : KIND_NAME[k]}</button>`).join("")}</div>
-    <div class="gitems">${items.map(it => {
+const KINDS: GachaKind[] = ["recipe", "decor", "char", "mascot", "manager"];
+registerList<GachaItem>("bag", {
+  placeholder: "Tìm theo tên hoặc mô tả",
+  items: () => GACHA_ITEMS,
+  cfg: {
+    text: i => [i.n, i.desc, KIND_NAME[i.kind], RARITY[i.rarity].n],
+    groups: {
+      kind: Object.fromEntries(KINDS.map(k => [k, (i: GachaItem) => i.kind === k])),
+      own: { yes: i => hasItem(i.id), no: i => !hasItem(i.id) }
+    },
+    sorts: { rarity: byNum(i => RARITIES.indexOf(i.rarity)), name: byText(i => i.n), count: byNum(i => countOf(i.id)) }
+  },
+  groups: [
+    { id: "kind", opts: [{ id: "all", label: "Tất cả" }, ...KINDS.map(k => ({ id: k, label: KIND_NAME[k] }))] },
+    { id: "own", opts: [{ id: "all", label: "Tất cả" }, { id: "yes", label: "Đã có" }, { id: "no", label: "Chưa có" }] }
+  ],
+  sorts: [{ id: "", label: "Mặc định" }, { id: "rarity", label: "Độ hiếm" }, { id: "count", label: "Số lượng" }, { id: "name", label: "Tên" }],
+  body: (rows, all) => `<div class="sh2"><b>Bộ sưu tập</b><span class="lav">${rows.length}/${all.length} món · đã có ${ownedCount()}</span></div>
+    <div class="gitems">${rows.map(it => {
       const i = entityInfo(it.id)!, own = i.owned;
       const sub = own ? (it.recipe ? `thành thạo ${masteryOf(it.id)}/${MASTERY_MAX}` : i.floor >= 0 ? `${it.char ? "Quản lý " : ""}tầng ${i.floor + 1}` : `x${i.count}`) : "";
       return entityTile(i, { attrs: `data-gact="card:${it.id}"`, cls: "gi2", px: 60, sub });
-    }).join("")}</div></div>`;
-}
+    }).join("") || `<p class="pempty">Không tìm thấy món nào.<br>Thử gõ tên khác hoặc bỏ bớt bộ lọc.</p>`}</div>`
+});
+const bagHTML = () => `<div class="gbag">${listHTML("bag")}</div>`;
 export function gachaHTML() {
   return `<div class="scr gacha6"><div class="phead">${BACK}<div class="pt"><small>Gacha Summon</small><h2>Triệu hồi</h2></div><span class="pill tk" aria-label="${S.gacha.tickets} vé">🎟 ${fmtN(S.gacha.tickets)}</span>${coinPill()}</div>
     <div class="ghero" role="img" aria-label="Gacha Summon"></div>
@@ -111,7 +129,7 @@ function poolSheet() {
 /** mở màn Gacha ở bộ sưu tập, đúng nhóm của món rồi hiện chi tiết món đó (dùng từ Quản lý, Công thức khi món chưa có) */
 export function openInGacha(id: string) {
   const it = gachaItem(id); if (!it) return;
-  tab = "bag"; filter = it.kind; fromPool = false;
+  tab = "bag"; Object.assign(viewOf("bag"), { q: "" }); setListFilter("bag", "kind", it.kind); setListFilter("bag", "own", "all"); fromPool = false;
   navigate("/gacha");
   setTimeout(() => detail(id), 60);
 }
@@ -120,7 +138,6 @@ export function openInGacha(id: string) {
 export async function gachaAct(act: string) {
   const [a, v] = act.split(":");
   if (a === "tab") { tab = v as typeof tab; sfx("click"); return render(); }
-  if (a === "filter") { filter = v as typeof filter; sfx("click"); return render(); }
   if (a === "pool") { poolR = (v as Rarity) || poolR; sfx("click"); return poolSheet(); }
   if (a === "try") { const it = gachaItem(v!); if (!it) return; unmount(); document.querySelector<HTMLElement>("[data-close]")?.click(); sfx("click"); return void playReveal([{ item: it, isNew: !hasItem(it.id), dust: 0, count: 1 }], () => detail(it.id), true); }
   if (a === "view3d") {

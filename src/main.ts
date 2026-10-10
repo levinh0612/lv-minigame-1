@@ -29,8 +29,8 @@ import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { fmtN } from "./engine/util";
 import { initTeam, setTeamTab, staffDialogAct, staffSheet, teamAct, type TeamTab } from "./ui/team";
-import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet, recipeFilter } from "./ui/sheets";
-import { setCakeFil, setPrepTab, type CakeFil, type PrepTab } from "./ui/screens/prep";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet } from "./ui/sheets";
+import { setPrepTab, type PrepTab } from "./ui/screens/prep";
 import { MAX_PINS, togglePin } from "./engine/progress";
 import { progressAct } from "./ui/screens/progress";
 import { rankSheet } from "./ui/screens/rank";
@@ -121,14 +121,12 @@ document.addEventListener("click", e => {
   if (d.iact) return ingAct(d.iact);
   if (d.cact) return customAct(d.cact);
   if (d.cedit) { sfx("click"); return openCustom(d.cedit); }
-  if (d.rfil) { sfx("click"); return recipeFilter(d.rfil); }
   if (d.rgacha) { sfx("click"); return openInGacha(d.rgacha); }
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
   if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
   if (d.progtab) return progressAct("tab", d.progtab);
   if (d.pact) return progressAct("act", d.pact);
-  if (d.pfil) { setCakeFil(d.pfil as CakeFil); sfx("click"); return render(); }
   if (d.rpin) { if (togglePin(d.rpin)) sfx("tap"); else toast(`Chỉ ghim được ${MAX_PINS} món, bỏ bớt một món trước nha`); return render(); }
   if (d.ptab) { setPrepTab(d.ptab as PrepTab); sfx("click"); return render(); }
   if (d.duty) { toggleDuty(d.duty as PetId); sfx("click"); return render(); }

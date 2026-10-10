@@ -25,10 +25,11 @@ import { frameName, levelBadge, levelFrame, tierBadge } from "../ui/badges";
 import { adminPanel, claimGoals, coinModal, giftSheet, goalsSheet, himNote, incidentModal, rewardModal, openLetter, pauseMenu, settings, tutorial, wallet, welcome } from "../ui/modals";
 import { INCIDENTS } from "../engine/incident";
 import { authHTML } from "../ui/screens/auth";
+import { setListFilter } from "../ui/components/listtools";
 import { openItemDialog, openStaffDialog, setDDOpen, setTeamTab } from "../ui/team";
 import { ingredientSheet } from "../ui/ingredients";
 import { openCustom } from "../ui/custom";
-import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, recipeFilter } from "../ui/sheets";
+import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet } from "../ui/sheets";
 import { earn, note, spend } from "../engine/wallet";
 import { progressHTML, setProgTab } from "../ui/screens/progress";
 import { ensureWeek } from "../engine/weekly";
@@ -240,7 +241,7 @@ const STORIES: Story[] = [
   { id: "m-custom", sec: "modals", title: "Tự làm bánh (2 tầng)", desc: "Chọn số tầng, đế + kem từng tầng, topping; giá tính trực tiếp, tự tay làm được thưởng thêm", kind: "modal",
     html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }]; }); return modalOver(homeHTML(), () => openCustom("c1")); } },
   { id: "m-menu3", sec: "modals", title: "Công thức · bánh tuỳ chỉnh", desc: "Mục Bánh tuỳ chỉnh: mẫu đã lưu, ô Tạo mẫu mới", kind: "modal",
-    html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }, { id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); return modalOver(homeHTML(), () => { menuSheet(); recipeFilter("custom"); }); } },
+    html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }, { id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); return modalOver(homeHTML(), () => { setListFilter("recipes", "sec", "custom"); menuSheet(); setListFilter("recipes", "sec", "all"); }); } },
   { id: "m-buff", sec: "modals", title: "Buff đang có", desc: "Tổng 4 loại buff và nguồn của từng buff", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), buffSheet); } },
   { id: "m-stats", sec: "modals", title: "Chỉ số của tiệm", desc: "Nút Xem chỉ số ở thẻ hồ sơ: đủ chỉ số, nhóm Cá nhân chỉ có ở tiệm của mình", kind: "modal",

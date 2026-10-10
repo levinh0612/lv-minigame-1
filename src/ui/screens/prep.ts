@@ -1,6 +1,6 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
 import { ic } from "../icons";
-import { CATS, STOCK_KEYS, partsOfRecipe } from "../../content/game";
+import { CATS, STOCK_KEYS, partsOfRecipe, type StockKey } from "../../content/game";
 import { canHire, hireFee, staffIds, capacity, demand, needUpgrade, spareSeats, crewPlan, estCostRows, estProfit, expectedCustomers, foodDef, mealOf, plannedMeal, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { MAX_PINS, featured, isPinned, lvl, unlocked } from "../../engine/progress";
 import { goalText, shiftGoals } from "../../engine/shift";
@@ -10,6 +10,8 @@ import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { cakeAnySVG, foodSVG, ingSVG } from "../art";
 import { coinPill, esc } from "../dom";
+import { byNum, byText } from "../../engine/listview";
+import { listHTML, registerList } from "../components/listtools";
 
 const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">${ic.chevL(18, 2.8, "none", "rose")}</button>`;
 export const pageHead = (title: string, sub = "") =>
@@ -28,18 +30,93 @@ function lockedCard(id: string) {
 export type PrepTab = "crew" | "cakes" | "stock" | "goals";
 let prepTab: PrepTab = "crew";
 export const setPrepTab = (t: PrepTab) => { prepTab = t; };
-/* lọc danh sách bánh: tất cả, món ruột (ghim), mới mở (trong 5 cấp gần đây), thiếu nguyên liệu */
-export type CakeFil = "all" | "pin" | "new" | "low";
-const CAKE_FILS: [CakeFil, string][] = [["all", "Tất cả"], ["pin", "Ruột"], ["new", "Mới"], ["low", "Thiếu"]];
-/* biểu tượng cùng một nét cho từng bộ lọc */
-const FIL_IC: Record<CakeFil, string> = {
-  all: "",
+/* biểu tượng cùng một nét cho từng bộ lọc bánh */
+const FIL_IC = {
   pin: ic.star(14, 2.4, "none", "gold"),
   new: ic.sparkle(14, 2.4, "none", "violet"),
   low: ic.warn(14, 2.4, "none", "red")
 };
-let cakeFil: CakeFil = "all";
-export const setCakeFil = (f: CakeFil) => { cakeFil = f; };
+const SORT_DEFAULT = { id: "", label: "Mặc định" };
+
+/* ===== Bánh ===== */
+type Rcp = ReturnType<typeof unlocked>[number];
+const lacks = (r: Rcp) => partsOfRecipe(r).some(p => stockOf(p.k, p.i) === 0);
+registerList<Rcp>("prep-cakes", {
+  placeholder: "Tìm bánh hoặc nguyên liệu",
+  items: unlocked,
+  cfg: {
+    text: r => [r.n, ...partsOfRecipe(r).map(p => CATS[p.k][p.i][0])],
+    groups: { fil: { pin: r => isPinned(r.id), new: r => r.lv > lvl() - 5 && r.lv <= lvl(), low: lacks } },
+    sorts: { price: byNum(r => r.price), lv: byNum(r => r.lv), name: byText(r => r.n) }
+  },
+  groups: [{ id: "fil", opts: [{ id: "all", label: "Tất cả" }, { id: "pin", label: "Ruột", icon: FIL_IC.pin }, { id: "new", label: "Mới", icon: FIL_IC.new }, { id: "low", label: "Thiếu", icon: FIL_IC.low, alert: true }] }],
+  sorts: [SORT_DEFAULT, { id: "price", label: "Giá" }, { id: "lv", label: "Cấp mở" }, { id: "name", label: "Tên" }],
+  body: (rows, all, v) => {
+    const feat = featured(), nPin = all.filter(r => isPinned(r.id)).length, fil = v.f.fil ?? "all";
+    const list = v.sort ? rows : [...rows].sort((x, y) => +isPinned(y.id) - +isPinned(x.id));       // mặc định: món ruột lên đầu
+    const empty = v.q ? "Không tìm thấy món nào.<br>Thử gõ tên khác hoặc bỏ bớt bộ lọc." : fil === "low" ? "Chưa có món nào thiếu hàng.<br>Kho đang đủ cho cả ca." : fil === "pin" ? "Chưa ghim món ruột nào.<br>Bấm ngôi sao ở món để ghim." : "Chưa có món nào trong mục này.";
+    return `<div class="sh2"><b>Bánh</b><span class="lav">${list.length}/${all.length} món · ★ ${nPin}/${MAX_PINS}</span></div>
+      <div class="pcakes">${list.map(r => {
+      const viral = r.id === feat.id, pin = isPinned(r.id);
+      return `<div class="pcake ${viral ? "viral" : ""}"><div class="pck">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up }, { size: 54, still: true })}</div>
+        <div class="pi"><b>${esc(r.n)}</b><small class="pprice">${fmtN(r.price)} xu${viral ? ` <span class="vtag">✦ Viral hôm nay</span>` : ""}</small>
+        <div class="pings">${partsOfRecipe(r).map(p => `<span title="${CATS[p.k][p.i][0]}" class="${stockOf(p.k, p.i) === 0 ? "out" : ""}">${ingSVG(p.k, p.i, 16)}</span>`).join("")}</div></div>
+        <button class="pinbtn ${pin ? "on" : ""}" data-rpin="${r.id}" aria-pressed="${pin}" aria-label="${pin ? "Bỏ ghim" : "Ghim"} ${esc(r.n)}">${pin ? "★" : "☆"}</button></div>`;
+    }).join("") || `<p class="pempty">${empty}</p>`}</div>
+      <p class="phint">Ghim tối đa ${MAX_PINS} món ruột: khách gọi các món này nhiều hơn (khoảng một nửa số khách) để bạn dễ tự nhớ công thức và nhận thưởng +50%.</p>`;
+  }
+});
+
+/* ===== Nhân viên ===== */
+registerList<string>("prep-crew", {
+  placeholder: "Tìm theo tên bé",
+  items: staffIds,
+  cfg: {
+    text: id => [petName(id), entityInfo(id)?.name ?? ""],
+    groups: { st: { on: id => !!S.staff[id].hired && onDuty(id), off: id => !!S.staff[id].hired && !onDuty(id), lock: id => !S.staff[id].hired } },
+    sorts: { lv: byNum(id => S.staff[id].lv), name: byText(id => petName(id)) }
+  },
+  groups: [{ id: "st", opts: [{ id: "all", label: "Tất cả" }, { id: "on", label: "Đi làm" }, { id: "off", label: "Đang nghỉ" }, { id: "lock", label: "Chưa nhận" }] }],
+  sorts: [SORT_DEFAULT, { id: "lv", label: "Bậc" }, { id: "name", label: "Tên" }],
+  body: (rows, all) => {
+    const hungry = all.filter(id => onDuty(id) && !plannedMeal(id)).map(petName);
+    return `<div class="sh2"><b>Chọn người đi làm</b><span class="lav">${crewPlan().filter(x => x.meal).length}/${all.length} đi làm</span></div>
+      <div class="pcrews">${rows.map(crewCard).join("") || `<p class="pempty">Không tìm thấy bé nào.<br>Thử gõ tên khác hoặc bỏ bớt bộ lọc.</p>`}</div>
+      <p class="phint">Chạm vào thẻ để chọn hoặc bỏ chọn đi làm.${hungry.length ? ` <b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>`;
+  }
+});
+
+/* ===== Nguyên liệu ===== */
+interface Ing { k: StockKey; i: number }
+const ingName = (x: Ing) => CATS[x.k][x.i][0];
+const KEY_LABEL: Record<StockKey, string> = { base: "Đế", cream: "Kem", top: "Topping" };
+registerList<Ing>("prep-stock", {
+  placeholder: "Tìm nguyên liệu",
+  items: () => STOCK_KEYS.flatMap(k => availableIdx(k).map(i => ({ k, i }))),
+  cfg: {
+    text: x => [ingName(x), KEY_LABEL[x.k]],
+    groups: {
+      kind: Object.fromEntries(STOCK_KEYS.map(k => [k, (x: Ing) => x.k === k])),
+      st: { low: x => stockOf(x.k, x.i) <= 2, out: x => stockOf(x.k, x.i) === 0 }
+    },
+    sorts: { left: byNum(x => stockOf(x.k, x.i)), name: byText(ingName), price: byNum(x => packPrice(x.k, x.i, 5)) }
+  },
+  groups: [
+    { id: "kind", opts: [{ id: "all", label: "Tất cả" }, ...STOCK_KEYS.map(k => ({ id: k, label: KEY_LABEL[k] }))] },
+    { id: "st", opts: [{ id: "all", label: "Tất cả" }, { id: "low", label: "Sắp hết", icon: FIL_IC.low, alert: true }, { id: "out", label: "Hết hàng", alert: true }] }
+  ],
+  sorts: [SORT_DEFAULT, { id: "left", label: "Còn ít nhất" }, { id: "price", label: "Giá nhập" }, { id: "name", label: "Tên" }],
+  body: (rows, all) => {
+    const low = all.filter(x => stockOf(x.k, x.i) <= 2).length;
+    const tiles = rows.map(x => {
+      const v = stockOf(x.k, x.i), p = packPrice(x.k, x.i, 5), nm = ingName(x);
+      return `<button class="stile ${v === 0 ? "out" : v <= 2 ? "low" : ""}" data-ing-buy="${x.k}:${x.i}:5" ${S.coins < p ? "disabled" : ""} aria-label="Nhập 5 ${nm}, ${p} xu">${ingSVG(x.k, x.i, 22)}<span>${nm}</span><b>${v === 0 ? "Hết" : v}</b></button>`;
+    }).join("");
+    return `<div class="sh2"><b>Kho trước ca</b><span class="${low ? "red" : "lav"}">${low ? `${low} món sắp hết` : "Đủ hàng"}</span></div>
+      <div class="stiles">${tiles || `<p class="pempty">Không tìm thấy nguyên liệu nào.<br>Thử gõ tên khác hoặc bỏ bớt bộ lọc.</p>`}</div>
+      <p class="phint">Chạm một món để nhập thêm 5 phần (giá theo nhà cung cấp).</p>`;
+  }
+});
 
 /* thẻ gọn của một bé: chạm cả thẻ để chọn/bỏ chọn đi làm (dùng thành phần chung entityRow) */
 function crewCard(id: string) {
@@ -58,41 +135,15 @@ export function prepHTML() {
   const feat = featured(), plan = crewPlan(), est = estProfit(), n = expectedCustomers();
   const sug = suggestion(), sugCost = sug.reduce((a, x) => a + x.cost, 0), goals = shiftGoals(n);
   const needPrep = sug.length > 0 || plan.some(x => !x.meal);
-  const hungry = plan.filter(x => !x.meal).map(x => petName(x.id));
   const low = STOCK_KEYS.flatMap(k => availableIdx(k).map(i => ({ k, i }))).filter(x => stockOf(x.k, x.i) <= 2);
   const tab = (id: PrepTab, label: string, badge = "") => `<button class="${prepTab === id ? "on" : ""}" data-ptab="${id}" role="tab" aria-selected="${prepTab === id}">${label}${badge}</button>`;
   const ic = [["#FFE9EF", "#E0567A"], ["#E3F6EC", "#3F9C78"], ["#FFF0C9", "#A77A0E"]];
   const rows = estCostRows();
   let body = "";
-  if (prepTab === "crew") {
-    const ids = staffIds();
-    body = `<div class="sh2"><b>Chọn người đi làm</b><span class="lav">${plan.filter(x => x.meal).length}/${ids.length} đi làm</span></div>
-      <div class="pcrews">${ids.map(crewCard).join("")}</div>
-      <p class="phint">Chạm vào thẻ để chọn hoặc bỏ chọn đi làm.${hungry.length ? ` <b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>`;
-  } else if (prepTab === "cakes") {
-    const all = unlocked(), L = lvl(), lacks = (r: (typeof all)[number]) => partsOfRecipe(r).some(p => stockOf(p.k, p.i) === 0);
-    const test: Record<CakeFil, (r: (typeof all)[number]) => boolean> = { all: () => true, pin: r => isPinned(r.id), new: r => r.lv > L - 5 && r.lv <= L, low: lacks };
-    const rs = all.filter(test[cakeFil]).sort((x, y) => +isPinned(y.id) - +isPinned(x.id));
-    const nPin = all.filter(r => isPinned(r.id)).length;
-    body = `<div class="pfil">${CAKE_FILS.map(([k, n]) => { const cnt = all.filter(test[k]).length; return `<button class="${cakeFil === k ? "on" : ""} ${k === "low" && cnt ? "alert" : ""}" data-pfil="${k}">${FIL_IC[k]}${n}<em>${cnt}</em></button>`; }).join("")}</div>
-      <div class="sh2"><b>Bánh</b><span class="lav">${rs.length}/${all.length} món · ★ ${nPin}/${MAX_PINS}</span></div>
-      <div class="pcakes">${rs.map(r => {
-      const viral = r.id === feat.id, pin = isPinned(r.id);
-      return `<div class="pcake ${viral ? "viral" : ""}"><div class="pck">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up }, { size: 54, still: true })}</div>
-        <div class="pi"><b>${esc(r.n)}</b><small class="pprice">${fmtN(r.price)} xu${viral ? ` <span class="vtag">✦ Viral hôm nay</span>` : ""}</small>
-        <div class="pings">${partsOfRecipe(r).map(p => `<span title="${CATS[p.k][p.i][0]}" class="${stockOf(p.k, p.i) === 0 ? "out" : ""}">${ingSVG(p.k, p.i, 16)}</span>`).join("")}</div></div>
-        <button class="pinbtn ${pin ? "on" : ""}" data-rpin="${r.id}" aria-pressed="${pin}" aria-label="${pin ? "Bỏ ghim" : "Ghim"} ${esc(r.n)}">${pin ? "★" : "☆"}</button></div>`;
-    }).join("") || `<p class="pempty">${cakeFil === "low" ? "Chưa có món nào thiếu hàng.<br>Kho đang đủ cho cả ca." : cakeFil === "pin" ? "Chưa ghim món ruột nào.<br>Bấm ngôi sao ở món để ghim." : "Chưa có món nào trong mục này."}</p>`}</div>
-      <p class="phint">Ghim tối đa ${MAX_PINS} món ruột: khách gọi các món này nhiều hơn (khoảng một nửa số khách) để bạn dễ tự nhớ công thức và nhận thưởng +50%.</p>`;
-  } else if (prepTab === "stock") {
-    const stock = STOCK_KEYS.map(k => availableIdx(k).map(i => {
-      const nm = CATS[k][i][0], v = stockOf(k, i), p = packPrice(k, i, 5);
-      return `<button class="stile ${v === 0 ? "out" : v <= 2 ? "low" : ""}" data-ing-buy="${k}:${i}:5" ${S.coins < p ? "disabled" : ""} aria-label="Nhập 5 ${nm}, ${p} xu">${ingSVG(k, i, 22)}<span>${nm}</span><b>${v === 0 ? "Hết" : v}</b></button>`;
-    }).join("")).join("");
-    body = `<div class="sh2"><b>Kho trước ca</b><span class="${low.length ? "red" : "lav"}">${low.length ? `${low.length} món sắp hết` : "Đủ hàng"}</span></div>
-      <div class="stiles">${stock}</div>
-      <p class="phint">Chạm một món để nhập thêm 5 phần (giá ${low.length ? "hiện khi chạm" : "theo nhà cung cấp"}).</p>`;
-  } else {
+  if (prepTab === "crew") body = listHTML("prep-crew");
+  else if (prepTab === "cakes") body = listHTML("prep-cakes");
+  else if (prepTab === "stock") body = listHTML("prep-stock");
+  else {
     body = `<div class="custcnt"><span class="cntico">👥</span><div><b>Dự đoán khách hàng ca này: ${n}</b><small>Ghế dư: ${spareSeats()}${spareSeats() ? ` <span class="gh">🌟 Có thể gặp giờ vàng</span>` : ""}</small></div></div>
       ${needUpgrade() ? `<button class="vwarn" data-act="venue"><span>🪑</span><div><b>Khách đông hơn chỗ ngồi</b><small>Giờ cao điểm ${demand()} khách, tiệm có ${capacity()} ghế. Chạm để nâng cấp.</small></div></button>` : ""}
       <div class="sh2"><b>Mục tiêu ca này</b><span class="gold">thưởng lúc hết ca</span></div>

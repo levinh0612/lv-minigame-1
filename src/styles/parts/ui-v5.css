@@ -28,7 +28,7 @@
 .prep2 .pfil button.on{background:#6F5BE0;color:#fff}
 .prep2 .pfil button.on em{background:rgba(255,255,255,.25);color:#fff}
 .prep2 .pfil button.alert em{background:#E85D7F;color:#fff}
-.prep2 .pempty{margin:8px 0 0;padding:16px;border-radius:16px;background:#fff;box-shadow:0 2px 0 var(--sh);text-align:center;font:700 13px/1.4 var(--body);color:var(--soft2)}
+.pempty{margin:8px 0 0;padding:16px;border-radius:16px;background:#fff;box-shadow:0 2px 0 var(--sh);text-align:center;font:700 13px/1.4 var(--body);color:var(--soft2)}
 @media (max-width:360px){.prep2 .pfil button{font-size:12px}.prep2 .pfil svg{display:none}}
 
 /* ===== Hàng khách ===== */
