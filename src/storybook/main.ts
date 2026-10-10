@@ -4,6 +4,7 @@
 import { myStats } from "../engine/stats";
 import { statsDialog } from "../ui/statsdlg";
 import "../styles/main.css";
+import { installGlyphs } from "../ui/glyphs";
 import "../styles/tailwind.css";
 import "../styles/themes.css";
 import "./sb.css";
@@ -408,3 +409,5 @@ function exportBook() {
   a.download = `tiem-banh-storybook-${new Date().toISOString().slice(0, 10)}.html`;
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
+
+installGlyphs();

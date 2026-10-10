@@ -21,6 +21,7 @@ import { fmtN } from "../../engine/util";
 import { cakeAnySVG, charSVG, ingSVG } from "../art";
 import { $, bump, coinPill, esc, floatText, haptic, hasModal, modal, toast } from "../dom";
 import { himNote } from "../modals";
+import { ic } from "../icons";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
 import { applyQueue, queueHTML } from "./queue-fit";
@@ -121,9 +122,9 @@ const cakeOf = (c: Customer, size: number) => cakeAnySVG({ base: c.r.base, cream
 const shiftPct = (sh: Shift) => Math.min(1, (sh.served + sh.left) / Math.max(1, sh.total));
 /* tầng đang chọn nguyên liệu (chỉ khác 0 với bánh nhiều tầng) */
 let curTier = 0;
-const BOX = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4A3438" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8 L12 3.5 L21 8 V17 L12 21.5 L3 17 Z" fill="#F6D59A"/><path d="M3 8 L12 12.5 L21 8 M12 12.5 V21.5"/><path d="M7.5 5.8 L16.5 10.3" stroke-width="1.8"/></svg>`;
-const CHEV = (up: boolean) => `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="${up ? "M3 9 L7 5 L11 9" : "M3 5 L7 9 L11 5"}" stroke="#C07A8C" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const TICK = `<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 L5 9 L10 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const BOX = ic.box(24, 2.1);
+const CHEV = (up: boolean) => (up ? ic.chevU : ic.chevD)(16, 2.8, "none", "rose");
+const TICK = ic.check(13, 3.2, "none", "");
 const lowCount = () => STOCK_KEYS.reduce((a, k) => a + usedIdx(k).filter(i => stockOf(k, i) <= 2).length, 0);
 
 /* một khách trong hàng đợi: hình bánh đã gọi (không ghi nguyên liệu), mặt, kiên nhẫn, ai đang làm */

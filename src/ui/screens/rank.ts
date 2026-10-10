@@ -1,5 +1,6 @@
 /* Bảng xếp hạng: username + tiền bán hàng (tiền bánh + tip + thưởng trong ca). Tuần này / Tất cả.
    Theo dõi username người ấy để hai tiệm hiện cạnh nhau. */
+import { ic } from "../icons";
 import { S } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { account, follow, leaderboard, type Board, type Rank } from "../../net/cloud";
@@ -7,7 +8,7 @@ import { $, esc, modal, toast } from "../dom";
 
 let period: "week" | "all" = "week";
 const MEDAL = ["#FFC53D", "#C9CCD6", "#E3A06B"];
-const HEART = `<svg width="22" height="20" viewBox="0 0 16 14" aria-hidden="true"><path d="M8 13 C4 10 1 7.5 1 4.5 C1 2 3 1 4.7 1 C6.2 1 7.4 2 8 3 C8.6 2 9.8 1 11.3 1 C13 1 15 2 15 4.5 C15 7.5 12 10 8 13 Z" fill="#FF6F91" stroke="#4A3438" stroke-width="1.4"/></svg>`;
+const HEART = ic.heart(20, 2.2, "#FF7FA1", "pink");
 const row = (r: Rank) => `<div class="rk ${r.me ? "me" : ""}"><span class="no" ${r.rank <= 3 ? `style="background:${MEDAL[r.rank - 1]};color:#4A3438"` : ""}>${r.rank}</span>
   <span class="nm"><span class="n1">${esc(r.username)}${r.me ? " <em>bạn</em>" : ""}</span><small>Lv ${r.lv}</small></span><b>${fmtN(r.earned)} xu</b>${r.me ? "" : `<button class="vbtn" data-visit="${esc(r.username)}" aria-label="Ghé thăm tiệm ${esc(r.username)}">Ghé thăm</button>`}</div>`;
 const ago = (iso?: string) => { if (!iso) return ""; const m = Math.round((Date.now() - +new Date(iso)) / 60000); return m < 1 ? "vừa chơi" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`; };

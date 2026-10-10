@@ -54,7 +54,7 @@ async function resume(user: string) {
   finally { loading = ""; }
 }
 
-const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm của mình"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm của mình">${ic.chevL(18, 2.8, "none", "rose")}</button>`;
 
 /** mở hộp thoại chỉ số của tiệm đang tham quan */
 export function visitStatsDialog() {

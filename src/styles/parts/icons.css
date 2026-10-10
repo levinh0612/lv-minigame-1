@@ -1,0 +1,21 @@
+/* Icon Lucide chỉnh riêng: tông màu, tô nhạt bên trong và bóng đổ nhẹ cho bóng bẩy */
+.lu{--lu:currentColor;flex:none;vertical-align:-.2em;overflow:visible;
+  filter:drop-shadow(0 1.5px 0 color-mix(in srgb,var(--lu) 28%,transparent))}
+.lu.t-pink{--lu:#E85D7F;color:var(--lu)}
+.lu.t-rose{--lu:#D9779A;color:var(--lu)}
+.lu.t-gold{--lu:#E39A14;color:var(--lu)}
+.lu.t-mint{--lu:#2FA37A;color:var(--lu)}
+.lu.t-violet{--lu:#6F5BE0;color:var(--lu)}
+.lu.t-sky{--lu:#3E94D6;color:var(--lu)}
+.lu.t-wood{--lu:#B07A4A;color:var(--lu)}
+.lu.t-red{--lu:#E4543F;color:var(--lu)}
+.lu.t-ink{--lu:#4A3438;color:var(--lu)}
+/* duotone: tô nhạt cùng màu nét, chỉ cho icon hình khối đóng kín */
+.lu.d :is(path,circle,rect,polygon,ellipse){fill:var(--lu);fill-opacity:.2}
+.lu.d :is(line,polyline){fill:none}
+/* icon nằm trong nút/nền màu (thêm class inv vào cha): lấy màu chữ của cha, bỏ bóng và tô nhạt */
+.inv .lu.lu{color:inherit;--lu:currentColor;filter:none}
+.inv .lu.d :is(path,circle,rect,polygon,ellipse){fill-opacity:.25}
+/* icon thay cho ký tự trong dòng chữ: bám cỡ chữ, nét đặc hơn một chút để đọc rõ ở cỡ nhỏ */
+.lu.hollow :is(path,circle,rect,polygon){fill:none}
+.lu.hollow{opacity:.45;filter:none}

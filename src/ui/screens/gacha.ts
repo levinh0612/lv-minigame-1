@@ -1,4 +1,5 @@
 /* Màn Gacha: triệu hồi (1 hoặc 10 lần), vé, bảo hiểm, bộ sưu tập. Lợi ích của từng loại đồ nằm ở engine/gacha.ts */
+import { ic } from "../icons";
 import { sfx } from "../../audio/sound";
 import { DUST_PER_TICKET, GACHA_ITEMS, itemsOf, KIND_NAME, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, asManager, gachaItem, roleOf, type GachaItem, type GachaKind, type Rarity } from "../../content/gacha";
 import { BOND_AT, BOND_STEP, packCost, bondLevel, bondOf, buyTickets, claimFreeTicket, countOf, exchangeDust, freeTicketReady, hasItem, masteryOf, ownedCount, pull, floorCount, floorOfStaff, placeStaff, clearStaff, untilRare, untilUltra } from "../../engine/gacha";
@@ -15,7 +16,7 @@ import { mountTurntableLazy as mountTurntable } from "../../scene/turntable";
 
 let unmount = () => { }, fromPool = false;
 let tab: "summon" | "bag" = "summon", filter: GachaKind | "all" = "all", busy = false, poolR: Rarity = "common";
-const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">${ic.chevL(18, 2.8, "none", "rose")}</button>`;
 
 function summonHTML() {
   const g = S.gacha, t = g.tickets, rare = untilRare(), ultra = untilUltra();

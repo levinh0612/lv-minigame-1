@@ -1,4 +1,5 @@
 import "./styles/main.css";
+import { installGlyphs } from "./ui/glyphs";
 import "./styles/tailwind.css";
 import "./styles/themes.css";
 import { registerSW } from "virtual:pwa-register";
@@ -256,3 +257,6 @@ if (prevVer) setTimeout(() => { if (!hasModal() && !isLocked() && loggedIn()) wh
   document.addEventListener("visibilitychange", fit);
   setInterval(() => { if (!document.hidden) fit(); }, 600);    // iOS có lúc không bắn sự kiện resize; app ẩn thì không cần đo
 }
+
+/* ký tự / emoji trang trí → icon Lucide (xem ui/glyphs.ts) */
+installGlyphs();

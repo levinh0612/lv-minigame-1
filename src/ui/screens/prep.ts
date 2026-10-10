@@ -1,4 +1,5 @@
 /* Màn Chuẩn bị ca (PrepScreen của Claude Design): ai đi làm, mục tiêu ca, kho trước ca */
+import { ic } from "../icons";
 import { CATS, STOCK_KEYS, partsOfRecipe } from "../../content/game";
 import { canHire, hireFee, staffIds, capacity, demand, needUpgrade, spareSeats, crewPlan, estCostRows, estProfit, expectedCustomers, foodDef, mealOf, plannedMeal, onDuty, packPrice, staffDef, stockOf, suggestion } from "../../engine/economy";
 import { MAX_PINS, featured, isPinned, lvl, unlocked } from "../../engine/progress";
@@ -10,7 +11,7 @@ import { fmtN } from "../../engine/util";
 import { cakeAnySVG, foodSVG, ingSVG } from "../art";
 import { coinPill, esc } from "../dom";
 
-const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm">${ic.chevL(18, 2.8, "none", "rose")}</button>`;
 export const pageHead = (title: string, sub = "") =>
   `<div class="phead">${BACK}<div class="pt">${sub ? `<small>${sub}</small>` : ""}<h2>${title}</h2></div>${coinPill()}</div>`;
 
@@ -33,9 +34,9 @@ const CAKE_FILS: [CakeFil, string][] = [["all", "Tất cả"], ["pin", "Ruột"]
 /* biểu tượng cùng một nét cho từng bộ lọc */
 const FIL_IC: Record<CakeFil, string> = {
   all: "",
-  pin: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l2 4.2 4.5.6-3.3 3.1.8 4.5L8 11.9l-4 2.3.8-4.5L1.5 6.6 6 6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
-  new: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-  low: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13zM8 6.5v3M8 11.5v.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+  pin: ic.star(14, 2.4, "none", "gold"),
+  new: ic.sparkle(14, 2.4, "none", "violet"),
+  low: ic.warn(14, 2.4, "none", "red")
 };
 let cakeFil: CakeFil = "all";
 export const setCakeFil = (f: CakeFil) => { cakeFil = f; };

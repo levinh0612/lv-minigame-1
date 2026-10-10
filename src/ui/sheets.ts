@@ -134,7 +134,7 @@ export function photoSheet() {
 }
 
 /* Nhạc nền: bật/tắt và chọn bài; chạm bài nào là nghe thử ngay */
-const NOTE = `<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 12.5V3.5l7-1.5v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4.3" cy="12.5" r="2" fill="currentColor"/><circle cx="11.3" cy="11" r="2" fill="currentColor"/></svg>`;
+const NOTE = ic.music(18, 2.2, "none", "");
 export function musicSheet() {
   const cur = S.song && SONGS[S.song] ? S.song : "auto";
   const item = (id: string, n: string, d: string) => `<button class="song ${cur === id ? "on" : ""}" data-song="${id}"><span class="si">${NOTE}</span><span class="sn"><b>${esc(n)}</b><small>${esc(d)}</small></span><span class="sc">${cur === id ? (S.music ? "Đang phát" : "Đã chọn") : ""}</span></button>`;
