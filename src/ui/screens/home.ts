@@ -1,4 +1,6 @@
 /* Màn Chính (HomeScreen của Claude Design): mái hiên, cảnh tiệm, thư hôm nay, Mở tiệm, 4 nút dưới */
+import { achPending } from "../../engine/achievements";
+import { weeklyPending } from "../../engine/weekly";
 import { capacity, demand, expectedCustomers, tableLvs } from "../../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { fx, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
@@ -61,6 +63,7 @@ export function homeHTML() {
     : "";
   const nav = [
     { n: "Mục tiêu", ic: NAV_IC.goal, c1: "#FFD66B", c2: "#F2A41F", go: "/muc-tieu", dot: left ? String(left) : "" },
+    { n: "Nhiệm vụ", ic: ic.trophy(26, 2.4), c1: "#FFB27A", c2: "#E5622E", go: "/thanh-tich", dot: weeklyPending() + achPending() ? String(weeklyPending() + achPending()) : "" },
     { n: "Quà tặng", ic: NAV_IC.gift, c1: "#FF9DB6", c2: "#EE5A83", go: "/cua-hang/qua-tang", dot: gift ? "1" : "" },
     { n: "Triệu hồi", ic: NAV_IC.gacha, c1: "#8EC5FF", c2: "#4C8DF0", go: "/gacha", dot: "" },
     { n: "Cửa hàng", ic: NAV_IC.shop, c1: "#C2B0FA", c2: "#8B6FE6", go: "/cua-hang", dot: "" },
@@ -89,7 +92,7 @@ export function homeHTML() {
         <button class="b3 h5-open" data-go="/chuan-bi"><span>${ic.store(26, 2.4)}Mở tiệm</span><small>Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></button>
         <button class="h5-fix2" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}</button>
       </div>
-      <nav class="dock">${nav.map(x => `<button ${"go" in x ? `data-go="${x.go}"` : `data-act="${x.act}"`} style="--c1:${x.c1};--c2:${x.c2};--dk:${x.c2}"><span class="ic">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}<b>${x.n}</b></button>`).join("")}</nav>
+      <nav class="dock" style="grid-template-columns:repeat(6,minmax(0,1fr))">${nav.map(x => `<button ${"go" in x ? `data-go="${x.go}"` : `data-act="${x.act}"`} style="--c1:${x.c1};--c2:${x.c2};--dk:${x.c2}"><span class="ic">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}<b>${x.n}</b></button>`).join("")}</nav>
     </div>
   </div>`;
 }
