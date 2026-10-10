@@ -8,7 +8,7 @@ import type { PetId } from "../content/couple";
 import { BAKE_TIME, FOODS, MAX_STAFF_LV, PETS } from "../content/game";
 import { GACHA_ITEMS, KIND_NAME, RARITIES, RARITY, asManager, fxLine, gachaItem, mgrFx, type GachaItem } from "../content/gacha";
 import { buyFood, foodDef, foodOf, hire, hireFee, isMascotStaff, mascotBonus, mealChoices, mealOf, mealOutlook, mealSlow, onDuty, setMeal, staffIds, staffState, toggleDuty, train, trainCost, treat } from "../engine/economy";
-import { clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, type StaffKind } from "../engine/gacha";
+import { BOND_AT, bondLevel, bondOf, clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, type StaffKind } from "../engine/gacha";
 import { SKILLS, SKILL_FEE, SKILL_NAME, SKILL_SHIFTS, canTeach, knows, progressOf, teach } from "../engine/skills";
 import { S, petName, petState, save } from "../engine/state";
 import { fmtN, roman } from "../engine/util";
@@ -131,19 +131,25 @@ function mealHTML(id: string) {
   return `<div class="sh2"><b>Bữa ăn mỗi ca (lương)</b><span class="lav">ăn lúc mở ca, trừ vào kho</span></div>${pick}${msg}
     <div class="sd-rec"><div>${foodSVG(want.id, 40)}<span><b>${want.n}</b><small>còn ${foodOf(want.id)} phần trong kho</small></span></div><button class="pk" data-sd="buy:${want.id}:5" ${S.coins < want.cost * 5 ? "disabled" : ""}>Mua 5 · ${fmtN(want.cost * 5)} xu</button></div>`;
 }
+/* Thân thiết: linh thú tính theo cấp thân thiết (đi làm thêm ca + tặng quà), thú cưng tính theo điểm vuốt ve và quà; cùng một cách hiển thị với thẻ phía trên */
+function bondStat(id: string) {
+  if (!isMascotStaff(id)) return heartRow(petState(id).aff, 13);
+  const lv = bondLevel(id), max = BOND_AT.length - 1, nxt = lv < max ? BOND_AT[lv + 1]! - bondOf(id) : 0;
+  return `${heartRow(lv, 13, 1, max)}<small>${lv >= max ? "Tối đa" : `còn ${nxt} điểm lên cấp ${lv + 1}`}</small>`;
+}
 function staffBody(id: string) {
   const st = staffState(id), on = onDuty(id), mas = isMascotStaff(id), tier = st.lv, eat = foodDef(mealOf(id));
   const fed = petState(id).fedDay === S.daily.day, mb = mascotBonus(id), fee = hireFee(id);
   const ei = entityInfo(id)!;
   const petArt = mas ? undefined : `<button class="sd-pet" data-sd="pet:${id}" aria-label="Vuốt ve ${esc(petName(id))}">${petSVG({ ...PETS[id as PetId], mood: fed ? "love" : "happy", ledge: false }, 118)}</button>`;
-  const stat = (k: string, v: string) => `<div><small>${k}</small><b>${v}</b></div>`;
+  const stat = (k: string, v: string, go = "") => `<div${go ? ` role="button" tabindex="0" data-sd="goto:${go}" class="go"` : ""}><small>${k}</small><b>${v}</b>${go ? `<i class="gt">chạm để tặng quà ↓</i>` : ""}</div>`;
   const act = !st.hired ? `<button class="b3" data-sd="hire:${id}" ${S.coins < fee ? "disabled" : ""}>${mas ? `Thuê · ${fmtN(fee)} xu` : "Nhận vào làm"}</button>` :
     `<button class="b3 ${on ? "w" : ""}" data-sd="duty:${id}">${on ? "Cho nghỉ ca này" : "Cho đi làm"}</button>${trainCost(id) ? `<button class="b3 up2" data-sd="train:${id}" ${S.coins < trainCost(id) ? "disabled" : ""}>Lên bậc ${roman(tier + 1)} · ${fmtN(trainCost(id))} xu<small>${bake(tier)} → ${bake(tier + 1)}</small></button>` : `<div class="sd-max">Đã đạt bậc tối đa</div>`}`;
   return `<div class="sd">${entityHero(ei, { px: 104, art: petArt, extra: mas ? `<span class="eh-sub">Linh thú · thuê một lần, đứng tầng được</span>` : `<span class="eh-sub">${BREED[id as PetId]} · chạm vào bé để vuốt ve</span>` })}
-    <div class="sd-stats">${stat("Tốc độ", bake(tier))}${stat("Bữa ăn", `${foodSVG(eat.id, 16)} ${eat.n}`)}${stat("Thân thiết", heartRow(petState(id).aff, 13))}${mas ? stat("Buff", `+${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip`) : stat("Bậc", `${roman(tier)} / ${roman(MAX_STAFF_LV)}`)}</div>
+    <div class="sd-stats">${stat("Tốc độ", bake(tier))}${stat("Bữa ăn", `${foodSVG(eat.id, 16)} ${eat.n}`)}${stat("Thân thiết", bondStat(id), st.hired ? "gift" : "")}${mas ? stat("Buff", `+${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip`) : stat("Bậc", `${roman(tier)} / ${roman(MAX_STAFF_LV)}`)}</div>
     <div class="sd-acts">${act}</div>${st.hired ? skillsHTML(id) : ""}
     ${mealHTML(id)}
-    <div class="sh2"><b>Quà thân thiết</b><span class="lav">mỗi ngày tặng 1 món · lấy từ cùng kho</span></div><div class="sd-food-grid">${foodTiles(id)}</div>`;
+    <div class="sh2" id="sdGift"><b>Quà thân thiết</b><span class="lav">mỗi ngày tặng 1 món · lấy từ cùng kho</span></div><div class="sd-food-grid">${foodTiles(id)}</div>`;
 }
 /* kỹ năng gói quà / giao hàng: dạy được khi chủ tiệm đạt SSS, bé đi làm vài ca là tự làm được */
 function skillsHTML(id: string) {
@@ -189,6 +195,7 @@ const refreshItem = (id: string) => { const b = document.getElementById("tdBody"
 /** data-sd: thao tác trong hộp thoại thợ bánh; el là phần tử vừa chạm (để bay tim) */
 export function staffDialogAct(act: string, el: HTMLElement) {
   const [a, x, y] = act.split(":");
+  if (a === "goto") { sfx("click"); return document.getElementById("sd" + x![0]!.toUpperCase() + x!.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }); }
   if (a === "open") { sfx("click"); return openStaffDialog(x!); }
   if (a === "buy") { const f = foodDef(x as never); if (buyFood(f.id, +y!)) { if (dlg && S.staff[dlg]) S.staff[dlg].prio = Date.now(); save(); sfx("tap"); toast(`+${y} ${f.n} · ${fmtN(f.cost * +y!)} xu`); } else toast("Không đủ xu"); return refreshStaff(); }
   if (a === "treat") { const id = x!, f = foodDef(y as never); if (treat(id, f.id)) { const r = el.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop"); toast(`${petName(id)} ăn ${f.n} ngon lành! +${f.aff} ♥`); } else toast("Không đủ xu để mua đồ ăn"); return refreshStaff(); }
@@ -202,7 +209,7 @@ export function staffDialogAct(act: string, el: HTMLElement) {
     if (st.petDay !== S.daily.day) { st.petDay = S.daily.day; st.pets = 0; }
     if (st.pets < 10) { st.pets++; st.aff++; save(); }
     floatHearts(r.left + r.width / 2, r.top + r.height / 3, 3); sfx("boop"); bump(el, "squish");
-    const stats = document.querySelector<HTMLElement>(".sd-stats div:nth-child(3) b"); if (stats) stats.innerHTML = heartRow(st.aff, 13);
+    const stats = document.querySelector<HTMLElement>(".sd-stats div:nth-child(3) b"); if (stats) stats.innerHTML = bondStat(x!);
   }
 }
 /** data-tm: thao tác ở tab Quản lý và Linh thú */

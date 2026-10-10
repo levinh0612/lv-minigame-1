@@ -87,7 +87,7 @@ function shopHTML(v: VisitShop) {
             <small>${ic.sprout(16, 2.2)}Đang ghé thăm</small>
             <b style="font-size:${name.length <= 12 ? 26 : 20}px">${esc(name)}</b>
             ${name !== v.username ? `<em class="pc-title">@${esc(v.username)}</em>` : ""}
-            <div class="pc-stats"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${seatsOfTables(v.venue.tbl)} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Độ viral</small><b>${viral} khách</b></i></span></div>
+            <div class="pc-stats"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${seatsOfTables(v.venue.tbl)} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Khách cao điểm</small><b>${viral} khách</b></i></span></div>
           </div>
         </div>
         <div class="pc-buffs pc-info"><span class="bf">🛍 ${v.decor} đồ trang trí</span><span class="bf">🏢 ${v.venue.floors} lầu</span><span class="bf">🐾 ${v.hired} nhân viên</span></div>

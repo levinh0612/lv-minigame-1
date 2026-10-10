@@ -3,7 +3,7 @@ import { ahead, lossLines, snapOf, type Snap } from "../engine/conflict";
 import { Sound, sfx, songName } from "../audio/sound";
 import { CFG, type EventKey, type PetId } from "../content/couple";
 import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
-import { buyVenue, canAffordUpgrade, capacity, demand, needUpgrade, seatsNow, spots, tableLvs, upgradeOptions } from "../engine/economy";
+import { buyVenue, canAffordUpgrade, capacity, demand, fameParts, needUpgrade, seatsNow, spots, tableLvs, upgradeOptions } from "../engine/economy";
 import { addTickets } from "../engine/gacha";
 import { claimWelcome } from "../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
@@ -382,4 +382,23 @@ export function visitGiftModal(gifts: { visitor: string; gift: number }[]) {
     ${one ? "" : `<div class="rwbox">${rows}</div>`}
     <div class="inccost"><b>+${fmtN(total)} xu</b><small>Số xu hiện có ${fmtN(S.coins)} xu · xem ở Ví</small></div>
     <div class="mbtns"><button class="b3" data-close>Cảm ơn quý nhân!</button></div>`);
+}
+
+/* Giải thích hai con số ở thẻ hồ sơ: khách cao điểm (từ danh tiếng) và sức chứa (từ bàn), cách tăng từng thứ */
+export function fameModal() {
+  const f = fameParts(), cap = capacity(), dem = demand();
+  const row = (n: string, v: number, how: string) => `<div class="fm-row"><span><b>${n}</b><small>${how}</small></span><em>+${v.toFixed(1).replace(".", ",")}</em></div>`;
+  const toNext = f.next && f.nextAt != null ? `<p class="fm-next">Còn <b>${Math.max(0, f.nextAt - f.score).toFixed(1).replace(".", ",")}</b> điểm nữa lên bậc <b>${esc(f.next.n)}</b> (${f.next.seats} khách cao điểm).</p>` : `<p class="fm-next">Đã đạt bậc cao nhất, khách cao điểm không tăng thêm nữa.</p>`;
+  const gap = dem > cap ? `<p class="fm-warn">Khách cao điểm (${dem}) nhiều hơn ghế (${cap}). Hãy nâng cấp tiệm để đón đủ khách.</p>` : dem < cap ? `<p class="fm-next">Ghế dư ${cap - dem}: dùng cho giờ vàng, khách đổ về thêm trong ca.</p>` : "";
+  modal(`<h2>Khách cao điểm và sức chứa</h2><p class="sub">Hai con số quyết định tiệm đón được bao nhiêu khách cùng lúc</p>
+    <div class="fm-box"><b>👥 Khách cao điểm: ${dem}</b><p>Số khách ngồi chờ cùng lúc khi tiệm đông nhất. Con số này đến từ <b>danh tiếng</b> của tiệm (bậc ${esc(f.now.n)}). Danh tiếng càng cao thì mỗi ca càng nhiều khách (hôm nay khoảng ${f.expected}, tối đa ${f.cap} khách một ca) nên xu kiếm được càng nhiều.</p></div>
+    <div class="fm-box"><b>🪑 Sức chứa: ${cap} ghế</b><p>Tổng số ghế của các bàn (bàn cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4). Số khách ngồi cùng lúc trong ca là số nhỏ hơn giữa hai con số. Tăng bằng cách mua bàn, nâng cấp bàn, xây lầu hoặc mở rộng ngang.</p></div>
+    ${gap}
+    <div class="sh2"><b>Điểm danh tiếng ${f.score.toFixed(1).replace(".", ",")}</b><span class="lav">Cách tăng khách cao điểm</span></div>
+    ${row("Đánh giá của khách", f.stars, `sao trung bình ${f.stars.toFixed(1).replace(".", ",")}/3: giao nhanh, đúng món để khách vui`)}
+    ${row("Trang trí tiệm", f.decor, "mỗi món trang trí khác mặc định được 0,4")}
+    ${row("Cấp của bạn", f.lv, "mỗi cấp từ cấp 2 được 0,3")}
+    ${row("Đầu tư tiệm", f.venue, "mỗi lầu 0,8, mỗi lần mở rộng 0,5, mỗi cấp nâng của bàn 0,25")}
+    ${toNext}
+    <div class="mbtns"><button class="b3" data-act="venue">Nâng cấp tiệm</button><button class="b3 w" data-close>Đóng</button></div>`);
 }

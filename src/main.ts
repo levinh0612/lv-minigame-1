@@ -21,7 +21,7 @@ import { myStats } from "./engine/stats";
 import { statsDialog } from "./ui/statsdlg";
 import { askVisit, visitStatsDialog } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
-import { accountPanel, adminPanel, claimGoals, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, adminPanel, claimGoals, fameModal, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
 import { flushSave, isLocked, loggedIn, pull, peekCloud, resolveConflict, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
@@ -81,6 +81,7 @@ document.addEventListener("click", e => {
     case "menu": return menuSheet();
     case "more": return moreSheet();
     case "buff": return buffSheet();
+    case "fame": return fameModal();
     case "staff": return staffSheet();
     case "ings": return ingredientSheet();
     case "custom": return openCustom();

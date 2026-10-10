@@ -333,7 +333,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
       <button class="rbtn box" data-act="stock" aria-label="Kho nguyên liệu">${BOX}<span class="dot" id="lowDot" ${low ? "" : "hidden"}>${low}</span></button>
       <button class="rbtn" data-act="pause" aria-label="Tạm dừng">❚❚</button>
     </div>
-    <div class="qhead"><b id="shLeft">Hàng đợi: còn ${remaining(sh)} khách</b><span>✦ ${f.n} · ${sh.seats.length} bàn</span></div>
+    <div class="qhead"><b id="shLeft">Hàng đợi: còn ${remaining(sh)} khách</b><span>✦ ${f.n} · ${sh.seats.length} ghế</span></div>
     <div class="mx-[18px] mb-1.5 h-1.5 overflow-hidden rounded-full bg-pink-l" role="progressbar" aria-label="Tiến độ ca" aria-valuenow="${Math.round(shiftPct(sh) * 100)}" aria-valuemin="0" aria-valuemax="100"><i id="shBar" class="block h-full origin-left rounded-full bg-mint-d transition-transform duration-500" style="transform:scaleX(${shiftPct(sh).toFixed(3)})"></i></div>
     <div id="comboBox">${comboHTML(sh)}</div>
     <div id="mouseBox">${mouseChip(sh)}</div>

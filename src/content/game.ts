@@ -182,7 +182,7 @@ export const MAX_STAFF_LV = BAKE_TIME.length;
 const BAKE_TEXT = BAKE_TIME.map(t => `Tự nhận đơn, ${String(t).replace(".", ",")} giây một bánh`);
 /* Độ nổi tiếng: càng nổi tiếng càng nhiều bàn, khách đến càng dày */
 export const FAME = [
-  { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Viral", seats: 6 },
+  { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Được săn đón", seats: 6 },
   { n: "Nổi như cồn", seats: 8 }, { n: "Địa điểm check-in", seats: 10 }, { n: "Huyền thoại", seats: 12 }
 ];
 export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13];     // điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi)

@@ -205,6 +205,12 @@ export function demandOf(stars: number, decor: number, lv: number, v: { tbl: num
 /** đầu tư vào tiệm cộng điểm nổi tiếng: mỗi lầu thêm 0,8, mỗi lần mở rộng 0,5, mỗi cấp nâng của bàn 0,25 */
 export const venueFame = () => (S.venue.floors - 1) * 0.8 + S.venue.wide * 0.5 + S.venue.tbl.reduce((a, l) => a + (l - 1) * 0.25, 0);
 export const fameLevel = () => { const x = fameScore(); return FAME_AT.filter(t => x >= t).length; };
+/** điểm nổi tiếng chia theo từng nguồn, kèm mốc bậc kế tiếp: để giải thích cho người chơi vì sao khách cao điểm là số này và cách tăng */
+export function fameParts() {
+  const r = S.reviews.slice(0, 20), stars = r.length ? r.reduce((a, x) => a + x.s, 0) / r.length : 2;
+  const decor = decorCount() * 0.4, lv = (lvl() - 1) * 0.3, venue = venueFame(), score = stars + decor + lv + venue, level = fameLevel();
+  return { stars, decor, lv, venue, score, level, now: FAME[level], next: FAME[level + 1] ?? null, nextAt: FAME_AT[level] ?? null, cap: customerCap(), expected: expectedCustomers() };
+}
 export const fame = () => ({ ...FAME[fameLevel()], lv: fameLevel(), score: fameScore() });
 
 /* ===== Sức chứa tiệm: bàn (cấp 1..3), lầu, mở rộng ngang =====

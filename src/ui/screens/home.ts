@@ -37,7 +37,7 @@ function profileCard(L: number, cur: number, need: number) {
         <small>${ic.sprout(16, 2.2)}${nm ? "Tiệm Bánh của" : "Tiệm Bánh"}</small>
         <b style="font-size:${fs}px">${esc(nm || "Matcha")}</b>
         ${title ? `<em class="pc-title">${ic.crown(13, 2.4)}${esc(title)}</em>` : ""}
-        <div class="pc-stats"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${capacity()} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Độ viral</small><b>${demand()} khách</b></i></span></div>
+        <div class="pc-stats" data-act="fame" role="button" tabindex="0" aria-label="Giải thích sức chứa và khách cao điểm"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${capacity()} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Khách cao điểm</small><b>${demand()} khách</b></i></span></div>
       </div>
     </div>
     <button class="pc-buffs" data-act="buff" aria-label="Buff đang có">${BUFFS.map(([k, f]) => `<span class="bf ${k} ${fx(k) ? "" : "zero"}">${f(15, 2.4)}${buffText(k)}</span>`).join("")}<i>${ic.chevron(18, 2.6)}</i></button>

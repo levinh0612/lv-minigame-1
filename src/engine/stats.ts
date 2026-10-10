@@ -61,7 +61,7 @@ export function statGroups(s: ShopStats, self: boolean): StatGroup[] {
       { icon: "😊", label: "Đánh giá trung bình", value: `${s.stars.toFixed(1)} / 3 sao` }
     ] },
     { title: "Tiệm", rows: [
-      { icon: "🔥", label: "Độ viral", value: `${s.viral} khách` },
+      { icon: "🔥", label: "Khách cao điểm", value: `${s.viral} khách` },
       { icon: "🪑", label: "Sức chứa", value: `${s.seats} ghế` },
       { icon: "🏢", label: "Số lầu", value: s.floors },
       { icon: "↔️", label: "Mở rộng ngang", value: s.wide },
