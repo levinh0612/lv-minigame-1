@@ -5,22 +5,23 @@ export const SLOT_W = 84, SLOT_H = 152;       // cỡ thiết kế của một �
 export const GAP = 8;
 export const K_MAX = 1.25;                    // ít khách vẫn không phình quá to
 export const K_MIN = 0.5;                     // nhỏ nhất vẫn chạm được (84 × 0,5 = 42px)
-export const MAX_COLS = 9;
+export const MAX_COLS = 6;                    // iPhone (khung ~362px): 6 cột vẫn còn ô rộng ~54px, nhiều hơn thì mặt khách không còn nhìn rõ
+export const K_FLOOR = 0.9;                   // trần chiều cao chỉ được ép ô nhỏ tới mức này (chiều rộng mới được ép thấp hơn)
 
 export interface QueueLayout { cols: number; rows: number; k: number; w: number; h: number; fits: boolean }
-/** chọn số cột (3..MAX_COLS) cho ô to nhất mà n ô vẫn nằm vừa khung W × H; không vừa thì dùng K_MIN và để khung cao hơn H */
+/** chia n khách thành các dòng cân bằng: số cột ≈ √(2n) (bề ngang ô ≈ một nửa chiều cao nên lưới hơi ngang), chặn 2..MAX_COLS,
+    rồi tính số dòng và chia lại cột cho đều để không có dòng cuối lẻ loi (8 khách → 4×2, 12 → 4×3, 30 → 6×5).
+    Cỡ ô k = min(trần, vừa bề rộng, vừa chiều cao H nhưng không nhỏ hơn K_FLOOR); không vừa H thì khung cao hơn H và vùng này cuộn */
 export function fitQueue(n: number, W: number, H: number): QueueLayout {
   const count = Math.max(1, n);
-  let best: QueueLayout | null = null;
-  for (let cols = Math.min(3, count); cols <= Math.min(MAX_COLS, count + 2); cols++) {
-    const cw = (W - GAP * (cols - 1)) / cols, k = Math.min(K_MAX, cw / SLOT_W);
-    if (k < K_MIN) break;
-    const rows = Math.ceil(count / cols), h = rows * (SLOT_H * k + GAP) - GAP;
-    if (h <= H && (!best || k > best.k + 1e-6)) best = { cols, rows, k, w: cols * SLOT_W * k + (cols - 1) * GAP, h, fits: true };
-  }
-  if (best) return best;
-  const cols = Math.max(1, Math.min(MAX_COLS, Math.floor((W + GAP) / (SLOT_W * K_MIN + GAP)))), rows = Math.ceil(count / cols);
-  return { cols, rows, k: K_MIN, w: cols * SLOT_W * K_MIN + (cols - 1) * GAP, h: rows * (SLOT_H * K_MIN + GAP) - GAP, fits: false };
+  let cols = count <= 3 ? count : Math.max(2, Math.min(MAX_COLS, Math.round(Math.sqrt(count * 2))));
+  const widthK = (c: number) => (W - GAP * (c - 1)) / c / SLOT_W;
+  while (cols > 2 && widthK(cols) < K_MIN) cols--;                 // màn hẹp: bớt cột cho ô còn chạm được
+  const rows = Math.ceil(count / cols);
+  cols = Math.ceil(count / rows);                                  // chia đều cột cho các dòng
+  const kh = ((H + GAP) / rows - GAP) / SLOT_H;
+  const k = Math.max(K_MIN, Math.min(K_MAX, widthK(cols), Math.max(kh, K_FLOOR))), h = rows * (SLOT_H * k + GAP) - GAP;
+  return { cols, rows, k, w: cols * SLOT_W * k + (cols - 1) * GAP, h, fits: h <= H + 1e-6 };
 }
 /** mức hiển thị chữ theo tỉ lệ (giữ chữ không nhỏ hơn 11px): full có tên, mid chỉ còn avatar bé và %, mini chỉ mặt + bánh */
 export const modeOf = (k: number) => (k >= 0.92 ? "full" : k >= 0.7 ? "mid" : "mini");

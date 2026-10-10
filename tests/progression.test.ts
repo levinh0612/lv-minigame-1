@@ -91,16 +91,21 @@ describe("Bạch Chi là nhân vật (quản lý), không phải linh thú", () 
 
 describe("hàng đợi tự co", () => {
   it("ít khách thì ô to (tới trần), đông thì nhỏ dần nhưng không nhỏ hơn mức chạm được", async () => {
-    const { fitQueue, K_MAX, K_MIN, SLOT_H } = await import("../src/ui/screens/queue-fit");
+    const { fitQueue, K_MAX, K_MIN, SLOT_H, MAX_COLS } = await import("../src/ui/screens/queue-fit");
     const W = 362, H = 330, k = (n: number) => fitQueue(n, W, H).k;
     expect(k(3)).toBeCloseTo(K_MAX); expect(k(5)).toBeGreaterThan(k(12)); expect(k(12)).toBeGreaterThan(k(30));
+    const shape = (n: number) => { const L = fitQueue(n, W, H); return [L.cols, L.rows]; };
+    expect(shape(4)).toEqual([2, 2]); expect(shape(8)).toEqual([4, 2]); expect(shape(12)).toEqual([4, 3]); expect(shape(30)).toEqual([6, 5]);
+    for (let n = 1; n <= 40; n++) expect(fitQueue(n, W, H).cols).toBeLessThanOrEqual(MAX_COLS);
+    expect(fitQueue(8, W, H).k * 84).toBeGreaterThanOrEqual(80);    // 8 khách: mỗi ô rộng ≥ 80px
+    expect(fitQueue(30, W, H).k * 84).toBeGreaterThanOrEqual(50);   // 30 khách vẫn ≥ 50px
     for (let n = 1; n <= 40; n++) { const L = fitQueue(n, W, H); expect(L.k).toBeGreaterThanOrEqual(K_MIN); expect(L.cols * L.rows).toBeGreaterThanOrEqual(n); if (L.fits) expect(L.h).toBeLessThanOrEqual(H); }
     expect(fitQueue(60, W, H).fits).toBe(false);                 // quá đông: khung cao hơn, vùng này cuộn
     expect(SLOT_H * K_MIN).toBeGreaterThanOrEqual(44 * 0.9);
   });
-  it("kích thước giảm liên tục khi thêm bàn (không nhảy cóc)", async () => {
-    const { fitQueue } = await import("../src/ui/screens/queue-fit");
-    let prev = Infinity;
-    for (let n = 3; n <= 30; n++) { const k = fitQueue(n, 362, 330).k; expect(k).toBeLessThanOrEqual(prev + 1e-9); prev = k; }
+  it("các dòng đều nhau: không bao giờ có dòng cuối chỉ lẻ một hai khách khi còn cách chia gọn hơn", async () => {
+    const { fitQueue, K_MIN } = await import("../src/ui/screens/queue-fit");
+    for (let n = 1; n <= 40; n++) { const L = fitQueue(n, 362, 330); expect(L.cols * L.rows - n).toBeLessThan(L.rows); expect(L.k).toBeGreaterThanOrEqual(K_MIN); }
+    for (const W of [320, 362, 402]) for (let n = 1; n <= 40; n++) expect(fitQueue(n, W, 330).w).toBeLessThanOrEqual(W + 1);   // iPhone SE, thường, Pro Max: không tràn bề ngang
   });
 });
