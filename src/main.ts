@@ -16,7 +16,9 @@ import { render } from "./ui/app";
 import { loadSprites } from "./ui/sprite";
 import { profileSheet } from "./ui/profile";
 import { $, bump, closeModal, dropModal, esc, floatHearts, hasModal, heartRow, modalLocked, toast } from "./ui/dom";
-import { askVisit } from "./ui/screens/visit";
+import { myStats } from "./engine/stats";
+import { statsDialog } from "./ui/statsdlg";
+import { askVisit, visitStatsDialog } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
 import { accountPanel, adminPanel, claimGoals, giftSheet, goalsSheet, coinModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
@@ -110,6 +112,7 @@ document.addEventListener("click", e => {
     return render();
   }
   if (d.hire) { if (hire(d.hire as PetId)) { sfx("level"); toast(`${petName(d.hire as PetId)} đã vào làm!`); } else if (hireFee(d.hire)) toast(`Cần ${fmtN(hireFee(d.hire))} xu để thuê ${petName(d.hire)}`); return render(); }
+  if (d.stats) { sfx("click"); return d.stats === "visit" ? visitStatsDialog() : statsDialog(S.shop.trim() || "Tiệm của bạn", myStats(), true); }
   if (d.gact) return void gachaAct(d.gact);
   if (d.sd) return staffDialogAct(d.sd, t);
   if (d.tm) return teamAct(d.tm);

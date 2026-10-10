@@ -1,5 +1,7 @@
 /* Ghé thăm tiệm hàng xóm: xem cảnh 3D theo dữ liệu của chủ tiệm (chỉ xem, không sửa được gì).
    Vào tham quan phải đóng phí vé (luật ở engine/visit.ts); chủ tiệm nhận tiền mừng ở lần mở app sau. */
+import { visitStats } from "../../engine/stats";
+import { statsDialog } from "../statsdlg";
 import { sfx } from "../../audio/sound";
 import { RECIPES } from "../../content/game";
 import { S, save } from "../../engine/state";
@@ -54,6 +56,12 @@ async function resume(user: string) {
 
 const BACK = `<button class="rbtn back" data-go="/" aria-label="Về tiệm của mình"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" stroke="#C07A8C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 
+/** mở hộp thoại chỉ số của tiệm đang tham quan */
+export function visitStatsDialog() {
+  const v = visiting(); if (!v) return;
+  const viral = demandOf(v.stars ?? 2, ROOM_CATS.filter(c => !isDefault(c.k, v.room[c.k])).length, v.lv, v.venue);
+  statsDialog(v.shop.trim() || v.username, visitStats(v, seatsOfTables(v.venue.tbl), viral), false);
+}
 export function visitHTML(user: string) {
   const v = visiting();
   if (!v || v.username !== user) {
@@ -83,7 +91,7 @@ function shopHTML(v: VisitShop) {
           </div>
         </div>
         <div class="pc-buffs pc-info"><span class="bf">🛍 ${v.decor} đồ trang trí</span><span class="bf">🏢 ${v.venue.floors} lầu</span><span class="bf">🐾 ${v.hired} nhân viên</span></div>
-        ${shopStatsHTML(v.earned, v.served, recipes)}
+        ${shopStatsHTML(v.earned, v.served, recipes, "visit")}
       </div>
     </div>
     <div class="h5-bottom">

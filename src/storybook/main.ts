@@ -1,6 +1,8 @@
 /* Storybook: bày mọi màn hình, hộp thoại và thành phần của game với dữ liệu mẫu.
    Dùng chính code vẽ của game nên luôn khớp. Mở /storybook.html, hoặc ?story=<id> để xem một mục.
    `npm run capture` chụp từng mục ra design-kit/ để gửi Claude Design. */
+import { myStats } from "../engine/stats";
+import { statsDialog } from "../ui/statsdlg";
 import "../styles/main.css";
 import "../styles/tailwind.css";
 import "../styles/themes.css";
@@ -238,6 +240,8 @@ const STORIES: Story[] = [
     html: () => { lvState(13, s => { s.suppliers = ["alpine"]; s.custom = [{ id: "c1", n: "Tháp Dâu Sữa", tiers: [[0, 1], [2, 0]], top: 0 }, { id: "c2", n: "Tháp Croissant", tiers: [[3, 3], [4, 2], [0, 0]], top: 2 }]; }); return modalOver(homeHTML(), () => { menuSheet(); recipeFilter("custom"); }); } },
   { id: "m-buff", sec: "modals", title: "Buff đang có", desc: "Tổng 4 loại buff và nguồn của từng buff", kind: "modal",
     html: () => { lvState(13, buffed); return modalOver(homeHTML(), buffSheet); } },
+  { id: "m-stats", sec: "modals", title: "Chỉ số của tiệm", desc: "Nút Xem chỉ số ở thẻ hồ sơ: đủ chỉ số, nhóm Cá nhân chỉ có ở tiệm của mình", kind: "modal",
+    html: () => { lvState(34, s => { s.earned = 116709; s.served = 1840; s.shifts = 140; s.prog.stat.perfect = 900; s.prog.made = { r1: 600, r2: 300 }; s.streak = 12; s.prog.bestStreak = 21; }); return modalOver(homeHTML(), () => statsDialog("Tiệm của bạn", myStats(), true)); } },
   { id: "m-letter", sec: "modals", title: "Thư hôm nay", desc: "Mở từ thẻ thư ở màn Bắt đầu", kind: "modal",
     html: () => { lvState(3); return modalOver(homeHTML(), openLetter); } },
   { id: "m-gift", sec: "modals", title: "Nhận quà mục tiêu", desc: "Xong 3 mục tiêu: +60 xu và thư bí mật", kind: "modal",

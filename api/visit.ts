@@ -29,7 +29,15 @@ function publicShop(u: { username: string; lv: number; earned: unknown; state: u
   let tbl = Array.isArray(v.tbl) ? v.tbl.map(n => Math.max(1, Math.min(3, Math.floor(Number(n) || 1)))).slice(0, 24) : [];
   if (!tbl.length) tbl = Array(Math.max(2, Math.ceil((Number(v.tables) || 5) / 2))).fill(1);
   const staff = (s.staff ?? {}) as Record<string, { hired?: boolean }>;
+  const prog = (s.prog ?? {}) as { made?: Record<string, number>; stat?: Record<string, number>; up?: Record<string, number>; bestStreak?: number };
+  const num = (x: unknown) => Math.max(0, Math.floor(Number(x) || 0));
+  const made = Object.values(prog.made ?? {}).map(num), stat = prog.stat ?? {};
+  const gacha = (s.gacha ?? {}) as { owned?: Record<string, number> };
   return {
+    shifts: num(s.shifts), streak: Math.max(num(prog.bestStreak), num(s.streak)), made: made.reduce((a, b) => a + b, 0),
+    perfect: num(stat.perfect), tower: num(stat.tower), elite: num(stat.elite),
+    mastered: made.filter(n => n >= 500).length,          // 500 = mốc sao 5 (CRAFT_AT cuối trong src/content/progression.ts)
+    upgrades: Object.values(prog.up ?? {}).reduce((a, b) => a + num(b), 0), collected: Object.keys(gacha.owned ?? {}).length,
     username: u.username, lv: u.lv, earned: Number(u.earned),
     shop: str(s.shop, 20), room: strMap(s.room, 24), me: strMap(s.me, 24),
     served: Math.max(0, Math.floor(Number(s.served) || 0)), decor: Array.isArray(s.owned) ? s.owned.length : 0,
