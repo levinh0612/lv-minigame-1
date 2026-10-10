@@ -8,7 +8,7 @@ import {
   DoorOpen, Droplet, Drumstick, Flame, Flower2, Gem, Gift, Handshake, Heart, Hourglass, Image, Layers, Lightbulb, Mail,
   Mars, Medal, Menu, Moon, Music, NotebookPen, Package, Palette, Pause, PawPrint, PartyPopper, Plus, Search, Settings,
   ShoppingBag, ShoppingBasket, Siren, Smile, Sofa, Sparkles, Sprout, Star, Store, Sun, Target, Ticket, TrendingUp, Trophy,
-  TriangleAlert, UserPlus, UserRound, Users, Venus, Wrench, X, Zap, Castle, Cake
+  TriangleAlert, UserPlus, UserRound, Users, Venus, Wrench, X, Zap, Castle, Cake, PiggyBank, ClockPlus, Award, House, ClipboardCheck
 } from "lucide";
 import type { IconNode } from "lucide";
 
@@ -22,8 +22,8 @@ const mk = (node: IconNode, tone: Tone, duo = false) =>
 export const ic = {
   /* đã dùng từ trước */
   seat: mk(Armchair, "wood", true), book: mk(BookOpen, "violet"), cal: mk(CalendarDays, "sky"), chevron: mk(ChevronRight, ""),
-  coins: mk(Coins, "gold", true), crown: mk(Crown, "gold", true), fire: mk(Flame, "red", true), heart: mk(Heart, "pink", true),
-  hourglass: mk(Hourglass, "wood"), menu: mk(Menu, ""), paw: mk(PawPrint, "wood", true), plus: mk(Plus, ""),
+  coins: mk(PiggyBank, "gold", true), coin: mk(Coins, "gold", true), crown: mk(Crown, "gold", true), fire: mk(Flame, "red", true), heart: mk(Heart, "pink", true),
+  hourglass: mk(Hourglass, "wood"), clockPlus: mk(ClockPlus, "sky"), award: mk(Award, "gold", true), home: mk(House, "", true), mission: mk(ClipboardCheck, "mint"), menu: mk(Menu, ""), paw: mk(PawPrint, "wood", true), plus: mk(Plus, ""),
   basket: mk(ShoppingBasket, "wood", true), star: mk(Star, "gold", true), store: mk(Store, "pink", true), trophy: mk(Trophy, "gold", true),
   userPlus: mk(UserPlus, "violet"), user: mk(UserRound, "violet", true), users: mk(Users, "violet", true), sprout: mk(Sprout, "mint", true),
   layers: mk(Layers, "violet", true), chef: mk(ChefHat, "wood", true), deal: mk(Handshake, "mint"),

@@ -23,13 +23,8 @@ const GEAR = ic.gear(20, 2.1, "none", "violet");
 const PEN = ic.pen(20, 2.2, "none", "violet");
 const ENV = `<svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="26" height="18" rx="3" fill="var(--pink-m)"/><path d="M2.5 3.5 L15 12 L27.5 3.5" fill="var(--pink)"/><circle cx="15" cy="12" r="3.2" fill="var(--pink-d)" stroke-width="1.8"/></svg>`;
 const CAKE = `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#4A3438" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="13" width="20" height="11" rx="3" fill="#FFB3C7"/><path d="M4 17 C8 19 10 15 14 17 C18 19 20 15 24 17" stroke-width="1.8"/><rect x="12.5" y="6" width="3" height="7" fill="#fff"/><path d="M14 2 C12 4 12 6 14 6 C16 6 16 4 14 2 Z" fill="#FF8F4D" stroke-width="1.6"/></svg>`;
-/* icon thanh dưới: Lucide trắng trên nền gradient, cùng một cỡ nét */
-const NAV_IC = {
-  goal: ic.target(26, 2.4, "none", ""), gacha: ic.sparkle(26, 2.4, "none", ""),
-  gift: ic.gift(26, 2.4, "none", ""), shop: ic.store(26, 2.4, "none", "")
-};
 
-const BUFFS = [["price", ic.coins, "Giá bánh"], ["tip", ic.heart, "Tip"], ["pat", ic.hourglass, "Khách chờ lâu"], ["cust", ic.userPlus, "Thêm khách mỗi ca"]] as const;
+const BUFFS = [["price", ic.coins, "Giá bánh"], ["tip", ic.heart, "Tip"], ["pat", ic.clockPlus, "Khách chờ lâu"], ["cust", ic.userPlus, "Thêm khách mỗi ca"]] as const;
 export const buffText = (k: (typeof BUFFS)[number][0]) => k === "cust" ? `+${fx(k)}` : `+${Math.round(fx(k) * 100)}%`;
 export const BUFF_LABEL = Object.fromEntries(BUFFS.map(b => [b[0], b[2]])) as Record<(typeof BUFFS)[number][0], string>;
 export const buffIcon = (k: (typeof BUFFS)[number][0], size: number, fill = "none") => BUFFS.find(b => b[0] === k)![1](size, 2.4, fill);
@@ -58,13 +53,13 @@ export function homeHTML() {
   const card = te.length
     ? `<button class="hcard ev" data-act="letter"><span class="ic">${CAKE}</span><span class="tx"><b>${esc(te[0].t)} · xu ×2</b><small>${esc(eventNote(te[0]))}</small></span><i class="dot"></i></button>`
     : "";
+  /* thanh dưới kiểu kính lỏng: 4 mục cùng một màu chính; Mục tiêu, Nhiệm vụ, Quà tặng nằm trong Xem thêm */
+  const moreDot = left + weeklyPending() + achPending() + (gift ? 1 : 0);
   const nav = [
-    { n: "Mục tiêu", ic: NAV_IC.goal, c1: "#FFD66B", c2: "#F2A41F", go: "/muc-tieu", dot: left ? String(left) : "" },
-    { n: "Nhiệm vụ", ic: ic.trophy(26, 2.4), c1: "#FFB27A", c2: "#E5622E", go: "/thanh-tich", dot: weeklyPending() + achPending() ? String(weeklyPending() + achPending()) : "" },
-    { n: "Quà tặng", ic: NAV_IC.gift, c1: "#FF9DB6", c2: "#EE5A83", go: "/cua-hang/qua-tang", dot: gift ? "1" : "" },
-    { n: "Triệu hồi", ic: NAV_IC.gacha, c1: "#8EC5FF", c2: "#4C8DF0", go: "/gacha", dot: "" },
-    { n: "Cửa hàng", ic: NAV_IC.shop, c1: "#C2B0FA", c2: "#8B6FE6", go: "/cua-hang", dot: "" },
-    { n: "Menu", ic: ic.menu(26, 3), c1: "#B9C6E6", c2: "#6B7BA6", act: "more", dot: "" }
+    { n: "Tiệm", ic: ic.home(26, 2.2, "none", ""), go: "/", on: true, dot: "" },
+    { n: "Triệu hồi", ic: ic.sparkle(26, 2.2, "none", ""), go: "/gacha", on: false, dot: "" },
+    { n: "Cửa hàng", ic: ic.store(26, 2.2, "none", ""), go: "/cua-hang", on: false, dot: "" },
+    { n: "Xem thêm", ic: ic.menu(26, 2.6, "none", ""), act: "more", on: false, dot: moreDot ? String(moreDot) : "" }
   ];
   /* 3D chiếm cả màn hình; mọi thứ khác (thanh trên, hồ sơ, thư, nút Mở tiệm, thanh dưới) là lớp phủ trên và dưới */
   return `<div class="scr home5">
@@ -89,7 +84,7 @@ export function homeHTML() {
         <button class="b3 h5-open" data-go="/chuan-bi"><span>${ic.store(26, 2.4)}Mở tiệm</span><small>Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></button>
         <button class="h5-fix2" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}</button>
       </div>
-      <nav class="dock" style="grid-template-columns:repeat(6,minmax(0,1fr))">${nav.map(x => `<button ${"go" in x ? `data-go="${x.go}"` : `data-act="${x.act}"`} style="--c1:${x.c1};--c2:${x.c2};--dk:${x.c2}"><span class="ic">${x.ic}</span>${x.dot ? `<span class="nd">${x.dot}</span>` : ""}<b>${x.n}</b></button>`).join("")}</nav>
+      <nav class="glass5">${nav.map(x => `<button class="${x.on ? "on" : ""}" ${"go" in x ? `data-go="${x.go}"` : `data-act="${x.act}"`}${x.on ? ' aria-current="page"' : ""}>${x.ic}${x.dot ? `<span class="nd">${x.dot}</span>` : ""}<b>${x.n}</b></button>`).join("")}</nav>
     </div>
   </div>`;
 }

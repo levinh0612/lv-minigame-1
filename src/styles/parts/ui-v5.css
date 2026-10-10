@@ -43,3 +43,22 @@
 
 /* mặt quầy mỏng, có gờ sáng như mặt gỗ */
 .band{border-top:5px solid #EAC7A2;box-shadow:inset 0 6px 0 #D7A57C,0 -3px 0 rgba(0,0,0,.05);margin-top:12px}
+
+/* ===== Thanh dưới kiểu kính lỏng (iOS): nền mờ, viền sáng, mục đang chọn là viên kính nổi; một màu chính ===== */
+.glass5{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:6px;border-radius:30px;margin-top:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
+  -webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);
+  border:1px solid rgba(255,255,255,.75);
+  box-shadow:0 10px 28px -10px color-mix(in srgb,var(--pink-d) 45%,transparent),inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -1px 0 color-mix(in srgb,var(--pink-d) 18%,transparent)}
+.glass5 button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:58px;border-radius:24px;
+  color:color-mix(in srgb,var(--pink-d) 70%,#4A3438);transition:background .2s,transform .15s}
+.glass5 button:active{transform:scale(.95)}
+.glass5 .lu{filter:none;color:inherit}
+.glass5 b{font:800 11.5px/1 var(--body);color:inherit}
+.glass5 button.on{color:var(--pink-d);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pink) 30%,#fff),color-mix(in srgb,var(--pink) 16%,#fff));
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 0 0 1px color-mix(in srgb,var(--pink) 45%,transparent),0 3px 10px -4px color-mix(in srgb,var(--pink-d) 55%,transparent)}
+.glass5 .nd{position:absolute;top:3px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red,#E85D7F);color:#fff;font:800 11px/18px var(--body);text-align:center;border:2px solid #fff}
+/* nút trong bảng Menu: chấm số */
+.more5 button{position:relative}
+.more5 .nd{position:absolute;top:-2px;right:calc(50% - 34px);min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red,#E85D7F);color:#fff;font:800 11px/16px var(--body);text-align:center;border:2.5px solid #fff;font-style:normal}

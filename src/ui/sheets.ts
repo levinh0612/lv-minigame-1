@@ -16,6 +16,9 @@ import { $, closeModal, esc, modal, toast } from "./dom";
 import { FX_CAP, buffSources, fx, fxRaw } from "../engine/progress";
 import { gachaArt } from "./gachafx";
 import { ic } from "./icons";
+import { giftReady, goals } from "../engine/progress";
+import { weeklyPending } from "../engine/weekly";
+import { achPending } from "../engine/achievements";
 import { BUFF_LABEL, buffIcon, buffText } from "./screens/home";
 
 const ingChips = (r: (typeof RECIPES)[number]) => partsOfRecipe(r).map(p => `<span>${ingSVG(p.k, p.i, 18)}${CATS[p.k][p.i][0]}</span>`).join("");
@@ -153,14 +156,19 @@ export function musicSheet() {
 /* Nút Menu ở thanh dưới: những thứ không cần luôn hiện ở màn chính */
 export function moreSheet() {
   const T = (n: string, icon: string, c1: string, c2: string, attr: string) => `<button ${attr} style="--c1:${c1};--c2:${c2};--dk:${c2}"><span class="ic">${icon}</span><b>${n}</b></button>`;
+  const left = goals().filter(g => g.cur < g.need).length, pend = weeklyPending() + achPending(), gift = giftReady();
+  const nd = (n: number) => n ? `<i class="nd">${n}</i>` : "";
   modal(`<h2>Menu</h2><p class="sub">Những thứ khác của tiệm</p><div class="more5">
+    ${T("Mục tiêu", ic.target(28, 2.2) + nd(left), "#FFD66B", "#F2A41F", 'data-go="/muc-tieu"')}
+    ${T("Nhiệm vụ", ic.mission(28, 2.2) + nd(pend), "#9BE0B4", "#35B07A", 'data-go="/thanh-tich"')}
+    ${T("Quà tặng", ic.gift(28, 2.2) + nd(gift ? 1 : 0), "#FF9DB6", "#EE5A83", 'data-go="/cua-hang/qua-tang"')}
     ${T("Công thức", ic.book(28, 2.2), "#FFB27A", "#EE7A2E", 'data-act="menu"')}
     ${T("Nguyên liệu", ic.basket(28, 2.2), "#8EE0BC", "#3FB68A", 'data-act="ings"')}
     ${T("Đội ngũ", ic.users(28, 2.2), "#C2B0FA", "#8B6FE6", 'data-go="/cua-hang/thu-cung"')}
     ${T("Hồ sơ", ic.user(28, 2.2), "#8EC5FF", "#4C8DF0", 'data-act="profile"')}
     ${T("Xếp hạng", ic.trophy(28, 2.2), "#FFD66B", "#F2A41F", 'data-act="rank"')}
     ${T("Sự kiện", ic.cal(28, 2.2), "#8EE0BC", "#2FA67C", 'data-act="days"')}
-    ${T("Thành tích", ic.trophy(28, 2.2), "#FFB27A", "#E5622E", 'data-go="/thanh-tich"')}
+    ${T("Thành tích", ic.award(28, 2.2), "#FFB27A", "#E5622E", 'data-go="/thanh-tich"')}
   </div>`);
 }
 
