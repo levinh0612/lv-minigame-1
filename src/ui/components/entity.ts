@@ -26,8 +26,10 @@ export function entityAvatar(i: EntityInfo, px: number, mood: Mood = "open") {
   const bw = px >= 80 ? 12 : 9;     // độ dày viền ảnh khung: cỡ lớn dày hơn
   return i.rarity ? `<span class="cf cf-${i.rarity} ${i.owned ? "" : "dim"}" style="--bw:${bw}px">${inner}</span>` : `<span class="cf cf-pet">${inner}</span>`;
 }
+
 /** nhóm chip chỉ số */
 export const entityChips = (chips: Chip[]) => chips.length ? `<span class="ec-chips">${chips.map(c => `<i class="ec-${c.tone}">${esc(c.t)}</i>`).join("")}</span>` : "";
+
 /** nhãn độ hiếm có sao phát sáng */
 export const rarityChip = (r: Rarity) => `<i class="er-rar er-rar-${r}">${rarityIcon(r, 11)}${RARITY[r].n}</i>`;
 const statusChip = (s: EntityInfo["status"]) => s ? `<em class="er-st er-st-${s.tone}">${s.t}</em>` : "";
@@ -43,17 +45,30 @@ export interface RowOpts {
   trail?: string;            // phần bên phải; mặc định là nhãn trạng thái và dấu ›
   showMeta?: boolean;
 }
-/** thẻ dạng dòng: ảnh | tên + độ hiếm + bậc + vai trò / dòng phụ / chip chỉ số | trạng thái */
+
+/** thẻ dạng dòng (Đã tối ưu UI Layered): Ảnh | Tên + Độ hiếm + Bậc + Tim / Dòng phụ / Chip chỉ số | Trạng thái + Mũi tên */
 export function entityRow(i: EntityInfo, o: RowOpts = {}) {
   const px = o.px ?? 48, chips = o.chips ?? (i.workChips.length ? i.workChips : i.fxChips);
   const trail = o.trail ?? `${statusChip(i.status)}<span class="er-go" aria-hidden="true">›</span>`;
   const meta = o.meta ?? (i.staff ? `${i.bake ?? ""} · ${i.meal ? `${foodSVG(i.meal.id, 15)}${i.meal.n}` : ""}` : fxText(i) ? esc(fxText(i)) : "");
+  
   return `<button class="er er-${i.rarity ?? "pet"} ${i.owned ? "own" : "lock"} ${o.cls ?? ""}" ${o.attrs ?? ""}>
     <span class="er-av">${entityAvatar(i, px, o.mood)}</span>
-    <span class="er-main"><span class="er-name"><b>${esc(i.name)}</b>${i.rarity ? rarityChip(i.rarity) : ""}${i.tier ? tierBadge(i.tier, 22) : ""}${roleChip(i)}${i.bond !== null && i.bond > 0 ? HEARTS(i.bond) : ""}</span>
-      ${meta ? `<span class="er-meta">${meta}</span>` : ""}${entityChips(chips)}</span>
-    <span class="er-trail">${trail}</span></button>`;
+    <span class="er-main">
+      <span class="er-line-top">
+        <b>${esc(i.name)}</b>
+        ${i.rarity ? rarityChip(i.rarity) : ""}
+        ${i.tier ? tierBadge(i.tier, 22) : ""}
+        ${roleChip(i)}
+        ${i.bond !== null && i.bond > 0 ? HEARTS(i.bond) : ""}
+      </span>
+      ${meta ? `<span class="er-meta">${meta}</span>` : ""}
+      ${chips.length ? `<span class="er-chips-row">${entityChips(chips)}</span>` : ""}
+    </span>
+    <span class="er-trail">${trail}</span>
+  </button>`;
 }
+
 /** thẻ dạng ô vuông (danh sách bộ sưu tập): khung độ hiếm, tên, nhãn độ hiếm, trạng thái */
 export function entityTile(i: EntityInfo, o: { attrs?: string; cls?: string; px?: number; sub?: string } = {}) {
   const px = o.px ?? 56;

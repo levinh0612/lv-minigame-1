@@ -1980,11 +1980,13 @@ button.cm{position:relative}
 @keyframes cfsheen{60%,100%{background-position:-60% 0}}
 @media (prefers-reduced-motion:reduce){.cf-ultra::after,.cf-rare::after{animation:none}}
 .cf.dim{filter:grayscale(.85) opacity(.6)}.cf.dim::after{display:none}
+
 /* chip chỉ số */
 .ec-chips{display:flex;flex-wrap:wrap;gap:4px}
 .ec-chips i{font:800 11.5px var(--body);font-style:normal;padding:2px 8px;border-radius:99px;background:#EEF1F7;color:#5B6478}
 .ec-price{background:#FFF0D2!important;color:#8A5A00!important}.ec-tip{background:#DDF4E8!important;color:#2A7A59!important}.ec-pat{background:#E4EBFF!important;color:#3A4FB0!important}.ec-cust{background:#F1E6FF!important;color:#6A3FB0!important}
 .ec-bond{font-style:normal;font:800 11px var(--body);color:#E0567A;letter-spacing:1px}
+
 /* nhãn độ hiếm và trạng thái */
 .er-rar{display:inline-flex;align-items:center;gap:2px;font:800 11px var(--body);font-style:normal;padding:1px 8px 1px 5px;border-radius:99px;background:#EAF0F8;color:#5B7391}
 .er-rar-rare{background:#E3E9FF;color:#3F52C9}.er-rar-ultra{background:#FFF0C8;color:#9A6400}
@@ -1992,21 +1994,37 @@ button.cm{position:relative}
 .er-st{font:800 11.5px var(--body);font-style:normal;padding:3px 10px;border-radius:99px;white-space:nowrap}
 .er-st-on{background:#DDF4E8;color:#2A7A59}.er-st-off{background:#ECEFF4;color:#7A8498}.er-st-bad{background:#FDE0E4;color:#C43D5B}
 .er-st-free{background:#EEF1F7;color:#6B7487}.er-st-lock{background:#F1F2F5;color:#9AA2B3}.er-st-work{background:#E3E9FF;color:#3F52C9}
-/* thẻ dạng dòng */
+
+/* thẻ dạng dòng (Tối ưu phân tầng UI) */
 .er{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border-radius:22px;padding:10px 12px;box-shadow:0 3px 0 var(--sh);border:2px solid transparent;cursor:pointer;transition:transform .12s}
 .er:active{transform:scale(.985)}
 .er.lock{opacity:.9}.er-rare{border-color:#C9D4FF}.er-ultra{border-color:#FFE29A;background:linear-gradient(180deg,#fffdf6,#fff)}
-.er-av{flex:none}.er-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.er-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.er-name>b{font:800 16px var(--display);color:var(--ink2)}
+
+.er-av{flex:none}
+.er-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+
+/* Tầng 1: Tên, độ hiếm, bậc, tim */
+.er-line-top, .er-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.er-line-top>b, .er-name>b{font:800 16px var(--display);color:var(--ink2)}
 .er-name .tbg{position:static;flex:none;filter:none;margin:0}
+
+/* Tầng 2: Meta info (tốc độ, món ăn) */
 .er-meta{display:flex;align-items:center;gap:4px;font:700 12.5px var(--body);color:var(--soft2)}
-.er-trail{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}.er-go{font:800 22px var(--body);color:#9AA7C3;line-height:1}
+
+/* Tầng 3: Dải chip chỉ số riêng biệt */
+.er-chips-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+
+/* Phần bên phải: Trạng thái và mũi tên */
+.er-trail{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.er-go{font:800 22px var(--body);color:#9AA7C3;line-height:1}
+
 /* thẻ ô vuông */
 .et{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px 10px;border-radius:20px;background:#fff;box-shadow:0 3px 0 var(--sh);text-align:center;border:2px solid transparent;cursor:pointer;min-width:0}
 .et-rare{border-color:#C9D4FF}.et-ultra{border-color:#FFE29A;background:linear-gradient(180deg,#fffdf6,#fff)}
 .et>b{font:800 14px/1.15 var(--display);color:var(--ink2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .et>small{font:700 11.5px var(--body);color:var(--soft2);display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:14px}
 .et .ec-chips{justify-content:center}
+
 .er.crew.on{border-color:#9CD9B8}.er.crew:not(.on){background:var(--k-fbf4f6);opacity:.88}.er.crew.hun{border-color:#F3B6C4}
 .er.crew .er-meta .bad{color:var(--k-d14e73)}.pcwrap .er{width:100%}
 

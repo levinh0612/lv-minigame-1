@@ -183,15 +183,21 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const c = sh.seats[i]; if (!c) return "";
   const f = c.pat / c.max, S2 = faceSize(sh), mine = mineIdx(sh) === i;
   const b = c.by ? sh.bakers.find(x => x.id === c.by) : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
+  
   const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
-  const who = c.by ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
+  
+  const whoTag = c.by 
+    ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
+    
   const rg = c.reg ? gachaItem(c.reg) : null, perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");
   const vip = rg ? `<i class="vtag vt-${rg.rarity}" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>` : "";
+  
   return `${vip}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
-    <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${who}`;
+    <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${whoTag}`;
 }
+
 const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (c?.reg ? " reg reg-" + (gachaItem(c.reg)?.rarity ?? "common") : "") + (extra ? " " + extra : ""); };
 const slotLabel = (sh: Shift, i: number) => { const c = sh.seats[i]; return !c ? "Bàn trống" : c.by ? `${petName(c.by)} đang làm cho ${c.who}` : `Nhận đơn của ${c.who}`; };
 const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
