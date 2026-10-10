@@ -105,7 +105,7 @@ function updateBaking() {
     const pct = Math.min(100, Math.round(b.done / b.need * 100)), st = Math.floor(pct / 25);
     if (bakeStep[b.id] !== st) { bakeStep[b.id] = st; redraw = true; }
     document.querySelectorAll<HTMLElement>(`[data-bake="${b.id}"]`).forEach(el => {
-      const i = el.querySelector("i"), t = el.querySelector("span");
+      const i = el.querySelector("i"), t = el.querySelector(".pc");
       if (i) i.style.width = pct + "%";
       if (t) t.textContent = pct + "%";
     });
@@ -135,7 +135,7 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
   
   const whoTag = c.by 
-    ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span>${pct}%</span><i style="width:${pct}%"></i></div>`
+    ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span class="pc">${pct}%</span><i style="width:${pct}%"></i></div>`
     : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
     
   const rg = c.reg ? gachaItem(c.reg) : null, perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");

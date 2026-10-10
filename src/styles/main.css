@@ -12,3 +12,4 @@
 @import "./parts/home-recipes.css" layer(legacy);
 @import "./parts/team.css" layer(legacy);
 @import "./parts/entity.css" layer(legacy);
+@import "./parts/ui-v5.css" layer(legacy);

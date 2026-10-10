@@ -21,7 +21,7 @@
 .cell>.slot{width:100%;height:100%}
 @media (prefers-reduced-motion:reduce){.queue,.cell{transition:none}}
 [data-mode=mid] .slot .nm,[data-mode=mini] .slot .nm{display:none}
-[data-mode=mini] .who.by span{display:none}
+[data-mode=mini] .who.by .pc{display:none}
 .slot{position:relative;border-radius:18px;background:#fff;border:2.5px solid #fff;box-shadow:0 3px 0 var(--sh);padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s}
 .slot:active{transform:scale(.96)}
 .slot.mine{border-color:var(--pink);box-shadow:0 3px 0 var(--k-f3a9bc);transform:translateY(-3px)}

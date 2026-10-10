@@ -29,7 +29,14 @@ let prepTab: PrepTab = "crew";
 export const setPrepTab = (t: PrepTab) => { prepTab = t; };
 /* lọc danh sách bánh: tất cả, món ruột (ghim), mới mở (trong 5 cấp gần đây), thiếu nguyên liệu */
 export type CakeFil = "all" | "pin" | "new" | "low";
-const CAKE_FILS: [CakeFil, string][] = [["all", "Tất cả"], ["pin", "★ Món ruột"], ["new", "Mới mở"], ["low", "Thiếu hàng"]];
+const CAKE_FILS: [CakeFil, string][] = [["all", "Tất cả"], ["pin", "Ruột"], ["new", "Mới"], ["low", "Thiếu"]];
+/* biểu tượng cùng một nét cho từng bộ lọc */
+const FIL_IC: Record<CakeFil, string> = {
+  all: "",
+  pin: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l2 4.2 4.5.6-3.3 3.1.8 4.5L8 11.9l-4 2.3.8-4.5L1.5 6.6 6 6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+  new: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+  low: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13zM8 6.5v3M8 11.5v.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+};
 let cakeFil: CakeFil = "all";
 export const setCakeFil = (f: CakeFil) => { cakeFil = f; };
 
@@ -58,7 +65,7 @@ export function prepHTML() {
   let body = "";
   if (prepTab === "crew") {
     const ids = staffIds();
-    body = `<div class="sh2"><b>Nhân viên</b><span class="lav">${plan.filter(x => x.meal).length}/${ids.length} đi làm</span></div>
+    body = `<div class="sh2"><b>Chọn người đi làm</b><span class="lav">${plan.filter(x => x.meal).length}/${ids.length} đi làm</span></div>
       <div class="pcrews">${ids.map(crewCard).join("")}</div>
       <p class="phint">Chạm vào thẻ để chọn hoặc bỏ chọn đi làm.${hungry.length ? ` <b>${esc(hungry.join(", "))} đói, sẽ nghỉ nếu không mua đồ ăn.</b>` : ""}</p>`;
   } else if (prepTab === "cakes") {
@@ -66,7 +73,7 @@ export function prepHTML() {
     const test: Record<CakeFil, (r: (typeof all)[number]) => boolean> = { all: () => true, pin: r => isPinned(r.id), new: r => r.lv > L - 5 && r.lv <= L, low: lacks };
     const rs = all.filter(test[cakeFil]).sort((x, y) => +isPinned(y.id) - +isPinned(x.id));
     const nPin = all.filter(r => isPinned(r.id)).length;
-    body = `<div class="gfil rfil">${CAKE_FILS.map(([k, n]) => `<button class="${cakeFil === k ? "on" : ""}" data-pfil="${k}">${n}</button>`).join("")}</div>
+    body = `<div class="pfil">${CAKE_FILS.map(([k, n]) => { const cnt = all.filter(test[k]).length; return `<button class="${cakeFil === k ? "on" : ""} ${k === "low" && cnt ? "alert" : ""}" data-pfil="${k}">${FIL_IC[k]}${n}<em>${cnt}</em></button>`; }).join("")}</div>
       <div class="sh2"><b>Bánh</b><span class="lav">${rs.length}/${all.length} món · ★ ${nPin}/${MAX_PINS}</span></div>
       <div class="pcakes">${rs.map(r => {
       const viral = r.id === feat.id, pin = isPinned(r.id);
@@ -74,7 +81,7 @@ export function prepHTML() {
         <div class="pi"><b>${esc(r.n)}</b><small class="pprice">${fmtN(r.price)} xu${viral ? ` <span class="vtag">✦ Viral hôm nay</span>` : ""}</small>
         <div class="pings">${partsOfRecipe(r).map(p => `<span title="${CATS[p.k][p.i][0]}" class="${stockOf(p.k, p.i) === 0 ? "out" : ""}">${ingSVG(p.k, p.i, 16)}</span>`).join("")}</div></div>
         <button class="pinbtn ${pin ? "on" : ""}" data-rpin="${r.id}" aria-pressed="${pin}" aria-label="${pin ? "Bỏ ghim" : "Ghim"} ${esc(r.n)}">${pin ? "★" : "☆"}</button></div>`;
-    }).join("") || `<p class="phint">Không có món nào trong mục này.</p>`}</div>
+    }).join("") || `<p class="pempty">${cakeFil === "low" ? "Chưa có món nào thiếu hàng.<br>Kho đang đủ cho cả ca." : cakeFil === "pin" ? "Chưa ghim món ruột nào.<br>Bấm ngôi sao ở món để ghim." : "Chưa có món nào trong mục này."}</p>`}</div>
       <p class="phint">Ghim tối đa ${MAX_PINS} món ruột: khách gọi các món này nhiều hơn (khoảng một nửa số khách) để bạn dễ tự nhớ công thức và nhận thưởng +50%.</p>`;
   } else if (prepTab === "stock") {
     const stock = STOCK_KEYS.map(k => availableIdx(k).map(i => {

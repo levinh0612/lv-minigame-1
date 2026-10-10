@@ -1,0 +1,45 @@
+/* Giao diện v5: màn Chuẩn bị (thẻ nhân viên đồng nhất, thanh lọc có số lượng) và hàng khách ở quầy */
+
+/* ===== Chuẩn bị: thẻ nhân viên ===== */
+.prep2 .pcrews,.prep2 .pcakes{gap:8px;padding-bottom:12px}
+.prep2 .er.crew{padding:9px 10px;gap:10px;border-radius:16px;border:2px solid transparent;opacity:1;background:#fff}
+.prep2 .er.crew:not(.on){background:#fff}
+.prep2 .er.crew.on{border-color:#5DBE95}
+.prep2 .er.crew .er-line-top>b{font-size:15px;line-height:1.1}
+.prep2 .er .tbg,.prep2 .er .ec-bond,.prep2 .er-rar svg,.prep2 .er-rar .rar-ic{display:none}
+.prep2 .er-rar{padding:3px 7px;font:800 10px/1 var(--body);border-radius:7px}
+.prep2 .er-meta{font-size:11.5px}
+.prep2 .er-chips-row{margin-top:3px}
+.prep2 .pc-chk{width:28px;height:28px;border:2px solid #E3D8DF}
+.prep2 .er.crew.on .pc-chk{background:#5DBE95;border-color:#5DBE95}
+
+/* thẻ thiếu đồ ăn: nút mua nằm trong cùng khung với thẻ */
+.prep2 .pcwrap{gap:0;background:#fff;border:2px solid #F3B6C4;border-radius:16px;box-shadow:0 3px 0 var(--sh);overflow:hidden}
+.prep2 .pcwrap .er.crew,.prep2 .pcwrap .er.crew.hun{border:0;box-shadow:none;border-radius:0;background:transparent}
+.prep2 .pcwrap .pc-buy{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:0;padding:8px 12px;background:#FFE3EA;color:#B23A5E;font:800 12.5px var(--body)}
+.prep2 .pcwrap .pc-buy:disabled{opacity:.55}
+.prep2 .er.crew .er-meta .bad{color:#B23A5E}
+
+/* ===== Chuẩn bị: thanh lọc bánh (4 chip một dòng, có số lượng) ===== */
+.prep2 .pfil{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:12px 16px 0}
+.prep2 .pfil button{display:flex;align-items:center;justify-content:center;gap:4px;height:36px;padding:0 4px;border-radius:99px;background:#fff;box-shadow:0 2px 0 var(--sh);font:800 13px var(--body);color:var(--soft2);white-space:nowrap}
+.prep2 .pfil svg{width:14px;height:14px;flex:none}
+.prep2 .pfil em{font:800 11px/1 var(--body);font-style:normal;padding:3px 6px;border-radius:99px;background:#F2EDF5;color:var(--soft2);font-variant-numeric:tabular-nums}
+.prep2 .pfil button.on{background:#6F5BE0;color:#fff}
+.prep2 .pfil button.on em{background:rgba(255,255,255,.25);color:#fff}
+.prep2 .pfil button.alert em{background:#E85D7F;color:#fff}
+.prep2 .pempty{margin:8px 0 0;padding:16px;border-radius:16px;background:#fff;box-shadow:0 2px 0 var(--sh);text-align:center;font:700 13px/1.4 var(--body);color:var(--soft2)}
+@media (max-width:360px){.prep2 .pfil button{font-size:12px}.prep2 .pfil svg{display:none}}
+
+/* ===== Hàng khách ===== */
+.slot .pat{width:100%;height:7px}
+.slot .nm{font-size:12.5px;color:var(--ink2)}
+.slot.taken{background:#fff;border-color:#E8E1FA;box-shadow:0 3px 0 #DCD2F7}
+.who.by{width:100%;justify-content:flex-start;gap:4px;background:#ECE7FB;border-radius:9px;color:#6E58C0}
+.who.by .pc{margin-left:auto}
+.who.by .cf{flex:none}
+.who:not(.by):not(.me):empty::after{content:"Chờ nhận";display:block;font:700 11px/20px var(--body);color:var(--soft3);text-align:center}
+.who.me{width:100%;text-align:center;border-radius:9px}
+
+/* mặt quầy mỏng, có gờ sáng như mặt gỗ */
+.band{border-top:5px solid #EAC7A2;box-shadow:inset 0 6px 0 #D7A57C,0 -3px 0 rgba(0,0,0,.05);margin-top:12px}
