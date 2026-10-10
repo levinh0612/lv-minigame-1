@@ -9,7 +9,8 @@ import { CATS, type PartKey, type StockKey } from "./content/game";
 import type { RoomKey } from "./content/room";
 import { buy, buyFood, canAffordUpgrade, needUpgrade, buySuggested, quickPrep, foodDef, hire, hireFee, packPrice, setMeal, toggleDuty, train, treat } from "./engine/economy";
 import type { FoodId } from "./content/game";
-import { S, petName, save } from "./engine/state";
+import { S, loadState, petName, save } from "./engine/state";
+import { sameState } from "./engine/conflict";
 import { tickIncident } from "./engine/incident";
 import { earn } from "./engine/wallet";
 import { claimPassive } from "./engine/passive";
@@ -55,7 +56,7 @@ document.addEventListener("pointerup", e => {
 });
 /* Một bộ xử lý chạm cho cả app (event delegation) */
 document.addEventListener("click", e => {
-  const t = (e.target as HTMLElement).closest<HTMLElement>("button, .modal"); if (!t) return;
+  const t = (e.target as HTMLElement).closest<HTMLElement>("button, [role=button], .modal"); if (!t) return;
   if (t.id === "modal") { if (e.target === t && !SH && !modalLocked()) closeModal(); return; }
   if (t.hasAttribute("data-close")) return closeModal();
   if (t.hasAttribute("data-music")) { Sound.setMusic(!S.music); if (!SH) render(); return; }
@@ -196,7 +197,8 @@ async function visitGifts() {
 }
 setInterval(() => void visitGifts(), 45000); setTimeout(() => void visitGifts(), 4000);
 setInterval(() => { if (!document.hidden && loggedIn() && !isLocked() && !SH) void pull(); }, 20000);
-addEventListener("cloud:conflict", () => { if (SH || hasModal()) return void setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); void peekCloud().then(c => { if (hasModal()) return setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); conflictModal(c, keep => void resolveConflict(keep, c)); }); });
+addEventListener("cloud:conflict", () => { if (SH || hasModal()) return void setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); void peekCloud().then(c => { if (hasModal()) return setTimeout(() => dispatchEvent(new Event("cloud:conflict")), 5000); if (c && sameState(S as never, loadState(JSON.stringify(c)) as never)) return void resolveConflict(true, c, true);     // hai bản giống hệt nhau: gộp im lặng, không hỏi
+    conflictModal(c, keep => void resolveConflict(keep, c)); }); });
 addEventListener("cloud:pulled", () => { if (!SH && !hasModal()) render(); });
 window.addEventListener("hashchange", () => render());
 

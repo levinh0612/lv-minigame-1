@@ -191,11 +191,23 @@ export function openItemDialog(id: string) {
 }
 const refreshItem = (id: string) => { const b = document.getElementById("tdBody"); if (b) b.innerHTML = itemBody(id); render(true); };
 
+/** cuộn khung của hộp thoại tới phần tử; tự tween bằng scrollTop vì scrollIntoView smooth không chạy ổn trong khung cuộn trên vài trình duyệt (iOS) */
+function scrollToIn(id: string) {
+  const el = document.getElementById(id), box = el?.closest<HTMLElement>(".mscroll"); if (!el || !box) return;
+  const from = box.scrollTop, to = Math.max(0, from + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 8), t0 = performance.now();
+  const step = (now: number) => {
+    const k = Math.min(1, (now - t0) / 350);
+    box.scrollTop = from + (to - from) * (1 - (1 - k) ** 3);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 /* ============ xử lý nút ============ */
 /** data-sd: thao tác trong hộp thoại thợ bánh; el là phần tử vừa chạm (để bay tim) */
 export function staffDialogAct(act: string, el: HTMLElement) {
   const [a, x, y] = act.split(":");
-  if (a === "goto") { sfx("click"); return document.getElementById("sd" + x![0]!.toUpperCase() + x!.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  if (a === "goto") { sfx("click"); return scrollToIn("sd" + x![0]!.toUpperCase() + x!.slice(1)); }
   if (a === "open") { sfx("click"); return openStaffDialog(x!); }
   if (a === "buy") { const f = foodDef(x as never); if (buyFood(f.id, +y!)) { if (dlg && S.staff[dlg]) S.staff[dlg].prio = Date.now(); save(); sfx("tap"); toast(`+${y} ${f.n} · ${fmtN(f.cost * +y!)} xu`); } else toast("Không đủ xu"); return refreshStaff(); }
   if (a === "treat") { const id = x!, f = foodDef(y as never); if (treat(id, f.id)) { const r = el.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop"); toast(`${petName(id)} ăn ${f.n} ngon lành! +${f.aff} ♥`); } else toast("Không đủ xu để mua đồ ăn"); return refreshStaff(); }

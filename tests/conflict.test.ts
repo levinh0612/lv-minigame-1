@@ -20,3 +20,16 @@ describe("so sánh hai bản lưu", () => {
     expect(lossLines({ ...A, lv: 9 }, A)).toEqual([]);
   });
 });
+
+import { diffLabels, sameState } from "../src/engine/conflict";
+describe("hai bản giống hệt nhau", () => {
+  const a = { coins: 5, xp: 10, stock: { x: [1, 2] }, cloud: { rev: 1, at: "a" } };
+  it("bỏ qua thông tin đồng bộ và thứ tự khoá", () => {
+    expect(sameState(a, { xp: 10, stock: { x: [1, 2] }, coins: 5, cloud: { rev: 9, at: "b" } })).toBe(true);
+  });
+  it("khác dù chỉ một mục thì không giống, và nêu đúng mục khác", () => {
+    const b = { ...a, stock: { x: [1, 3] } };
+    expect(sameState(a, b)).toBe(false);
+    expect(diffLabels(a, b)).toEqual(["kho nguyên liệu"]);
+  });
+});

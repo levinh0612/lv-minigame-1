@@ -142,10 +142,10 @@ let pulling = false, asking = false;
 /** hai máy cùng có thay đổi: báo giao diện hỏi người chơi (chỉ một lần cho tới khi có lựa chọn) */
 function askConflict() { if (asking) return; asking = true; dispatchEvent(new Event("cloud:conflict")); }
 /** người chơi chọn: giữ bản máy này (ghi đè bản trên mây) hoặc dùng bản trên mây (bỏ thay đổi chưa lưu ở máy này) */
-export async function resolveConflict(keepMine: boolean, cloudState?: unknown) {
+export async function resolveConflict(keepMine: boolean, cloudState?: unknown, silent = false) {
   asking = false;
   if (!A?.token) return;
-  backup(keepMine ? "cloud" : "mine", keepMine ? cloudState : S);       // bản bị bỏ vẫn cứu lại được ở Tài khoản
+  if (!silent) backup(keepMine ? "cloud" : "mine", keepMine ? cloudState : S);       // bản bị bỏ vẫn cứu lại được ở Tài khoản
   if (!keepMine) { A.dirty = false; store(); await pull(true); return; }
   try { const r = await api<{ rev: number }>("sync?since=999999999"); muted = true; S.cloud.rev = r.rev; save(); muted = false; }
   catch { muted = false; return; }

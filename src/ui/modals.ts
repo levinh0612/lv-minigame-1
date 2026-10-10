@@ -1,5 +1,5 @@
 /* Các hộp thoại: thư, quà, cài đặt, tạm dừng, Anh ghé tiệm */
-import { ahead, lossLines, snapOf, type Snap } from "../engine/conflict";
+import { ahead, diffLabels, lossLines, snapOf, type Snap } from "../engine/conflict";
 import { Sound, sfx, songName } from "../audio/sound";
 import { CFG, type EventKey, type PetId } from "../content/couple";
 import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
@@ -9,7 +9,7 @@ import { claimWelcome } from "../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
 import { giftReady } from "../engine/progress";
 import { closeEarly, type Customer } from "../engine/shift";
-import { S, resetState, save } from "../engine/state";
+import { S, loadState, resetState, save } from "../engine/state";
 import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, petSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, confirmSpend, dropModal, esc, floatHearts, modal, toast } from "./dom";
@@ -287,9 +287,11 @@ export function conflictModal(cloud: unknown | null, pick: (keepMine: boolean) =
       <b>${title}</b>${win ? `<em>Tiến xa hơn</em>` : ""}
       ${sn ? `<dl><dt>Cấp</dt><dd>Lv ${sn.lv}</dd><dt>Xu</dt><dd>${fmtN(sn.coins)}</dd><dt>Đã kiếm</dt><dd>${fmtN(sn.earned)}</dd><dt>Số ca</dt><dd>${sn.shifts}</dd><dt>Lưu</dt><dd>${id === "cfMine" ? "máy này" : when(sn.at)}</dd></dl>` : `<p>Chưa tải được, kiểm tra mạng</p>`}
       <span>Giữ bản này</span></button>`;
+  const diff = cloud ? diffLabels(mine as Record<string, unknown>, loadState(JSON.stringify(cloud)) as never) : [];
+  const same = lead === "same" && diff.length ? `<p class="cfnote">Số liệu chính giống nhau, hai bản chỉ khác ở: ${esc(diff.join(", "))}. Giữ bản nào cũng gần như nhau; nên giữ bản có thay đổi mới nhất mà bạn vừa làm.</p>` : "";
   modal(`<h2>Tiệm đã lưu ở máy khác</h2><p class="sub">Máy này cũng có thay đổi chưa lưu. Chọn bản muốn giữ. Bản còn lại sẽ bị thay thế, nhưng được cất 7 ngày, khôi phục ở Tài khoản.</p>
     <div class="cfcards">${card("cfMine", "Máy này", m, lead === "mine")}${card("cfCloud", "Trên mây", c, lead === "cloud")}</div>
-    ${lead === "same" ? "" : `<p class="cfnote" id="cfNote"></p>`}`, undefined, true);
+    ${same}${lead === "same" ? "" : `<p class="cfnote" id="cfNote"></p>`}`, undefined, true);
   const note = $("#cfNote"), losses = (keep: Snap, lose: Snap) => lossLines(keep, lose).join(", ");
   for (const [id, keep] of [["#cfMine", true], ["#cfCloud", false]] as const) {
     let warned = false;
