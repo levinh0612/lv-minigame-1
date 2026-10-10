@@ -7,6 +7,14 @@ import { S, petName } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { $, dropModal, esc, floatText, haptic, modal, toast } from "../dom";
 
+const RAT_W = 140, RAT_H = 52;   // ảnh chuột 640x240 thu nhỏ
+/* chạm vào khung: hiện cái vợt vung xuống đúng chỗ chạm (trúng chuột hay trượt đều có) */
+function swingNet(arena: HTMLElement, e: PointerEvent) {
+  const b = arena.getBoundingClientRect(), n = document.createElement("img");
+  n.src = "/game/net.png"; n.alt = ""; n.className = "net"; n.draggable = false;
+  n.style.left = e.clientX - b.left + "px"; n.style.top = e.clientY - b.top + "px";
+  arena.appendChild(n); setTimeout(() => n.remove(), 520);
+}
 interface Rat { el: HTMLElement; x: number; y: number; a: number; turn: number }
 let rat: Rat | null = null;
 export function removeRat() { rat?.el.remove(); rat = null; if ($("#ratArena")) dropModal(); const b = $("#mouseBox"); if (b) b.innerHTML = ""; }
@@ -14,19 +22,19 @@ export function removeRat() { rat?.el.remove(); rat = null; if ($("#ratArena")) 
 export function moveRat(sh: Shift | null, dt: number, onCatch: () => void) {
   if (!sh?.mouse) { if (rat) removeRat(); return; }
   const arena = $("#ratArena"); if (!arena) { rat = null; return; }
-  const box = arena.getBoundingClientRect(), SZ = 64;
+  const box = arena.getBoundingClientRect(), SZ = RAT_W;
   if (!rat || !rat.el.isConnected) {
-    const el = document.createElement("button"); el.id = "rat"; el.className = "rat"; el.setAttribute("aria-label", "Bắt chuột"); el.textContent = "🐭"; arena.appendChild(el);
-    el.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); onCatch(); });
+    const el = document.createElement("button"); el.id = "rat"; el.className = "rat"; el.setAttribute("aria-label", "Bắt chuột"); el.innerHTML = `<img src="/game/rat.png" alt="" draggable="false">`; arena.appendChild(el);
+    el.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); swingNet(arena, e); onCatch(); });
     rat = { el, x: -SZ + 1, y: box.height * (.2 + Math.random() * .5), a: -.2 + Math.random() * .4, turn: 0 };
   }
   const k = box.width / 390, age = sh.mouse.age, speed = Math.max(55, 420 - age * 12) * k;
   rat.turn -= dt; if (rat.turn <= 0) { rat.a += (Math.random() - .5) * 2.2; rat.turn = .35 + Math.random() * .8; }
   rat.x += Math.cos(rat.a) * speed * dt; rat.y += Math.sin(rat.a) * speed * dt;
-  const W = box.width - SZ, H = box.height - SZ;
+  const W = box.width - SZ, H = box.height - RAT_H;
   if (rat.x < 0 && rat.x > -SZ + 2) { rat.x = 0; rat.a = Math.PI - rat.a; } else if (rat.x > W) { rat.x = W; rat.a = Math.PI - rat.a; }
   if (rat.y < 0) { rat.y = 0; rat.a = -rat.a; } else if (rat.y > H) { rat.y = H; rat.a = -rat.a; }
-  rat.el.style.transform = `translate(${rat.x.toFixed(1)}px,${rat.y.toFixed(1)}px) scaleX(${Math.cos(rat.a) < 0 ? -1 : 1})`;
+  rat.el.style.transform = `translate(${rat.x.toFixed(1)}px,${rat.y.toFixed(1)}px) scaleX(${Math.cos(rat.a) > 0 ? -1 : 1})`;
 }
 function mouseInfo(sh: Shift) {
   const m = sh.mouse; if (!m) return "";
@@ -44,6 +52,7 @@ export const mouseChip = (sh: Shift) => sh.mouse ? `<button class="mhud chip s-$
 export function openMouseDlg(sh: Shift | null) {
   if (!sh?.mouse) return;
   modal(`<h2>🐭 Chuột vào tiệm!</h2><div id="mouseInfo">${mouseInfo(sh)}</div><div class="arena" id="ratArena"></div>`);
+  $("#ratArena")?.addEventListener("pointerdown", e => swingNet(e.currentTarget as HTMLElement, e));
 }
 export function renderMouse(sh: Shift | null) {
   if (!sh) return;

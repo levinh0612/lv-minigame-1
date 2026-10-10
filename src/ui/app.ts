@@ -21,6 +21,7 @@ import { animateResult, hasResult, resultHTML } from "./screens/result";
 import { roadmapHTML } from "./screens/roadmap";
 import { rankSheet } from "./screens/rank";
 import { shopHTML } from "./screens/shop";
+import { syncNav } from "./gnav";
 
 let shown = "";
 /** keepModal === true: vẽ lại màn phía sau mà giữ nguyên hộp thoại đang mở (nâng cấp tiệm cập nhật tiền và cảnh ngay) */
@@ -29,7 +30,7 @@ export function render(keepModal?: boolean) {
   const path = currentPath(), r = resolve(path);
   // chưa đăng nhập: màn chào / đăng nhập; đã đăng nhập nhưng vừa mở app: hỏi PIN
   if (!SH && (!loggedIn() || isLocked())) {
-    dropModal(); document.body.dataset.scr = "auth"; shown = "";
+    dropModal(); syncNav("auth"); document.body.dataset.scr = "auth"; shown = "";
     $("#app")!.innerHTML = authHTML(loggedIn() ? "lock" : account() ? "login" : "welcome"); window.scrollTo(0, 0); return;
   }
   // đang bán mà người chơi bấm Back: quay lại ca, hiện bảng tạm dừng
@@ -54,7 +55,7 @@ export function render(keepModal?: boolean) {
     case "visit": $("#app")!.innerHTML = visitHTML(r.user); break;
     case "rank": $("#app")!.innerHTML = homeHTML(); setTimeout(rankSheet, 0); break;   // link cũ: màn chính + hộp thoại
   }
-  fitRooms(); void mountRooms(); hydratePortraits();
+  syncNav(r.name); fitRooms(); void mountRooms(); hydratePortraits();
   // vẽ lại cùng màn (mua đồ, cho ăn…) thì giữ vị trí cuộn; sang màn khác thì lên đầu
   window.scrollTo(0, scroll ? y : 0);
 }

@@ -5,6 +5,7 @@ import { myStats } from "../engine/stats";
 import { statsDialog } from "../ui/statsdlg";
 import "../styles/main.css";
 import { installGlyphs } from "../ui/glyphs";
+import { navHTML } from "../ui/gnav";
 import "../styles/tailwind.css";
 import "../styles/themes.css";
 import "./sb.css";
@@ -362,7 +363,7 @@ await loadSprites();
 if (new URLSearchParams(location.search).has("force")) { Object.defineProperty(document, "hidden", { get: () => false }); window.requestAnimationFrame = cb => window.setTimeout(() => cb(performance.now()), 34); }
 const q = new URLSearchParams(location.search), one = q.get("story"), root = document.getElementById("sb")!;
 applyTheme(q.get("theme") || "pink");   // ?theme=blue|green|purple|orange|slate để xem từng theme
-const wrap = (s: Story) => s.kind === "comp" ? s.html() : `<div class="frame ${s.long ? "long" : ""} ${s.resBg ? "res-bg" : ""}">${s.html()}</div>`;
+const wrap = (s: Story) => s.kind === "comp" ? s.html() : `<div class="frame ${s.long ? "long" : ""} ${s.resBg ? "res-bg" : ""}">${s.html()}${/^(home|gacha|shop)/.test(s.id) ? `<div id="gnav" style="position:absolute">${navHTML(s.id.startsWith("home") ? "home" : s.id.startsWith("gacha") ? "gacha" : "shop")}</div>` : ""}</div>`;
 
 if (q.has("list")) {
   // cho script chụp ảnh đọc danh sách

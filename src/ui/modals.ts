@@ -280,17 +280,17 @@ export function conflictModal(pick: (keepMine: boolean) => void) {
 
 /** Đồng xu may rủi: người chơi tự bấm. 70% bình an, 30% gặp sự cố (trừ khoản cố định theo cấp tiệm, tối đa 25% số xu có). */
 export function coinModal(onClose?: () => void) {
-  modal(`<div class="coinwrap"><button type="button" class="tosscoin" id="coinBtn" aria-label="Tung đồng xu"><span class="cf cfa"><i>xu</i></span></button></div>
+  modal(`<div class="coinwrap"><button type="button" class="coin3d" id="coinBtn" aria-label="Tung đồng xu"><span class="cs"><img class="f" src="/game/coin-luck.png" alt="" draggable="false"><img class="b" src="/game/coin-loss.png" alt="" draggable="false"></span></button></div>
     <h2>Tung đồng xu!</h2><p class="sub">Bấm vào đồng xu. Có 30% gặp sự cố bị trừ xu, 70% bình an.</p>
     <div class="coinodds">${(["low", "mid", "high"] as const).map(l => `<span>${LEVELS[l].name} −${fmtN(incidentCost(S.coins, l))} xu</span>`).join("")}</div>`, onClose, true);
   const btn = $<HTMLButtonElement>("#coinBtn"); if (!btn) return;
   btn.addEventListener("click", () => {
-    btn.disabled = true; btn.classList.add("flip"); sfx("tap");
+    const hit = tossCoin();
+    btn.disabled = true; btn.style.setProperty("--end", hit ? "1980deg" : "1800deg"); btn.classList.add("flip"); sfx("tap");
     setTimeout(() => {
-      const hit = tossCoin();
       if (!hit) {
         sfx("level");
-        modal(`<div class="coinwrap"><span class="tosscoin safe"><span class="cf">🍀</span></span></div><h2>May quá!</h2><p class="sub">Đồng xu mỉm cười, tiệm bình an vô sự. Hẹn bạn ở lần tung sau.</p>
+        modal(`<div class="coinwrap"><span class="coin3d safe"><span class="cs"><img class="f" src="/game/coin-luck.png" alt=""></span></span></div><h2>May quá!</h2><p class="sub">Đồng xu mỉm cười, tiệm bình an vô sự. Hẹn bạn ở lần tung sau.</p>
           <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`, onClose, true);
         return;
       }

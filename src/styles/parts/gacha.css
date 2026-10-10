@@ -217,7 +217,7 @@
 .mhud.s-warn{background:#FFE0E6;box-shadow:0 3px 0 #F4B2C0;animation:mWarn .9s ease-in-out infinite}.mhud.s-warn .mt{color:#B1264A}.mhud.s-warn .mb i{background:#E5426B}
 @keyframes mWarn{50%{box-shadow:0 3px 0 #F4B2C0,0 0 16px rgba(229,66,107,.55)}}
 .mhud .mpay{height:38px;font-size:14px;border-radius:14px}
-.rat{position:absolute;left:0;top:0;z-index:5;width:64px;height:64px;padding:0;border:0;background:none;font-size:56px;line-height:64px;cursor:pointer;filter:drop-shadow(0 4px 3px rgba(0,0,0,.28));touch-action:manipulation;will-change:transform}
+.rat{position:absolute;left:0;top:0;z-index:5;width:140px;height:52px;padding:0;border:0;background:none;cursor:pointer;filter:drop-shadow(0 4px 3px rgba(0,0,0,.28));touch-action:manipulation;will-change:transform}
 .arena{position:relative;height:min(46vh,280px);margin:10px 14px 14px;border-radius:18px;background:repeating-conic-gradient(#F6EEDD 0 25%,#EFE4CB 0 50%) 0 0/36px 36px;border:3px solid #3E3A4A;overflow:hidden;touch-action:none}
 #mouseInfo .mhud{margin:8px 14px 0}.mhud.chip{width:calc(100% - 28px);border:0;text-align:left;font:800 13px var(--body);color:#4B3F77;cursor:pointer}
 
@@ -235,3 +235,8 @@
 .gfl button{min-width:64px;height:34px;border-radius:12px;border:2.5px solid #F3D5DD;background:#fff;font:800 13px var(--body);color:var(--soft2)}
 .gfl button.on{background:var(--pink);border-color:var(--pink);color:#fff}
 .gfl button.off{border-color:#E0D4F5;color:#6E58C0}
+
+.rat img{width:100%;height:100%;display:block;pointer-events:none;user-select:none}
+/* vợt: tâm lưới nằm đúng chỗ chạm, vung từ trên xuống */
+.arena .net{position:absolute;z-index:6;width:120px;pointer-events:none;transform-origin:78% 48%;margin:-56px 0 0 -94px;filter:drop-shadow(0 6px 4px rgba(0,0,0,.3));animation:netswing .5s ease-out forwards}
+@keyframes netswing{0%{opacity:0;transform:rotate(-70deg) scale(1.15)}25%{opacity:1}55%{transform:rotate(8deg) scale(.95)}75%{opacity:1;transform:rotate(0) scale(1)}100%{opacity:0;transform:rotate(0) scale(1)}}

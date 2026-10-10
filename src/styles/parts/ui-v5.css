@@ -62,3 +62,44 @@
 /* nút trong bảng Menu: chấm số */
 .more5 button{position:relative}
 .more5 .nd{position:absolute;top:-2px;right:calc(50% - 34px);min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red,#E85D7F);color:#fff;font:800 11px/16px var(--body);text-align:center;border:2.5px solid #fff;font-style:normal}
+
+/* ===== Đồng xu may rủi: mặt Luck (may mắn) và mặt Loss (rủi ro), búng lên và xoay rồi lật ra kết quả ===== */
+.coin3d{--end:1800deg;width:112px;height:112px;border:0;background:none;padding:0;cursor:pointer;perspective:700px;display:block;
+  filter:drop-shadow(0 10px 10px rgba(120,80,30,.35));animation:coinbob 1.8s ease-in-out infinite}
+.coin3d .cs{display:block;width:100%;height:100%;position:relative;transform-style:preserve-3d}
+.coin3d img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;backface-visibility:hidden;-webkit-backface-visibility:hidden;user-select:none;pointer-events:none}
+.coin3d .b{transform:rotateY(180deg)}
+.coin3d:active:not(.flip){transform:scale(.95)}
+.coin3d.flip{animation:coinflip 1.2s cubic-bezier(.25,.75,.35,1) forwards}
+.coin3d.flip .cs{animation:coinspin 1.2s cubic-bezier(.25,.75,.35,1) forwards}
+.coin3d.safe{cursor:default;animation:none;filter:drop-shadow(0 0 18px rgba(80,200,120,.7)) drop-shadow(0 8px 8px rgba(80,120,60,.35))}
+@keyframes coinbob{50%{transform:translateY(-6px) rotateZ(-3deg)}}
+@keyframes coinflip{0%{transform:translateY(0) scale(1)}45%{transform:translateY(-58px) scale(1.18)}100%{transform:translateY(0) scale(1)}}
+@keyframes coinspin{from{transform:rotateY(0)}to{transform:rotateY(var(--end))}}
+@media (prefers-reduced-motion:reduce){.coin3d,.coin3d.flip,.coin3d.flip .cs{animation-duration:.01s}}
+.coinwrap{height:150px}
+
+/* thanh dưới dùng chung: nằm cố định dưới màn, các màn chính chừa chỗ cho nó */
+#gnav{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:430px;margin:0 auto;padding:0 12px calc(8px + env(safe-area-inset-bottom,0px));pointer-events:none}
+#gnav .glass5{pointer-events:auto;margin-top:0}
+body.has-gnav .scr:not(.home5){padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+body.has-gnav .home5 .h5-bottom{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+
+/* nút Mở tiệm: kính màu đậm cùng màu chính, chữ trắng có bóng, vệt sáng phía trên */
+.h5-open{position:relative;overflow:hidden;border:1.5px solid rgba(255,255,255,.7);color:#fff;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pink) 78%,#fff) 0%,var(--pink-d) 100%);
+  box-shadow:0 6px 0 color-mix(in srgb,var(--pink-d) 75%,#2a1c30),0 14px 26px -8px color-mix(in srgb,var(--pink-d) 80%,transparent),inset 0 2px 0 rgba(255,255,255,.65),inset 0 -10px 18px -8px rgba(0,0,0,.18)}
+.h5-open::before{content:"";position:absolute;left:6%;right:6%;top:3px;height:42%;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));pointer-events:none}
+.h5-open span{text-shadow:0 2px 0 color-mix(in srgb,var(--pink-d) 70%,#2a1c30)}
+.h5-open span .lu{filter:drop-shadow(0 2px 0 color-mix(in srgb,var(--pink-d) 70%,#2a1c30));color:#fff}
+.h5-open small{color:#fff;opacity:.95;text-shadow:0 1px 0 color-mix(in srgb,var(--pink-d) 70%,#2a1c30)}
+.h5-open:active{transform:translateY(4px);box-shadow:0 2px 0 color-mix(in srgb,var(--pink-d) 75%,#2a1c30),inset 0 2px 0 rgba(255,255,255,.5)}
+
+/* bảng Menu: ô kính cùng kiểu thanh dưới, một màu chính */
+.more5 .ic{width:60px;height:60px;border-radius:22px;color:var(--pink-d);
+  background:linear-gradient(180deg,rgba(255,255,255,.85),color-mix(in srgb,var(--pink) 22%,#fff));
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 8px 16px -8px color-mix(in srgb,var(--pink-d) 55%,transparent),inset 0 1.5px 0 #fff,inset 0 -1px 0 color-mix(in srgb,var(--pink-d) 20%,transparent)}
+.more5 .ic .lu.lu{color:var(--pink-d);--lu:var(--pink-d);filter:none}
+.more5 button:active .ic{transform:scale(.94)}
+.more5 b{color:var(--ink2)}

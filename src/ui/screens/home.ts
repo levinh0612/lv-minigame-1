@@ -1,9 +1,7 @@
 /* Màn Chính (HomeScreen của Claude Design): mái hiên, cảnh tiệm, thư hôm nay, Mở tiệm, 4 nút dưới */
-import { achPending } from "../../engine/achievements";
-import { weeklyPending } from "../../engine/weekly";
 import { capacity, demand, expectedCustomers, tableLvs } from "../../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
-import { fx, giftReady, goals, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
+import { fx, giftReady, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
 import { S, meLook } from "../../engine/state";
 import { fmtN } from "../../engine/util";
 import { mouseTitle } from "../../engine/mouse";
@@ -49,18 +47,10 @@ function profileCard(L: number, cur: number, need: number) {
 
 export function homeHTML() {
   const te = todayEvents(), ln = letterNew(), gift = giftReady(), L = lvl(), cur = S.xp - xpFor(L), need = xpFor(L + 1) - xpFor(L);
-  const left = goals().filter(g => g.cur < g.need).length, rk = S.cloud.rank;
+  const rk = S.cloud.rank;
   const card = te.length
     ? `<button class="hcard ev" data-act="letter"><span class="ic">${CAKE}</span><span class="tx"><b>${esc(te[0].t)} · xu ×2</b><small>${esc(eventNote(te[0]))}</small></span><i class="dot"></i></button>`
     : "";
-  /* thanh dưới kiểu kính lỏng: 4 mục cùng một màu chính; Mục tiêu, Nhiệm vụ, Quà tặng nằm trong Xem thêm */
-  const moreDot = left + weeklyPending() + achPending() + (gift ? 1 : 0);
-  const nav = [
-    { n: "Tiệm", ic: ic.home(26, 2.2, "none", ""), go: "/", on: true, dot: "" },
-    { n: "Triệu hồi", ic: ic.sparkle(26, 2.2, "none", ""), go: "/gacha", on: false, dot: "" },
-    { n: "Cửa hàng", ic: ic.store(26, 2.2, "none", ""), go: "/cua-hang", on: false, dot: "" },
-    { n: "Xem thêm", ic: ic.menu(26, 2.6, "none", ""), act: "more", on: false, dot: moreDot ? String(moreDot) : "" }
-  ];
   /* 3D chiếm cả màn hình; mọi thứ khác (thanh trên, hồ sơ, thư, nút Mở tiệm, thanh dưới) là lớp phủ trên và dưới */
   return `<div class="scr home5">
     <div class="h5-room">${room3dHTML(S.room, { event: te.length > 0, recipes: unlocked().length, giftDot: gift, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, false, true)}</div>
@@ -84,7 +74,6 @@ export function homeHTML() {
         <button class="b3 h5-open" data-go="/chuan-bi"><span>${ic.store(26, 2.4)}Mở tiệm</span><small>Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></button>
         <button class="h5-fix2" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}</button>
       </div>
-      <nav class="glass5">${nav.map(x => `<button class="${x.on ? "on" : ""}" ${"go" in x ? `data-go="${x.go}"` : `data-act="${x.act}"`}${x.on ? ' aria-current="page"' : ""}>${x.ic}${x.dot ? `<span class="nd">${x.dot}</span>` : ""}<b>${x.n}</b></button>`).join("")}</nav>
     </div>
   </div>`;
 }
