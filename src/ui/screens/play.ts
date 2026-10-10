@@ -14,7 +14,7 @@ import { lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
   beginShift, buildPicked, buildTotal, finishShift, freshBuild, goalDone, goalProgress, goalText, isComplete, isOver, matches, mineIdx, needAt, needOf, partAt, partsOfBuild, peek, release, remaining, serve, setPartAt, take, tick,
-  COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift, applyService
+  COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift, applyService, autoService
 } from "../../engine/shift";
 import { S, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
@@ -27,6 +27,7 @@ import { navigate } from "../router";
 import { applyQueue, queueHTML } from "./queue-fit";
 import { doCatchMouse, doMousePay as payMouseFor, mouseChip, moveRat, openMouseDlg as openMouseDlgFor, removeRat, renderMouse } from "./play-mouse";
 import { setResult } from "./result";
+import { advanceSkills, SKILL_NAME } from "../../engine/skills";
 import { runService, svcLabel } from "../minigames/session";
 
 export let SH: Shift | null = null;
@@ -76,7 +77,11 @@ function loop(now: number) {
     if (ev.spawned >= 0) { renderSlot(ev.spawned, true); sfx("bell"); }
     ev.left.forEach(onLeave);
     ev.claimed.forEach(b => renderSlot(b.seat));
-    ev.baked.forEach(x => showServed(x.res, x.baker.id));
+    ev.baked.forEach(x => {
+      showServed(x.res, x.baker.id);
+      const a = autoService(SH!, x.res.c, x.res.price, x.baker.id);
+      if (a) { refreshCoins(); toast(`${petName(x.baker.id)} ${a.msg}`); }
+    });
     ev.restock.forEach(r => toast(`${petName(r.id)} nhập nhanh ${r.what}`));
     if (ev.assigned >= 0) { sheetOpen = true; renderTicket(); sfx("click"); }
     if (ev.claimed.length || ev.restock.length || ev.baked.length) { renderCrew(); refreshCoins(false); }
@@ -573,6 +578,7 @@ export function endShift() {
   cancelAnimationFrame(raf); void keepAwake(false);
   const sh = SH, led = finishShift(sh);
   const res = { sh, lv: lvl(), led }; setResult(res); SH = null;
+  advanceSkills(sh.working).forEach(u => setTimeout(() => toast(`${petName(u.id)} đã thạo ${SKILL_NAME[u.k].toLowerCase()}!`), 900));
   navigate("/ket-qua", true);
   sfx(res.lv > sh.lv0 ? "level" : "end");
   void cloudSave();

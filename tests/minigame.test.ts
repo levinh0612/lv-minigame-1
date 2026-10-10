@@ -93,3 +93,18 @@ describe("khách xin dịch vụ trong ca", () => {
     applyService(sh, 0, false); expect(S.daily.angry).toBe(a0 + 1); expect(sh.svcFail).toBe(1);
   });
 });
+
+import { SKILL_SHIFTS, advanceSkills, knows, staffService, teach } from "../src/engine/skills";
+describe("kỹ năng nhân viên", () => {
+  it("chỉ dạy được khi chủ tiệm SSS; học đủ ca thì thạo; chưa thạo thì không tự làm", () => {
+    S.staff["x"] = { hired: true, lv: 1, onDuty: true }; S.coins = 5000; S.mg = { gift: 0, ship: 0 };
+    expect(teach("x", "gift")).toBe(false);
+    S.mg.gift = 200; expect(teach("x", "gift")).toBe(true); expect(teach("x", "gift")).toBe(false);
+    expect(staffService("x", "gift", 100, 1)).toBeNull();
+    for (let i = 0; i < SKILL_SHIFTS; i++) advanceSkills(["x"]);
+    expect(knows("x", "gift")).toBe(true);
+    expect(staffService("x", "both", 100, 1)).toBeNull();            // chưa biết giao hàng
+    const r = staffService("x", "gift", 100, 1, () => 0)!; expect(r.ok && r.fee > 0).toBe(true);
+    expect(staffService("x", "gift", 100, 1, () => 0.99)!.ok).toBe(false);
+  });
+});

@@ -15,6 +15,8 @@ import { featured, fx, lvl, newestRecipe, pickMenu, unlocked } from "./progress"
 import { S, save } from "./state";
 import { earn, note, spend } from "./wallet";
 import { nameList, pick, rnd } from "./util";
+import { SKILL_NAME, staffService } from "./skills";
+import { GIFT_COMPLAINTS, SHIP_COMPLAINTS } from "../content/minigames";
 import { pickAddress, pickRibbon, pickService, serviceQuota } from "./minigame";
 import type { Address, Ribbon } from "../content/minigames";
 
@@ -371,4 +373,14 @@ export function applyService(sh: Shift, fee: number, ok: boolean) {
   if (ok && fee > 0) { earn("svc", fee); sh.svcFee += fee; sh.svcDone++; }
   else { sh.svcFail++; S.daily.angry++; breakCombo(sh); }
   save();
+}
+
+/* Bé thợ bánh làm hộ đơn có dịch vụ: thạo kỹ năng thì tự gói/giao (có thưởng, đôi khi trượt và khách phàn nàn). Trả về lời để báo, hoặc null nếu bé chưa biết làm */
+export function autoService(sh: Shift, c: Customer, price: number, id: StaffId): { ok: boolean; fee: number; msg: string } | null {
+  if (!c.svc) return null;
+  const r = staffService(id, c.svc, price, c.addr?.km ?? 1); if (!r) return null;
+  applyService(sh, r.fee, r.ok);
+  const what = c.svc === "both" ? "gói và giao" : SKILL_NAME[c.svc].toLowerCase();
+  const bad = pick(c.svc === "ship" ? SHIP_COMPLAINTS : GIFT_COMPLAINTS);
+  return { ok: r.ok, fee: r.fee, msg: r.ok ? `đã ${what} giúp bạn! +${r.fee} xu thưởng` : `${what} chưa khéo, ${c.who} phàn nàn: "${bad}"` };
 }

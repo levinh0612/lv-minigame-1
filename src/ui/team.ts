@@ -9,6 +9,7 @@ import { BAKE_TIME, FOODS, MAX_STAFF_LV, PETS } from "../content/game";
 import { GACHA_ITEMS, KIND_NAME, RARITIES, RARITY, asManager, fxLine, gachaItem, mgrFx, type GachaItem } from "../content/gacha";
 import { buyFood, foodDef, foodOf, hire, hireFee, isMascotStaff, mascotBonus, mealChoices, mealOf, onDuty, plannedMeal, setMeal, staffIds, staffState, toggleDuty, train, trainCost, treat } from "../engine/economy";
 import { clearStaff, floorCount, floorOfStaff, hasItem, placeStaff, staffAt, type StaffKind } from "../engine/gacha";
+import { SKILLS, SKILL_FEE, SKILL_NAME, SKILL_SHIFTS, canTeach, knows, progressOf, teach } from "../engine/skills";
 import { S, petName, petState, save } from "../engine/state";
 import { fmtN, roman } from "../engine/util";
 import { render } from "./app";
@@ -131,10 +132,22 @@ function staffBody(id: string) {
   return `<div class="sd">${entityHero(ei, { px: 104, art: petArt, extra: mas ? `<span class="eh-sub">Linh thú · thuê một lần, đứng tầng được</span>` : `<span class="eh-sub">${BREED[id as PetId]} · chạm vào bé để vuốt ve</span>` })}
     <div class="sd-stats">${stat("Tốc độ", bake(tier))}${stat("Bữa ăn", `${foodSVG(eat.id, 16)} ${eat.n}`)}${stat("Thân thiết", heartRow(petState(id).aff, 13))}${mas ? stat("Buff", `+${Math.round(mb.price * 100)}% giá · +${Math.round(mb.tip * 100)}% tip`) : stat("Bậc", `${roman(tier)} / ${roman(MAX_STAFF_LV)}`)}</div>
     ${on && !meal ? `<p class="sd-warn">Hết đồ ăn cho bữa này, bé sẽ nghỉ ca. Mua thêm ở tủ bên dưới.</p>` : ""}
-    <div class="sd-acts">${act}</div>${pick}
+    <div class="sd-acts">${act}</div>${st.hired ? skillsHTML(id) : ""}${pick}
     <div class="sh2"><b>Đồ ăn đề xuất</b><span class="lav">hợp bậc ${roman(tier)}</span></div>
     <div class="sd-rec">${(() => { const f = eat, n = foodOf(f.id); return `<div>${foodSVG(f.id, 40)}<span><b>${f.n}</b><small>${n ? `còn ${n} phần` : "đã hết, nên mua thêm"}</small></span></div><button class="pk" data-sd="buy:${f.id}:5" ${S.coins < f.cost * 5 ? "disabled" : ""}>Mua 5 · ${fmtN(f.cost * 5)} xu</button>`; })()}</div>
     <div class="sh2"><b>Tủ đồ ăn</b><span class="lav">thưởng mỗi ngày một lần</span></div><div class="sd-food-grid">${foodTiles(id)}</div></div>`;
+}
+/* kỹ năng gói quà / giao hàng: dạy được khi chủ tiệm đạt SSS, bé đi làm vài ca là tự làm được */
+function skillsHTML(id: string) {
+  const row = (k: typeof SKILLS[number]) => {
+    const p = progressOf(id, k);
+    const st = knows(id, k) ? `<b class="ok">Đã thạo · tự làm khi khách xin</b>`
+      : p !== undefined ? `<b>Đang học ${p}/${SKILL_SHIFTS} ca (cần đi làm)</b>`
+      : canTeach(k) ? `<button class="b3" data-sd="skill:${id}:${k}" ${S.coins < SKILL_FEE ? "disabled" : ""}>Dạy · ${fmtN(SKILL_FEE)} xu</button>`
+      : `<small>Cần đạt hạng SSS để dạy</small>`;
+    return `<div class="sd-skill"><span>${SKILL_NAME[k]}</span>${st}</div>`;
+  };
+  return `<div class="sh2"><b>Kỹ năng đặc biệt</b><span class="lav">bé làm hộ được 80% thưởng</span></div>${SKILLS.map(row).join("")}`;
 }
 export function openStaffDialog(id: string) {
   dlg = id;
@@ -173,6 +186,7 @@ export function staffDialogAct(act: string, el: HTMLElement) {
   if (a === "treat") { const id = x!, f = foodDef(y as never); if (treat(id, f.id)) { const r = el.getBoundingClientRect(); floatHearts(r.left + r.width / 2, r.top, 6); sfx("boop"); toast(`${petName(id)} ăn ${f.n} ngon lành! +${f.aff} ♥`); } else toast("Không đủ xu để mua đồ ăn"); return refreshStaff(); }
   if (a === "meal") { setMeal(x!, y as never); sfx("click"); return refreshStaff(); }
   if (a === "duty") { toggleDuty(x!); sfx("click"); return refreshStaff(); }
+  if (a === "skill") return confirmSpend(SKILL_FEE, `Dạy ${SKILL_NAME[y as "gift" | "ship"].toLowerCase()} cho ${petName(x!)}?`, () => { if (teach(x!, y as "gift" | "ship")) { sfx("level"); toast(`${petName(x!)} bắt đầu học, đi làm ${SKILL_SHIFTS} ca là thạo`); } refreshStaff(); });
   if (a === "train") return confirmSpend(trainCost(x!), `Lên bậc cho ${petName(x!)}?`, () => { if (train(x!)) { sfx("level"); toast(`${petName(x!)} lên bậc ${roman(staffState(x!).lv)}!`); } refreshStaff(); });
   if (a === "hire") return confirmSpend(hireFee(x!), `Thuê ${petName(x!)} làm thợ bánh?`, () => { if (hire(x!)) { sfx("level"); toast(`${petName(x!)} đã vào làm!`); } else if (hireFee(x!)) toast(`Cần ${fmtN(hireFee(x!))} xu để thuê ${petName(x!)}`); refreshStaff(); });
   if (a === "pet") {
