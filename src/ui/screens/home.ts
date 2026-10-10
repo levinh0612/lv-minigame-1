@@ -51,7 +51,7 @@ function profileCard(L: number, cur: number, need: number) {
       </div>
     </div>
     <button class="pc-buffs" data-act="buff" aria-label="Buff đang có">${BUFFS.map(([k, f]) => `<span class="bf ${k} ${fx(k) ? "" : "zero"}">${f(15, 2.4)}${buffText(k)}</span>`).join("")}<i>${ic.chevron(18, 2.6)}</i></button>
-    ${shopStatsHTML(S.earned, S.served, unlocked().length)}
+    ${shopStatsHTML()}
   </div>`;
 }
 

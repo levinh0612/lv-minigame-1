@@ -91,7 +91,7 @@ function shopHTML(v: VisitShop) {
           </div>
         </div>
         <div class="pc-buffs pc-info"><span class="bf">🛍 ${v.decor} đồ trang trí</span><span class="bf">🏢 ${v.venue.floors} lầu</span><span class="bf">🐾 ${v.hired} nhân viên</span></div>
-        ${shopStatsHTML(v.earned, v.served, recipes, "visit")}
+        ${shopStatsHTML("visit")}
       </div>
     </div>
     <div class="h5-bottom">

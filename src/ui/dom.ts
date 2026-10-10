@@ -116,10 +116,9 @@ export const heartRow = (n: number, S = 15) => { const k = Math.min(5, Math.floo
 export const twinkles = (cols: string[], n: number) => `<div class="twk" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
   `<i style="left:${6 + Math.random() * 88}%;top:${8 + Math.random() * 60}%;font-size:${10 + Math.random() * 14}px;color:${cols[i % cols.length]};animation-duration:${2 + Math.random() * 2}s;animation-delay:${-Math.random() * 3}s">✦</i>`).join("")}</div>`;
 
-/** Hàng 3 số thống kê của tiệm, dùng chung cho màn của mình và màn ghé thăm để hai màn giống nhau */
-export const shopStatsHTML = (earned: number, served: number, recipes: number, who: "self" | "visit" = "self") =>
-  `<div class="vstats"><div><b>${fmtN(earned)}</b><small>xu bán được</small></div><div><b>${fmtN(served)}</b><small>khách đã phục vụ</small></div><div><b>${recipes}</b><small>món bánh</small></div></div>`
-  + `<button class="mx-auto mt-1.5 block rounded-full bg-pink-l px-4 py-1 text-[12px] font-extrabold text-pink-d" data-stats="${who}">📊 Xem chỉ số</button>`;
+/** Nút mở hộp thoại chỉ số của tiệm (thay cho hàng 3 số cũ), dùng chung cho màn của mình và màn ghé thăm */
+export const shopStatsHTML = (who: "self" | "visit" = "self") =>
+  `<button class="mt-2 block w-full rounded-full bg-pink-l py-1.5 text-[13px] font-extrabold text-pink-d" data-stats="${who}">📊 Xem chỉ số</button>`;
 
 /* Hỏi lại trước khi chi khoản lớn (từ CONFIRM_MIN xu): lớp nhỏ phủ lên trên, không đụng tới hộp thoại đang mở bên dưới */
 export const CONFIRM_MIN = 500;
