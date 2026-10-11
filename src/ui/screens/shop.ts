@@ -1,8 +1,8 @@
-import { ROOM_CATS, fxDiff, fxText, setStates, isDefault, roomCat, roomItem, type RoomItem, type RoomKey } from "../../content/room";
+import { ROOM_CATS, fxDiff, fxText, setStates, isDefault, roomCat, roomItem, type RoomItem } from "../../content/room";
 import { tableLvs } from "../../engine/economy";
+import { dcat, trial } from "../../engine/decor";
 import { decorCount, lvl, unlocked } from "../../engine/progress";
-import { S, save } from "../../engine/state";
-import { spend } from "../../engine/wallet";
+import { S } from "../../engine/state";
 import { fmtD, parse } from "../../engine/util";
 import { esc } from "../dom";
 import { room3dHTML } from "../room3d";
@@ -12,26 +12,8 @@ import { teamHTML } from "../team";
 import type { ShopTab } from "../router";
 import { claimBtn, goalsList } from "./goals";
 
-/* ===== Trang trí tiệm (DecorScreen của Claude Design): chạm để thử, rồi mua hoặc dùng ===== */
-let dcat = 0, trial: { k: RoomKey; v: string } | null = null;
-export const setDecorCat = (i: number) => { dcat = i; trial = null; };
-export function tryDecor(k: RoomKey, v: string) { trial = S.room[k] === v ? null : { k, v }; }
-export const cancelDecor = () => { trial = null; };
-/** chạm đồ trong cảnh: chuyển sang nhóm đó để đổi kiểu hoặc cất */
-export function pickDecorCat(k: string) { const i = ROOM_CATS.findIndex(c => c.k === k); if (i >= 0) setDecorCat(i); }
-/** cất đồ đang dùng của nhóm đang chọn về kiểu mặc định (đồ đã mua vẫn còn, dùng lại miễn phí) */
-export function stashDecor(): string {
-  const C = ROOM_CATS[dcat], it = roomItem(C.k, S.room[C.k]); if (isDefault(C.k, S.room[C.k])) return "";
-  S.room[C.k] = C.items[0].v; trial = null; save(); return `Đã cất ${it.n}, dùng lại lúc nào cũng được`;
-}
-/* mua (nếu chưa có) và dùng món đang thử; trả về thông báo hoặc "" nếu không làm gì */
-export function applyDecor(): string {
-  if (!trial) return "";
-  const { k, v } = trial, it = roomItem(k, v), id = k + ":" + v, own = isDefault(k, v) || S.owned.includes(id);
-  if (!own) { if (it.gacha || S.coins < it.cost || lvl() < (it.lv ?? 0)) return ""; spend("decor", it.cost, `Mua ${it.n}`); S.owned.push(id); }
-  S.room[k] = v; trial = null; save();
-  return own ? `Đã đổi sang ${it.n}` : `Đã mua ${it.n}`;
-}
+/* ===== Trang trí tiệm (DecorScreen của Claude Design): chạm để thử, rồi mua hoặc dùng. Logic ở engine/decor.ts ===== */
+export { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, tryDecor } from "../../engine/decor";
 /* tiến độ các bộ trang trí theo phòng đang xem (gồm món đang thử): "🍓 Hồng ngọt 2/3 · còn 1 món để tip +3%" */
 const setLine = (room: Record<string, string>) => setStates(room).map(st => {
   const t = st.set.tiers, cur = t.filter(([n]) => st.count >= n).pop(), nxt = t.find(([n]) => st.count < n);
@@ -55,7 +37,7 @@ export function decorHTML() {
   const fx = trIt ? fxText(trIt) : "", diff = tr && trIt ? fxDiff(roomItem(tr.k, S.room[tr.k]), trIt) : "";
   return `<div class="scr decor4">
     ${pageHead("Trang trí tiệm", "")}
-    <p class="dsub">Đã có ${decorCount()} món · chạm chấm hồng trên đồ để chỉnh</p>
+    <p class="dsub">Đã có ${decorCount()} món · chạm chấm trên đồ để chỉnh</p>
     <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, edit: true, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
     ${tr && S.room[tr.k] !== tr.v ? `<p class="dsub dd">So với đang dùng: ${diff ? esc(diff) : "chỉ số không đổi"}</p>` : ""}

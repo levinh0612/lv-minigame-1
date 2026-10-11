@@ -58,16 +58,16 @@ export const ROOM_CATS: RoomCat[] = [
     { v: "0", n: "Không cây", cost: 0, sw: NONE, glyph: "+" },
     { v: "1", n: "Sen đá", cost: 90, sw: "radial-gradient(ellipse at 50% 40%,#9FD18A 12px,transparent 13px),linear-gradient(transparent 60%,#E9A27C 60%) #EEF9F3", fx: { tip: .04 } },
     { v: "2", n: "Monstera", cost: 160, lv: 5, sw: "radial-gradient(ellipse at 50% 38%,#6FB27A 16px,transparent 17px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { tip: .04, cust: 1 } },
-    { v: "3", n: "Xương rồng", cost: 100, sw: "radial-gradient(ellipse 7px 14px at 50% 45%,#7FBF86 100%,transparent),linear-gradient(transparent 66%,#E9A27C 66%) #EEF9F3", fx: { tip: .04 } },
-    { v: "4", n: "Hoa tulip", cost: 130, sw: "radial-gradient(circle at 35% 35%,#FF8FAB 6px,transparent 7px),radial-gradient(circle at 65% 30%,#FFD66B 6px,transparent 7px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { tip: .05 } },
+    { v: "3", n: "Xương rồng", cost: 100, sw: "radial-gradient(ellipse 7px 14px at 50% 45%,#7FBF86 100%,transparent),linear-gradient(transparent 66%,#E9A27C 66%) #EEF9F3", fx: { pat: .04 } },
+    { v: "4", n: "Hoa tulip", cost: 130, sw: "radial-gradient(circle at 35% 35%,#FF8FAB 6px,transparent 7px),radial-gradient(circle at 65% 30%,#FFD66B 6px,transparent 7px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { price: .04 } },
     { v: "5", n: "Cây cọ", cost: 200, lv: 5, sw: "radial-gradient(ellipse 16px 6px at 50% 28%,#6FB27A 100%,transparent),linear-gradient(90deg,transparent 46%,#A9784F 46% 54%,transparent 54%) #EEF9F3", fx: { tip: .06, cust: 1 } }] },
   { k: "rug", n: "Thảm", hl: "rug", items: [
     { v: "0", n: "Không thảm", cost: 0, sw: NONE, glyph: "–" },
     { v: "1", n: "Thảm tròn", cost: 120, sw: "radial-gradient(ellipse,#FFD1DC 50%,#fff 52%,#fff 56%,#FFD1DC 58%,#FFD1DC 66%,transparent 68%) #DDF4E8", fx: { cust: 1 } },
     { v: "2", n: "Thảm dâu", cost: 190, lv: 5, sw: "radial-gradient(#FFF1A8 2px,transparent 2.5px) #FF8FAB", sws: "10px 8px", fx: { cust: 1, tip: .05 } },
-    { v: "3", n: "Thảm caro kem", cost: 150, sw: "repeating-conic-gradient(#FFC9A0 0 25%,#FFF1D6 0 50%)", sws: "14px 14px", fx: { cust: 1 } },
+    { v: "3", n: "Thảm caro kem", cost: 150, sw: "repeating-conic-gradient(#FFC9A0 0 25%,#FFF1D6 0 50%)", sws: "14px 14px", fx: { pat: .04 } },
     { v: "4", n: "Thảm trái tim", cost: 210, lv: 5, sw: "radial-gradient(circle at 38% 40%,#FF8FAB 9px,transparent 10px),radial-gradient(circle at 62% 40%,#FF8FAB 9px,transparent 10px),#DDF4E8", fx: { cust: 1, tip: .05 } },
-    { v: "5", n: "Thảm sọc xanh", cost: 130, sw: "repeating-linear-gradient(90deg,#CFE9FF 0 8px,#fff 8px 16px)", fx: { cust: 1 } }] },
+    { v: "5", n: "Thảm sọc xanh", cost: 130, sw: "repeating-linear-gradient(90deg,#CFE9FF 0 8px,#fff 8px 16px)", fx: { price: .04 } }] },
   /* mặt tiền: chỉ thấy khi xem ngoài tiệm (món số 0 là kiểu cũ, miễn phí) */
   { k: "sign", n: "Biển hiệu", hl: "sign", ext: true, items: [
     { v: "0", n: "Biển hồng", cost: 0, sw: "linear-gradient(#FF8FAB,#FF8FAB) padding-box,#fff" },

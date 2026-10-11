@@ -29,7 +29,7 @@ export interface ShopOpts {
   shipAt?: number;                         // lúc giao hàng thành công gần nhất (ms): còn mới thì xe giao bánh tới dừng trước cửa khi xem ngoài tiệm
   hl?: string;                             // nhóm đồ đang được chọn ở màn trang trí: làm nổi bật
 }
-export interface Hotspot { id: string; attr: string; value: string; label: string; obj: THREE.Object3D; wall: number | null; dy: number; on?: () => boolean }   // on: chỉ hiện khi trả về true (nút chỉnh đồ trang trí chỉ hiện khi đang có đồ)
+export interface Hotspot { id: string; attr: string; value: string; label: string; obj: THREE.Object3D; wall: number | null; dy: number; on?: () => boolean; ext?: boolean }   // on: chỉ hiện khi trả về true (nút chỉnh đồ trang trí chỉ hiện khi đang có đồ)
 export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
@@ -241,6 +241,10 @@ export function createShop(o: ShopOpts): ShopScene {
   hotspots.push({ id: "dec-plant2", attr: "data-ddec", value: "plant", label: "Chỉnh cây", obj: decAnchor(root, 3.3 + (W - W0), .7, 2.3), wall: null, dy: 0, on: () => cur.plant !== "0" });
   decHs("lamp", "Chỉnh đèn", decAnchor(root, -.8, 2.1, -1.0), null, 0);
   decHs("wallItem", "Chỉnh đồ treo tường", frameAnchor, wi(wN), 0);
+  hotspots.push({ id: "dec-wall", attr: "data-ddec", value: "wall", label: "Chỉnh tường", obj: decAnchor(wN.decor, -.2, .7, .1), wall: wi(wN), dy: 0 });
+  hotspots.push({ id: "dec-floor", attr: "data-ddec", value: "floor", label: "Chỉnh sàn", obj: decAnchor(root, 1.3, .02, .9), wall: null, dy: 0 });
+  hotspots.push({ id: "dec-counter", attr: "data-ddec", value: "counter", label: "Chỉnh quầy", obj: decAnchor(root, -2.0, .55, -1.42), wall: null, dy: 0 });
+  hotspots.push({ id: "dec-curtain", attr: "data-ddec", value: "curtain", label: "Chỉnh rèm", obj: decAnchor(wN.decor, -2.0, 1.2, .3), wall: wi(wN), dy: 0, on: () => cur.curtain !== "0" });
 
   /* thú cưng + chủ tiệm */
   const petMeta: [PetKind, number, string][] = [["dog", -2.9, "dog"], ["gold", -1.6, "gold"], ["white", -.3, "white"]];
@@ -466,6 +470,8 @@ export function createShop(o: ShopOpts): ShopScene {
   const outside = new THREE.Group(); outside.visible = false; root.add(outside);
   const extGlass: THREE.MeshToonMaterial[] = [], neon: THREE.MeshBasicMaterial[] = [];
   const z0 = D / 2 + .2, x0 = W / 2 + CX + .2;
+  ([["sign", "Chỉnh biển hiệu", 0, 2.88, z0 + .2], ["awning", "Chỉnh mái hiên", 2.4, 2.3, z0 + .75], ["flower", "Chỉnh hộp hoa", -2.2, .5, z0 + .3]] as const).forEach(([k, label, x, y, z]) =>
+    hotspots.push({ id: "dec-" + k, attr: "data-ddec", value: k, label, obj: decAnchor(outside, x, y, z), wall: null, dy: 0, ext: true }));
   const streetPl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); streetPl.position.set(-4.9, 3.1, z0 + 1.7); outside.add(streetPl);
   const lampBulb = new THREE.MeshStandardMaterial({ color: "#FFF1CC", emissive: new THREE.Color("#FFD27A"), emissiveIntensity: 0 });
   // cửa chính: khung + cánh cửa quay quanh bản lề; mở khi có người đi qua
@@ -721,7 +727,7 @@ export function createShop(o: ShopOpts): ShopScene {
     stop() { running = false; cancelAnimationFrame(raf); },
     /* hình học và ảnh của nhân vật 3D dùng chung giữa các cảnh (userData.keep): giữ lại để khỏi tải lại lên GPU */
     dispose() { running = false; cancelAnimationFrame(raf); scene.traverse(ob => { const m = ob as THREE.Mesh; if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); const mt = m.material as THREE.Material | THREE.Material[] | undefined; (Array.isArray(mt) ? mt : mt ? [mt] : []).forEach(x => { const mp = (x as THREE.MeshToonMaterial).map; if (mp && !mp.userData.keep) mp.dispose(); x.dispose(); }); }); disposables.forEach(d => d.dispose()); },
-    project(hs) { if (curFloor) return { x: 0, y: 0, show: false }; hs.obj.getWorldPosition(v); v.y += hs.dy; v.project(cam); const wl = hs.wall === null ? null : walls[hs.wall]; const show = wl ? (wl.nx * Math.sin(az) + wl.nz * Math.cos(az)) < .45 : true; const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return { x, y, show: show && !exterior && (hs.on ? hs.on() : true) && x > 8 && x < w - 8 && y > 8 && y < h - 8 }; },
+    project(hs) { if (curFloor) return { x: 0, y: 0, show: false }; hs.obj.getWorldPosition(v); v.y += hs.dy; v.project(cam); const wl = hs.wall === null ? null : walls[hs.wall]; const show = wl ? (wl.nx * Math.sin(az) + wl.nz * Math.cos(az)) < .45 : true; const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return { x, y, show: show && exterior === !!hs.ext && (hs.on ? hs.on() : true) && x > 8 && x < w - 8 && y > 8 && y < h - 8 }; },
     tags() { if (!exterior || !traffic) return []; return traffic.active().flatMap((c, i) => { v.set(c.x, 1.25, c.g.position.z); outside.localToWorld(v); v.project(cam); const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return x > 20 && x < w - 20 && y > 20 && y < h - 20 ? [{ id: i, text: c.label, x, y }] : []; }); },
     setInsets(top, bottom) { insTop = top; insBot = bottom; },
     setExterior(on) { if (on) { buildOutside(); callDelivery(); } exterior = on; outside.visible = on; zoomT = on ? .78 : 1; panT = 0; el = (on ? 30 : 38) * Math.PI / 180; },
