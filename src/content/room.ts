@@ -4,87 +4,87 @@ import type { FxKey } from "./game";
 
 export type RoomKey = "wall" | "floor" | "counter" | "curtain" | "lamp" | "wallItem" | "plant" | "rug" | "sign" | "awning" | "flower";
 export type Room = Record<RoomKey, string>;
-export interface RoomItem { v: string; n: string; cost: number; sw: string; sws?: string; glyph?: string; fx?: Partial<Record<FxKey, number>>; gacha?: boolean }   // gacha: chỉ có khi quay trúng, không mua bằng xu
+export interface RoomItem { v: string; n: string; cost: number; lv?: number; sw: string; sws?: string; glyph?: string; fx?: Partial<Record<FxKey, number>>; gacha?: boolean }   // gacha: chỉ có khi quay trúng, không mua bằng xu
 export interface RoomCat { k: RoomKey; n: string; hl: string; items: RoomItem[]; ext?: boolean }   // ext: đồ mặt tiền, xem thử ở cảnh ngoài tiệm
 
 const NONE = "#F6F0F2";
 export const ROOM_CATS: RoomCat[] = [
   { k: "wall", n: "Tường", hl: "wall", items: [
     { v: "pink", n: "Sọc hồng", cost: 0, sw: "repeating-linear-gradient(90deg,#FFE6EC 0 8px,#FFDDE5 8px 16px)" },
-    { v: "mint", n: "Sọc bạc hà", cost: 120, sw: "repeating-linear-gradient(90deg,#E4F6EC 0 8px,#D8F0E3 8px 16px)", fx: { tip: .05 } },
-    { v: "peach", n: "Sọc cam đào", cost: 130, sw: "repeating-linear-gradient(90deg,#FFE4D0 0 8px,#FFD9BE 8px 16px)", fx: { tip: .05 } },
-    { v: "sky", n: "Sọc xanh trời", cost: 140, sw: "repeating-linear-gradient(90deg,#E2F1FF 0 8px,#D3E8FA 8px 16px)", fx: { tip: .05 } },
-    { v: "brick", n: "Gạch cổ điển", cost: 220, sw: "repeating-linear-gradient(0deg,#D99A82 0 3px,#EBC9B4 3px 12px)", fx: { pat: .05 } },
-    { v: "cream", n: "Kem chấm bi", cost: 160, sw: "radial-gradient(#FFD9A8 2.5px,transparent 3px) #FFF6E3", sws: "12px 12px", fx: { tip: .05 } },
-    { v: "lavender", n: "Ô vuông tím", cost: 200, sw: "linear-gradient(90deg,#E4DBFF 1.5px,transparent 1.5px),linear-gradient(#E4DBFF 1.5px,transparent 1.5px),#F4F0FF", sws: "12px 12px", fx: { tip: .05 } },
+    { v: "mint", n: "Sọc bạc hà", cost: 120, sw: "repeating-linear-gradient(90deg,#E4F6EC 0 8px,#D8F0E3 8px 16px)", fx: { tip: .04 } },
+    { v: "peach", n: "Sọc cam đào", cost: 130, sw: "repeating-linear-gradient(90deg,#FFE4D0 0 8px,#FFD9BE 8px 16px)", fx: { tip: .04 } },
+    { v: "sky", n: "Sọc xanh trời", cost: 140, sw: "repeating-linear-gradient(90deg,#E2F1FF 0 8px,#D3E8FA 8px 16px)", fx: { tip: .04 } },
+    { v: "brick", n: "Gạch cổ điển", cost: 220, lv: 5, sw: "repeating-linear-gradient(0deg,#D99A82 0 3px,#EBC9B4 3px 12px)", fx: { pat: .06 } },
+    { v: "cream", n: "Kem chấm bi", cost: 160, lv: 5, sw: "radial-gradient(#FFD9A8 2.5px,transparent 3px) #FFF6E3", sws: "12px 12px", fx: { tip: .06 } },
+    { v: "lavender", n: "Ô vuông tím", cost: 200, lv: 5, sw: "linear-gradient(90deg,#E4DBFF 1.5px,transparent 1.5px),linear-gradient(#E4DBFF 1.5px,transparent 1.5px),#F4F0FF", sws: "12px 12px", fx: { tip: .06 } },
     { v: "candy", n: "Tường kẹo ngọt", cost: 0, gacha: true, sw: "repeating-linear-gradient(135deg,#FFD1E8 0 10px,#FFF 10px 20px,#C9F0FF 20px 30px,#FFF 30px 40px)", fx: { tip: .08 } },
     { v: "starry", n: "Tường trời sao", cost: 0, gacha: true, sw: "radial-gradient(#FFF6B0 1.6px,transparent 2px) 0 0/16px 16px,radial-gradient(#fff 1px,transparent 1.4px) 8px 8px/16px 16px,#2B2F6B", fx: { tip: .12, price: .05 } }] },
   { k: "floor", n: "Sàn", hl: "rug", items: [
     { v: "check", n: "Caro bạc hà", cost: 0, sw: "repeating-conic-gradient(#DDF4E8 0 25%,#CBEDDB 0 50%)", sws: "20px 20px" },
-    { v: "wood", n: "Gỗ ấm", cost: 180, sw: "repeating-linear-gradient(90deg,#EFCB9E 0 18px,#E7BD8B 18px 20px)", fx: { pat: .05 } },
-    { v: "dark", n: "Gỗ sẫm", cost: 220, sw: "repeating-linear-gradient(90deg,#9A6846 0 18px,#8A5A3C 18px 20px)", fx: { pat: .05 } },
-    { v: "marble", n: "Đá hoa", cost: 260, sw: "repeating-conic-gradient(#F4F4F6 0 25%,#E3E5EA 0 50%)", sws: "20px 20px", fx: { pat: .08 } },
-    { v: "tile", n: "Gạch hồng", cost: 150, sw: "repeating-conic-gradient(#FFE3EA 0 25%,#FFFFFF 0 50%)", sws: "16px 16px", fx: { pat: .05 } },
+    { v: "wood", n: "Gỗ ấm", cost: 180, lv: 5, sw: "repeating-linear-gradient(90deg,#EFCB9E 0 18px,#E7BD8B 18px 20px)", fx: { pat: .06 } },
+    { v: "dark", n: "Gỗ sẫm", cost: 220, lv: 5, sw: "repeating-linear-gradient(90deg,#9A6846 0 18px,#8A5A3C 18px 20px)", fx: { pat: .06 } },
+    { v: "marble", n: "Đá hoa", cost: 260, lv: 10, sw: "repeating-conic-gradient(#F4F4F6 0 25%,#E3E5EA 0 50%)", sws: "20px 20px", fx: { pat: .09 } },
+    { v: "tile", n: "Gạch hồng", cost: 150, sw: "repeating-conic-gradient(#FFE3EA 0 25%,#FFFFFF 0 50%)", sws: "16px 16px", fx: { pat: .04 } },
     { v: "rainbow", n: "Sàn cầu vồng", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#FFB3C7 0 12px,#FFE3A0 12px 24px,#BDF0CF 24px 36px,#BFE0FF 36px 48px)", fx: { pat: .05 } },
     { v: "sakura", n: "Sàn hoa anh đào", cost: 0, gacha: true, sw: "radial-gradient(#FF9FB8 3px,transparent 3.5px) 0 0/18px 18px,#FFEFF3", fx: { pat: .08, cust: 1 } }] },
   { k: "counter", n: "Quầy", hl: "counter", items: [
     { v: "pink", n: "Quầy dâu", cost: 0, sw: "repeating-linear-gradient(90deg,#FFB3C7 0 10px,#FFC7D5 10px 20px)" },
-    { v: "mint", n: "Quầy matcha", cost: 220, sw: "repeating-linear-gradient(90deg,#9FDCC0 0 10px,#B6E6CF 10px 20px)", fx: { price: .05 } },
-    { v: "wood", n: "Quầy gỗ", cost: 200, sw: "repeating-linear-gradient(90deg,#D9A66B 0 10px,#E3B47D 10px 20px)", fx: { price: .05 } },
-    { v: "choco", n: "Quầy socola", cost: 260, sw: "repeating-linear-gradient(90deg,#8B5A3C 0 10px,#A06E4B 10px 20px)", fx: { price: .06 } },
-    { v: "white", n: "Quầy kem", cost: 240, sw: "repeating-linear-gradient(90deg,#F1E9DF 0 10px,#FFFFFF 10px 20px)", fx: { price: .05 } },
+    { v: "mint", n: "Quầy matcha", cost: 220, lv: 5, sw: "repeating-linear-gradient(90deg,#9FDCC0 0 10px,#B6E6CF 10px 20px)", fx: { price: .06 } },
+    { v: "wood", n: "Quầy gỗ", cost: 200, lv: 5, sw: "repeating-linear-gradient(90deg,#D9A66B 0 10px,#E3B47D 10px 20px)", fx: { price: .06 } },
+    { v: "choco", n: "Quầy socola", cost: 260, lv: 10, sw: "repeating-linear-gradient(90deg,#8B5A3C 0 10px,#A06E4B 10px 20px)", fx: { price: .08 } },
+    { v: "white", n: "Quầy kem", cost: 240, lv: 10, sw: "repeating-linear-gradient(90deg,#F1E9DF 0 10px,#FFFFFF 10px 20px)", fx: { price: .07 } },
     { v: "candy", n: "Quầy kẹo", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#FF9FC5 0 10px,#FFF 10px 20px)", fx: { price: .05 } },
     { v: "gold", n: "Quầy vàng", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#E9B949 0 10px,#F7D675 10px 20px)", fx: { price: .12 } }] },
   { k: "curtain", n: "Rèm", hl: "curtain", items: [
     { v: "0", n: "Không rèm", cost: 0, sw: NONE, glyph: "–" },
-    { v: "1", n: "Ren hồng", cost: 90, sw: "repeating-linear-gradient(90deg,#FF9FB6 0 8px,#fff 8px 16px)", fx: { pat: .10 } },
-    { v: "2", n: "Caro xanh", cost: 110, sw: "repeating-conic-gradient(#8FD9B6 0 25%,#fff 0 50%)", sws: "12px 12px", fx: { pat: .10 } },
-    { v: "3", n: "Chấm bi vàng", cost: 120, sw: "radial-gradient(#F2B84B 3px,transparent 3.5px) #FFF3C4", sws: "12px 12px", fx: { pat: .10 } },
-    { v: "4", n: "Sọc tím", cost: 130, sw: "repeating-linear-gradient(90deg,#D9CCFF 0 8px,#fff 8px 16px)", fx: { pat: .10 } }] },
+    { v: "1", n: "Ren hồng", cost: 90, sw: "repeating-linear-gradient(90deg,#FF9FB6 0 8px,#fff 8px 16px)", fx: { pat: .06 } },
+    { v: "2", n: "Caro xanh", cost: 160, lv: 5, sw: "repeating-conic-gradient(#8FD9B6 0 25%,#fff 0 50%)", sws: "12px 12px", fx: { pat: .06 } },
+    { v: "3", n: "Chấm bi vàng", cost: 170, lv: 5, sw: "radial-gradient(#F2B84B 3px,transparent 3.5px) #FFF3C4", sws: "12px 12px", fx: { tip: .06 } },
+    { v: "4", n: "Sọc tím", cost: 180, lv: 5, sw: "repeating-linear-gradient(90deg,#D9CCFF 0 8px,#fff 8px 16px)", fx: { price: .06 } }] },
   { k: "lamp", n: "Đèn", hl: "lamp", items: [
     { v: "0", n: "Không đèn", cost: 0, sw: NONE, glyph: "–" },
-    { v: "1", n: "Đèn mây", cost: 180, sw: "radial-gradient(circle at 35% 55%,#FFF7DC 12px,transparent 13px),radial-gradient(circle at 62% 45%,#FFF7DC 15px,transparent 16px),#FFE9EF", fx: { tip: .10 } },
-    { v: "2", n: "Dây đèn sao", cost: 140, sw: "radial-gradient(#FFF1A8 4px,transparent 5px) #FFE9EF", sws: "14px 14px", fx: { tip: .15 } },
-    { v: "3", n: "Đèn lồng", cost: 200, sw: "radial-gradient(ellipse,#FF7A59 11px,transparent 12px) #FFE9EF", fx: { tip: .12 } },
-    { v: "4", n: "Đèn chụp đen", cost: 170, sw: "radial-gradient(circle at 50% 30%,#3F4452 10px,transparent 11px),radial-gradient(circle at 50% 62%,#FFE680 6px,transparent 7px) #FFE9EF", fx: { tip: .10 } }] },
+    { v: "1", n: "Đèn mây", cost: 180, lv: 5, sw: "radial-gradient(circle at 35% 55%,#FFF7DC 12px,transparent 13px),radial-gradient(circle at 62% 45%,#FFF7DC 15px,transparent 16px),#FFE9EF", fx: { tip: .06 } },
+    { v: "2", n: "Dây đèn sao", cost: 140, lv: 5, sw: "radial-gradient(#FFF1A8 4px,transparent 5px) #FFE9EF", sws: "14px 14px", fx: { tip: .08 } },
+    { v: "3", n: "Đèn lồng", cost: 240, lv: 10, sw: "radial-gradient(ellipse,#FF7A59 11px,transparent 12px) #FFE9EF", fx: { tip: .09 } },
+    { v: "4", n: "Đèn chụp đen", cost: 170, lv: 5, sw: "radial-gradient(circle at 50% 30%,#3F4452 10px,transparent 11px),radial-gradient(circle at 50% 62%,#FFE680 6px,transparent 7px) #FFE9EF", fx: { pat: .06 } }] },
   { k: "wallItem", n: "Treo tường", hl: "wall", items: [
     { v: "0", n: "Để trống", cost: 0, sw: NONE, glyph: "+" },
-    { v: "1", n: "Khung ảnh đôi", cost: 150, sw: "radial-gradient(circle,#FFD1DC 14px,#FFE9B8 15px)", fx: { price: .10 } },
-    { v: "2", n: "Đồng hồ mèo", cost: 170, sw: "radial-gradient(circle,#FFF3F6 12px,#fff 13px,#fff 20px,#FFE3EA 21px)", fx: { pat: .10 } },
-    { v: "3", n: "Ba bức tranh", cost: 160, sw: "linear-gradient(90deg,#FFD1DC 30%,#fff 30% 35%,#CFE9FF 35% 65%,#fff 65% 70%,#FFE9B8 70%)", fx: { price: .08 } },
+    { v: "1", n: "Khung ảnh đôi", cost: 150, sw: "radial-gradient(circle,#FFD1DC 14px,#FFE9B8 15px)", fx: { price: .04 } },
+    { v: "2", n: "Đồng hồ mèo", cost: 170, lv: 5, sw: "radial-gradient(circle,#FFF3F6 12px,#fff 13px,#fff 20px,#FFE3EA 21px)", fx: { pat: .06 } },
+    { v: "3", n: "Ba bức tranh", cost: 160, lv: 5, sw: "linear-gradient(90deg,#FFD1DC 30%,#fff 30% 35%,#CFE9FF 35% 65%,#fff 65% 70%,#FFE9B8 70%)", fx: { price: .06 } },
     { v: "4", n: "Vòng hoa", cost: 140, sw: "radial-gradient(circle,#FFF3F6 10px,#7FBF86 11px,#7FBF86 19px,transparent 20px)", fx: { cust: 1 } },
-    { v: "5", n: "Biển OPEN", cost: 150, sw: "linear-gradient(#FFF3E4,#FFF3E4) padding-box,#E9A27C", fx: { cust: 1 } }] },
+    { v: "5", n: "Biển OPEN", cost: 190, lv: 5, sw: "linear-gradient(#FFF3E4,#FFF3E4) padding-box,#E9A27C", fx: { cust: 1, tip: .03 } }] },
   { k: "plant", n: "Cây", hl: "plant", items: [
     { v: "0", n: "Không cây", cost: 0, sw: NONE, glyph: "+" },
     { v: "1", n: "Sen đá", cost: 90, sw: "radial-gradient(ellipse at 50% 40%,#9FD18A 12px,transparent 13px),linear-gradient(transparent 60%,#E9A27C 60%) #EEF9F3", fx: { tip: .04 } },
-    { v: "2", n: "Monstera", cost: 160, sw: "radial-gradient(ellipse at 50% 38%,#6FB27A 16px,transparent 17px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { tip: .04, cust: 1 } },
+    { v: "2", n: "Monstera", cost: 160, lv: 5, sw: "radial-gradient(ellipse at 50% 38%,#6FB27A 16px,transparent 17px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { tip: .04, cust: 1 } },
     { v: "3", n: "Xương rồng", cost: 100, sw: "radial-gradient(ellipse 7px 14px at 50% 45%,#7FBF86 100%,transparent),linear-gradient(transparent 66%,#E9A27C 66%) #EEF9F3", fx: { tip: .04 } },
     { v: "4", n: "Hoa tulip", cost: 130, sw: "radial-gradient(circle at 35% 35%,#FF8FAB 6px,transparent 7px),radial-gradient(circle at 65% 30%,#FFD66B 6px,transparent 7px),linear-gradient(transparent 66%,#FFF3F6 66%) #EEF9F3", fx: { tip: .05 } },
-    { v: "5", n: "Cây cọ", cost: 200, sw: "radial-gradient(ellipse 16px 6px at 50% 28%,#6FB27A 100%,transparent),linear-gradient(90deg,transparent 46%,#A9784F 46% 54%,transparent 54%) #EEF9F3", fx: { tip: .05, cust: 1 } }] },
+    { v: "5", n: "Cây cọ", cost: 200, lv: 5, sw: "radial-gradient(ellipse 16px 6px at 50% 28%,#6FB27A 100%,transparent),linear-gradient(90deg,transparent 46%,#A9784F 46% 54%,transparent 54%) #EEF9F3", fx: { tip: .06, cust: 1 } }] },
   { k: "rug", n: "Thảm", hl: "rug", items: [
     { v: "0", n: "Không thảm", cost: 0, sw: NONE, glyph: "–" },
     { v: "1", n: "Thảm tròn", cost: 120, sw: "radial-gradient(ellipse,#FFD1DC 50%,#fff 52%,#fff 56%,#FFD1DC 58%,#FFD1DC 66%,transparent 68%) #DDF4E8", fx: { cust: 1 } },
-    { v: "2", n: "Thảm dâu", cost: 190, sw: "radial-gradient(#FFF1A8 2px,transparent 2.5px) #FF8FAB", sws: "10px 8px", fx: { cust: 1, tip: .05 } },
+    { v: "2", n: "Thảm dâu", cost: 190, lv: 5, sw: "radial-gradient(#FFF1A8 2px,transparent 2.5px) #FF8FAB", sws: "10px 8px", fx: { cust: 1, tip: .05 } },
     { v: "3", n: "Thảm caro kem", cost: 150, sw: "repeating-conic-gradient(#FFC9A0 0 25%,#FFF1D6 0 50%)", sws: "14px 14px", fx: { cust: 1 } },
-    { v: "4", n: "Thảm trái tim", cost: 210, sw: "radial-gradient(circle at 38% 40%,#FF8FAB 9px,transparent 10px),radial-gradient(circle at 62% 40%,#FF8FAB 9px,transparent 10px),#DDF4E8", fx: { cust: 1, tip: .05 } },
+    { v: "4", n: "Thảm trái tim", cost: 210, lv: 5, sw: "radial-gradient(circle at 38% 40%,#FF8FAB 9px,transparent 10px),radial-gradient(circle at 62% 40%,#FF8FAB 9px,transparent 10px),#DDF4E8", fx: { cust: 1, tip: .05 } },
     { v: "5", n: "Thảm sọc xanh", cost: 130, sw: "repeating-linear-gradient(90deg,#CFE9FF 0 8px,#fff 8px 16px)", fx: { cust: 1 } }] },
   /* mặt tiền: chỉ thấy khi xem ngoài tiệm (món số 0 là kiểu cũ, miễn phí) */
   { k: "sign", n: "Biển hiệu", hl: "sign", ext: true, items: [
     { v: "0", n: "Biển hồng", cost: 0, sw: "linear-gradient(#FF8FAB,#FF8FAB) padding-box,#fff" },
-    { v: "1", n: "Biển gỗ", cost: 150, sw: "linear-gradient(#C9966A 70%,#8A5A3A 70%)", fx: { tip: .05 } },
-    { v: "2", n: "Biển đèn neon", cost: 240, sw: "linear-gradient(#2B2640 60%,#FF6FB5 60% 70%,#2B2640 70%)", fx: { cust: 1 } },
-    { v: "3", n: "Biển bảng đen", cost: 180, sw: "linear-gradient(#3E4A43 75%,#D9A66B 75%)", fx: { price: .05 } }] },
+    { v: "1", n: "Biển gỗ", cost: 150, sw: "linear-gradient(#C9966A 70%,#8A5A3A 70%)", fx: { tip: .04 } },
+    { v: "2", n: "Biển đèn neon", cost: 240, lv: 10, sw: "linear-gradient(#2B2640 60%,#FF6FB5 60% 70%,#2B2640 70%)", fx: { cust: 1 } },
+    { v: "3", n: "Biển bảng đen", cost: 180, lv: 5, sw: "linear-gradient(#3E4A43 75%,#D9A66B 75%)", fx: { price: .06 } }] },
   { k: "awning", n: "Mái hiên", hl: "awning", ext: true, items: [
     { v: "0", n: "Sọc hồng", cost: 0, sw: "repeating-linear-gradient(90deg,#FF8FAB 0 8px,#fff 8px 16px)" },
-    { v: "1", n: "Sọc bạc hà", cost: 130, sw: "repeating-linear-gradient(90deg,#8FD9B6 0 8px,#fff 8px 16px)", fx: { pat: .05 } },
-    { v: "2", n: "Sọc vàng", cost: 140, sw: "repeating-linear-gradient(90deg,#FFD66B 0 8px,#fff 8px 16px)", fx: { tip: .05 } },
-    { v: "3", n: "Sọc xanh trời", cost: 150, sw: "repeating-linear-gradient(90deg,#9EC9FF 0 8px,#fff 8px 16px)", fx: { pat: .05 } }] },
+    { v: "1", n: "Sọc bạc hà", cost: 130, sw: "repeating-linear-gradient(90deg,#8FD9B6 0 8px,#fff 8px 16px)", fx: { pat: .04 } },
+    { v: "2", n: "Sọc vàng", cost: 140, sw: "repeating-linear-gradient(90deg,#FFD66B 0 8px,#fff 8px 16px)", fx: { tip: .04 } },
+    { v: "3", n: "Sọc xanh trời", cost: 160, lv: 5, sw: "repeating-linear-gradient(90deg,#9EC9FF 0 8px,#fff 8px 16px)", fx: { pat: .06 } }] },
   { k: "flower", n: "Hộp hoa", hl: "flower", ext: true, items: [
     { v: "0", n: "Hoa xuân", cost: 0, sw: "radial-gradient(#FF8FAB 4px,transparent 4.5px) 0 0/12px 12px,radial-gradient(#FFD66B 4px,transparent 4.5px) 6px 6px/12px 12px,#EEF9F3" },
-    { v: "1", n: "Hoa hồng", cost: 100, sw: "radial-gradient(#FF5C7A 5px,transparent 5.5px) 0 0/12px 12px,#EEF9F3", fx: { tip: .04 } },
-    { v: "2", n: "Oải hương", cost: 120, sw: "radial-gradient(#B79CFF 4.5px,transparent 5px) 0 0/10px 12px,#EEF9F3", fx: { pat: .05 } },
-    { v: "3", n: "Cúc vàng", cost: 110, sw: "radial-gradient(#FFD66B 5px,transparent 5.5px) 0 0/12px 12px,#EEF9F3", fx: { tip: .04 } },
-    { v: "4", n: "Cây xanh", cost: 140, sw: "radial-gradient(#6FB27A 5.5px,transparent 6px) 0 0/11px 12px,#EEF9F3", fx: { cust: 1 } }] }
+    { v: "1", n: "Hoa hồng", cost: 100, sw: "radial-gradient(#FF5C7A 5px,transparent 5.5px) 0 0/12px 12px,#EEF9F3", fx: { price: .03 } },
+    { v: "2", n: "Oải hương", cost: 120, sw: "radial-gradient(#B79CFF 4.5px,transparent 5px) 0 0/10px 12px,#EEF9F3", fx: { pat: .04 } },
+    { v: "3", n: "Cúc vàng", cost: 110, sw: "radial-gradient(#FFD66B 5px,transparent 5.5px) 0 0/12px 12px,#EEF9F3", fx: { pat: .04, tip: .04 } },
+    { v: "4", n: "Cây xanh", cost: 160, lv: 5, sw: "radial-gradient(#6FB27A 5.5px,transparent 6px) 0 0/11px 12px,#EEF9F3", fx: { cust: 1 } }] }
 ];
 
 export const DEFAULT_ROOM: Room = { wall: "pink", floor: "check", counter: "pink", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0", sign: "0", awning: "0", flower: "0" };
