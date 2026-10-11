@@ -54,4 +54,12 @@ export function tossCoin(rng: () => number = Math.random): Hit | null {
   return { inc: INCIDENTS[Math.floor(rng() * INCIDENTS.length) % INCIDENTS.length]!, level, cost: incidentCost(S.coins, level) };
 }
 
-export function applyIncident(h: Hit) { spend("incident", h.cost, `${h.inc.title} (mức ${LEVELS[h.level].name.toLowerCase()})`); S.incAt = S.shifts; }
+/** cách xử lý sau khi gặp sự cố: sửa ngay trả đủ; làm tạm trả một nửa nhưng ca kế tiếp khách sốt ruột hơn (PATCH_PAT) */
+export const PATCH_SHARE = 0.5, PATCH_PAT = 0.8;
+export const patchCost = (h: Hit) => h.cost > 0 ? Math.max(1, Math.round(h.cost * PATCH_SHARE)) : 0;
+export function applyIncident(h: Hit, patch = false) {
+  spend("incident", patch ? patchCost(h) : h.cost, `${h.inc.title} (mức ${LEVELS[h.level].name.toLowerCase()}${patch ? ", làm tạm" : ""})`);
+  S.incAt = S.shifts; S.incPatch = patch;
+}
+/** dùng một lần khi bắt đầu ca: hệ số kiên nhẫn của khách (làm tạm ở lần sự cố trước thì khách dễ cáu hơn) */
+export function takePatchPenalty(): number { const p = !!S.incPatch; S.incPatch = false; return p ? PATCH_PAT : 1; }

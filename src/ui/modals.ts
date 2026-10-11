@@ -17,7 +17,7 @@ import { render } from "./app";
 import { liveStats } from "./room3d";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
-import { LEVELS, applyIncident, incidentCost, tossCoin, type Incident, type Level } from "../engine/incident";
+import { LEVELS, PATCH_PAT, applyIncident, incidentCost, patchCost, type Hit, tossCoin, type Incident, type Level } from "../engine/incident";
 import { ADMIN_USER, account, getBackup, restoreBackup, changePin, isAdmin, disablePush, enablePush, isStandalone, logout, pushSupported, savedAgo } from "../net/cloud";
 import { currentCfg, EVENT_KEYS, PET_IDS, type GameConfig } from "../content/gameconfig";
 import { cfgRev, publishGameConfig } from "../net/gamecfg";
@@ -306,6 +306,24 @@ export function incidentModal(i: Incident, cost: number, onClose?: () => void, l
     <div class="mbtns"><button class="b3" data-close>Đành chịu thôi</button></div>`, onClose, !!level);
 }
 
+/** Gặp sự cố: chọn sửa ngay (trả đủ) hoặc làm tạm (trả nửa, ca sau khách sốt ruột hơn). Không đóng được cho tới khi chọn. */
+export function incidentChoiceModal(hit: Hit, onClose?: () => void) {
+  const half = patchCost(hit), pct = Math.round((1 - PATCH_PAT) * 100);
+  modal(`${incidentArt(hit.inc)}<h2>${esc(hit.inc.title)}</h2><p class="sub">${esc(hit.inc.text)}</p>
+    <div class="inclv ${hit.level}">Mức ${esc(LEVELS[hit.level].name.toLowerCase())} · bạn xử lý thế nào?</div>
+    <div class="vopts">
+      <button class="vopt" data-inc="fix" ${S.coins < hit.cost ? "disabled" : ""}><span class="vi">🔧</span><span class="vt"><b>Sửa ngay · −${fmtN(hit.cost)} xu</b><small>Xong xuôi, không lo gì thêm.</small></span></button>
+      <button class="vopt" data-inc="patch"><span class="vi">🩹</span><span class="vt"><b>Làm tạm · −${fmtN(half)} xu</b><small>Rẻ một nửa, nhưng ca kế tiếp khách kiên nhẫn ít hơn ${pct}%.</small></span></button>
+    </div>`, onClose, true);
+  document.querySelectorAll<HTMLButtonElement>("[data-inc]").forEach(b => b.addEventListener("click", () => {
+    const patch = b.dataset.inc === "patch"; applyIncident(hit, patch); save(); sfx("untap");
+    const cost = patch ? half : hit.cost;
+    modal(`${incidentArt(hit.inc)}<h2>${patch ? "Đã làm tạm" : "Đã sửa xong"}</h2><p class="sub">${patch ? `Tạm ổn rồi, nhưng khách ở ca sau sẽ dễ sốt ruột hơn.` : "Mọi thứ trở lại như cũ."}</p>
+      <div class="inccost"><b>−${fmtN(cost)} xu</b><small>Còn lại ${fmtN(S.coins)} xu · xem ở Ví</small></div>
+      <div class="mbtns"><button class="b3" data-close>Ok</button></div>`, onClose, true);
+  }));
+}
+
 /** Hai máy cùng lưu thay đổi: so hai bản cạnh nhau, gợi ý bản tiến xa hơn, cảnh báo nếu chọn bản thấp hơn (cấm đóng bằng cách bấm ra ngoài) */
 export function conflictModal(cloud: unknown | null, pick: (keepMine: boolean) => void, mine: unknown = S) {
   const m = snapOf(mine as Record<string, unknown>)!, c = snapOf(cloud as Record<string, unknown> | null);
@@ -350,8 +368,7 @@ export function coinModal(onClose?: () => void) {
           <div class="mbtns"><button class="b3" data-close>Tuyệt!</button></div>`, onClose, true);
         return;
       }
-      applyIncident(hit); save(); sfx("untap");
-      incidentModal(hit.inc, hit.cost, onClose, hit.level);
+      sfx("untap"); incidentChoiceModal(hit, onClose);
     }, 1250);
   });
 }

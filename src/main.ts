@@ -30,6 +30,7 @@ import { customAct, openCustom } from "./ui/custom";
 import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { fmtN } from "./engine/util";
 import { initTeam, setTeamTab, staffDialogAct, staffSheet, teamAct, type TeamTab } from "./ui/team";
+import { collectionSheet, eventSheet } from "./ui/collection";
 import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet } from "./ui/sheets";
 import { setPrepTab, type PrepTab } from "./ui/screens/prep";
 import { MAX_PINS, togglePin } from "./engine/progress";
@@ -90,6 +91,8 @@ document.addEventListener("click", e => {
     case "music": return musicSheet();
     case "cakes": return cakesSheet();
     case "days": return daysSheet();
+    case "collect": return collectionSheet();
+    case "events": return eventSheet();
     case "photo": return photoSheet();
     case "wallet": if (!SH) wallet(); return;
     case "update": return void applyUpdate();

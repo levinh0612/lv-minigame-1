@@ -15,6 +15,13 @@ import { featured, fx, lvl, newestRecipe, pickMenu, unlocked } from "./progress"
 import { S, save } from "./state";
 import { earn, note, spend } from "./wallet";
 import { nameList, pick, rnd } from "./util";
+import { takePatchPenalty } from "./incident";
+import { advanceStory, planStory } from "./story";
+import { addSeasonServed } from "./season";
+import { challengeMods, judgeChallenge } from "./challenge";
+import { giveSticker, randomSticker } from "./collection";
+import { storyOf } from "../content/collection";
+import { VIPS, planVip, vipBonus, vipRecipe, type VipKind } from "./vip";
 import { SKILL_NAME, staffService } from "./skills";
 import { GIFT_COMPLAINTS, SHIP_COMPLAINTS } from "../content/minigames";
 import { pickAddress, pickRibbon, pickService, serviceQuota } from "./minigame";
@@ -28,6 +35,8 @@ export interface Customer {
   perkPrice?: number; perkTip?: number;   // lợi ích riêng của khách quen: giá bánh và tip cộng thêm
   svc?: "gift" | "ship" | "both"; ribbon?: Ribbon; addr?: Address;   // khách muốn gói quà / giao tận nhà (minigame)
   seatLv?: number;     // cấp bàn khách đang ngồi (1..3)
+  story?: string;      // khách quen có truyện (engine/story.ts)
+  vip?: VipKind;       // khách đặc biệt của ca (engine/vip.ts)
 }
 /* một bé thợ bánh trong ca: đang làm cho ghế nào, được bao nhiêu */
 export interface Baker { id: StaffId; seat: number; done: number; need: number }
@@ -40,6 +49,9 @@ export interface Shift {
   mine: number;        // ghế của đơn chủ tiệm đang làm (-1 = rảnh tay)
   peek: boolean;       // đã xem công thức đơn này chưa (chưa xem mà giao đúng thì được thưởng)
   svcPlan: number[]; svcFee: number; svcDone: number; svcFail: number;   // svcPlan: thứ tự khách xin gói/giao; svcFee: xu thưởng từ minigame
+  storyAt: number; storyId: string; storyHit: string;   // khách quen có truyện: ghé sau khách thứ mấy (-1 = không), vị nào, vị nào vừa lòng
+  chId: string; chPrice: number; notes: string[];       // thử thách ngày đang bật (id, hệ số giá); dòng thông báo cho màn Kết quả
+  vipAt: number; vipKind: VipKind | null; vipBonus: number;   // vipAt: ghé sau khách thứ mấy (-1 = ca này không có VIP)
   bonus: number; tierBonus: number; lack: Partial<Record<StaffId, string>>;
   ingUsed: number; quickCost: number; wages: number; bakers: Baker[]; working: StaffId[]; meals: Partial<Record<StaffId, FoodId>>;
   seatLv: number[]; rushAt: number; rushExtra: number; rushUntil: number; rushDone: boolean;   // giờ vàng: ghế dư đem thêm khách
@@ -89,11 +101,15 @@ export function createShift(): Shift {
   const sh: Shift = {
     total: expectedCustomers(), spawned: 0, served: 0, left: 0, coins: 0, tips: 0, stars: [],
     seats: Array(seatsNow()).fill(null), build: emptyBuild(), t: 0, next: 1, paused: false,
-    boyDone: !!S.daily.boy, lv0: L, xp0: S.xp, wk0: { ...S.prog.weekly.prog }, ups: [], record: false, mine: -1, peek: false, svcPlan: [], svcFee: 0, svcDone: 0, svcFail: 0, bonus: 0, tierBonus: 0, lack: {},
+    boyDone: !!S.daily.boy, lv0: L, xp0: S.xp, wk0: { ...S.prog.weekly.prog }, ups: [], record: false, mine: -1, peek: false, svcPlan: [], svcFee: 0, svcDone: 0, svcFail: 0, vipAt: -1, vipKind: null, vipBonus: 0, storyAt: -1, storyId: "", storyHit: "", chId: "", chPrice: 1, notes: [], bonus: 0, tierBonus: 0, lack: {},
     ingUsed: 0, quickCost: 0, wages: 0, bakers: [], working: [], meals: {}, seatLv: seatLevels(), ...rushPlan(), memo: 0, helped: 0, goals: shiftGoals(), goalCoins: 0, ticket: false, ticketCapped: false, bondUp: 0, combo: 0, bestCombo: 0, comboBank: 0, comboLost: 0, comboPaid: 0, mouse: null, mousePlan: -1, mouseDone: false, fainted: [], patMul: 1, shutdown: false, mouseFine: 0, mouseReward: 0, mouseKills: 0, mousePaid: 0
   };
+  sh.patMul *= takePatchPenalty();
   sh.mousePlan = planMouse(sh.total);
   sh.svcPlan = planService(sh.total);
+  const vp = planVip(sh.total); if (vp) { sh.vipAt = vp.at; sh.vipKind = vp.kind; }
+  const sp = planStory(sh.total, sh.vipAt); if (sp) { sh.storyAt = sp.at; sh.storyId = sp.id; }
+  const cm = challengeMods(); sh.chId = cm.id; sh.chPrice = cm.price; sh.patMul *= cm.pat;
   return sh;
 }
 
@@ -110,6 +126,19 @@ function makeGuest(): { who: string; look: Look } {
     who: pick(nameList(girl ? CFG.girlNames : CFG.boyNames)),
     look: { gender: girl ? "girl" : "boy", sprite: pick(girl ? GIRL_SPRITES : BOY_SPRITES), hair: pick(HAIR), skin: pick(SKIN), eye: pick(EYES), coat: pick(COAT), shirt: pick(SHIRT) }
   };
+}
+
+/* Biến khách vừa tạo thành VIP của ca: đổi món (nếu loại đó kén món), chỉnh độ kiên nhẫn, gắn nhãn */
+function makeVip(sh: Shift, c: Customer) {
+  const kind = sh.vipKind!, r = vipRecipe(kind, unlocked());
+  c.vip = kind; c.reg = undefined; c.perkPrice = c.perkTip = undefined; if (r) c.r = r;
+  c.max *= VIPS[kind].pat; c.pat = c.max;
+}
+
+/* Khách quen có truyện: tên và nhãn riêng, kiên nhẫn hơn một chút */
+function makeStory(sh: Shift, c: Customer) {
+  const st = storyOf(sh.storyId); if (!st) return;
+  c.story = st.id; c.who = st.who; c.reg = undefined; c.perkPrice = c.perkTip = undefined; c.max *= 1.2; c.pat = c.max;
 }
 
 /* Chọn khách mới: Anh (mỗi ngày một lần) hoặc khách thường (nam/nữ) */
@@ -134,7 +163,7 @@ export function makeCustomer(sh: Shift): Customer {
 
 /* Chạy thời gian. Trả về ghế vừa có khách và các ghế khách vừa bỏ về. */
 export type StaffDone = { baker: Baker; res: Extract<ServeResult, { ok: true }> };
-export interface TickOut { rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: StaffId; what: string }[]; mouse: MouseOut }
+export interface TickOut { vip?: boolean; story?: boolean; rush: number; spawned: number; left: number[]; claimed: Baker[]; baked: StaffDone[]; assigned: number; restock: { id: StaffId; what: string }[]; mouse: MouseOut }
 export function tick(sh: Shift, dt: number): TickOut {
   const out: TickOut = { rush: 0, spawned: -1, left: [], claimed: [], baked: [], assigned: -1, restock: [], mouse: {} };
   if (sh.paused) return out;
@@ -145,6 +174,8 @@ export function tick(sh: Shift, dt: number): TickOut {
   if (sh.spawned < sh.total && sh.t >= sh.next && free >= 0) {
     const c = makeCustomer(sh), lv = sh.seatLv[free] ?? 1; c.seatLv = lv; c.max *= comfortPat(lv); c.pat = c.max;     // bàn cao cấp: khách kiên nhẫn hơn
     if (!c.him && S.svcOn !== false && sh.svcPlan.includes(sh.spawned)) { c.svc = pickService(Math.random); if (c.svc !== "ship") c.ribbon = pickRibbon(Math.random); if (c.svc !== "gift") c.addr = pickAddress(Math.random); }
+    if (sh.storyId && sh.storyAt >= 0 && sh.spawned >= sh.storyAt && !c.him && !c.vip) { makeStory(sh, c); sh.storyAt = -1; out.story = true; }
+    if (sh.vipKind && sh.vipAt >= 0 && sh.spawned >= sh.vipAt && !c.him) { makeVip(sh, c); sh.vipAt = -1; out.vip = true; }
     sh.seats[free] = c; sh.spawned++; out.spawned = free;
     sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv] * (sh.t < sh.rushUntil ? 0.55 : 1);
   }
@@ -224,7 +255,7 @@ export function release(sh: Shift) { sh.mine = -1; sh.peek = false; }
 export function peek(sh: Shift) { sh.peek = true; }
 
 export type ServeResult =
-  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; tierBonus: number; perfect: boolean; combo: number; comboAdd: number; craftUp?: { star: number; reward: number } }
+  | { ok: true; idx: number; c: Customer; stars: number; price: number; tip: number; quick: number; byStaff: boolean; bonus: number; tierBonus: number; vipBonus?: number; perfect: boolean; combo: number; comboAdd: number; craftUp?: { star: number; reward: number } }
   | { ok: false; msg: string; broke?: number };
 
 const tiersOfBuild = (b: Build) => 1 + (b.up?.length ?? 0);
@@ -269,15 +300,17 @@ function deliver(sh: Shift, idx: number, byStaff: boolean, staffId?: StaffId): E
   const c = sh.seats[idx]!; c.gone = true;
   const f = c.pat / c.max, stars = f > 0.55 ? 3 : f > 0.3 ? 2 : 1, mult = coinMult();
   const mb = staffId ? mascotBonus(staffId) : { price: 0, tip: 0 };   // linh thú thuê: bánh bé làm bán được giá hơn
-  const price = Math.round(c.r.price * (1 + fx("price")) * (1 + (c.perkPrice ?? 0)) * (1 + mb.price) * (1 + craftBonus(c.r.id))) * mult;
-  const tip = Math.round(c.r.price * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0)) * (1 + mb.tip)) * mult;
+  const vd = c.vip ? VIPS[c.vip] : null, price = Math.round(c.r.price * (vd?.price ?? 1) * sh.chPrice * (1 + fx("price")) * (1 + (c.perkPrice ?? 0)) * (1 + mb.price) * (1 + craftBonus(c.r.id))) * mult;
+  const tip = Math.round(c.r.price * (vd?.tip ?? 1) * f * 0.6 * (1 + fx("tip")) * comfortTip(c.seatLv ?? 1) * (1 + (c.perkTip ?? 0)) * (1 + mb.tip)) * mult;
   // Thưởng nhớ bài: chủ tiệm giao đúng mà không xem công thức
   const bonus = !byStaff && !sh.peek ? Math.round(price * 0.5) : 0;
   // Thưởng bánh nhiều tầng: chủ tiệm tự tay làm thì thêm (số tầng − 1) × 20% giá bánh; bé làm hộ thì không có
   const tierBonus = !byStaff && tiersOf(c.r) > 1 ? Math.round(c.r.price * TIER_HAND_BONUS * (tiersOf(c.r) - 1)) : 0;
-  earn("sales", price); earn("tip", tip); earn("memo", bonus); earn("tier", tierBonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0) + (tierBonus ? 2 : 0); S.served++;
+  const vb = c.vip ? vipBonus(c.vip, stars, price) : 0; sh.vipBonus += vb;
+  earn("sales", price); earn("tip", tip); earn("vip", vb); earn("memo", bonus); earn("tier", tierBonus); S.xp += 4 + stars * 2 + (bonus ? 2 : 0) + (tierBonus ? 2 : 0); S.served++;
   sh.coins += price; sh.tips += tip; sh.bonus += bonus; sh.tierBonus += tierBonus; sh.served++; sh.stars.push(stars);
   if (bonus) sh.memo++;
+  if (c.story && stars >= 2) sh.storyHit = c.story;
   // combo (chỉ tính bánh chủ tiệm tự làm): Hoàn hảo = giao nhanh 3 sao; 1-2 sao không thêm cũng không đứt
   const perfect = !byStaff && stars === 3; let comboAdd = 0;
   if (perfect) { sh.combo++; sh.bestCombo = Math.max(sh.bestCombo, sh.combo); comboAdd = Math.round(price * COMBO_PCT * Math.min(sh.combo, COMBO_CAP)); sh.comboBank += comboAdd; }
@@ -287,7 +320,7 @@ function deliver(sh: Shift, idx: number, byStaff: boolean, staffId?: StaffId): E
   const craftUp = trackServe(c.r, price + tip, stars, perfect);
   if (craftUp) sh.ups.push({ n: c.r.n, star: craftUp.star });
   addReview(c, stars); save();
-  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, tierBonus, perfect, combo: sh.combo, comboAdd, ...(craftUp ? { craftUp } : {}) };
+  return { ok: true, idx, c, stars, price, tip, quick, byStaff, bonus, tierBonus, vipBonus: vb, perfect, combo: sh.combo, comboAdd, ...(craftUp ? { craftUp } : {}) };
 }
 
 export function leaveCustomer(sh: Shift, i: number) {
@@ -339,6 +372,11 @@ export function finishShift(sh: Shift) {
     else sh.ticketCapped = true;
   }
   sh.bondUp = addBond();
+  if (sh.storyHit) sh.notes.push(...(advanceStory(sh.storyHit)?.notes ?? []));
+  const drops = (sh.vipBonus > 0 ? 1 : 0) + (sh.served > 0 && Math.random() < 0.5 ? 1 : 0);
+  for (let i = 0; i < drops; i++) { const id = randomSticker(); if (id) sh.notes.push(...(giveSticker(id)?.notes ?? [])); }
+  sh.notes.push(...addSeasonServed(sh.served));
+  const ch = sh.chId ? judgeChallenge({ served: sh.served, total: sh.served + sh.left, left: sh.left, bestCombo: sh.bestCombo }, sh.chId) : null; if (ch) sh.notes.push(...ch.notes);
   if (sh.comboBank > 0) { earn("combo", sh.comboBank); sh.comboPaid = sh.comboBank; }
   const led = ledger(sh); S.earned += led.revenue;
   const best = S.prog.stat.bestProfit ?? 0;                 // kỷ lục lãi một ca (ca đầu tiên không tính là phá kỷ lục)
@@ -348,7 +386,7 @@ export function finishShift(sh: Shift) {
   return led;
 }
 export const ledger = (sh: Shift) => {
-  const revenue = sh.coins + sh.tips + sh.bonus + sh.tierBonus + sh.svcFee + sh.goalCoins + sh.comboPaid;
+  const revenue = sh.coins + sh.tips + sh.bonus + sh.tierBonus + sh.vipBonus + sh.svcFee + sh.goalCoins + sh.comboPaid;
   return { revenue, ingUsed: sh.ingUsed, quick: sh.quickCost, wages: sh.wages, profit: revenue - sh.ingUsed - sh.quickCost - sh.wages };
 };
 

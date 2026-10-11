@@ -111,3 +111,17 @@ describe("khoản cộng thụ động", () => {
     const c = claimPassive(); expect(c.comp).toBe(0); expect(c.daily).toBe(dailyReward()); expect(S.comp).toBe(1);
   });
 });
+
+describe("chọn cách xử lý sự cố", () => {
+  const hit = () => ({ inc: INCIDENTS[0]!, level: "mid" as const, cost: 200 });
+  it("làm tạm trả một nửa và ca sau khách bớt kiên nhẫn, chỉ một lần", async () => {
+    const { patchCost, takePatchPenalty, PATCH_PAT } = await import("../src/engine/incident");
+    expect(patchCost(hit())).toBe(100);
+    applyIncident(hit(), true); expect(S.coins).toBe(900);
+    expect(takePatchPenalty()).toBe(PATCH_PAT); expect(takePatchPenalty()).toBe(1);
+  });
+  it("sửa ngay trả đủ và không để lại hậu quả", async () => {
+    const { takePatchPenalty } = await import("../src/engine/incident");
+    applyIncident(hit(), false); expect(S.coins).toBe(800); expect(takePatchPenalty()).toBe(1);
+  });
+});

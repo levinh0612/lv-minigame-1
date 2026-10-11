@@ -1,5 +1,7 @@
 /* Màn Chơi và màn Kết quả: phần hiển thị. Luật chơi nằm ở engine/shift.ts.
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
+import { STORIES } from "../../content/collection";
+import { VIPS } from "../../engine/vip";
 import { gachaFx, staffPlaced } from "../../engine/gacha";
 import { gachaArt } from "../gachafx";
 import { gachaItem } from "../../content/gacha";
@@ -75,6 +77,8 @@ function loop(now: number) {
     moveRat(SH, dt, catchRat);
     if (SH.mouse && now - mouseUiAt > 250) { mouseUiAt = now; renderMouse(SH); }
     if (ev.spawned >= 0) { renderSlot(ev.spawned, true); sfx("bell"); }
+    if (ev.story) { const st = STORIES.find(x => x.id === SH!.storyId); if (st) toast(`${st.e} ${st.who} ghé tiệm! Giao bánh từ 2 sao để nghe chuyện`); }
+    if (ev.vip && SH.vipKind) toast(`${VIPS[SH.vipKind].emoji} ${VIPS[SH.vipKind].n} ghé tiệm! ${VIPS[SH.vipKind].hint}`);
     ev.left.forEach(onLeave);
     ev.claimed.forEach(b => renderSlot(b.seat));
     ev.baked.forEach(x => {
@@ -150,12 +154,14 @@ export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const svc = c.svc ? `<i class="stag" title="Khách xin ${svcLabel(c.svc).toLowerCase()}">${c.svc === "ship" ? ic.right(11, 2.8) : ic.gift(11, 2.4)}${svcLabel(c.svc)}</i>` : "";
   const vip = rg ? `<i class="vtag vt-${rg.rarity}" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>` : "";
   
-  return `${vip}${svc}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
+  const stg = c.story ? STORIES.find(x => x.id === c.story) : null;
+  const vp = stg ? `<i class="vtag vt-vip vt-story" title="${esc(stg.who)}: khách quen có truyện, giao từ 2 sao để nghe chuyện" aria-label="${esc(stg.who)}">${stg.e}</i>` : c.vip ? `<i class="vtag vt-vip" title="${esc(VIPS[c.vip].n)}: ${esc(VIPS[c.vip].hint)}" aria-label="${esc(VIPS[c.vip].n)}">${VIPS[c.vip].emoji}</i>` : "";
+  return `${vp}${vip}${svc}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
     <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
     <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${whoTag}`;
 }
 
-const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (c?.reg ? " reg reg-" + (gachaItem(c.reg)?.rarity ?? "common") : "") + (extra ? " " + extra : ""); };
+const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (c?.vip ? " vipg" : "") + (c?.story ? " storyg" : "") + (c?.reg ? " reg reg-" + (gachaItem(c.reg)?.rarity ?? "common") : "") + (extra ? " " + extra : ""); };
 const slotLabel = (sh: Shift, i: number) => { const c = sh.seats[i]; return !c ? "Bàn trống" : c.by ? `${petName(c.by)} đang làm cho ${c.who}` : `Nhận đơn của ${c.who}`; };
 const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
   `<button class="${slotClass(sh, i, st === "low" ? "low" : "")}" id="seat${i}" data-seat="${i}" aria-label="${esc(slotLabel(sh, i))}">${slotHTML(sh, i, st)}</button>`;
@@ -532,6 +538,7 @@ export function doServe() {
   renderBuild(true);
   if (res.bonus) toast(`Nhớ công thức giỏi quá! +${res.bonus} xu thưởng`);
   if (res.craftUp) toast(`Tay nghề ${"★".repeat(res.craftUp.star)} · ${res.c.r.n}! +${res.craftUp.reward} xu`);
+  if (res.vipBonus && res.c.vip) toast(`${VIPS[res.c.vip].emoji} ${VIPS[res.c.vip].n} hài lòng! +${fmtN(res.vipBonus)} xu thưởng`);
   if (res.tierBonus) toast(`Bánh ${tiersOf(res.c.r)} tầng tự tay làm! +${res.tierBonus} xu thưởng`);
   const sh = SH;
   if (res.c.svc) offerService(res.c, res.price);

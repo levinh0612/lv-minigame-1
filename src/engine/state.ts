@@ -21,6 +21,14 @@ export interface Prog {
   bestStreak: number;
 }
 export const freshProg = (): Prog => ({ made: {}, stat: {}, ach: {}, up: {}, weekly: { week: "", missions: [], prog: {}, claimed: [], chest: false }, bestStreak: 0 });
+/** sưu tầm và sự kiện (tất cả tùy chọn, tạo khi cần bằng ex() ở engine/collection.ts) */
+export interface Extra {
+  stickers: string[]; pages: string[];                 // sticker đã có; trang đã nhận thưởng
+  outfits: string[]; worn: Record<string, string>;     // đồ đã có; đồ mỗi bé đang mặc (petId -> outfitId)
+  story: Record<string, number>;                       // số chương đã xem của từng khách quen
+  season: Record<string, number>; seasonTier: Record<string, number>;   // khoá "id-năm": số khách phục vụ; số mốc đã nhận
+  ch: { on: string; done: string; wins: number; streak: number; last: string };   // on/done: ngày đã bật / đã đạt; last: ngày thắng gần nhất
+}
 export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
   names: { her: string };     // chỉ tên chủ tiệm là của riêng mỗi người; tên người gửi, thú cưng, khách do admin cấu hình (CFG)
@@ -44,6 +52,8 @@ export interface State {
   photo: string;                  // ảnh treo tường tiệm (data URL đã thu nhỏ)
   comp?: number;                  // đã nhận khoản đền bù một lần chưa
   loginDay?: string;              // ngày (YYYY-MM-DD) đã nhận thưởng đăng nhập gần nhất
+  extra?: Extra;
+  incPatch?: boolean;             // lần sự cố trước chọn làm tạm: ca kế tiếp khách sốt ruột hơn
   incAt?: number;                 // số ca đã chơi lúc gặp sự cố gần nhất (để cách nhau vài ca)
   prog: Prog;                     // tay nghề, thành tích, nhiệm vụ tuần, nâng cấp tiệm cao cấp
   cloud: Cloud;
