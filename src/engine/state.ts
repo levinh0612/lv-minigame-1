@@ -28,7 +28,7 @@ export interface State {
   daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
   stock: Record<StockKey, number[]>; suppliers: string[]; custom: CustomCake[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
   staff: Record<string, StaffState>; tut: boolean;   // khoá: PetId của 3 bé thợ bánh hoặc id linh thú Gacha đã thuê
-  food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean;
+  food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean; svcOn?: boolean;   // svcOn: nhận dịch vụ gói/giao (mặc định bật; tắt thì khách mới không xin)
   pins?: string[];                // món ruột ghim ở màn Chuẩn bị (tối đa MAX_PINS): khách gọi các món này nhiều hơn để dễ tự nhớ công thức
   gacha: GachaState;
   mg?: { gift: number; ship: number };   // điểm kinh nghiệm minigame gói quà / giao hàng (hạng D → SSS)

@@ -234,3 +234,5 @@
 .pfoot .b3{height:58px;border-radius:22px}
 .pfoot .b3.w{padding:0 16px;font:800 16px var(--display);white-space:nowrap}
 .pfoot .b3:last-child{flex:1;font-size:21px}
+.tgs{display:flex;gap:10px;flex:none;align-items:center}
+.or1 .tgs{flex-direction:column;align-items:flex-start;gap:0}

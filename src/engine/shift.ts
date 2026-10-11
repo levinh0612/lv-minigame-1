@@ -144,7 +144,7 @@ export function tick(sh: Shift, dt: number): TickOut {
   const free = sh.seats.findIndex(s => !s);
   if (sh.spawned < sh.total && sh.t >= sh.next && free >= 0) {
     const c = makeCustomer(sh), lv = sh.seatLv[free] ?? 1; c.seatLv = lv; c.max *= comfortPat(lv); c.pat = c.max;     // bàn cao cấp: khách kiên nhẫn hơn
-    if (!c.him && sh.svcPlan.includes(sh.spawned)) { c.svc = pickService(Math.random); if (c.svc !== "ship") c.ribbon = pickRibbon(Math.random); if (c.svc !== "gift") c.addr = pickAddress(Math.random); }
+    if (!c.him && S.svcOn !== false && sh.svcPlan.includes(sh.spawned)) { c.svc = pickService(Math.random); if (c.svc !== "ship") c.ribbon = pickRibbon(Math.random); if (c.svc !== "gift") c.addr = pickAddress(Math.random); }
     sh.seats[free] = c; sh.spawned++; out.spawned = free;
     sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv] * (sh.t < sh.rushUntil ? 0.55 : 1);
   }

@@ -210,7 +210,8 @@ export function watchBaker(id: string) {
   draw(); clearInterval(watchT); watchT = window.setInterval(draw, 250);
 }
 
-const toggleHTML = () => `<button class="toggle ${S.autoTake ? "on" : ""}" data-act="auto" role="switch" aria-checked="${S.autoTake}"><span>Tự nhận đơn</span><i></i></button>`;
+const svcOn = () => S.svcOn !== false;
+const toggleHTML = () => `<span class="tgs"><button class="toggle ${svcOn() ? "on" : ""}" data-act="svc" role="switch" aria-checked="${svcOn()}"><span>Nhận dịch vụ</span><i></i></button><button class="toggle ${S.autoTake ? "on" : ""}" data-act="auto" role="switch" aria-checked="${S.autoTake}"><span>Tự nhận đơn</span><i></i></button></span>`;
 function idleHTML(sh: Shift) {
   const busy = sh.seats.some(x => x && !x.gone && !x.by), any = sh.seats.some(x => x && !x.gone);
   const earned = sh.coins + sh.tips + sh.bonus;
@@ -512,6 +513,12 @@ export function toggleAuto() {
   if (SH && !S.autoTake && mineIdx(SH) >= 0) { release(SH); resetBuild(); renderBuild(); }
   if (SH) renderTicket();
   toast(S.autoTake ? "Tự nhận đơn: bật. Làm xong sẽ được gán đơn mới" : "Rảnh tay: các bé nhận hết, chạm vào khách để tự làm");
+}
+
+export function toggleSvc() {
+  S.svcOn = !svcOn(); save();
+  if (SH) renderTicket();
+  toast(S.svcOn ? "Nhận dịch vụ: bật. Khách mới có thể xin gói quà / giao hàng (bé phải chơi minigame)" : "Nhận dịch vụ: tắt. Khách mới sẽ không xin gói quà / giao hàng");
 }
 
 export function doServe() {
