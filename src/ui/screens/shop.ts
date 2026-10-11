@@ -72,5 +72,5 @@ export function giftBody() {
 export function shopHTML(tab: ShopTab) {
   if (tab === "pets") return teamHTML(pageHead);
   if (tab === "decor") return decorHTML();
-  return `<div class="scr gift4">${pageHead("Quà tặng")}${giftBody()}</div>`;
+  return `<div class="scr gift4">${pageHead("Quà & thư")}${giftBody()}</div>`;
 }

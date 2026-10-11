@@ -338,7 +338,7 @@ export function rewardModal(c: { daily: number; comp: number }) {
 
 /* ===== Mục tiêu và Quà tặng: hộp thoại trượt từ dưới lên (thay cho trang riêng) ===== */
 export function goalsSheet() { modal(`<h2>Mục tiêu</h2>${goalsBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }
-export function giftSheet() { modal(`<h2>Quà tặng</h2>${giftBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }
+export function giftSheet() { modal(`<h2>Quà & thư</h2>${giftBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }
 
 /* ===== Nâng cấp tiệm: mua bàn, xây lầu, mở rộng ngang =====
    forced = khách đông hơn số bàn: không đóng được, phải chọn một cách nâng cấp (trừ khi không đủ xu cho cách nào) */

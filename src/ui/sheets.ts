@@ -191,7 +191,7 @@ export function moreSheet() {
   modal(`<h2>Menu</h2><p class="sub">Những thứ khác của tiệm</p><div class="more5">
     ${T("Mục tiêu", ic.target(28, 2.2) + nd(left), "#FFD66B", "#F2A41F", 'data-go="/muc-tieu"')}
     ${T("Nhiệm vụ", ic.mission(28, 2.2) + nd(pend), "#9BE0B4", "#35B07A", 'data-go="/thanh-tich"')}
-    ${T("Quà tặng", ic.gift(28, 2.2) + nd(gift ? 1 : 0), "#FF9DB6", "#EE5A83", 'data-go="/cua-hang/qua-tang"')}
+    ${T("Quà & thư", ic.gift(28, 2.2) + nd(gift ? 1 : 0), "#FF9DB6", "#EE5A83", 'data-go="/cua-hang/qua-tang"')}
     ${T("Công thức", ic.book(28, 2.2), "#FFB27A", "#EE7A2E", 'data-act="menu"')}
     ${T("Nguyên liệu", ic.basket(28, 2.2), "#8EE0BC", "#3FB68A", 'data-act="ings"')}
     ${T("Đội ngũ", ic.users(28, 2.2), "#C2B0FA", "#8B6FE6", 'data-go="/cua-hang/thu-cung"')}

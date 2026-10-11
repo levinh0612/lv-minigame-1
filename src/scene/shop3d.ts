@@ -231,7 +231,7 @@ export function createShop(o: ShopOpts): ShopScene {
   add(gift, RB(.06, .3, .32, .01), T(PKM), 0, .14, 0, { ol: null }); add(gift, RB(.32, .3, .06, .01), T(PKM), 0, .14, 0, { ol: null });
   if (o.giftDot) add(gift, SPH(.07, 10, 8), T("#FF4F7A", { emissive: new THREE.Color("#FF4F7A"), emissiveIntensity: .5 }), .16, .38, .16, { ol: "thin" });
   ups.push(t => { gift.position.y = 1.09 + Math.sin(t * 2.4) * .02; });
-  hotspots.push({ id: "gift", attr: "data-go", value: "/cua-hang/qua-tang", label: "Quà tặng", obj: gift, wall: null, dy: .25 });
+  hotspots.push({ id: "gift", attr: "data-go", value: "/cua-hang/qua-tang", label: "Quà & thư", obj: gift, wall: null, dy: .25 });
 
   /* thú cưng + chủ tiệm */
   const petMeta: [PetKind, number, string][] = [["dog", -2.9, "dog"], ["gold", -1.6, "gold"], ["white", -.3, "white"]];
