@@ -554,7 +554,7 @@ function nextService() {
     runService(q.c, q.price, (fee, ok, complaint) => {
       svcBusy = false;
       if (SH === q.sh) {
-        applyService(q.sh, fee, ok); refreshCoins();
+        applyService(q.sh, fee, ok, q.c.svc !== "gift"); refreshCoins();
         if (ok) { sfx("coin"); toast(`${svcLabel(q.c.svc!)} xuất sắc! +${fmtN(fee)} xu thưởng`); }
         else { sfx("wrong"); toast(`${q.c.who} phàn nàn: "${complaint}" · mất thưởng`); }
         if (svcQueue.length) nextService(); else resume();

@@ -369,8 +369,8 @@ export const goalProgress = (sh: Shift, g: ShiftGoal) => g.id === "serve" ? sh.s
 export const goalDone = (sh: Shift, g: ShiftGoal) => g.id === "calm" ? sh.left === 0 && sh.served > 0 : goalProgress(sh, g) >= g.n;
 
 /* Kết quả minigame gói quà / giao hàng: cộng xu thưởng, hoặc khách phàn nàn (mất thưởng, tính khách giận) */
-export function applyService(sh: Shift, fee: number, ok: boolean) {
-  if (ok && fee > 0) { earn("svc", fee); sh.svcFee += fee; sh.svcDone++; }
+export function applyService(sh: Shift, fee: number, ok: boolean, ship = false) {
+  if (ok && fee > 0) { earn("svc", fee); sh.svcFee += fee; sh.svcDone++; if (ship) S.shipAt = Date.now(); }   // shipAt: lần giao hàng thành công gần nhất, để cảnh ngoài tiệm cho xe tới dừng trước cửa
   else { sh.svcFail++; S.daily.angry++; breakCombo(sh); }
   save();
 }
@@ -379,7 +379,7 @@ export function applyService(sh: Shift, fee: number, ok: boolean) {
 export function autoService(sh: Shift, c: Customer, price: number, id: StaffId): { ok: boolean; fee: number; msg: string } | null {
   if (!c.svc) return null;
   const r = staffService(id, c.svc, price, c.addr?.km ?? 1); if (!r) return null;
-  applyService(sh, r.fee, r.ok);
+  applyService(sh, r.fee, r.ok, c.svc !== "gift");
   const what = c.svc === "both" ? "gói và giao" : SKILL_NAME[c.svc].toLowerCase();
   const bad = pick(c.svc === "ship" ? SHIP_COMPLAINTS : GIFT_COMPLAINTS);
   return { ok: r.ok, fee: r.fee, msg: r.ok ? `đã ${what} giúp bạn! +${r.fee} xu thưởng` : `${what} chưa khéo, ${c.who} phàn nàn: "${bad}"` };

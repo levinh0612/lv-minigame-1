@@ -26,6 +26,7 @@ export interface ShopOpts {
   menuCount: number;
   shopName: string;                        // tên tiệm trên biển hiệu
   staff?: { mgr?: StaffSlot; pet?: StaffSlot }[];   // quản lý và linh vật gacha của từng tầng (theo thứ tự tầng): đứng cạnh chủ tiệm ở tầng đó
+  shipAt?: number;                         // lúc giao hàng thành công gần nhất (ms): còn mới thì xe giao bánh tới dừng trước cửa khi xem ngoài tiệm
   hl?: string;                             // nhóm đồ đang được chọn ở màn trang trí: làm nổi bật
 }
 export interface Hotspot { id: string; attr: string; value: string; label: string; obj: THREE.Object3D; wall: number | null; dy: number }
@@ -37,6 +38,7 @@ export interface ShopScene {
   update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; setFloor(f: number): void; floor(): number; floors: number; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
+let seenShip = 0;   // đơn giao đã cho xe tới rồi (nhớ giữa các lần dựng lại cảnh)
 let renderer: THREE.WebGLRenderer | null = null, quality = 0;   // quality: mức giảm chất lượng khi máy chậm (0 = đầy đủ), nhớ giữa các cảnh
 import { webglOK } from "./webgl";
 export { webglOK };
@@ -480,7 +482,7 @@ export function createShop(o: ShopOpts): ShopScene {
     const walk = add(outside, new THREE.PlaneGeometry(16 + (W - W0), 8.6), T("#fff", { map: tex(64, 64, (g, w, h) => { g.fillStyle = "#EAE5DD"; g.fillRect(0, 0, w, h); g.strokeStyle = "#D8D1C6"; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }, [16, 8]) }), 0, -.34, D / 2 + 1.4, { cast: false, ol: null }); walk.rotation.x = -Math.PI / 2;
     const rd = add(outside, new THREE.PlaneGeometry(70, 3.4), T("#7E8088"), 0, -.335, road.z, { cast: false, ol: null }); rd.rotation.x = -Math.PI / 2;
     for (let i = -6; i <= 6; i++) { const dsh = add(outside, new THREE.PlaneGeometry(.9, .14), T("#FFF1A8"), i * 2.2, -.33, road.z, { cast: false, ol: null }); dsh.rotation.x = -Math.PI / 2; }
-    traffic = buildTraffic(outside, road.z, PK);
+    traffic = buildTraffic(outside, road.z, PK, DOOR_X); callDelivery();
     // các lầu trên (nhìn từ ngoài): khối tường có dải cửa sổ
     for (let f = 1; f < floors; f++) {
       add(outside, RB(W + .1, FH - .1, D + .1, .04), T(R.wall === "mint" ? "#DDF3E8" : "#FFD9E3"), CX, f * FH + HH / 2 - .05, 0, { ol: "mid" });
@@ -528,6 +530,8 @@ export function createShop(o: ShopOpts): ShopScene {
     setHour(skyState.h);                                // áp lại giờ hiện tại cho kính, đèn mới dựng
   }
   let exterior = false;
+  function callDelivery() { if (new URLSearchParams(location.search).get("ship") === "1") seenShip = 0, o.shipAt = Date.now();   // ?ship=1: thử xe giao hàng
+    if (traffic && o.shipAt && o.shipAt > seenShip && Date.now() - o.shipAt < 20 * 60000) { seenShip = o.shipAt; traffic.callVan(); } }
 
   /* ---------- ánh sáng + giờ ---------- */
   const hemi = new THREE.HemisphereLight("#fff2e0", "#c9a37a", .9); scene.add(hemi);
@@ -702,7 +706,7 @@ export function createShop(o: ShopOpts): ShopScene {
     project(hs) { if (curFloor) return { x: 0, y: 0, show: false }; hs.obj.getWorldPosition(v); v.y += hs.dy; v.project(cam); const wl = hs.wall === null ? null : walls[hs.wall]; const show = wl ? (wl.nx * Math.sin(az) + wl.nz * Math.cos(az)) < .45 : true; const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return { x, y, show: show && !exterior && x > 8 && x < w - 8 && y > 8 && y < h - 8 }; },
     tags() { if (!exterior || !traffic) return []; return traffic.active().flatMap((c, i) => { v.set(c.x, 1.25, c.g.position.z); outside.localToWorld(v); v.project(cam); const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return x > 20 && x < w - 20 && y > 20 && y < h - 20 ? [{ id: i, text: c.label, x, y }] : []; }); },
     setInsets(top, bottom) { insTop = top; insBot = bottom; },
-    setExterior(on) { if (on) buildOutside(); exterior = on; outside.visible = on; zoomT = on ? .78 : 1; panT = 0; el = (on ? 30 : 38) * Math.PI / 180; },
+    setExterior(on) { if (on) { buildOutside(); callDelivery(); } exterior = on; outside.visible = on; zoomT = on ? .78 : 1; panT = 0; el = (on ? 30 : 38) * Math.PI / 180; },
     isExterior() { return exterior; },
     floors, floor: () => curFloor,
     setFloor(f) {
