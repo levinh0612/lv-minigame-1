@@ -17,7 +17,7 @@ let live: Live | null = null, kept: Live | null = null, token = 0;
 /** vùng chứa cảnh: bên trong là cảnh 2D cũ làm dự phòng */
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
-  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"${o.ext ? ' data-ext="1"' : ""}` : "", fullAttr = full ? ' data-full="1"' : "";
+  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"${o.ext ? ' data-ext="1"' : ""}${o.edit ? ' data-edit="1"' : ""}` : "", fullAttr = full ? ' data-full="1"' : "";
   const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-tables="${o.tables ?? "1,1,1"}" data-wide="${o.wide ?? 0}" data-floors="${o.floors ?? 1}"${o.user ? ` data-user="${o.user}"` : ""} data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
@@ -57,7 +57,7 @@ function optsOf(el: HTMLElement): ShopOpts {
   };
 }
 /** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
-const baseOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.ext, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
+const baseOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.ext, el.dataset.edit, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
@@ -114,7 +114,7 @@ export async function mountRooms() {
     if (box.dataset.ext === "1") scene.setExterior(true);      // nhóm mặt tiền: xem thử ở cảnh ngoài tiệm
     box.classList.add("live"); box.innerHTML = "";
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
-    const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
+    const edit = box.dataset.edit === "1", btns = (el0hs(box) ? scene.hotspots.filter(h => !h.id.startsWith("dec-")) : edit ? scene.hotspots.filter(h => h.id.startsWith("dec-")) : []).map(h => button(layer, h, scene));   // màn chính: nút chạm thường; màn Trang trí: nút chọn đồ trang trí
     box.insertAdjacentHTML("beforeend", `<div class="rot3d"><button data-rot="-1" aria-label="Xoay sang trái">${ICON.left}</button><button data-rot="1" aria-label="Xoay sang phải">${ICON.right}</button>${scene.floors > 1 ? `<div class="floor3d" role="group" aria-label="Chọn tầng"><small>TẦNG</small>${Array.from({ length: scene.floors }, (_, i) => scene.floors - 1 - i).map(f => `<button data-fl="${f}" class="${f === scene.floor() ? "on" : ""}" aria-label="Tầng ${f + 1}">T${f + 1}</button>`).join("")}</div>` : ""}</div>`);
     box.insertAdjacentHTML("beforeend", `<div class="zoom3d"><button data-zoom="1.3" aria-label="Phóng to">${ICON.plus}</button><button data-zoom="0.77" aria-label="Thu nhỏ">${ICON.minus}</button><button data-view aria-label="Xem ngoài tiệm" class="vw">${ICON.shop}</button>${box.dataset.full === "1" && !box.dataset.user ? `<button data-act="venue" aria-label="Nâng cấp tiệm" class="vw up">${ICON.up}</button>` : ""}</div>`);
     box.querySelector<HTMLElement>("[data-view]")!.addEventListener("click", e => { e.stopPropagation(); const b = e.currentTarget as HTMLElement, on = !scene.isExterior(); scene.setExterior(on); b.innerHTML = on ? ICON.room : ICON.shop; b.setAttribute("aria-label", on ? "Vào trong tiệm" : "Xem ngoài tiệm"); });

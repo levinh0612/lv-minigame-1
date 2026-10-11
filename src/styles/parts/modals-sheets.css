@@ -160,6 +160,7 @@ button.cm{position:relative}
 .room3d canvas{display:block;width:100%;height:100%;touch-action:pan-y}
 .hs-layer{position:absolute;inset:0;pointer-events:none}
 .hs{position:absolute;left:0;top:0;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:transparent;pointer-events:auto;-webkit-tap-highlight-color:transparent}
+.hs[data-ddec]::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;border:3px solid var(--pink);box-shadow:0 2px 6px rgba(0,0,0,.2);animation:ddp 1.6s ease-in-out infinite}@keyframes ddp{50%{transform:scale(1.25)}}@media (prefers-reduced-motion:reduce){.hs[data-ddec]::after{animation:none}}
 .veh-tag{position:absolute;left:0;top:0;margin:-34px 0 0;padding:2px 8px;border-radius:99px;background:#fff;color:var(--pink-d);font:800 11px/1.3 var(--body);white-space:nowrap;box-shadow:0 2px 0 var(--k-f0d2da);translate:-50% 0;pointer-events:none}
 .veh-tag[hidden]{display:none}
 .rot3d{position:absolute;left:10px;bottom:10px;display:flex;gap:6px}

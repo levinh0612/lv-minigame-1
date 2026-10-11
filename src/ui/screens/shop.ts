@@ -17,6 +17,13 @@ let dcat = 0, trial: { k: RoomKey; v: string } | null = null;
 export const setDecorCat = (i: number) => { dcat = i; trial = null; };
 export function tryDecor(k: RoomKey, v: string) { trial = S.room[k] === v ? null : { k, v }; }
 export const cancelDecor = () => { trial = null; };
+/** chạm đồ trong cảnh: chuyển sang nhóm đó để đổi kiểu hoặc cất */
+export function pickDecorCat(k: string) { const i = ROOM_CATS.findIndex(c => c.k === k); if (i >= 0) setDecorCat(i); }
+/** cất đồ đang dùng của nhóm đang chọn về kiểu mặc định (đồ đã mua vẫn còn, dùng lại miễn phí) */
+export function stashDecor(): string {
+  const C = ROOM_CATS[dcat], it = roomItem(C.k, S.room[C.k]); if (isDefault(C.k, S.room[C.k])) return "";
+  S.room[C.k] = C.items[0].v; trial = null; save(); return `Đã cất ${it.n}, dùng lại lúc nào cũng được`;
+}
 /* mua (nếu chưa có) và dùng món đang thử; trả về thông báo hoặc "" nếu không làm gì */
 export function applyDecor(): string {
   if (!trial) return "";
@@ -48,14 +55,14 @@ export function decorHTML() {
   const fx = trIt ? fxText(trIt) : "", diff = tr && trIt ? fxDiff(roomItem(tr.k, S.room[tr.k]), trIt) : "";
   return `<div class="scr decor4">
     ${pageHead("Trang trí tiệm", "")}
-    <p class="dsub">Đã có ${decorCount()} món · hiện ở màn chính</p>
-    <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
+    <p class="dsub">Đã có ${decorCount()} món · chạm chấm hồng trên đồ để chỉnh</p>
+    <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, edit: true, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
     ${tr && S.room[tr.k] !== tr.v ? `<p class="dsub dd">So với đang dùng: ${diff ? esc(diff) : "chỉ số không đổi"}</p>` : ""}
     ${(sl => sl ? `<div class="dsets">${sl}</div>` : "")(setLine(room))}
     <div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
     <div class="ditems">${items}</div>
-    <div class="dfoot"><button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>${act}</div>
+    <div class="dfoot">${!tr && !isDefault(C.k, S.room[C.k]) ? `<button class="b3 w" data-act="dstash">Cất đồ này</button>` : `<button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>`}${act}</div>
   </div>`;
 }
 

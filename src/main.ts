@@ -37,7 +37,7 @@ import { progressAct } from "./ui/screens/progress";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
-import { applyDecor, cancelDecor, setDecorCat, tryDecor } from "./ui/screens/shop";
+import { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, tryDecor } from "./ui/screens/shop";
 import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
 
 initTeam();
@@ -107,8 +107,10 @@ document.addEventListener("click", e => {
     case "tickall": return tickAll();
     case "refill": return doRefill();
     case "dcancel": cancelDecor(); return render();
+    case "dstash": { const m = stashDecor(); if (m) { sfx("tap"); toast(m); } return render(); }
     case "dbuy": { const m = applyDecor(); if (m) { sfx("level"); toast(m); } return render(); }
   }
+  if (d.ddec) { pickDecorCat(d.ddec); sfx("tap"); return render(); }
   if (d.dcat) { setDecorCat(+d.dcat); sfx("tap"); return render(); }
   if (d.dtry) { const [k, v] = d.dtry.split(":"); tryDecor(k as RoomKey, v); sfx("tap"); return render(); }
   if (d.ingBuy) {
