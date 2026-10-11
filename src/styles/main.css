@@ -15,3 +15,4 @@
 @import "./parts/ui-v5.css" layer(legacy);
 @import "./parts/icons.css" layer(legacy);
 @import "./parts/minigame.css" layer(legacy);
+@import "./parts/hanzi.css" layer(legacy);

@@ -39,6 +39,7 @@ export interface State {
   food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean; svcOn?: boolean; shipAt?: number;   // svcOn: nhận dịch vụ gói/giao (mặc định bật; tắt thì khách mới không xin)
   pins?: string[];                // món ruột ghim ở màn Chuẩn bị (tối đa MAX_PINS): khách gọi các món này nhiều hơn để dễ tự nhớ công thức
   gacha: GachaState;
+  zh?: { xp: number; best: number; wrong: Record<string, number>; voice: boolean };   // game học chữ Hán: điểm danh hiệu, số bóng trúng nhiều nhất một ván, số lần sai của từng chữ, bật giọng đọc
   mg?: { gift: number; ship: number };   // điểm kinh nghiệm minigame gói quà / giao hàng (hạng D → SSS)
   mouse?: { king: number; last: number };   // king: số lần diệt chuột kịp trong 10 giây (hạng Vua diệt chuột); last: ca gần nhất có chuột
   venue: { tbl: number[]; floors: number; wide: number; tables?: number };   // cấp từng bàn ([] = chưa đặt: người chơi cũ được tặng theo độ nổi tiếng), số lầu, số lần mở rộng ngang; tables = số ghế của bản 2.52

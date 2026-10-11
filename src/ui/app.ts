@@ -16,6 +16,7 @@ import { progressHTML } from "./screens/progress";
 import { prepHTML } from "./screens/prep";
 import { visitHTML } from "./screens/visit";
 import { gachaHTML } from "./screens/gacha";
+import { hanziHTML, mountHanziScreen } from "./screens/hanzi";
 import { SH, renderPlay } from "./screens/play";
 import { animateResult, hasResult, resultHTML } from "./screens/result";
 import { roadmapHTML } from "./screens/roadmap";
@@ -52,6 +53,7 @@ export function render(keepModal?: boolean) {
     case "roadmap": $("#app")!.innerHTML = roadmapHTML(); break;
     case "shop": $("#app")!.innerHTML = shopHTML(r.tab); break;
     case "gacha": $("#app")!.innerHTML = gachaHTML(); break;
+    case "hanzi": $("#app")!.innerHTML = hanziHTML(); mountHanziScreen(); break;
     case "visit": $("#app")!.innerHTML = visitHTML(r.user); break;
     case "rank": $("#app")!.innerHTML = homeHTML(); setTimeout(rankSheet, 0); break;   // link cũ: màn chính + hộp thoại
   }

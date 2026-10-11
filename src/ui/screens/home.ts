@@ -4,6 +4,7 @@ import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { fx, giftReady, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
 import { S, meLook } from "../../engine/state";
 import { fmtN } from "../../engine/util";
+import { hanziTitle } from "../../engine/hanzi";
 import { mouseTitle } from "../../engine/mouse";
 import { coinPill, esc, shopStatsHTML } from "../dom";
 import { ic } from "../icons";
@@ -69,6 +70,7 @@ export function homeHTML() {
     </div>
     <div class="h5-bottom">
       ${card}
+      <button class="h5-zh" data-go="/hoc-chu" aria-label="Học chữ Hán, danh hiệu ${esc(hanziTitle())}"><b>字</b><span>Học chữ Hán<small>${esc(hanziTitle())}</small></span></button>
       <div class="h5-row">
         ${te.length ? "" : `<button class="h5-mail" data-act="letter" aria-label="${ln ? "Thư hôm nay đã đến, chạm để mở" : "Đọc lại thư hôm nay"}">${ENV}${ln ? `<i class="dot"></i>` : ""}</button>`}
         <button class="b3 h5-open" data-go="/chuan-bi"><span>${ic.store(26, 2.4)}Mở tiệm</span><small>Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></button>

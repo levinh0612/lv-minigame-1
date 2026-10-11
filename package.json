@@ -1,7 +1,7 @@
 {
   "name": "tiem-banh-matcha",
   "private": true,
-  "version": "3.58.0",
+  "version": "3.59.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,13 +12,15 @@
     "capture": "npm run build && node scripts/capture.mjs",
     "storybook": "vite --open /storybook.html",
     "db:init": "node --env-file=.env.local scripts/db-init.mjs",
-    "themes": "node scripts/gen-themes.mjs"
+    "themes": "node scripts/gen-themes.mjs",
+    "hanzi:data": "node scripts/gen-hanzi-data.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.3",
     "@types/three": "^0.186.0",
     "@types/web-push": "^3.6.4",
+    "hanzi-writer-data": "^2.0.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
@@ -27,6 +29,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "hanzi-writer": "^3.7.3",
     "lucide": "^1.52.0",
     "three": "^0.186.1",
     "web-push": "^3.6.7"

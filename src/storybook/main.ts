@@ -53,6 +53,9 @@ import { fitAllQueues } from "../ui/screens/queue-fit";
 import { ROOM_CATS } from "../content/room";
 import { mountGift } from "../ui/minigames/gift";
 import { mountShip } from "../ui/minigames/ship";
+import { mountHanzi } from "../ui/minigames/hanzi";
+import { mountHanziWrite } from "../ui/minigames/hanziwrite";
+import { hanziHTML, mountHanziScreen } from "../ui/screens/hanzi";
 import { RIBBONS, ADDRESSES } from "../content/minigames";
 
 setPersist(false);   // không bao giờ ghi vào tiến trình thật
@@ -366,6 +369,17 @@ const STORIES: Story[] = [
     desc: k === "gift" ? "3 bước: đóng hộp, chọn ruy băng, cố định hộp. Có nút bỏ qua (mất thưởng)." : "3 làn, 3 mạng, né chướng ngại. Chạm nửa trái/phải, vuốt hoặc dùng mũi tên.",
     html: () => `<div class="sbmg" data-mg="${k}" data-tier="${tier}"></div>` })),
 
+  ...([[0, "D"], [3, "A"], [6, "SSS"]] as const).map(([tier, nm]) => ({
+    id: `mg-hanzi-${nm.toLowerCase()}`, sec: "minigames", kind: "comp" as const, title: "Bóng bay thanh điệu · bậc " + nm,
+    desc: "Bóng chở chữ HSK 1 rơi xuống; vẽ thanh điệu (ngang, lên, xuống rồi lên, xuống, chạm) để làm nổ. Bậc thấp có bảng gợi ý nét; từ bậc A có boss từ ghép cuối ván (vẽ lần lượt 2 thanh).",
+    html: () => `<div class="sbmg" data-mg="hanzi" data-tier="${tier}"></div>` })),
+  ...([[0, "D"], [4, "S"]] as const).map(([tier, nm]) => ({
+    id: `mg-hanziwrite-${nm.toLowerCase()}`, sec: "minigames", kind: "comp" as const, title: "Luyện viết chữ · bậc " + nm,
+    desc: "Viết lại chữ Hán từng nét, đúng thứ tự (Hanzi Writer chấm). Bậc thấp có khung mờ và chạy mẫu nét trước; có nút Xem mẫu và Bỏ qua.",
+    html: () => `<div class="sbmg" data-mg="hanziwrite" data-tier="${tier}"></div>` })),
+  { id: "hanzi", sec: "screens", title: "Học chữ Hán", desc: "Danh hiệu, tiến độ, chữ cần ôn và nút chơi; ván chơi nằm trong cùng trang", kind: "screen", long: true,
+    html: () => { lvState(5); return hanziHTML(); } },
+
   /* ---------- Trang trí ---------- */
   { id: "c-room", sec: "decor", title: "Cảnh tiệm với đủ đồ", desc: "Tường kem, sàn gỗ, quầy matcha, rèm caro, dây đèn sao, đồng hồ mèo, monstera, thảm dâu", kind: "comp",
     html: () => { lvState(9); return `<div class="board w390" style="padding:20px 16px">${roomHTML({ wall: "cream", floor: "wood", counter: "mint", curtain: "2", lamp: "2", wallItem: "2", plant: "2", rug: "2", sign: "0", awning: "0", flower: "0" }, { recipes: 9, giftDot: true })}</div>`; } },
@@ -380,11 +394,14 @@ if (new URLSearchParams(location.search).has("force")) { Object.defineProperty(d
 const q = new URLSearchParams(location.search), one = q.get("story"), root = document.getElementById("sb")!;
 applyTheme(q.get("theme") || "pink");   // ?theme=blue|green|purple|orange|slate để xem từng theme
 function hydrateMinigames() {
+  if (document.getElementById("zhBody")) mountHanziScreen();
   document.querySelectorAll<HTMLElement>("[data-mg]").forEach((h, i) => {
     const tier = Number(h.dataset.tier), ribbon = RIBBONS[i % RIBBONS.length]!, addr = ADDRESSES[(i * 5) % ADDRESSES.length]!;
     const again = () => {
       (h as HTMLElement & { _mg?: () => void })._mg?.(); h.innerHTML = "";
-      if (h.dataset.mg === "gift") mountGift(h, { tier, price: 100, ribbon, onDone: again, onSkip: again });
+      if (h.dataset.mg === "hanziwrite") mountHanziWrite(h, { tier, wrong: {}, voice: false, onDone: again, onExit: again });
+      else if (h.dataset.mg === "hanzi") mountHanzi(h, { tier, wrong: {}, voice: false, onDone: again, onExit: again });
+      else if (h.dataset.mg === "gift") mountGift(h, { tier, price: 100, ribbon, onDone: again, onSkip: again });
       else mountShip(h, { tier, price: 100, addr, onDone: again, onSkip: again });
     };
     again();
