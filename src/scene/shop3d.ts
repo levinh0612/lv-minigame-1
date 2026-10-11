@@ -34,7 +34,7 @@ export interface ShopScene {
   dom: HTMLCanvasElement; hotspots: Hotspot[];
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean }; tags(): { id: number; text: string; x: number; y: number }[];
-  phases(): string[]; breakdown(): Record<string, number>; stats(): { sky: string; upMs: number; drawMs: number; calls: number; tris: number; q: number };
+  phases(): string[]; breakdown(): Record<string, number>; stats(): { sky: string; upMs: number; drawMs: number; calls: number; tris: number; q: number; fps: number };
   update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; setFloor(f: number): void; floor(): number; floors: number; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
@@ -662,7 +662,7 @@ export function createShop(o: ShopOpts): ShopScene {
   function resize(ww: number, hh: number) { w = ww; h = hh; r.setSize(ww, hh, false); if (Math.abs(ww / hh - skyAsp) > .01) { skyAsp = ww / hh; drawSky(); } const a = ww / hh, hw = Math.max(FR * a, FR * 1.06), hv = hw / a;   // khung dọc (điện thoại): giữ vừa bề ngang căn phòng, thừa chiều dọc cho lớp phủ giao diện
     cam.left = -hw; cam.right = hw; cam.top = hv; cam.bottom = -hv; cam.updateProjectionMatrix(); }
   const pulse = new Map<string, number>();
-  let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0, upMs = 0, drawMs = 0;
+  let prevFrame = 0, avgGap = 33, adaptN = 0, shadowTick = 0, upMs = 0, drawMs = 0, fpsN = 0, fpsT = 0, fps = 0;
   /** máy chậm: hạ độ phân giải để giữ mượt */
   const applyQuality = () => { r.setPixelRatio(quality >= 3 ? .8 : quality >= 2 ? 1 : Math.min(devicePixelRatio, 1.5)); resize(w, h); layout(); r.render(scene, cam); };   // vẽ ngay sau khi đổi cỡ để canvas không trắng chớp
   function frame(now: number) {
@@ -671,6 +671,7 @@ export function createShop(o: ShopOpts): ShopScene {
     const gap = prevFrame ? Math.min(now - prevFrame, 250) : 33; prevFrame = now; avgGap = avgGap * .92 + gap * .08;
     if (++adaptN % 45 === 0 && avgGap > 50 && quality < 3) { quality++; applyQuality(); avgGap = 33; }   // trung bình dưới 20 hình/giây: giảm một nấc
     last = now; const t = now / 1000; const u0 = performance.now();
+    if (!fpsT) fpsT = now; fpsN++; if (now - fpsT >= 1000) { fps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; }   // số hình thật vẽ được mỗi giây (tối đa ~30)
     ups.forEach(f => f(t));
     petObjs.forEach((p, id) => { const k = pulse.get(id) ?? -9, dt = t - k; p.g.scale.setScalar(PET_S * (dt < .5 ? 1 + Math.sin(dt / .5 * Math.PI) * .12 : 1)); p.g.position.y = .6 + (dt < .5 ? Math.sin(dt / .5 * Math.PI) * .12 : 0); });
     bulbsStr.forEach((b, i) => (b.scale.setScalar(1 + Math.sin(t * 3 + i) * .12)));
@@ -718,7 +719,7 @@ export function createShop(o: ShopOpts): ShopScene {
         if ((m as THREE.SkinnedMesh).isSkinnedMesh) { o.skinnedMeshes!++; o.skinnedTris! += t; } if (m.parent && (m.parent as THREE.Mesh).isMesh) { o.outlineMeshes!++; o.outlineTris! += t; } if (m.castShadow) { o.castMeshes!++; o.castTris! += t; } });
       return o;
     },
-    stats: () => ({ sky: skyCv.width + "x" + skyCv.height + " asp " + skyAsp.toFixed(2), upMs: +upMs.toFixed(2), drawMs: +drawMs.toFixed(2), calls: r.info.render.calls, tris: r.info.render.triangles, q: quality }),
+    stats: () => ({ sky: skyCv.width + "x" + skyCv.height + " asp " + skyAsp.toFixed(2), upMs: +upMs.toFixed(2), drawMs: +drawMs.toFixed(2), calls: r.info.render.calls, tris: r.info.render.triangles, q: quality, fps }),
     phases: () => slots.map(sl => `${sl.phase}@${sl.actor.group.position.x.toFixed(1)},${sl.actor.group.position.z.toFixed(1)}${sl.actor.group.visible ? "" : " hidden"}`),
     dom, hotspots, resize,
     rotate(dir) { azT += dir * Math.PI / 2; },

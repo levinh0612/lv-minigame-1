@@ -349,3 +349,4 @@ button.cm{position:relative}
 .vnote{margin:8px 16px 4px;text-align:center;font:700 12px var(--body);color:var(--soft2)}
 .ditem .tg.gacha{background:linear-gradient(90deg,#E1E5FF,#FFE3F2);color:#6A4FD6}
 .rticket{margin:8px 0 0;padding:8px 12px;border-radius:14px;background:#EEF0FF;color:#4A55C9;font:800 13px var(--body);text-align:center}
+#fps-hud{position:fixed;left:6px;top:6px;z-index:99999;max-width:calc(100vw - 12px);padding:3px 8px;border-radius:8px;background:rgba(20,20,30,.78);color:#9dffb0;font:700 11px/1.4 ui-monospace,Menlo,monospace;pointer-events:none}
