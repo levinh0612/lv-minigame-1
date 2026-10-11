@@ -625,9 +625,11 @@ export function createShop(o: ShopOpts): ShopScene {
   setHour(hq !== null ? +hq : new Date().getHours() + new Date().getMinutes() / 60);
 
   /* ---------- camera xoay 4 góc ---------- */
+  const EXT_Z = 2;   // xem ngoài tiệm: dời khung nhìn về phía mặt đường (đơn vị thế giới)
   let insTop = 0, insBot = 0; const FR = 5.2 + (W - W0) * .5 + TOP * .4; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
   function layout() {
-    const r2 = 26; cam.position.set(CX + Math.sin(az) * Math.cos(el) * r2, Math.sin(el) * r2 + .8, Math.cos(az) * Math.cos(el) * r2); cam.lookAt(CX, 1.0 + pan + (exterior ? TOP / 2 : 0), 0);
+    const r2 = 26, ek = exterior ? EXT_Z * Math.max(0, Math.cos(az)) : 0, ex = CX + Math.sin(az) * ek, ez = Math.cos(az) * ek;   // xem ngoài: dời cả camera lẫn điểm nhìn về phía mặt đường để đường và xe nằm giữa màn hình, không bị thanh điều hướng che
+    cam.position.set(ex + Math.sin(az) * Math.cos(el) * r2, Math.sin(el) * r2 + .8, ez + Math.cos(az) * Math.cos(el) * r2); cam.lookAt(ex, 1.0 + pan + (exterior ? TOP / 2 : 0), ez);
     cam.position.y += pan; cam.zoom = zoom;
     if (insTop || insBot) cam.setViewOffset(w, h, 0, (insBot - insTop) / 2, w, h); else cam.clearViewOffset();      // đẩy căn phòng vào giữa vùng không bị lớp phủ che
     cam.updateProjectionMatrix();
