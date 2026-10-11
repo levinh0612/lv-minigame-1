@@ -71,6 +71,9 @@ function run(l: Live) {
     l.raf = requestAnimationFrame(loop);
     if (now - last < 33 || document.hidden) return; last = now;
     l.btns.forEach(([h, b]) => { const p = l.scene.project(h); b.hidden = !p.show; b.style.transform = `translate(${p.x}px,${p.y}px)`; });
+    const tg = l.scene.tags(), lay = l.el.querySelector(".hs-layer");   // nhãn nổi trên xe ngoài phố: dùng lại các thẻ đã có, thừa thì ẩn
+    if (lay) { const els = lay.getElementsByClassName("veh-tag"); for (let i = els.length; i < tg.length; i++) lay.insertAdjacentHTML("beforeend", '<span class="veh-tag"></span>');
+      for (let i = 0; i < els.length; i++) { const e = els[i] as HTMLElement, t = tg[i]; e.hidden = !t; if (t) { if (e.textContent !== t.text) e.textContent = t.text; e.style.transform = `translate(${t.x}px,${t.y}px)`; } } }
   };
   l.raf = requestAnimationFrame(loop);
 }
