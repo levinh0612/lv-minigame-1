@@ -20,12 +20,12 @@ export function profileSheet() {
   const genders = () => ([["g1", "Nữ"], ["b1", "Nam"], ...FIXED_CHARS.filter(([id]) => id === d.me.sprite)] as [string, string][]).map(([id, n]) => `<button type="button" class="pf-gd${id === d.me.sprite || (id.length === 2 && !isFixedChar(id) && id[0] === d.me.sprite[0] && !isFixedChar(d.me.sprite)) ? " on" : ""}" data-pf="gender" data-v="${id}">${portraitHTML(id, { ...d.me, style: d.me.style }, 46, guestSVG({ ...look(), sprite: id, gender: id[0] === "b" || id[0] === "m" ? "boy" : "girl", ledge: false, mood: "happy" }, 46))}<b>${n}</b></button>`).join("");
   modal(`<h2>Hồ sơ của bạn</h2>
     <form id="pfForm"${anime() ? ' class="pf-anime"' : ""}>
-      <div class="pf-prev" id="pfPrev">${portraitHTML(d.me.sprite, d.me, 150, fb(150), "", true)}</div>
-      <label class="field">Tên tiệm (hiện ở màn chính)<input id="pfShop" value="${esc(d.shop)}" maxlength="16" placeholder="${esc(account() || "Matcha")}"></label>
-      <div class="pf-h">Nhân vật</div>
-      <div class="pf-gds" id="pfGenders">${genders()}</div>
-      <div class="pf-h">Màu chính <small>· đổi màu cả giao diện</small></div>
-      <div class="pf-sw5s" id="pfThemes">${THEMES.map(t => `<button type="button" class="pf-sw5${t.id === d.theme ? " on" : ""}" data-pf="theme" data-v="${t.id}"><i style="background:${t.dot}"></i><span>${t.name}</span></button>`).join("")}</div>
+      <section class="sx-card"><div class="pf-prev" id="pfPrev">${portraitHTML(d.me.sprite, d.me, 150, fb(150), "", true)}</div>
+        <label class="field">Tên tiệm (hiện ở màn chính)<input id="pfShop" value="${esc(d.shop)}" maxlength="16" placeholder="${esc(account() || "Matcha")}"></label></section>
+      <section class="sx-card"><div class="sx-t">🧑 Nhân vật</div>
+      <div class="pf-gds" id="pfGenders">${genders()}</div></section>
+      <section class="sx-card"><div class="sx-t">🎨 Màu chính<small>đổi màu cả giao diện</small></div>
+      <div class="pf-sw5s" id="pfThemes">${THEMES.map(t => `<button type="button" class="pf-sw5${t.id === d.theme ? " on" : ""}" data-pf="theme" data-v="${t.id}"><i style="background:${t.dot}"></i><span>${t.name}</span></button>`).join("")}</div></section>
       <div class="mbtns"><button class="b3" type="submit">Lưu</button></div>
     </form>`, () => applyTheme(S.theme));   // đóng mà chưa lưu thì trả theme cũ
 

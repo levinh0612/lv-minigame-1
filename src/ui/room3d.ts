@@ -60,20 +60,18 @@ function optsOf(el: HTMLElement): ShopOpts {
 const baseOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.ext, el.dataset.edit, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
-/* Bảng đo hình/giây cho cảnh 3D: mở bằng ?fps=1 trên địa chỉ (nhớ lại cho lần sau), tắt bằng ?fps=0 */
-const HUD = (() => { try { const q = new URLSearchParams(location.search).get("fps"); if (q === "1") localStorage.setItem("fps", "1"); else if (q === "0") localStorage.removeItem("fps"); return localStorage.getItem("fps") === "1"; } catch { return false; } })();
-const hud = () => document.getElementById("fps-hud") ?? Object.assign(document.body.appendChild(document.createElement("div")), { id: "fps-hud" });
+/** số đo của cảnh 3D đang chạy (hiện ở Cài đặt); null nếu chưa có cảnh */
+export const liveStats = () => live?.scene.stats() ?? null;
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
 function run(l: Live) {
   const fit = () => { const r = l.el.getBoundingClientRect(); if (r.width) { l.scene.resize(Math.round(r.width), Math.round(r.height)); insets(l.el, l.scene); } };
   l.el.prepend(l.scene.dom); fit(); l.scene.start();
   l.ro.observe(l.el);
   l.timer = window.setInterval(() => l.scene.setHour(new Date().getHours() + new Date().getMinutes() / 60), 60000);
-  let last = 0, hudAt = 0;
+  let last = 0;
   const loop = (now: number) => {
     l.raf = requestAnimationFrame(loop);
     if (now - last < 33 || document.hidden) return; last = now;
-    if (HUD && now - hudAt > 500) { hudAt = now; const s = l.scene.stats(); hud().textContent = `${Math.round(s.fps)} fps · vẽ ${s.drawMs}ms · cập nhật ${s.upMs}ms · ${s.calls} lệnh · ${Math.round(s.tris / 1000)}k tam giác · mức giảm ${s.q}`; }
     l.btns.forEach(([h, b]) => { const p = l.scene.project(h); b.hidden = !p.show; b.style.transform = `translate(${p.x}px,${p.y}px)`; });
     const tg = l.scene.tags(), lay = l.el.querySelector(".hs-layer");   // nhãn nổi trên xe ngoài phố: dùng lại các thẻ đã có, thừa thì ẩn
     if (lay) { const els = lay.getElementsByClassName("veh-tag"); for (let i = els.length; i < tg.length; i++) lay.insertAdjacentHTML("beforeend", '<span class="veh-tag"></span>');

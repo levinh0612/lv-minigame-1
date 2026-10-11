@@ -349,4 +349,23 @@ button.cm{position:relative}
 .vnote{margin:8px 16px 4px;text-align:center;font:700 12px var(--body);color:var(--soft2)}
 .ditem .tg.gacha{background:linear-gradient(90deg,#E1E5FF,#FFE3F2);color:#6A4FD6}
 .rticket{margin:8px 0 0;padding:8px 12px;border-radius:14px;background:#EEF0FF;color:#4A55C9;font:800 13px var(--body);text-align:center}
-#fps-hud{position:fixed;left:6px;top:6px;z-index:99999;max-width:calc(100vw - 12px);padding:3px 8px;border-radius:8px;background:rgba(20,20,30,.78);color:#9dffb0;font:700 11px/1.4 ui-monospace,Menlo,monospace;pointer-events:none}
+
+/* Cài đặt + Hồ sơ: các khối có tiêu đề */
+.sx-card{margin-top:12px;padding:12px 12px 10px;border-radius:20px;background:#fff;box-shadow:0 0 0 2px var(--pink-b);text-align:left}
+.sx-t{display:flex;align-items:center;gap:6px;font:900 14px var(--display);color:var(--ink2);margin-bottom:2px}
+.sx-t small{margin-left:auto;font:700 11px var(--body);color:var(--soft)}
+.sx-card .field{margin-top:6px}
+.sx-card .cloudbtn{margin-top:6px}
+.sx-fps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.sx-fps div{display:flex;flex-direction:column;align-items:center;padding:7px 2px;border-radius:14px;background:var(--bg)}
+.sx-fps b{font:900 17px var(--display);color:var(--ink2)}
+.sx-fps span{font:700 11px var(--body);color:var(--soft)}
+.sx-fps .bad b{color:var(--red)}
+.sx-note{margin:8px 2px 0;font:700 11px/1.45 var(--body);color:var(--soft)}
+.sx-card.sx-danger{box-shadow:0 0 0 2px var(--k-f7bfcd)}
+.sx-card .verrow{margin-top:6px}
+.sx-card .pf-prev{margin-top:4px}
+.sx-card .verrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sx-card .setlinks{margin-top:8px;text-align:left}
+.sx-note a{color:var(--pink-d);font-weight:800}
+.sx-danger #resetBtn{display:block;width:100%}

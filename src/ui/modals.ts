@@ -14,6 +14,7 @@ import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, petSVG, foodSVG, guestSVG } from "./art";
 import { $, closeModal, confirmSpend, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
+import { liveStats } from "./room3d";
 import { CHANGELOG } from "../content/roadmap";
 import { earn } from "../engine/wallet";
 import { LEVELS, applyIncident, incidentCost, tossCoin, type Incident, type Level } from "../engine/incident";
@@ -71,24 +72,51 @@ export function pauseMenu() {
 }
 
 let resetArm = false;
+const fpsCard = () => `<section class="sx-card"><div class="sx-t">📈 Hiệu năng cảnh 3D<small id="fpsQ"></small></div>
+  <div class="sx-fps" id="fpsBox"><div><b>–</b><span>hình/giây</span></div><div><b>–</b><span>ms vẽ</span></div><div><b>–</b><span>lệnh vẽ</span></div></div>
+  <p class="sx-note" id="fpsNote">Số đo cập nhật mỗi nửa giây. Dưới 20 hình/giây mà máy nóng hoặc giật thì tắt “Cảnh tiệm 3D”.</p></section>`;
+function fpsLoop() {
+  const tick = () => {
+    const box = $("#fpsBox"); if (!box) { clearInterval(id); return; }
+    const s = liveStats(), q = $("#fpsQ")!, n = $("#fpsNote")!;
+    if (!s) { n.textContent = S.scene3d ? "Chưa có cảnh 3D đang chạy: đóng cài đặt và vào màn tiệm để đo." : "Cảnh 3D đang tắt."; return; }
+    const v: [string, string][] = [[String(Math.round(s.fps)), "hình/giây"], [String(s.drawMs), "ms vẽ"], [String(s.calls), "lệnh vẽ"]];
+    box.innerHTML = v.map(([a, l], i) => `<div class="${i === 0 && s.fps < 20 ? "bad" : ""}"><b>${a}</b><span>${l}</span></div>`).join("");
+    q.textContent = `${Math.round(s.tris / 1000)}k tam giác · mức giảm ${s.q}`;
+  };
+  const id = window.setInterval(tick, 500); tick();
+}
 export function settings() {
   resetArm = false;
   modal(`<h2>Cài đặt tiệm</h2>
     <form id="setForm">
-      <label class="field">Tên chủ tiệm (tên bạn trong thư và thông báo)<input id="fHer" value="${esc(S.names.her)}" maxlength="20"></label>
-      <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
-      <button type="button" class="b3 w cloudbtn" data-act="profile">🎨 Hồ sơ · nhân vật · tên tiệm · màu giao diện</button>
-      <button type="button" class="b3 w cloudbtn" data-act="music">🎵 Chọn bài · ${esc(songName())}</button>
-      <label class="tg"><input id="fScene" type="checkbox" ${S.scene3d ? "checked" : ""}>Cảnh tiệm 3D (tắt nếu máy bị nóng hoặc giật)</label>
-      <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
-      ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
-      <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
-      ${isAdmin() ? `<button type="button" class="b3 w cloudbtn" data-act="admin">🛠 Quản trị game · tên, khách, thư, thông báo</button>` : ""}
-      <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)} · build ${__BUILD__.slice(6, 8)}/${__BUILD__.slice(4, 6)} ${__BUILD__.slice(8, 10)}:${__BUILD__.slice(10, 12)} UTC</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button></div>
-      <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button></div>
-      <div class="verrow" style="font-size:11px;opacity:.7"><span>Nhân vật nam 3D: “Basemesh_sd_boy” của phurit2014 (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Nữ anime 3D: “cute anime girl” của udream studio (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Nhân vật nữ 3D: “Cute Hiking Girl 3D Character” (<a href="https://www.cgtrader.com/items/7623397" target="_blank" rel="noopener">CGTrader</a>). Xương và chuyển động từ Mixamo.</span></div>
-      <div class="mbtns"><button class="b3" type="submit">Lưu</button><button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red)">Chơi lại từ đầu</button></div>
+      <section class="sx-card"><div class="sx-t">🎨 Hồ sơ</div>
+        <label class="field">Tên chủ tiệm (tên bạn trong thư và thông báo)<input id="fHer" value="${esc(S.names.her)}" maxlength="20"></label>
+        <button type="button" class="b3 w cloudbtn" data-act="profile">Nhân vật · tên tiệm · màu giao diện</button>
+        <button type="button" class="b3 w cloudbtn" data-act="account">👤 Tài khoản · đổi PIN · nhắc giờ</button>
+        ${isAdmin() ? `<button type="button" class="b3 w cloudbtn" data-act="admin">🛠 Quản trị game · tên, khách, thư, thông báo</button>` : ""}
+      </section>
+      <section class="sx-card"><div class="sx-t">🔊 Âm thanh</div>
+        <label class="tg"><input id="fMusic" type="checkbox" ${S.music ? "checked" : ""}>Nhạc nền</label>
+        <button type="button" class="b3 w cloudbtn" data-act="music">🎵 Chọn bài · ${esc(songName())}</button>
+        <label class="tg"><input id="fSound" type="checkbox" ${S.sound ? "checked" : ""}>Hiệu ứng âm thanh</label>
+        ${"vibrate" in navigator ? `<label class="tg"><input id="fVibe" type="checkbox" ${S.vibe ? "checked" : ""}>Rung khi giao bánh</label>` : ""}
+      </section>
+      <section class="sx-card"><div class="sx-t">🖥 Hiển thị</div>
+        <label class="tg"><input id="fScene" type="checkbox" ${S.scene3d ? "checked" : ""}>Cảnh tiệm 3D (tắt nếu máy bị nóng hoặc giật)</label>
+      </section>
+      ${fpsCard()}
+      <section class="sx-card"><div class="sx-t">ℹ️ Thông tin</div>
+        <div class="verrow"><span>Phiên bản ${esc(__APP_VERSION__)} · build ${__BUILD__.slice(6, 8)}/${__BUILD__.slice(4, 6)} ${__BUILD__.slice(8, 10)}:${__BUILD__.slice(10, 12)} UTC</span><button type="button" class="mini pk" data-act="checkver">Kiểm tra bản mới</button></div>
+        <div class="setlinks"><button type="button" class="mini pk" data-act="tutorial">Xem lại hướng dẫn</button></div>
+        <p class="sx-note">Nhân vật nam 3D: “Basemesh_sd_boy” của phurit2014 (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Nữ anime 3D: “cute anime girl” của udream studio (Sketchfab), giấy phép <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Nhân vật nữ 3D: “Cute Hiking Girl 3D Character” (<a href="https://www.cgtrader.com/items/7623397" target="_blank" rel="noopener">CGTrader</a>). Xương và chuyển động từ Mixamo.</p>
+      </section>
+      <section class="sx-card sx-danger"><div class="sx-t">⚠️ Vùng nguy hiểm</div>
+        <button class="b3 w" type="button" id="resetBtn" style="font-size:16px;color:var(--red);margin-top:6px">Chơi lại từ đầu</button>
+      </section>
+      <div class="mbtns"><button class="b3" type="submit">Lưu</button></div>
     </form>`, render);
+  fpsLoop();
   const v = (id: string) => $<HTMLInputElement>(id)!.value.trim();
   $("#setForm")!.addEventListener("submit", e => {
     e.preventDefault();
