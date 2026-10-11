@@ -200,8 +200,8 @@ export function moreSheet() {
     ${T("Xếp hạng", ic.trophy(28, 2.2), "#FFD66B", "#F2A41F", 'data-act="rank"')}
     ${T("Sự kiện", ic.cal(28, 2.2), "#8EE0BC", "#2FA67C", 'data-act="days"')}
     ${T("Thành tích", ic.award(28, 2.2), "#FFB27A", "#E5622E", 'data-go="/thanh-tich"')}
-    ${T("Sưu tập", `<span style="font-size:28px;line-height:1">🏷️</span>`, "#FFC2D6", "#E5608F", 'data-act="collect"')}
-    ${T("Thử thách", `<span style="font-size:28px;line-height:1">🎯</span>${nd(challengeActive() || challengeDone() ? 0 : 1)}`, "#C2B0FA", "#7B5BD6", 'data-act="events"')}
+    ${T("Sưu tập", ic.album(28, 2.2), "#FFC2D6", "#E5608F", 'data-act="collect"')}
+    ${T("Thử thách", ic.medal(28, 2.2) + nd(challengeActive() || challengeDone() ? 0 : 1),  "#C2B0FA", "#7B5BD6", 'data-act="events"')}
   </div>`);
 }
 

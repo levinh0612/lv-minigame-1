@@ -27,8 +27,8 @@ function outfitTab() {
   const list = OUTFITS.map(o => {
     const own = hasOutfit(o.id), by = pets.find(id => wornBy(id)?.id === o.id), buy = "buy" in o.src ? o.src.buy : 0;
     const act = own ? `<div class="outbtns">${pets.map(id => `<button type="button" class="${by === id ? "on" : ""}" data-wear="${id}:${by === id ? "" : o.id}">${esc(petName(id))}</button>`).join("")}</div>`
-      : buy ? `<button type="button" class="b3 sm" data-buyout="${o.id}" ${S.coins < buy ? "disabled" : ""}>Mua ${fmtN(buy)} xu</button>` : `<small class="how">${esc(outfitHow(o))}</small>`;
-    return `<div class="outrow ${own ? "" : "lock"}"><span class="oe">${o.e}</span><div><b>${esc(o.n)}</b>${act}</div></div>`;
+      : buy ? `<button type="button" class="outbuy" data-buyout="${o.id}" ${S.coins < buy ? "disabled" : ""}>Mua ${fmtN(buy)} xu</button>` : `<small class="how">${esc(outfitHow(o))}</small>`;
+    return `<div class="outrow ${own ? "" : "lock"}"><span class="oe">${o.e}</span><div class="ob"><b>${esc(o.n)}</b>${act}</div></div>`;
   }).join("");
   return `${crew}<p class="sub">Chạm tên một bé để mặc đồ. Bấm lại để cởi.</p><div class="outlist">${list}</div>`;
 }

@@ -8,7 +8,7 @@ import {
   DoorOpen, Droplet, Drumstick, Flame, Flower2, Gem, Gift, Handshake, Heart, Hourglass, Image, Layers, Lightbulb, Mail,
   Mars, Medal, Menu, Moon, Music, NotebookPen, Package, Palette, Pause, PawPrint, PartyPopper, Plus, Search, Settings,
   ShoppingBag, ShoppingBasket, Siren, Smile, Sofa, Sparkles, Sprout, Star, Store, Sun, Target, Ticket, TrendingUp, Trophy,
-  TriangleAlert, UserPlus, UserRound, Users, Venus, Wrench, X, Zap, Castle, Cake, PiggyBank, ClockPlus, Award, House, ClipboardCheck
+  TriangleAlert, UserPlus, UserRound, Users, Venus, Wrench, X, Zap, Castle, Cake, PiggyBank, ClockPlus, Award, House, ClipboardCheck, BookHeart
 } from "lucide";
 import type { IconNode } from "lucide";
 
@@ -39,7 +39,7 @@ export const ic = {
   medal: mk(Medal, "gold", true), trend: mk(TrendingUp, "mint"), dice: mk(Dices, "violet", true), image: mk(Image, "sky", true),
   /* đồ, nơi chốn */
   bag: mk(ShoppingBag, "pink", true), building: mk(Building2, "sky", true), castle: mk(Castle, "violet", true), door: mk(DoorOpen, "wood", true),
-  cake: mk(Cake, "pink", true), slice: mk(CakeSlice, "pink", true), meat: mk(Drumstick, "wood", true), pot: mk(CookingPot, "wood", true),
+  album: mk(BookHeart, "pink", true), cake: mk(Cake, "pink", true), slice: mk(CakeSlice, "pink", true), meat: mk(Drumstick, "wood", true), pot: mk(CookingPot, "wood", true),
   coffee: mk(Coffee, "wood", true), sofa: mk(Sofa, "wood", true), box: mk(Package, "wood", true), siren: mk(Siren, "red", true),
   stats: mk(ChartColumn, "violet"), music: mk(Music, "pink"), palette: mk(Palette, "rose", true), wrench: mk(Wrench, "wood"),
   gear: mk(Settings, "violet"), pen: mk(NotebookPen, "violet"), venus: mk(Venus, "pink"), mars: mk(Mars, "sky")

@@ -49,7 +49,7 @@ export function resultHTML(r: Result | null = result) {
   const pctOf = (xp: number, L: number) => Math.max(0, Math.min(100, (xp - xpFor(L)) / (xpFor(L + 1) - xpFor(L)) * 100));
   const from = lv > sh.lv0 ? 0 : pctOf(sh.xp0, sh.lv0), to = pctOf(S.xp, lv), gained = S.xp - sh.xp0;
   const rows = [progRow("⭐", lv > sh.lv0 ? `Lên cấp ${lv}!` : `Cấp ${lv}`, `${Math.round(from)}% → ${Math.round(to)}%`, growBar(from, to, "bg-pink"), `+${fmtN(gained)} XP`)];
-  sh.ups.forEach(u => rows.push(progRow("🎂", esc(u.n), `${"★".repeat(u.star - 1)} → ${"★".repeat(u.star)}`, growBar(0, 100, "bg-gold-d"), "Lên sao")));
+  sh.ups.forEach(u => rows.push(progRow("🎂", esc(u.n), `${u.star - 1}★ → ${u.star}★`, growBar(0, 100, "bg-gold-d"), "Lên sao")));
   S.prog.weekly.missions.forEach(m => {
     const a = sh.wk0[m.key] ?? 0, b = S.prog.weekly.prog[m.key] ?? 0; if (b <= a) return;
     rows.push(progRow("📅", esc(weeklyDef(m.key).text(m.n)), `${fmtN(Math.min(a, m.n))} → ${fmtN(Math.min(b, m.n))}`, growBar(Math.min(100, a / m.n * 100), Math.min(100, b / m.n * 100), "bg-mint-d"), b >= m.n ? "Xong!" : `+${fmtN(b - a)}`));
