@@ -1,4 +1,6 @@
 /* Các bảng trượt lên từ cảnh tiệm ở màn chính: Menu, Tủ bánh (carousel), Ngày kỷ niệm, Ảnh treo tường */
+import { CRAFT_MAX } from "../content/progression";
+import { craftStars } from "../engine/craft";
 import { CFG } from "../content/couple";
 import { CATS, CUSTOM_LV, MAX_CUSTOM, RECIPES, SEASON_LV, customRecipe, seasonalNow, partsOfRecipe, tiersOf } from "../content/game";
 import { GACHA_ITEMS, MASTERY_MAX, RARITY } from "../content/gacha";
@@ -30,25 +32,26 @@ const ingChips = (r: (typeof RECIPES)[number]) => partsOfRecipe(r).map(p => `<sp
 const RAR_C: Record<string, string> = { common: "#8FB4D9", rare: "#7A8CFF", ultra: "#F2B84B" };
 type RSec = "shop" | "season" | "gacha" | "custom";
 interface RItem { sec: RSec; n: string; price: number; lv: number; st: "ok" | "need" | "lock"; html: string }
-const tile = (r: { base: number; cream: number; top: number; up?: [number, number][] }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "") =>
-  `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${tag}</${attr ? "button" : "div"}>`;
+const craftRow = (id: string) => { const st = craftStars(id); return `<span class="cst" title="Tay nghề ${st}/${CRAFT_MAX} sao"><i class="on">${"★".repeat(st)}</i><i>${"★".repeat(CRAFT_MAX - st)}</i></span>`; };
+const tile = (r: { base: number; cream: number; top: number; up?: [number, number][] }, name: string, price: number | null, tag: string, cls: string, extra = "", attr = "", cid = "") =>
+  `<${attr ? "button" : "div"} class="rc5 ${cls}" ${attr}>${extra}${price ? `<span class="pr">${price} xu</span>` : ""}<div class="art">${cakeAnySVG({ base: r.base, cream: r.cream, top: r.top, up: r.up, sweet: 1 }, { size: 78, still: true })}</div><b>${esc(name)}</b>${cid ? craftRow(cid) : ""}${tag}</${attr ? "button" : "div"}>`;
 
 /* mọi công thức (của tiệm, theo mùa, Gacha, tuỳ chỉnh) thành một danh sách phẳng để tìm, lọc, sắp xếp chung */
 function recipeItems(): RItem[] {
   const L = lvl(), f = featured(), se = seasonalNow(), star = (id: string) => id === f.id ? `<em class="rstar">★ nổi bật</em>` : "";
   const shop = RECIPES.map((r): RItem => r.lv > L
     ? { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "lock", html: tile(r, r.n, r.price, `<span class="st soon">Mở ở Lv ${r.lv}</span>`, "dim") }
-    : !recipeReady(r) ? { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "need", html: tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`) }
-    : { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "ok", html: tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", star(r.id)) });
+    : !recipeReady(r) ? { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "need", html: tile(r, r.n, r.price, `<span class="st need">Thiếu nguyên liệu ›</span>`, "", "", `data-act="ings"`, r.id) }
+    : { sec: "shop", n: r.n, price: r.price, lv: r.lv, st: "ok", html: tile(r, r.n, r.price, `<span class="st ok">Sẵn sàng</span>`, r.id === f.id ? "star" : "", star(r.id), "", r.id) });
   const seasonSt = L < SEASON_LV ? "lock" : recipeReady(se) ? "ok" : "need";
   const season: RItem = { sec: "season", n: se.n, price: se.price, lv: SEASON_LV, st: seasonSt, html: tile(se, se.n, se.price,
     seasonSt === "lock" ? `<span class="st soon">Mở ở Lv ${SEASON_LV}</span>` : seasonSt === "ok" ? `<span class="st ok">Chỉ bán tháng ${se.month}</span>` : `<span class="st need">Thiếu nguyên liệu ›</span>`,
-    seasonSt === "lock" ? "dim" : se.id === f.id ? "star" : "", star(se.id), seasonSt === "need" ? `data-act="ings"` : "") };
+    seasonSt === "lock" ? "dim" : se.id === f.id ? "star" : "", star(se.id), seasonSt === "need" ? `data-act="ings"` : "", se.id) };
   const sp = new Map(specialRecipes().map(r => [r.id, r]));
   const gacha = GACHA_ITEMS.filter(i => i.recipe).map((i): RItem => {
     const rar = `<em class="rar" style="background:${RAR_C[i.rarity]}">${RARITY[i.rarity].n}</em>`;
     return hasItem(i.id)
-      ? { sec: "gacha", n: i.n, price: sp.get(i.id)!.price, lv: 0, st: "ok", html: tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", rar) }
+      ? { sec: "gacha", n: i.n, price: sp.get(i.id)!.price, lv: 0, st: "ok", html: tile(i.recipe!, i.n, sp.get(i.id)!.price, `<span class="st ok">Thành thạo ${masteryOf(i.id)}/${MASTERY_MAX}</span>`, "", rar, "", i.id) }
       : { sec: "gacha", n: i.n, price: i.recipe!.price, lv: 0, st: "lock", html: tile(i.recipe!, i.n, i.recipe!.price, `<span class="st gacha">Gacha ›</span>`, "dim", rar, `data-rgacha="${i.id}"`) };
   });
   const custom = S.custom.map((c): RItem => { const r = customRecipe(c), ok = recipeReady(r);
