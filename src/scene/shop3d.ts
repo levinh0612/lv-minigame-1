@@ -82,6 +82,7 @@ const FLOOR: Record<string, () => THREE.Texture> = {
 };
 const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"], candy: ["#FF9FC5", "#FFD1E3"], gold: ["#E9B949", "#F7D675"] };
 
+const FLOWERS: Record<string, string[]> = { "0": ["#FF8FAB", "#FFD66B", "#fff", "#C9B8F0"], "1": ["#FF5C7A", "#FF8FAB", "#FFC0CE"], "2": ["#B79CFF", "#D9CCFF", "#9B7BEF"], "3": ["#FFD66B", "#fff", "#FFB347"], "4": ["#6FB27A", "#8FD18A", "#4FA36A"] };   // màu hoa trong hộp hoa mặt tiền
 const W0 = 8, D = 6, HH = 3.2, PET_S = .92;
 const DOOR_X = 1.3, DOOR_W = 1.5, DOOR_H = 2.35;   // lối cửa chính trên tường Nam
 let blobTex: THREE.CanvasTexture | null = null;
@@ -493,15 +494,21 @@ export function createShop(o: ShopOpts): ShopScene {
     add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), CX, HH + TOP + .37, 0, { ol: "thin" });
     add(outside, RB(1.0, .5, .8, .04), T("#DDEBF2"), -2.2, HH + TOP + .7, -1.2, { ol: "thin" });                          // máy lạnh trên mái
     // biển hiệu
+    const SIGN: Record<string, { bg: string; edge: string; text: string; ink: string; board: string }> = {
+      "0": { bg: PKM, edge: "#fff", text: "#fff", ink: PKD, board: PKD },
+      "1": { bg: "#C9966A", edge: "#8A5A3A", text: "#FFF3E0", ink: "#6E4529", board: "#8A5A3A" },
+      "2": { bg: "#2B2640", edge: "#FF6FB5", text: "#FFE3F2", ink: "#FF3D9A", board: "#1E1A2E" },
+      "3": { bg: "#3E4A43", edge: "#D9A66B", text: "#fff", ink: "#2A332E", board: "#5E6F5B" }
+    }, sg = SIGN[R.sign ?? "0"] ?? SIGN["0"]!;
     const signTex = (() => { const c = document.createElement("canvas"); c.width = 768; c.height = 160; const g = c.getContext("2d")!;
-      g.fillStyle = PKM; g.beginPath(); g.roundRect(6, 6, 756, 148, 40); g.fill(); g.lineWidth = 8; g.strokeStyle = "#fff"; g.stroke();
+      g.fillStyle = sg.bg; g.beginPath(); g.roundRect(6, 6, 756, 148, 40); g.fill(); g.lineWidth = 8; g.strokeStyle = sg.edge; g.stroke();
       const t = "Tiệm Bánh " + o.shopName; let fs = 76; g.font = `800 ${fs}px Nunito, system-ui, sans-serif`; while (g.measureText(t).width > 680 && fs > 30) { fs -= 4; g.font = `800 ${fs}px Nunito, system-ui, sans-serif`; }
-      g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = 12; g.strokeStyle = PKD; g.strokeText(t, 384, 84); g.fillStyle = "#fff"; g.fillText(t, 384, 84);
+      g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = 12; g.strokeStyle = sg.ink; g.strokeText(t, 384, 84); g.fillStyle = sg.text; g.fillText(t, 384, 84);
       const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx; })();
-    add(outside, RB(3.1, .66, .12, .04), T(PKD), 0, 2.88, z0 + .06, { ol: "thin" });
+    add(outside, RB(3.1, .66, .12, .04), sel("sign", T(sg.board)), 0, 2.88, z0 + .06, { ol: "thin" });
     { const sm = new THREE.MeshBasicMaterial({ map: signTex, transparent: true }); neon.push(sm); const sp = new THREE.Mesh(new THREE.PlaneGeometry(2.95, .6), sm); sp.position.set(0, 2.88, z0 + .13); outside.add(sp); }
     // mái hiên sọc
-    const awnMat = T("#fff", { map: stripes(PK, "#fff", [9, 1]) });
+    const awnMat = sel("awning", T("#fff", { map: stripes([PK, "#8FD9B6", "#FFD66B", "#9EC9FF"][+(R.awning ?? 0)] ?? PK, "#fff", [9, 1]) }));
     add(outside, RB(7.4, .1, 1.1, .03), awnMat, 0, 2.38, z0 + .55, { r: [.38, 0, 0], ol: "thin" });
     // cửa sổ trưng bày + hộp hoa
     const extWin = (x: number, y: number, z: number, ry: number, w2: number, h2: number, flowers: boolean) => {
@@ -509,7 +516,7 @@ export function createShop(o: ShopOpts): ShopScene {
       const gm = T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .3 }); extGlass.push(gm);
       add(gp, RB(w2 + .24, h2 + .24, .1, .03), T("#8A5A3A"), 0, 0, .04, { ol: "thin" }); add(gp, RB(w2, h2, .05, .02), gm, 0, 0, .1, { ol: null });
       add(gp, RB(.06, h2, .06, .01), T("#8A5A3A"), 0, 0, .13, { ol: null });
-      if (flowers) { add(gp, RB(w2 + .2, .22, .3, .03), T("#E9A27C"), 0, -h2 / 2 - .22, .2, { ol: "thin" }); for (let i = 0; i < 7; i++) add(gp, SPH(.09, 8, 6), T(["#FF8FAB", "#FFD66B", "#fff", "#C9B8F0"][i % 4]), -w2 / 2 + .1 + i * (w2 / 6.4), -h2 / 2 - .06, .22, { ol: "thin", cast: false }); }
+      if (flowers) { add(gp, RB(w2 + .2, .22, .3, .03), sel("flower", T("#E9A27C")), 0, -h2 / 2 - .22, .2, { ol: "thin" }); const fl = FLOWERS[R.flower ?? "0"] ?? FLOWERS["0"]!; for (let i = 0; i < 7; i++) add(gp, SPH(.09, 8, 6), sel("flower", T(fl[i % fl.length]!)), -w2 / 2 + .1 + i * (w2 / 6.4), -h2 / 2 - .06, .22, { ol: "thin", cast: false }); }
     };
     extWin(-2.2, 1.45, z0, 0, 2.6, 1.5, true);
     extWin(x0, 1.45, -1.3, Math.PI / 2, 1.8, 1.4, true); extWin(x0, 1.45, 1.4, Math.PI / 2, 1.8, 1.4, true);

@@ -2,10 +2,10 @@
    Món số 0 / món đầu là mặc định (miễn phí). Hiệu ứng chỉ tính cho món đang dùng. */
 import type { FxKey } from "./game";
 
-export type RoomKey = "wall" | "floor" | "counter" | "curtain" | "lamp" | "wallItem" | "plant" | "rug";
+export type RoomKey = "wall" | "floor" | "counter" | "curtain" | "lamp" | "wallItem" | "plant" | "rug" | "sign" | "awning" | "flower";
 export type Room = Record<RoomKey, string>;
 export interface RoomItem { v: string; n: string; cost: number; sw: string; sws?: string; glyph?: string; fx?: Partial<Record<FxKey, number>>; gacha?: boolean }   // gacha: chỉ có khi quay trúng, không mua bằng xu
-export interface RoomCat { k: RoomKey; n: string; hl: string; items: RoomItem[] }
+export interface RoomCat { k: RoomKey; n: string; hl: string; items: RoomItem[]; ext?: boolean }   // ext: đồ mặt tiền, xem thử ở cảnh ngoài tiệm
 
 const NONE = "#F6F0F2";
 export const ROOM_CATS: RoomCat[] = [
@@ -67,13 +67,30 @@ export const ROOM_CATS: RoomCat[] = [
     { v: "2", n: "Thảm dâu", cost: 190, sw: "radial-gradient(#FFF1A8 2px,transparent 2.5px) #FF8FAB", sws: "10px 8px", fx: { cust: 1, tip: .05 } },
     { v: "3", n: "Thảm caro kem", cost: 150, sw: "repeating-conic-gradient(#FFC9A0 0 25%,#FFF1D6 0 50%)", sws: "14px 14px", fx: { cust: 1 } },
     { v: "4", n: "Thảm trái tim", cost: 210, sw: "radial-gradient(circle at 38% 40%,#FF8FAB 9px,transparent 10px),radial-gradient(circle at 62% 40%,#FF8FAB 9px,transparent 10px),#DDF4E8", fx: { cust: 1, tip: .05 } },
-    { v: "5", n: "Thảm sọc xanh", cost: 130, sw: "repeating-linear-gradient(90deg,#CFE9FF 0 8px,#fff 8px 16px)", fx: { cust: 1 } }] }
+    { v: "5", n: "Thảm sọc xanh", cost: 130, sw: "repeating-linear-gradient(90deg,#CFE9FF 0 8px,#fff 8px 16px)", fx: { cust: 1 } }] },
+  /* mặt tiền: chỉ thấy khi xem ngoài tiệm (món số 0 là kiểu cũ, miễn phí) */
+  { k: "sign", n: "Biển hiệu", hl: "sign", ext: true, items: [
+    { v: "0", n: "Biển hồng", cost: 0, sw: "linear-gradient(#FF8FAB,#FF8FAB) padding-box,#fff" },
+    { v: "1", n: "Biển gỗ", cost: 150, sw: "linear-gradient(#C9966A 70%,#8A5A3A 70%)", fx: { tip: .05 } },
+    { v: "2", n: "Biển đèn neon", cost: 240, sw: "linear-gradient(#2B2640 60%,#FF6FB5 60% 70%,#2B2640 70%)", fx: { cust: 1 } },
+    { v: "3", n: "Biển bảng đen", cost: 180, sw: "linear-gradient(#3E4A43 75%,#D9A66B 75%)", fx: { price: .05 } }] },
+  { k: "awning", n: "Mái hiên", hl: "awning", ext: true, items: [
+    { v: "0", n: "Sọc hồng", cost: 0, sw: "repeating-linear-gradient(90deg,#FF8FAB 0 8px,#fff 8px 16px)" },
+    { v: "1", n: "Sọc bạc hà", cost: 130, sw: "repeating-linear-gradient(90deg,#8FD9B6 0 8px,#fff 8px 16px)", fx: { pat: .05 } },
+    { v: "2", n: "Sọc vàng", cost: 140, sw: "repeating-linear-gradient(90deg,#FFD66B 0 8px,#fff 8px 16px)", fx: { tip: .05 } },
+    { v: "3", n: "Sọc xanh trời", cost: 150, sw: "repeating-linear-gradient(90deg,#9EC9FF 0 8px,#fff 8px 16px)", fx: { pat: .05 } }] },
+  { k: "flower", n: "Hộp hoa", hl: "flower", ext: true, items: [
+    { v: "0", n: "Hoa xuân", cost: 0, sw: "radial-gradient(#FF8FAB 4px,transparent 4.5px) 0 0/12px 12px,radial-gradient(#FFD66B 4px,transparent 4.5px) 6px 6px/12px 12px,#EEF9F3" },
+    { v: "1", n: "Hoa hồng", cost: 100, sw: "radial-gradient(#FF5C7A 5px,transparent 5.5px) 0 0/12px 12px,#EEF9F3", fx: { tip: .04 } },
+    { v: "2", n: "Oải hương", cost: 120, sw: "radial-gradient(#B79CFF 4.5px,transparent 5px) 0 0/10px 12px,#EEF9F3", fx: { pat: .05 } },
+    { v: "3", n: "Cúc vàng", cost: 110, sw: "radial-gradient(#FFD66B 5px,transparent 5.5px) 0 0/12px 12px,#EEF9F3", fx: { tip: .04 } },
+    { v: "4", n: "Cây xanh", cost: 140, sw: "radial-gradient(#6FB27A 5.5px,transparent 6px) 0 0/11px 12px,#EEF9F3", fx: { cust: 1 } }] }
 ];
 
-export const DEFAULT_ROOM: Room = { wall: "pink", floor: "check", counter: "pink", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0" };
+export const DEFAULT_ROOM: Room = { wall: "pink", floor: "check", counter: "pink", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0", sign: "0", awning: "0", flower: "0" };
 export const roomCat = (k: RoomKey) => ROOM_CATS.find(c => c.k === k)!;
 export const roomItem = (k: RoomKey, v: string) => roomCat(k).items.find(i => i.v === v) ?? roomCat(k).items[0];
-export const isDefault = (k: RoomKey, v: string) => roomCat(k).items[0].v === v;
+export const isDefault = (k: RoomKey, v?: string) => !v || roomCat(k).items[0].v === v;   // thiếu giá trị (bản lưu / tiệm người khác từ trước khi có nhóm mới) = mặc định
 
 const FX_TXT: Record<FxKey, (n: number) => string> = {
   pat: n => `khách chờ lâu hơn ${Math.round(n * 100)}%`, tip: n => `tip +${Math.round(n * 100)}%`, price: n => `giá bánh +${Math.round(n * 100)}%`,

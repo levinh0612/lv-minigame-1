@@ -368,7 +368,7 @@ const STORIES: Story[] = [
 
   /* ---------- Trang trí ---------- */
   { id: "c-room", sec: "decor", title: "Cảnh tiệm với đủ đồ", desc: "Tường kem, sàn gỗ, quầy matcha, rèm caro, dây đèn sao, đồng hồ mèo, monstera, thảm dâu", kind: "comp",
-    html: () => { lvState(9); return `<div class="board w390" style="padding:20px 16px">${roomHTML({ wall: "cream", floor: "wood", counter: "mint", curtain: "2", lamp: "2", wallItem: "2", plant: "2", rug: "2" }, { recipes: 9, giftDot: true })}</div>`; } },
+    html: () => { lvState(9); return `<div class="board w390" style="padding:20px 16px">${roomHTML({ wall: "cream", floor: "wood", counter: "mint", curtain: "2", lamp: "2", wallItem: "2", plant: "2", rug: "2", sign: "0", awning: "0", flower: "0" }, { recipes: 9, giftDot: true })}</div>`; } },
   { id: "c-decor", sec: "decor", title: "Ô đồ trang trí", desc: "Mẫu màu của từng kiểu trong 8 nhóm", kind: "comp",
     html: () => `<div class="board">${ROOM_CATS.map(c => `<div class="sbrow"><b style="width:80px">${c.n}</b>${c.items.map(it => `<div class="sbcell" style="width:90px"><span class="sw" style="display:block;width:80px;height:46px;border-radius:12px;border:2px solid #4A3438;background:${it.sw};background-size:${it.sws || "auto"}"></span>${esc(it.n)}</div>`).join("")}</div>`).join("")}</div>` }
 ];

@@ -17,7 +17,7 @@ let live: Live | null = null, kept: Live | null = null, token = 0;
 /** vùng chứa cảnh: bên trong là cảnh 2D cũ làm dự phòng */
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
-  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"` : "", fullAttr = full ? ' data-full="1"' : "";
+  const extra = still ? ` data-room="${JSON.stringify(r).replace(/"/g, "&quot;")}" data-hl="${o.hl ?? ""}" data-hs="0"${o.ext ? ' data-ext="1"' : ""}` : "", fullAttr = full ? ' data-full="1"' : "";
   const data = `data-event="${o.event ? 1 : 0}" data-guests="${o.guests ?? 2}" data-tables="${o.tables ?? "1,1,1"}" data-wide="${o.wide ?? 0}" data-floors="${o.floors ?? 1}"${o.user ? ` data-user="${o.user}"` : ""} data-gift="${o.giftDot ? 1 : 0}" data-recipes="${o.recipes ?? 4}"${extra}${fullAttr}`;
   return `<div class="room3d" ${data}>${roomHTML(r, o)}</div>`;
 }
@@ -57,7 +57,7 @@ function optsOf(el: HTMLElement): ShopOpts {
   };
 }
 /** phần cảnh không đổi khi chỉ đổi tường / sàn / quầy (màn Trang trí) */
-const baseOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
+const baseOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.me, hash(S.photo), S.photo.length, S.shop, account(), el.dataset.event, el.dataset.ext, el.dataset.guests, el.dataset.user, el.dataset.tables, el.dataset.wide, el.dataset.floors, el.dataset.gift, el.dataset.recipes]);
 const sigOf = (el: HTMLElement) => JSON.stringify([regulars().map(i => i.id), staffSig(), document.documentElement.dataset.theme, S.room, el.dataset, S.me, hash(S.photo), S.photo.length, S.shop, account()]);
 
 /** chạy cảnh + vòng cập nhật vị trí nút chạm + đồng hồ + theo dõi kích thước */
@@ -111,6 +111,7 @@ export async function mountRooms() {
   if (my !== token || !box.isConnected) return;       // trang đã đổi trong lúc tải
   try {
     const scene = mod.createShop(optsOf(box));
+    if (box.dataset.ext === "1") scene.setExterior(true);      // nhóm mặt tiền: xem thử ở cảnh ngoài tiệm
     box.classList.add("live"); box.innerHTML = "";
     const layer = document.createElement("div"); layer.className = "hs-layer"; box.appendChild(layer);
     const btns = el0hs(box) ? scene.hotspots.map(h => button(layer, h, scene)) : [];
