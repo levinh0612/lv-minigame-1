@@ -1,7 +1,7 @@
 /* Cấp, mục tiêu ngày, hiệu ứng đồ trang trí */
 import { RECIPES, SEASON_LV, customRecipe, partsOfRecipe, seasonalNow, type FxKey, type Recipe, type StockKey } from "../content/game";
 import { mgrFx, type GachaItem } from "../content/gacha";
-import { ROOM_CATS, isDefault, roomItem, type RoomItem } from "../content/room";
+import { ROOM_CATS, isDefault, roomItem, setStates, type RoomItem } from "../content/room";
 import { daysTogether } from "./dates";
 import { bondMul, floorCount, gachaFx, specialRecipes, staffAt } from "./gacha";
 import { S, save } from "./state";
@@ -23,7 +23,7 @@ export const unlocked = () => [...RECIPES.filter(r => r.lv <= lvl() && recipeRea
 /** chỉ số nguyên liệu mà các món đang bán dùng tới (màn làm bánh và kho giữa ca chỉ hiện những món này) */
 export const usedIdx = (k: StockKey) => [...new Set(unlocked().flatMap(r => partsOfRecipe(r).filter(p => p.k === k).map(p => p.i)))].sort((a, b) => a - b);
 /** tổng buff chưa bị chặn trần (cộng mọi nguồn) */
-export const fxRaw = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + gachaFx(k) + upgradeFx(k);
+export const fxRaw = (k: FxKey) => ROOM_CATS.reduce((a, c) => a + (roomItem(c.k, S.room[c.k]).fx?.[k] || 0), 0) + setStates(S.room).reduce((a, st) => a + (st.fx[k] || 0), 0) + gachaFx(k) + upgradeFx(k);
 /** trần buff: cộng nhiều tầng quản lý + linh thú không được kéo giá/tip/kiên nhẫn lên vô hạn (số khách cộng thêm không có trần) */
 export const FX_CAP: Partial<Record<FxKey, number>> = { price: 0.6, tip: 1, pat: 1 };
 export const fx = (k: FxKey) => Math.min(fxRaw(k), FX_CAP[k] ?? Infinity);
@@ -40,6 +40,7 @@ export function buffSources(): BuffRow[] {
       fx: Object.fromEntries(Object.entries(a.mascot!.fx).map(([k, v]) => [k, k === "cust" ? v : v! * bondMul(a.id)])) });
   }
   ROOM_CATS.forEach(c => { const it = roomItem(c.k, S.room[c.k]); if (it.fx && Object.keys(it.fx).length) rows.push({ src: "decor", name: it.n, sub: c.n, fx: { ...it.fx }, decor: it }); });
+  setStates(S.room).filter(st => Object.keys(st.fx).length).forEach(st => rows.push({ src: "decor", name: `Bộ ${st.set.n}`, sub: `Thưởng bộ trang trí · ${st.count} món`, fx: { ...st.fx } }));
   SHOP_UPGRADES.filter(u => upgradeLv(u.id) > 0).forEach(u => rows.push({ src: "shop", name: u.n, sub: `Nâng cấp tiệm · cấp ${upgradeLv(u.id)}/${u.max}`, fx: { [u.fx]: u.per * upgradeLv(u.id) } }));
   return rows;
 }

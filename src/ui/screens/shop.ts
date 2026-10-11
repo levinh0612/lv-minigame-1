@@ -1,4 +1,4 @@
-import { ROOM_CATS, fxDiff, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
+import { ROOM_CATS, fxDiff, fxText, setStates, isDefault, roomCat, roomItem, type RoomItem, type RoomKey } from "../../content/room";
 import { tableLvs } from "../../engine/economy";
 import { decorCount, lvl, unlocked } from "../../engine/progress";
 import { S, save } from "../../engine/state";
@@ -25,6 +25,12 @@ export function applyDecor(): string {
   S.room[k] = v; trial = null; save();
   return own ? `Đã đổi sang ${it.n}` : `Đã mua ${it.n}`;
 }
+/* tiến độ các bộ trang trí theo phòng đang xem (gồm món đang thử): "🍓 Hồng ngọt 2/3 · còn 1 món để tip +3%" */
+const setLine = (room: Record<string, string>) => setStates(room).map(st => {
+  const t = st.set.tiers, cur = t.filter(([n]) => st.count >= n).pop(), nxt = t.find(([n]) => st.count < n);
+  const got = cur ? fxText({ fx: cur[1] } as RoomItem) : "";
+  return `<span class="dset ${cur ? "on" : ""}">${st.set.icon} ${esc(st.set.n)} ${st.count}/${nxt ? nxt[0] : t[t.length - 1]![0]}${got ? ` · ${esc(got)}` : nxt ? ` · còn ${nxt[0] - st.count} món để ${esc(fxText({ fx: nxt[1] } as RoomItem))}` : ""}</span>`;
+}).join("");
 export function decorHTML() {
   const C = ROOM_CATS[dcat], room = { ...S.room }, tr = trial;
   if (tr) room[tr.k] = tr.v;
@@ -46,6 +52,7 @@ export function decorHTML() {
     <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
     ${tr && S.room[tr.k] !== tr.v ? `<p class="dsub dd">So với đang dùng: ${diff ? esc(diff) : "chỉ số không đổi"}</p>` : ""}
+    ${(sl => sl ? `<div class="dsets">${sl}</div>` : "")(setLine(room))}
     <div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
     <div class="ditems">${items}</div>
     <div class="dfoot"><button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>${act}</div>

@@ -111,3 +111,21 @@ export const fxDiff = (from: RoomItem, to: RoomItem) => (Object.keys(FX_SHORT) a
   const n = k === "cust" ? `${Math.abs(d)}` : `${Math.round(Math.abs(d) * 100)}%`;
   return [`${FX_SHORT[k]} ${d > 0 ? "+" : "−"}${n}`];
 }).join(", ");
+
+/* Bộ trang trí: dùng đủ số món cùng chủ đề (mỗi nhóm tính một món, kiểu mặc định không tính) thì được thêm thưởng bộ.
+   `tiers`: [số món cần, thưởng]; đạt bậc cao thì thay (không cộng dồn) thưởng bậc thấp. */
+export interface DecorSet { id: string; n: string; icon: string; pick: Partial<Record<RoomKey, string[]>>; tiers: [number, Partial<Record<FxKey, number>>][] }
+export const DECOR_SETS: DecorSet[] = [
+  { id: "pink", n: "Hồng ngọt", icon: "🍓", pick: { wall: ["candy"], floor: ["tile", "sakura"], counter: ["candy"], curtain: ["1"], lamp: ["1"], wallItem: ["1"], plant: ["4"], rug: ["2", "4"], flower: ["1"] }, tiers: [[3, { tip: .03 }], [5, { tip: .06 }]] },
+  { id: "wood", n: "Gỗ ấm", icon: "🪵", pick: { wall: ["brick"], floor: ["wood", "dark"], counter: ["wood", "choco"], lamp: ["3", "4"], plant: ["5"], sign: ["1"], wallItem: ["5"] }, tiers: [[3, { price: .02 }], [5, { price: .04 }]] },
+  { id: "matcha", n: "Xanh matcha", icon: "🍵", pick: { wall: ["mint"], counter: ["mint"], curtain: ["2"], plant: ["1", "2", "3"], wallItem: ["4"], awning: ["1"], flower: ["4"], rug: ["5"] }, tiers: [[3, { pat: .04 }], [5, { pat: .08 }]] },
+  { id: "sun", n: "Nắng kem", icon: "🌼", pick: { wall: ["cream", "peach"], counter: ["white"], curtain: ["3"], lamp: ["2"], rug: ["3"], awning: ["2"], flower: ["3"], sign: ["3"] }, tiers: [[3, { tip: .03 }], [5, { tip: .04, cust: 1 }]] }
+];
+export interface SetState { set: DecorSet; count: number; fx: Partial<Record<FxKey, number>>; next?: number }
+/** các bộ đang có ít nhất một món, kèm số món đã đủ và thưởng đang nhận */
+export const setStates = (room: Record<string, string | undefined>): SetState[] => DECOR_SETS.flatMap(set => {
+  const count = (Object.keys(set.pick) as RoomKey[]).filter(k => set.pick[k]!.includes(room[k] ?? "")).length;
+  if (!count) return [];
+  const got = set.tiers.filter(([n]) => count >= n).pop();
+  return [{ set, count, fx: got ? got[1] : {}, next: set.tiers.find(([n]) => count < n)?.[0] }];
+});
