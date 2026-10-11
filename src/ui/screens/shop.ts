@@ -1,4 +1,4 @@
-import { ROOM_CATS, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
+import { ROOM_CATS, fxDiff, fxText, isDefault, roomCat, roomItem, type RoomKey } from "../../content/room";
 import { tableLvs } from "../../engine/economy";
 import { decorCount, lvl, unlocked } from "../../engine/progress";
 import { S, save } from "../../engine/state";
@@ -39,12 +39,13 @@ export function decorHTML() {
     : trIt!.gacha ? `<button class="b3 off" disabled>Chỉ quay được từ Gacha</button>`
     : lvl() < (trIt!.lv ?? 0) ? `<button class="b3 off" disabled>Mở khoá ở cấp ${trIt!.lv}</button>`
     : S.coins >= trIt!.cost ? `<button class="b3" data-act="dbuy">Mua · ${trIt!.cost} xu</button>` : `<button class="b3 off" disabled>Chưa đủ xu · ${trIt!.cost} xu</button>`;
-  const fx = trIt ? fxText(trIt) : "";
+  const fx = trIt ? fxText(trIt) : "", diff = tr && trIt ? fxDiff(roomItem(tr.k, S.room[tr.k]), trIt) : "";
   return `<div class="scr decor4">
     ${pageHead("Trang trí tiệm", "")}
     <p class="dsub">Đã có ${decorCount()} món · hiện ở màn chính</p>
     <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
+    ${tr && S.room[tr.k] !== tr.v ? `<p class="dsub dd">So với đang dùng: ${diff ? esc(diff) : "chỉ số không đổi"}</p>` : ""}
     <div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
     <div class="ditems">${items}</div>
     <div class="dfoot"><button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>${act}</div>

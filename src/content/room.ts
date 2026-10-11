@@ -103,3 +103,11 @@ export const OLD_TO_ROOM: Record<string, [RoomKey, string]> = {
   curtain: ["curtain", "1"], lamp: ["lamp", "1"], bell: ["lamp", "2"], chair: ["rug", "1"], flags: ["rug", "2"],
   plant: ["plant", "1"], teapot: ["counter", "mint"], frame: ["wallItem", "1"]
 };
+
+/** chênh lệch chỉ số của món `to` so với món `from` (đang dùng), ví dụ "tip +2%, giá bánh −4%"; rỗng nếu không khác */
+const FX_SHORT: Record<FxKey, string> = { pat: "kiên nhẫn", tip: "tip", price: "giá bánh", cust: "khách/ca" };
+export const fxDiff = (from: RoomItem, to: RoomItem) => (Object.keys(FX_SHORT) as FxKey[]).flatMap(k => {
+  const d = (to.fx?.[k] || 0) - (from.fx?.[k] || 0); if (Math.abs(d) < 1e-9) return [];
+  const n = k === "cust" ? `${Math.abs(d)}` : `${Math.round(Math.abs(d) * 100)}%`;
+  return [`${FX_SHORT[k]} ${d > 0 ? "+" : "−"}${n}`];
+}).join(", ");
