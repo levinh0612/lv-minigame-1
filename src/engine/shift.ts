@@ -27,6 +27,8 @@ import { GIFT_COMPLAINTS, SHIP_COMPLAINTS } from "../content/minigames";
 import { pickAddress, pickRibbon, pickService, serviceQuota } from "./minigame";
 import type { Address, Ribbon } from "../content/minigames";
 
+/** nhịp khách đến theo bậc danh tiếng: bậc càng cao khách đến càng dày (nhân với khoảng cách giữa hai khách), bậc sau Huyền thoại giảm dần nhưng không dưới 0,22 */
+export const arrivalMul = (lv: number) => [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][lv] ?? Math.max(0.22, 0.45 - 0.025 * (lv - 6));
 export interface Customer {
   who: string; look: Look; r: Recipe; sweet: number; max: number; pat: number;
   him?: boolean; gone?: boolean; mood?: Mood; note?: string;
@@ -177,7 +179,7 @@ export function tick(sh: Shift, dt: number): TickOut {
     if (sh.storyId && sh.storyAt >= 0 && sh.spawned >= sh.storyAt && !c.him && !c.vip) { makeStory(sh, c); sh.storyAt = -1; out.story = true; }
     if (sh.vipKind && sh.vipAt >= 0 && sh.spawned >= sh.vipAt && !c.him) { makeVip(sh, c); sh.vipAt = -1; out.vip = true; }
     sh.seats[free] = c; sh.spawned++; out.spawned = free;
-    sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * [1, 0.85, 0.72, 0.62, 0.55, 0.5, 0.45][fame().lv] * (sh.t < sh.rushUntil ? 0.55 : 1);
+    sh.next = sh.t + (rnd(2.5, 5.5) - Math.min(1.5, lvl() * 0.12)) * arrivalMul(fame().lv) * (sh.t < sh.rushUntil ? 0.55 : 1);
   }
   sh.seats.forEach((c, i) => {
     if (!c || c.gone) return;

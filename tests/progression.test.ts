@@ -114,3 +114,13 @@ describe("hàng đợi theo bàn và lầu", () => {
     expect(fitK(300, 600)).toBe(1); expect(fitK(1000, 330)).toBe(K_MIN); expect(fitK(400, 330)).toBeCloseTo(330 / 400);
   });
 });
+
+describe("nhịp khách đến theo bậc danh tiếng", () => {
+  it("mọi bậc đều ra số hợp lệ, giảm dần, không thấp hơn 0,22 (bậc mới không làm khách ngừng đến)", async () => {
+    const { arrivalMul } = await import("../src/engine/shift");
+    const { FAME } = await import("../src/content/game");
+    const v = FAME.map((_, i) => arrivalMul(i));
+    v.forEach(x => { expect(Number.isFinite(x)).toBe(true); expect(x).toBeGreaterThanOrEqual(0.22); });
+    v.slice(1).forEach((x, i) => expect(x).toBeLessThanOrEqual(v[i]!));
+  });
+});
