@@ -38,6 +38,7 @@ import { progressAct } from "./ui/screens/progress";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
+import { initSheetDrag } from "./ui/sheetdrag";
 import { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, toggleDecorSheet, tryDecor } from "./ui/screens/shop";
 import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, flashSeat, openSettings, openStats, toggleFold, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
 
@@ -45,6 +46,7 @@ initTeam();
 
 /* Chọn nguyên liệu: xử lý lúc nhả tay (không cần chờ click) để không mất cú bấm khi giao diện vẽ lại hoặc ngón tay trượt nhẹ */
 let ingDown: { id: string; x: number; y: number; t: number } | null = null, ingAt = 0;
+initSheetDrag();
 document.addEventListener("pointerdown", e => {
   const b = (e.target as HTMLElement).closest<HTMLElement>("[data-ing]");
   ingDown = b && SH && (e.pointerType !== "mouse" || e.button === 0) ? { id: b.dataset.ing!, x: e.clientX, y: e.clientY, t: performance.now() } : null;

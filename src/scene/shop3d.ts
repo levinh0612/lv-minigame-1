@@ -92,14 +92,15 @@ const FLOWERS: Record<string, string[]> = { "0": ["#FF8FAB", "#FFD66B", "#fff", 
 const POTS: Record<string, [string, string, string, string?]> = { "0": ["#E9A27C", "#7BC47F", "#6FB27A"], "1": ["#FFFFFF", "#7BC47F", "#6FB27A"], "2": ["#FF9FB8", "#8FD18A", "#6FB27A", "#FFF3F6"], "3": ["#7FC9C0", "#6FB27A", "#4FA36A", "#FFD66B"], "4": ["#8A5A3A", "#6FB27A", "#7BC47F", "#FF8FAB"] };   // chậu cây trước cửa: [màu chậu, lá, lá, hoa]
 const BENCHES: Record<string, [string, string]> = { "0": ["#C9966A", "#4A4F5C"], "1": ["#FF9FB8", "#fff"], "2": ["#8FD9B6", "#4A4F5C"], "3": ["#F1E9DF", "#C9966A"], "4": ["#6F7A8C", "#2E323C"] };   // ghế đá trước tiệm: [mặt ghế, chân]
 const BUNTING: Record<string, string[]> = { "1": ["#FF8FAB", "#fff"], "2": ["#FF8FAB", "#FFD66B", "#8FD9B6", "#9EC9FF", "#B79CFF"], "3": ["#FFE9A0", "#FFD27A"], "4": ["#8FD9B6", "#fff", "#6FB27A"] };   // dây cờ treo trên biển hiệu (kiểu 3: đèn dây phát sáng)
-const W0 = 8, D = 6, HH = 3.2, PET_S = .92;
+const W0 = 8, D0 = 6, HH = 3.2, PET_S = .92;
 const DOOR_X = 1.3, DOOR_W = 1.5, DOOR_H = 2.35;   // lối cửa chính trên tường Nam
 let blobTex: THREE.CanvasTexture | null = null;
 const blobMap = () => blobTex ??= (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d")!, gr = g.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(60,30,40,.55)"); gr.addColorStop(1, "rgba(60,30,40,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
 
 export function createShop(o: ShopOpts): ShopScene {
   const floors = Math.max(1, Math.min(4, o.floors | 0)), FH = HH + .15, TOP = (floors - 1) * FH;   // FH: khoảng cách các lầu khi xem từ ngoài
-  const wide = Math.max(0, Math.min(4, o.wide | 0)), W = W0 + 2 * wide, CX = (W - W0) / 2, DX = DOOR_X - CX;   // phòng mở rộng về phía đông; CX = tâm mới, DX = tọa độ cửa trong khung tường Nam
+  const wide = Math.max(0, Math.min(4, o.wide | 0)), W = W0 + 2 * wide, CX = (W - W0) / 2, DX = DOOR_X - CX;
+  const DD = 1.5 * wide, D = D0 + DD, CZ = DD / 2, ZS = D0 / 2 + DD;   // mở rộng cũng sâu thêm 1,5 mỗi lần về phía mặt tiền (tường Bắc giữ nguyên); CZ = tâm mới theo chiều sâu, ZS = z của tường Nam   // phòng mở rộng về phía đông; CX = tâm mới, DX = tọa độ cửa trong khung tường Nam
   const r = getRenderer(), scene = new THREE.Scene(), root = new THREE.Group(); scene.add(root);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 80);
   const ups: ((t: number) => void)[] = [], hotspots: Hotspot[] = [], walls: { group: THREE.Group; decor: THREE.Group; nx: number; nz: number; mats: THREE.Material[] }[] = [];
@@ -123,9 +124,9 @@ export function createShop(o: ShopOpts): ShopScene {
   const cur: Record<string, string> = { ...R }, wallMains: [THREE.MeshToonMaterial, number][] = [], tableTops: THREE.MeshToonMaterial[] = [], tableLegs: THREE.MeshToonMaterial[] = [], counterBits: { top?: THREE.MeshToonMaterial; wood?: THREE.MeshToonMaterial } = {};
 
   /* nền nhà */
-  const slab = add(root, RB(W + .5, .35, D + .5, .06), T("#B98450"), CX, -.175, 0);
+  const slab = add(root, RB(W + .5, .35, D + .5, .06), T("#B98450"), CX, -.175, CZ);
   const fm = sel("rug", T("#fff", { map: (FLOOR[R.floor] || FLOOR.check)() }));
-  const floor = add(root, new THREE.PlaneGeometry(W, D), fm, CX, .002, 0, { cast: false, ol: null }); floor.rotation.x = -Math.PI / 2;
+  const floor = add(root, new THREE.PlaneGeometry(W, D), fm, CX, .002, CZ, { cast: false, ol: null }); floor.rotation.x = -Math.PI / 2;
 
   /* tường */
   const wstyle = (WALL[ev ? "party" : R.wall] || WALL.pink)();
@@ -142,8 +143,8 @@ export function createShop(o: ShopOpts): ShopScene {
     const decor = new THREE.Group(); g.add(decor);
     const w = { group: g, decor, nx, nz, mats }; walls.push(w); return w;
   }
-  const wN = wall(W, 0, -1, CX, -D / 2 - .1, 0), wW = wall(D, -1, 0, -W0 / 2 - .1, 0, Math.PI / 2), wS = wall(W, 0, 1, CX, D / 2 + .1, 0, [DX - DOOR_W / 2, DX + DOOR_W / 2]), wE = wall(D, 1, 0, W / 2 + CX + .1, 0, Math.PI / 2);
-  const wS2 = wall(W, 0, 1, CX, D / 2 + .1, 0); wS2.group.visible = false;   // tường Nam không cửa cho các lầu trên
+  const wN = wall(W, 0, -1, CX, -D0 / 2 - .1, 0), wW = wall(D, -1, 0, -W0 / 2 - .1, CZ, Math.PI / 2), wS = wall(W, 0, 1, CX, ZS + .1, 0, [DX - DOOR_W / 2, DX + DOOR_W / 2]), wE = wall(D, 1, 0, W / 2 + CX + .1, CZ, Math.PI / 2);
+  const wS2 = wall(W, 0, 1, CX, ZS + .1, 0); wS2.group.visible = false;   // tường Nam không cửa cho các lầu trên
   const wi = (w: typeof wN) => walls.indexOf(w);
 
   /* cửa sổ + rèm */
@@ -247,7 +248,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const decHs = (k: string, label: string, obj: THREE.Object3D, wall: number | null, dy: number) => hotspots.push({ id: "dec-" + k, attr: "data-ddec", value: k, label, obj, wall, dy, on: () => cur[k] !== "0" });
   decHs("rug", "Chỉnh thảm", decAnchor(root, .3, .05, .95), null, 0);
   decHs("plant", "Chỉnh cây", decAnchor(root, -3.5, .7, 2.5), null, 0);
-  hotspots.push({ id: "dec-plant2", attr: "data-ddec", value: "plant", label: "Chỉnh cây", obj: decAnchor(root, 3.3 + (W - W0), .7, 2.3), wall: null, dy: 0, on: () => cur.plant !== "0" });
+  hotspots.push({ id: "dec-plant2", attr: "data-ddec", value: "plant", label: "Chỉnh cây", obj: decAnchor(root, 3.3 + (W - W0), .7, 2.3 + DD), wall: null, dy: 0, on: () => cur.plant !== "0" });
   decHs("lamp", "Chỉnh đèn", decAnchor(root, -.8, 2.1, -1.0), null, 0);
   decHs("wallItem", "Chỉnh đồ treo tường", frameAnchor, wi(wN), 0);
   hotspots.push({ id: "dec-wall", attr: "data-ddec", value: "wall", label: "Chỉnh tường", obj: decAnchor(wN.decor, -.2, .7, .1), wall: wi(wN), dy: 0 });
@@ -280,16 +281,17 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
   const GROUND = 4 + 2 * wide;         // chỗ đặt bàn mỗi lầu: 4, mỗi lần mở rộng thêm 2
-  const COLS = Math.ceil(GROUND / 2), STEP = COLS > 1 ? (W - 5.1) / (COLS - 1) : 0;   // chừa góc đông cho cầu thang   // các cột bàn trải đều theo chiều rộng phòng
-  const SPOTS: [number, number][] = Array.from({ length: 2 * COLS }, (_, i) => [-1.9 + STEP * Math.floor(i / 2), i % 2 ? 2.2 : .7]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
+  const ROWS = 2 + Math.floor(wide / 2), ROWZ = (r: number) => .7 + 1.5 * r;   // càng mở rộng càng nhiều hàng bàn: 2, 2, 3, 3, 4
+  const COLS = Math.ceil(GROUND / ROWS), STEP = COLS > 1 ? (W - 5.1) / (COLS - 1) : 0;   // chừa góc đông cho cầu thang   // các cột bàn trải đều theo chiều rộng phòng
+  const SPOTS: [number, number][] = Array.from({ length: ROWS * COLS }, (_, i) => [-1.9 + STEP * (i % COLS), ROWZ(Math.floor(i / COLS))]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
   const ANG = [2.4, -2.4, .1, 3.14];
   /** dựng các bàn của lầu f vào nhóm lầu đó; lầu trệt luôn có ít nhất 2 bàn (khách ngồi) */
   const buildTables = (f: number) => {
     let lvs = o.tables.filter((_, i) => i % floors === f).slice(0, GROUND);          // bàn chia đều cho các lầu
     if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
-    const cols = Math.max(2, Math.ceil(lvs.length / 2)), step = (W - 5.1) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
+    const cols = Math.max(2, Math.ceil(lvs.length / ROWS)), step = (W - 5.1) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
     return lvs.map((lv, i) => {
-      const x = -1.9 + step * (i % cols), z = i < cols ? .7 : 2.2, r = .6 + .1 * lv, par = flG[f]!;
+      const x = -1.9 + step * (i % cols), z = ROWZ(Math.floor(i / cols)), r = .6 + .1 * lv, par = flG[f]!;
       const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par);
       const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return { x, z, chairs };
     });
@@ -307,7 +309,7 @@ export function createShop(o: ShopOpts): ShopScene {
     ...o.regulars.map(rg => ({ sprite: rg.sprite, look: { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" } }))   // khách quen từ gacha (model 3D làm sẵn)
   ];
   const fwd = (st: { x: number; z: number; a: number }, f: number) => new THREE.Vector2(st.x + Math.sin(st.a) * f, st.z + Math.cos(st.a) * f);
-  const STREET = [new THREE.Vector2(DOOR_X, 4.8), new THREE.Vector2(-1.3, 4.95)];           // vỉa hè bên trái cửa (bên phải có cây và biển menu)
+  const STREET = [new THREE.Vector2(DOOR_X, 4.8 + DD), new THREE.Vector2(-1.3, 4.95 + DD)];           // vỉa hè bên trái cửa (bên phải có cây và biển menu)
   const TK = new URLSearchParams(location.search).has("fast") ? .12 : 1;   // ?fast=1: rút ngắn thời gian chờ để thử
   interface Slot { st: { x: number; z: number; a: number }; actor: Actor; phase: "seated" | "getup" | "out" | "away" | "in" | "sitdown"; next: number; path: THREE.Vector2[]; pi: number; n: number; pending?: { actor: Actor; ok: boolean } }
   const slots: Slot[] = ([s1[0], s2[0]] as const).slice(0, o.guests).map((st, i) => {
@@ -359,14 +361,14 @@ export function createShop(o: ShopOpts): ShopScene {
       if (sl.phase === "seated" && t > sl.next) { sl.actor.mode("getup"); sl.phase = "getup"; }
       else if (sl.phase === "getup" && sl.actor.done()) {
         const f = fwd(sl.st, APPROACH); g.position.set(f.x, 0, f.y); sl.actor.mode("walk"); sl.phase = "out";
-        sl.path = [new THREE.Vector2(DOOR_X, 2.4), new THREE.Vector2(DOOR_X, 3.9), ...STREET]; sl.pi = 0;
+        sl.path = [new THREE.Vector2(DOOR_X, 2.4 + DD), new THREE.Vector2(DOOR_X, 3.9 + DD), ...STREET]; sl.pi = 0;
       } else if (sl.phase === "out" && advance(sl, dt)) { g.visible = false; sl.phase = "away"; sl.next = t + (6 + Math.random() * 8) * TK; prepare(sl); }
       else if (sl.phase === "away" && t > sl.next && sl.pending?.ok) {
         root.remove(g); sl.actor.dispose(); sl.n++; sl.actor = sl.pending.actor; sl.pending = undefined; sl.actor.group.visible = true;
-        sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9), new THREE.Vector2(DOOR_X, 2.4), fwd(sl.st, APPROACH)]; sl.pi = 0; sl.phase = "in";
+        sl.path = [STREET[0], new THREE.Vector2(DOOR_X, 3.9 + DD), new THREE.Vector2(DOOR_X, 2.4 + DD), fwd(sl.st, APPROACH)]; sl.pi = 0; sl.phase = "in";
       } else if (sl.phase === "in" && advance(sl, dt)) { g.position.set(sl.st.x, 0, sl.st.z); g.rotation.y = sl.st.a; sl.actor.mode("sit"); sl.phase = "sitdown"; }
       else if (sl.phase === "sitdown" && sl.actor.done()) { sl.phase = "seated"; sl.next = t + (26 + Math.random() * 30) * TK; }
-      if (walking) { g.visible = curFloor === 0 && (exterior || g.position.z < 3.4); if (g.position.z > 2.6 && g.position.z < 4.4 && Math.abs(g.position.x - DOOR_X) < 1.1) nearDoor = true; }
+      if (walking) { g.visible = curFloor === 0 && (exterior || g.position.z < 3.4 + DD); if (g.position.z > 2.6 + DD && g.position.z < 4.4 + DD && Math.abs(g.position.x - DOOR_X) < 1.1) nearDoor = true; }
     });
     doorOpen += ((nearDoor ? 1 : 0) - doorOpen) * Math.min(1, dt * 5); doorPivot.rotation.y = -1.45 * doorOpen;   // mở ra phía ngoài
   });
@@ -395,7 +397,7 @@ export function createShop(o: ShopOpts): ShopScene {
   for (let f = 1; f < floors; f++) {
     const g = flG[f]!, t = buildTables(f);
     t.forEach(tb => { blob(tb.x, tb.z, .95, .95, 1, g); tb.chairs.forEach(st => blob(st.x, st.z, .4, .4, 1, g)); });
-    Array.from({ length: COLS }, (_, c) => SPOTS[2 * c]![0]).forEach(x => {
+    Array.from({ length: COLS }, (_, c) => SPOTS[c]![0]).forEach(x => {
       const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, 1.45); if (upLamps.length % 2 === f % 2) g.add(pl);       // chỉ nửa số đèn là nguồn sáng thật (đèn điểm rất tốn trên điện thoại)
       upLamps.push({ pl, bulb: new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial()) });
     });
@@ -443,7 +445,7 @@ export function createShop(o: ShopOpts): ShopScene {
       for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; add(plantG, SPH(.3 * s, 12, 8), T("#6FB27A"), x + Math.cos(a) * .3 * s, 1.45 * s, z + Math.sin(a) * .3 * s, { s: [1, .22, .42], r: [0, -a, -.35], ol: "thin" }); }
     }
   };
-  const buildPlants = () => { plantAt(3.3 + (W - W0), 2.3, 1.2); plantAt(-3.5, 2.5, .9); }; buildPlants();
+  const buildPlants = () => { plantAt(3.3 + (W - W0), 2.3 + DD, 1.2); plantAt(-3.5, 2.5 + DD, .9); }; buildPlants();
 
   /* đèn */
   const lamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
@@ -463,7 +465,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const buildLamps = () => {
   const lk = cur.lamp === "1" || cur.lamp === "3" || cur.lamp === "4" ? cur.lamp : "0";
   pendant(-.8, -1.0, lk);
-  for (let c = 0; c < COLS; c++) pendant(SPOTS[2 * c]![0], 1.45, lk);
+  for (let c = 0; c < COLS; c++) pendant(SPOTS[c]![0], 1.45, lk);
   if (cur.lamp === "2" || ev) {
     const pts: THREE.Vector3[] = []; for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector3(-3.8 + t * 7.6, 2.95 - Math.sin(t * Math.PI) * .35, -2.8)); }
     lampG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .008, 4), new THREE.MeshBasicMaterial({ color: INK })));
@@ -478,7 +480,7 @@ export function createShop(o: ShopOpts): ShopScene {
   /* ---------- phía ngoài tiệm: mặt tiền, biển hiệu, vỉa hè, đường, cây (chỉ hiện khi xem ngoài) ---------- */
   const outside = new THREE.Group(); outside.visible = false; root.add(outside);
   const extGlass: THREE.MeshToonMaterial[] = [], neon: THREE.MeshBasicMaterial[] = [];
-  const z0 = D / 2 + .2, x0 = W / 2 + CX + .2;
+  const z0 = ZS + .2, x0 = W / 2 + CX + .2;
   ([["sign", "Chỉnh biển hiệu", 0, 2.88, z0 + .2], ["awning", "Chỉnh mái hiên", 2.4, 2.3, z0 + .75], ["flower", "Chỉnh hộp hoa", -2.2, .5, z0 + .3], ["bunting", "Chỉnh dây cờ", -2.4, 3.3, z0 + .3], ["pot", "Chỉnh chậu cây", 1.35, .6, z0 + .55], ["bench", "Chỉnh ghế đá", -2.6, .75, z0 + 2.4]] as const).forEach(([k, label, x, y, z]) =>
     hotspots.push({ id: "dec-" + k, attr: "data-ddec", value: k, label, obj: decAnchor(outside, x, y, z), wall: null, dy: 0, ext: true }));
   const streetPl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); streetPl.position.set(-4.9, 3.1, z0 + 1.7); outside.add(streetPl);
@@ -502,20 +504,20 @@ export function createShop(o: ShopOpts): ShopScene {
   ups.push(t => { if (outside.visible) traffic?.update(t); });   // xe chỉ chạy khi đang xem ngoài tiệm
   function buildOutside() {
     if (outsideBuilt) return; outsideBuilt = true;
-    const road = { z: D / 2 + 4.3 };
+    const road = { z: ZS + 4.3 };
     const gnd = add(outside, new THREE.PlaneGeometry(70, 60), T("#BFD8A6"), 0, -.352, 0, { cast: false, ol: null }); gnd.rotation.x = -Math.PI / 2;
-    const walk = add(outside, new THREE.PlaneGeometry(16 + (W - W0), 8.6), T("#fff", { map: tex(64, 64, (g, w, h) => { g.fillStyle = "#EAE5DD"; g.fillRect(0, 0, w, h); g.strokeStyle = "#D8D1C6"; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }, [16, 8]) }), 0, -.34, D / 2 + 1.4, { cast: false, ol: null }); walk.rotation.x = -Math.PI / 2;
+    const walk = add(outside, new THREE.PlaneGeometry(16 + (W - W0), 8.6), T("#fff", { map: tex(64, 64, (g, w, h) => { g.fillStyle = "#EAE5DD"; g.fillRect(0, 0, w, h); g.strokeStyle = "#D8D1C6"; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }, [16, 8]) }), 0, -.34, ZS + 1.4, { cast: false, ol: null }); walk.rotation.x = -Math.PI / 2;
     const rd = add(outside, new THREE.PlaneGeometry(70, 3.4), T("#7E8088"), 0, -.335, road.z, { cast: false, ol: null }); rd.rotation.x = -Math.PI / 2;
     for (let i = -6; i <= 6; i++) { const dsh = add(outside, new THREE.PlaneGeometry(.9, .14), T("#FFF1A8"), i * 2.2, -.33, road.z, { cast: false, ol: null }); dsh.rotation.x = -Math.PI / 2; }
     traffic = buildTraffic(outside, road.z, PK, DOOR_X); callDelivery();
     // các lầu trên (nhìn từ ngoài): khối tường có dải cửa sổ
     for (let f = 1; f < floors; f++) {
-      add(outside, RB(W + .1, FH - .1, D + .1, .04), T(R.wall === "mint" ? "#DDF3E8" : "#FFD9E3"), CX, f * FH + HH / 2 - .05, 0, { ol: "mid" });
-      for (let i = 0; i < 3 + wide; i++) add(outside, RB(1.1, .8, .05, .02), T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .25 }), CX - W / 2 + (i + .5) * W / (3 + wide), f * FH + HH / 2 + .1, D / 2 + .08, { ol: "thin" });
+      add(outside, RB(W + .1, FH - .1, D + .1, .04), T(R.wall === "mint" ? "#DDF3E8" : "#FFD9E3"), CX, f * FH + HH / 2 - .05, CZ, { ol: "mid" });
+      for (let i = 0; i < 3 + wide; i++) add(outside, RB(1.1, .8, .05, .02), T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .25 }), CX - W / 2 + (i + .5) * W / (3 + wide), f * FH + HH / 2 + .1, ZS + .08, { ol: "thin" });
     }
     // mái nhà
-    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : PKM), CX, HH + TOP + .14, 0, { ol: "mid" });
-    add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), CX, HH + TOP + .37, 0, { ol: "thin" });
+    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : PKM), CX, HH + TOP + .14, CZ, { ol: "mid" });
+    add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), CX, HH + TOP + .37, CZ, { ol: "thin" });
     add(outside, RB(1.0, .5, .8, .04), T("#DDEBF2"), -2.2, HH + TOP + .7, -1.2, { ol: "thin" });                          // máy lạnh trên mái
     // biển hiệu
     const SIGN: Record<string, { bg: string; edge: string; text: string; ink: string; board: string }> = {
@@ -552,7 +554,8 @@ export function createShop(o: ShopOpts): ShopScene {
     };
     extWin(-2.2, 1.45, z0, 0, 2.6, 1.5, true);
     extWin(x0, 1.45, -1.3, Math.PI / 2, 1.8, 1.4, true); extWin(x0, 1.45, 1.4, Math.PI / 2, 1.8, 1.4, true);
-    extWin(-1.6, 1.45, -D / 2 - .2, Math.PI, 2.2, 1.4, false); extWin(2.0, 1.45, -D / 2 - .2, Math.PI, 2.2, 1.4, false);
+    if (DD) { extWin(x0, 1.45, 1.4 + DD, Math.PI / 2, 1.8, 1.4, true); extWin(-W0 / 2 - .2, 1.45, 1.6 + DD, -Math.PI / 2, 1.8, 1.4, false); }
+    extWin(-1.6, 1.45, -D0 / 2 - .2, Math.PI, 2.2, 1.4, false); extWin(2.0, 1.45, -D0 / 2 - .2, Math.PI, 2.2, 1.4, false);
     extWin(-W0 / 2 - .2, 1.45, -1.0, -Math.PI / 2, 1.8, 1.4, false); extWin(-W0 / 2 - .2, 1.45, 1.6, -Math.PI / 2, 1.8, 1.4, false);
     // tấm bảng menu đứng, thảm chùi chân, chậu cây
     add(outside, RB(.9, 1.1, .08, .02), T("#5E6F5B"), 3.2, .62, z0 + 1.1, { r: [-.12, .3, 0], ol: "mid" }); add(outside, RB(.78, .98, .03, .01), T("#fff", { map: menuTex }), 3.2, .62, z0 + 1.15, { r: [-.12, .3, 0], ol: null });
@@ -567,7 +570,7 @@ export function createShop(o: ShopOpts): ShopScene {
       add(outside, RB(1.4, .1, .5, .03), sel("bench", T(bn[0])), -2.6, .35, z0 + 2.4, { ol: "thin" }); add(outside, RB(1.4, .5, .08, .03), sel("bench", T(bn[0])), -2.6, .62, z0 + 2.62, { ol: "thin" }); [-.55, .55].forEach(dx => add(outside, RB(.08, .4, .4, .02), sel("bench", T(bn[1])), -2.6 + dx, .12, z0 + 2.4, { ol: null })); }
     add(outside, CYL(.2, .17, .5, 12), T("#9FB8C9"), 4.5, -.08, z0 + 2.2, { ol: "thin" });
     // vài bụi cây thấp quanh nhà
-    [[-3.6, z0 + .35], [3.7, z0 + .35], [x0 + .45, 3.0], [x0 + .45, -2.6]].forEach(([x, z]) => [0, 1, 2].forEach(i => add(outside, SPH(.28, 10, 8), T("#7BC47F"), (x as number) + i * .32 - .3, -.1, z as number, { ol: "thin" })));
+    [[-3.6, z0 + .35], [3.7, z0 + .35], [x0 + .45, 3.0 + DD], [x0 + .45, -2.6]].forEach(([x, z]) => [0, 1, 2].forEach(i => add(outside, SPH(.28, 10, 8), T("#7BC47F"), (x as number) + i * .32 - .3, -.1, z as number, { ol: "thin" })));
     setHour(skyState.h);                                // áp lại giờ hiện tại cho kính, đèn mới dựng
   }
   let exterior = false;
@@ -577,8 +580,8 @@ export function createShop(o: ShopOpts): ShopScene {
   /* ---------- ánh sáng + giờ ---------- */
   const hemi = new THREE.HemisphereLight("#fff2e0", "#c9a37a", .9); scene.add(hemi);
   const sun = new THREE.DirectionalLight("#fff", 2); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
-  const sc = sun.shadow.camera; sc.left = -8 - wide; sc.right = 8 + wide; sc.top = 8; sc.bottom = -8; sc.near = .5; sc.far = 40; sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
-  sun.target.position.set(CX, 0, 0); scene.add(sun, sun.target);
+  const sc = sun.shadow.camera; sc.left = -8 - wide; sc.right = 8 + wide; sc.top = 8 + DD; sc.bottom = -8 - DD; sc.near = .5; sc.far = 40; sun.shadow.bias = -.0005; sun.shadow.normalBias = .03;
+  sun.target.position.set(CX, 0, CZ); scene.add(sun, sun.target);
   const C = (c: string) => new THREE.Color(c), lerpC = (a: string, b: string, t: number) => C(a).lerp(C(b), t);
   /* bầu trời vẽ bằng canvas: ngày có mặt trời + tia nắng + mây, đêm có trăng + sao */
   const skyCv = document.createElement("canvas"), skyTex = new THREE.CanvasTexture(skyCv); skyTex.colorSpace = THREE.SRGBColorSpace; scene.background = skyTex;
@@ -667,9 +670,9 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* ---------- camera xoay 4 góc ---------- */
   const EXT_Z = 2;   // xem ngoài tiệm: dời khung nhìn về phía mặt đường (đơn vị thế giới)
-  let insTop = 0, insBot = 0; const FR = 5.2 + (W - W0) * .5 + TOP * .4; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
+  let insTop = 0, insBot = 0; const FR = 5.2 + (W - W0) * .5 + DD * .4 + TOP * .4; const zq = new URLSearchParams(location.search).get("zoom"); let zoom = zq ? +zq : 1, zoomT = zoom, pan = 0, panT = 0, az = Math.PI / 4, azT = az, el = 38 * Math.PI / 180, dragging = false, w = 1, h = 1, raf = 0, last = 0, running = false;
   function layout() {
-    const r2 = 26, ek = exterior ? EXT_Z * Math.max(0, Math.cos(az)) : 0, ex = CX + Math.sin(az) * ek, ez = Math.cos(az) * ek;   // xem ngoài: dời cả camera lẫn điểm nhìn về phía mặt đường để đường và xe nằm giữa màn hình, không bị thanh điều hướng che
+    const r2 = 26, ek = exterior ? EXT_Z * Math.max(0, Math.cos(az)) : 0, ex = CX + Math.sin(az) * ek, ez = Math.cos(az) * ek + CZ;   // xem ngoài: dời cả camera lẫn điểm nhìn về phía mặt đường để đường và xe nằm giữa màn hình, không bị thanh điều hướng che
     cam.position.set(ex + Math.sin(az) * Math.cos(el) * r2, Math.sin(el) * r2 + .8, ez + Math.cos(az) * Math.cos(el) * r2); cam.lookAt(ex, 1.0 + pan + (exterior ? TOP / 2 : 0), ez);
     cam.position.y += pan; cam.zoom = zoom;
     if (insTop || insBot) cam.setViewOffset(w, h, 0, (insBot - insTop) / 2, w, h); else cam.clearViewOffset();      // đẩy căn phòng vào giữa vùng không bị lớp phủ che

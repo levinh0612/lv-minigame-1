@@ -32,11 +32,12 @@ export function modal(html: string, cb?: () => void, lock = false) {
     if (!sc || sc.scrollHeight <= sc.clientHeight) e.preventDefault();
   }, { passive: false });
 }
-/* chỉ kéo ở phần đầu (thanh kéo + tiêu đề) mới đóng; phần giữa để cuộn nội dung */
+/* kéo xuống để đóng: chuột kéo ở phần đầu; cảm ứng vuốt xuống ở bất cứ đâu trong hộp (như iOS), miễn nội dung đang ở đầu
+   và không phải vuốt ngang (băng chuyền) hay đang chạm vào cảnh 3D / thanh trượt */
 function dragToClose(box: HTMLElement, head: HTMLElement) {
   let y0: number | null = null, dy = 0;
   head.addEventListener("pointerdown", e => {
-    if ((e.target as HTMLElement).closest("button, input, textarea, select, label")) return;
+    if (e.pointerType === "touch" || (e.target as HTMLElement).closest("button, input, textarea, select, label")) return;
     y0 = e.clientY; dy = 0; box.style.transition = "none"; head.setPointerCapture(e.pointerId);
   });
   head.addEventListener("pointermove", e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); box.style.transform = `translateY(${dy}px)`; });
@@ -45,6 +46,28 @@ function dragToClose(box: HTMLElement, head: HTMLElement) {
     if (dy > 70 && box.closest("#modal")) closeModal();
   };
   head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
+  let x1 = 0, y1 = 0, t1 = 0, on: boolean | null = false, d = 0;
+  box.addEventListener("touchstart", e => {
+    const t = e.target as HTMLElement, sc = t.closest<HTMLElement>(".mscroll");
+    on = e.touches.length === 1 && !t.closest("canvas, input[type=range], .nodrag") && (!sc || sc.scrollTop <= 0) ? null : false;
+    x1 = e.touches[0]!.clientX; y1 = e.touches[0]!.clientY; t1 = Date.now(); d = 0;
+  }, { passive: true });
+  box.addEventListener("touchmove", e => {
+    if (on === false) return;
+    const dx = e.touches[0]!.clientX - x1, dyy = e.touches[0]!.clientY - y1;
+    if (on === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dyy) < 8) return;
+      on = dyy > 0 && dyy > Math.abs(dx) * 1.2; if (!on) return;
+      box.style.transition = "none";
+    }
+    e.preventDefault(); d = Math.max(0, dyy); box.style.transform = `translateY(${d}px)`;
+  }, { passive: false });
+  const tend = () => {
+    if (on !== true) { on = false; return; }
+    on = false; box.style.transition = ""; box.style.transform = "";
+    if ((d > 90 || (d > 40 && Date.now() - t1 < 250)) && box.closest("#modal")) closeModal();
+  };
+  box.addEventListener("touchend", tend); box.addEventListener("touchcancel", tend);
 }
 /* trượt xuống rồi mới gỡ (hộp thoại mới mở ngay sau đó không bị ảnh hưởng) */
 function dismiss() {
