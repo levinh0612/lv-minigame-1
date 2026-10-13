@@ -67,3 +67,10 @@
 .slot.q6.ping{animation:q6ping .9s ease 2}
 @keyframes q6ping{50%{transform:scale(1.07);box-shadow:0 0 0 4px #CFC3F6}}
 @media (prefers-reduced-motion:reduce){.slot.q6.ping{animation:none;box-shadow:0 0 0 4px #CFC3F6}}
+/* thợ đang làm đơn: vùng chính chạm để nháy ghế, nút mắt bên phải để xem bé làm bánh */
+.crew .cm.wk{padding:0}
+.crew .cm.wk .cmo{all:unset;box-sizing:border-box;cursor:pointer;flex:1;min-width:0;display:flex;align-items:center;gap:7px;padding:4px 4px 4px 4px;border-radius:14px}
+.crew .cm.wk .cmo:focus-visible,.crew .cm.wk .cmw:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+.crew .cm.wk .cmw{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:30px;height:30px;margin-right:5px;border-radius:50%;display:grid;place-items:center;background:#EFEAFD;color:#6E58C0}
+.crew .cm.wk .cmw:active{transform:scale(.9)}
+.cm.squish .cmo>svg{animation:squish .45s cubic-bezier(.3,1.6,.5,1)}

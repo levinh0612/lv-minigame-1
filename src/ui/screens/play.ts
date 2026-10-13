@@ -240,6 +240,7 @@ export function toggleFold(key: string) {
 }
 
 /* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì (quản lý + linh vật đã nằm ở tiêu đề từng lầu) */
+const EYE = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>`;
 /* vị trí ghế: " · Bàn 2 · Lầu 1" (chỉ ghi lầu khi tiệm có nhiều lầu) */
 function seatPlace(sh: Shift, i: number) {
   const fl = floorGroups(sh), f = fl.find(x => x.tables.some(t => t.seats.includes(i))), t = f?.tables.find(x => x.seats.includes(i));
@@ -261,7 +262,9 @@ export function crewHTML(sh: Shift) {
     const sub = b && c ? `<small>→ ${esc(c.who)}${seatPlace(sh, b.seat)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
-    return `<button class="cm" data-crew="${id}" ${b && c ? `data-flash="${b.seat}"` : `data-watch="${id}"`} aria-label="${b && c ? `${esc(petName(id))} đang làm cho ${esc(c.who)}, chạm để xem ghế` : `Xem ${esc(petName(id))}`}">${(() => { const ei = entityInfo(id); return ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"); })()}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
+    const ei = entityInfo(id), av = ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"), nm = esc(petName(id));
+    if (b && c) return `<div class="cm wk" data-crew="${id}"><button class="cmo" data-flash="${b.seat}" aria-label="${nm} đang làm cho ${esc(c.who)}, chạm để xem ghế">${av}<div class="ct"><b>${nm}</b>${sub}</div></button><button class="cmw" data-watch="${id}" aria-label="Xem ${nm} làm bánh" title="Xem bé làm bánh">${EYE}</button>${cake}</div>`;
+    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${nm}">${av}<div class="ct"><b>${nm}</b>${sub}</div>${cake}</button>`;
   }).join("")}</div>`;
 }
 /* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
