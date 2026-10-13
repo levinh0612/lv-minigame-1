@@ -84,3 +84,12 @@
 .ichip:active,.ibtn:active{transform:scale(.97)}
 .ichip:focus-visible,.ibtn:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
 .ibtn{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:54px;border-radius:18px;background:#fff;box-shadow:0 2px 0 #EBD9C2;display:grid;place-items:center;color:#6E58C0}
+/* thẻ lựa chọn cách chơi trong dialog */
+.opts{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:18px;background:#fff;border:2px solid #EBD9C2;text-align:left}
+.opt .ot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.opt b{font:800 16px/1.1 var(--display);color:var(--ink2)}
+.opt em{font:800 11.5px/1 var(--body);font-style:normal;padding:4px 9px;border-radius:99px;background:#EEE6E9;color:#8F7A84}
+.opt small{font:700 13px/1.35 var(--body);color:var(--soft)}
+.opt.on{border-color:#5DBE95;background:#F2FBF6}.opt.on em{background:#5DBE95;color:#fff}
+.opt:active{transform:scale(.98)}.opt:focus-visible{outline:2px solid var(--pink);outline-offset:2px}

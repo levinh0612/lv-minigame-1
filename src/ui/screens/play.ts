@@ -320,14 +320,16 @@ function statsHTML(sh: Shift) {
     <div class="mbtns"><button class="b3" data-close>Xong</button></div>`;
 }
 export const openStats = () => { if (SH) modal(statsHTML(SH)); };
-/* cài đặt chơi: hai công tắc, đổi xong vẽ lại ngay trong dialog */
-const settingsHTML = () => `<h2>Cài đặt ca chơi</h2>
-  <p class="sub">Nhận dịch vụ: khách có thể xin gói quà hoặc giao hàng (bé phải chơi minigame).<br>Tự nhận đơn: làm xong đơn nào thì được gán đơn mới ngay; tắt thì các bé nhận hết, bạn chạm vào khách để tự làm.</p>
-  <div class="my-3 flex flex-col gap-2">${toggleHTML()}</div>
-  <div class="mbtns"><button class="b3" data-close>Xong</button></div>`;
+/* hai lựa chọn cách chơi: mỗi lựa chọn một thẻ bấm có giải thích rõ, đổi xong vẽ lại ngay trong dialog */
+const optHTML = () => {
+  const card = (act: string, on: boolean, title: string, onTxt: string, offTxt: string) =>
+    `<button class="opt ${on ? "on" : ""}" data-act="${act}" role="switch" aria-checked="${on}"><span class="ot"><b>${title}</b><em>${on ? "Đang bật" : "Đang tắt"}</em></span><small>${on ? onTxt : offTxt}</small></button>`;
+  return `<div class="opts">${card("auto", !!S.autoTake, "Tự nhận đơn", "Bạn làm xong đơn nào thì được gán đơn mới ngay. Các bé thợ vẫn phụ làm cho các khách còn lại.", "Các bé thợ nhận hết đơn, bạn rảnh tay. Muốn tự làm đơn nào thì chạm vào khách đó.")}
+    ${card("svc", svcOn(), "Nhận dịch vụ", "Khách có thể xin gói quà hoặc giao hàng. Bé phải chơi một minigame ngắn nhưng được thêm xu.", "Khách mới sẽ không xin gói quà hay giao hàng, ca chơi đơn giản hơn.")}</div>`;
+};
+const settingsHTML = () => `<h2>Cách chơi ca này</h2><p class="sub">Chạm vào từng thẻ để bật hoặc tắt.</p>${optHTML()}<div class="mbtns"><button class="b3" data-close>Xong</button></div>`;
 export const openSettings = () => modal(settingsHTML());
-/** công tắc trong dialog: bật tắt xong vẽ lại dialog, thanh dưới đổi nhãn theo */
-const refreshSettings = () => { const box = document.querySelector<HTMLElement>("#modal .mscroll"); if (box && box.querySelector(".tgs")) box.querySelector<HTMLElement>(".tgs")!.outerHTML = toggleHTML(); if (SH) setHTML($("#idle")!, idleHTML(SH)); };
+const refreshSettings = () => { const o = document.querySelector<HTMLElement>("#modal .opts"); if (o) o.outerHTML = optHTML(); if (SH) setHTML($("#idle")!, idleHTML(SH)); };
 function idleHTML(sh: Shift) {
   const busy = sh.seats.some(x => x && !x.gone && !x.by), any = sh.seats.some(x => x && !x.gone);
   const auto = !!S.autoTake;
