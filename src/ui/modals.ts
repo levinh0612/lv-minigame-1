@@ -3,7 +3,7 @@ import { ahead, diffLabels, lossLines, snapOf, type Snap } from "../engine/confl
 import { Sound, sfx, songName } from "../audio/sound";
 import { CFG, type EventKey, type PetId } from "../content/couple";
 import { FAME, FAME_AT, FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
-import { buyVenue, canAffordUpgrade, capacity, demand, fameParts, needUpgrade, recommendUpgrade, seatsNow, spots, tableLvs, upgradeOptions } from "../engine/economy";
+import { capacity, demand, fameParts } from "../engine/economy";
 import { addTickets } from "../engine/gacha";
 import { claimWelcome } from "../engine/economy";
 import { daysTogether, eventNote, todayEvents } from "../engine/dates";
@@ -12,7 +12,7 @@ import { closeEarly, type Customer } from "../engine/shift";
 import { S, loadState, resetState, save } from "../engine/state";
 import { fmtN, nameList, pick } from "../engine/util";
 import { cakeSVG, petSVG, foodSVG, guestSVG } from "./art";
-import { $, closeModal, confirmSpend, dropModal, esc, floatHearts, modal, toast } from "./dom";
+import { $, closeModal, dropModal, esc, floatHearts, modal, toast } from "./dom";
 import { render } from "./app";
 import { liveStats } from "./room3d";
 import { CHANGELOG } from "../content/roadmap";
@@ -385,41 +385,7 @@ export function rewardModal(c: { daily: number; comp: number }) {
 export function goalsSheet() { modal(`<h2>Mục tiêu</h2>${goalsBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }
 export function giftSheet() { modal(`<h2>Quà & thư</h2>${giftBody()}<div class="mbtns"><button class="b3 w" data-close>Đóng</button></div>`); }
 
-/* ===== Nâng cấp tiệm: mua bàn, xây lầu, mở rộng ngang =====
-   forced = khách đông hơn số bàn: không đóng được, phải chọn một cách nâng cấp (trừ khi không đủ xu cho cách nào) */
-const VENUE_OPT = {
-  table: { ic: "🪑", n: "Mua thêm bàn", d: () => `Bàn cấp 1 chứa 2 người · bàn thứ ${tableLvs().length + 1}, đang có ${tableLvs().length}/${spots()} chỗ đặt` },
-  up: { ic: "⭐", n: "Nâng cấp bàn", d: () => `Bàn cấp ${Math.min(...tableLvs())} lên cấp ${Math.min(...tableLvs()) + 1}: thêm 1 ghế, khách kiên nhẫn và tip nhiều hơn` },
-  floor: { ic: "🏢", n: "Xây thêm lầu", d: () => `Thêm ${4 + 2 * S.venue.wide} chỗ đặt bàn · lầu ${S.venue.floors + 1}` },
-  wide: { ic: "↔️", n: "Mở rộng cửa hàng", d: () => `Rộng và sâu thêm, mỗi lầu +2 chỗ đặt bàn · lần ${S.venue.wide + 1}` }
-} as const;
-const SPOT_FULL = "Hết chỗ đặt bàn, hãy xây lầu hoặc mở rộng";
-export function upgradeModal(forced = false, hint = false) {
-  const need = needUpgrade(), stuck = forced && !canAffordUpgrade(), rec = hint ? recommendUpgrade() : null;
-  const opts = upgradeOptions().map(o => {
-    const v = VENUE_OPT[o.id], poor = S.coins < o.cost;
-    return `<button class="vopt${rec?.id === o.id ? " rec" : ""}" data-venue="${o.id}:${forced ? 1 : 0}" ${!o.ok || poor ? "disabled" : ""}><span class="vi">${v.ic}</span><span class="vt"><b>${v.n}</b><small>${o.ok ? v.d() : o.id === "up" ? "Mọi bàn đã cấp cao nhất" : SPOT_FULL}</small></span><em>${fmtN(o.cost)} xu</em></button>`;
-  }).join("");
-  const foot = forced && !stuck ? "" : `<div class="mbtns">${stuck ? `<button class="b3" data-act="start-anyway">Chơi với ${seatsNow()} ghế</button>` : `<button class="b3" data-close>Đóng</button>`}</div>`;
-  modal(`<h2>${forced ? "Tiệm đông quá rồi!" : "Nâng cấp tiệm"}</h2><p class="sub">${need ? `Giờ cao điểm có ${demand()} khách mà tiệm chỉ có ${capacity()} ghế. ${forced ? "Phải nâng cấp mới mở cửa được." : "Nâng cấp để đón đủ khách."}` : `Tiệm có ${tableLvs().length} bàn · ${S.venue.floors} lầu · mở rộng ${S.venue.wide} lần.`}</p>
-    <div class="vstat"><span>🪑 Sức chứa ${capacity()} ghế</span><span>👥 Cao điểm ${demand()} khách</span><span>🏢 ${S.venue.floors} lầu</span><span>${tableLvs().length}/${spots()} chỗ đặt bàn</span></div>
-    ${hint ? `<p class="vhint">${rec ? `💡 <b>Nên chọn: ${VENUE_OPT[rec.id].n}.</b> ${rec.why}${rec.short ? ` Cần thêm ${fmtN(rec.short)} xu.` : ""}` : "💡 Tiệm đã nâng cấp tối đa, chưa cần đầu tư thêm."}</p>` : `<button class="vsug" data-act="venue-hint" data-forced="${forced ? 1 : 0}">💡 Đề xuất</button>`}
-    <div class="vopts">${opts}</div>${stuck ? `<p class="sub">Chưa đủ xu cho cách nào. Bán thêm bánh rồi quay lại nhé.</p>` : ""}${foot}`, undefined, forced && !stuck);
-}
-/** mua xong: còn thiếu bàn thì giữ hộp thoại bắt buộc, đủ rồi thì đóng */
-export function venueBuy(id: string, forced: boolean) {
-  const o = upgradeOptions().find(x => x.id === id), v = VENUE_OPT[id as keyof typeof VENUE_OPT];
-  if (o && v) return confirmSpend(o.cost, `${v.n}?`, () => doVenueBuy(id, forced));
-  doVenueBuy(id, forced);
-}
-function doVenueBuy(id: string, forced: boolean) {
-  if (!buyVenue(id as "table" | "up" | "floor" | "wide")) { toast("Không đủ xu"); return; }
-  sfx("level"); render(true);                           // trừ xu và dựng lại cảnh tiệm ngay, hộp thoại vẫn mở
-  toast(id === "table" ? "Đã thêm bàn!" : id === "up" ? "Đã nâng cấp bàn!" : id === "floor" ? "Đã xây thêm lầu!" : "Đã mở rộng cửa hàng!");
-  if (forced && needUpgrade()) return upgradeModal(true);
-  if (forced) { closeModal(); toast("Đủ bàn rồi, bắt đầu ca thôi!"); return; }
-  upgradeModal(false);
-}
+export { upgradeModal, venueBuy, venueGo, venueSel } from "./venue";
 
 /** chủ tiệm mở app thì biết có khách ghé thăm và gửi tiền mừng */
 export function visitGiftModal(gifts: { visitor: string; gift: number }[]) {

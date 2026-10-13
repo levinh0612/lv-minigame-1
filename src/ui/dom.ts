@@ -10,9 +10,12 @@ export const esc = (s: unknown) => String(s).replace(/[&<>"]/g, c => ({ "&": "&a
 let onClose: (() => void) | null = null;
 /* Hộp thoại kiểu iOS: trượt từ dưới lên, kéo thanh trên cùng xuống để đóng.
    lock = true: không có nút ✕, không đóng được bằng chạm nền hay kéo xuống, chỉ đóng bằng nút trong hộp thoại */
-export function modal(html: string, cb?: () => void, lock = false) {
+export function modal(html: string, cb?: () => void, lock = false, still = false) {
   onClose = cb || null;
-  $("#layer")!.innerHTML = `<div class="modal${lock ? " locked" : ""}" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="mhead"><div class="grabber" aria-hidden="true"></div>${lock ? "" : `<button class="mx" data-close aria-label="Đóng">✕</button>`}</div><div class="mscroll">${html}</div></div></div>`;
+  // still = true: cập nhật nội dung hộp đang mở, không chạy lại hiệu ứng trượt lên và giữ vị trí cuộn
+  const old = still ? $("#modal") : null, y0 = old?.querySelector(".mscroll")?.scrollTop ?? 0;
+  $("#layer")!.innerHTML = `<div class="modal${lock ? " locked" : ""}${old ? " still" : ""}" id="modal"><div class="mbox" role="dialog" aria-modal="true"><div class="mhead"><div class="grabber" aria-hidden="true"></div>${lock ? "" : `<button class="mx" data-close aria-label="Đóng">✕</button>`}</div><div class="mscroll">${html}</div></div></div>`;
+  if (old) $("#modal .mscroll")!.scrollTop = y0;
   document.documentElement.classList.add("mlock");        // khoá cuộn trang phía sau (iPhone kéo cả app)
   const box = $<HTMLElement>("#modal .mbox")!, head = box.querySelector(".mhead")!, body = box.querySelector(".mscroll")!;
   // tiêu đề (+ dòng mô tả ngay sau) lên phần đầu cố định; hàng nút cuối xuống phần chân cố định

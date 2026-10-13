@@ -22,7 +22,7 @@ import { myStats } from "./engine/stats";
 import { statsDialog } from "./ui/statsdlg";
 import { askVisit, visitStatsDialog } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
-import { accountPanel, adminPanel, claimGoals, fameModal, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
+import { accountPanel, adminPanel, claimGoals, fameModal, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, venueGo, venueSel, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
 import { flushSave, isLocked, loggedIn, pull, peekCloud, resolveConflict, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
 import { navigate } from "./ui/router";
@@ -137,7 +137,9 @@ document.addEventListener("click", e => {
   if (d.cedit) { sfx("click"); return openCustom(d.cedit); }
   if (d.rgacha) { sfx("click"); return openInGacha(d.rgacha); }
   if (d.visit) { sfx("click"); return void askVisit(d.visit); }
-  if (d.venue) { const [vid, f] = d.venue.split(":"); return venueBuy(vid, f === "1"); }
+  if (d.venue) return venueBuy(d.venue);
+  if (d.vsel) return venueSel(d.vsel);
+  if (d.vgo) return venueGo(d.vgo);
   if (d.meal) { const [pid, fid] = d.meal.split(":"); setMeal(pid as PetId, fid as FoodId); sfx("click"); return render(); }
   if (d.progtab) return progressAct("tab", d.progtab);
   if (d.pact) return progressAct("act", d.pact);

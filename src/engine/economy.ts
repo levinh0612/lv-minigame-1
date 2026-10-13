@@ -275,6 +275,68 @@ export function buyVenue(id: "table" | "up" | "floor" | "wide"): boolean {
   S.venue.tbl.sort((a, b) => b - a); save(); return true;
 }
 
+/* ===== Mua / nâng nhiều bàn một lần + lộ trình lên bậc danh tiếng kế ===== */
+/** giá đưa một bàn mới từ cấp 1 lên cấp lv */
+const raiseTo = (lv: number) => { let c = 0; for (let k = 1; k < lv; k++) c += SHOP.upCost(k); return c; };
+/** giá mua n bàn mới, mỗi bàn đặt ở cấp lv (giá bàn tăng dần theo số bàn, cộng giá nâng lên cấp lv) */
+export function quoteTables(n: number, lv: number) {
+  const have = tableLvs().length; let c = 0;
+  for (let i = 1; i <= n; i++) c += SHOP.tableCost(have + i) + raiseTo(lv);
+  return c;
+}
+export const maxTables = (lv: number) => { const room = spots() - tableLvs().length; let n = 0; while (n < room && quoteTables(n + 1, lv) <= S.coins) n++; return n; };
+export function buyTables(n: number, lv: number): boolean {
+  const cost = quoteTables(n, lv);
+  if (n < 1 || n > spots() - tableLvs().length || S.coins < cost) return false;
+  spend("venue", cost, `Mua ${n} bàn cấp ${lv}`);
+  for (let i = 0; i < n; i++) S.venue.tbl.push(lv);
+  S.venue.tbl.sort((a, b) => b - a); save(); return true;
+}
+export const tablesAt = (lv: number) => tableLvs().filter(x => x === lv).length;
+export const quoteUps = (from: number, n: number) => n * SHOP.upCost(from);
+export const maxUps = (from: number) => Math.min(tablesAt(from), Math.floor(S.coins / SHOP.upCost(from)));
+export function buyUps(from: number, n: number): boolean {
+  const cost = quoteUps(from, n);
+  if (from >= SHOP.maxLv || n < 1 || n > tablesAt(from) || S.coins < cost) return false;
+  spend("venue", cost, `Nâng ${n} bàn lên cấp ${from + 1}`);
+  for (let i = 0; i < n; i++) S.venue.tbl[S.venue.tbl.indexOf(from)]!++;
+  S.venue.tbl.sort((a, b) => b - a); save(); return true;
+}
+/** điểm danh tiếng mỗi lựa chọn cộng thêm (đồng bộ venueFame) */
+export const FAME_GAIN = { table: (lv: number) => (lv - 1) * 0.25, up: 0.25, floor: 0.8, wide: 0.5 };
+export type Step = { id: "table" | "up" | "floor" | "wide"; n: number };
+/** lộ trình rẻ nhất (tham lam) để đủ ghế rồi lên bậc danh tiếng kế: mô phỏng trên bản sao, không đụng trạng thái thật */
+export function planToNext(): { steps: Step[]; cost: number; to: string | null } | null {
+  const f = fameParts();
+  const tbl = [...tableLvs()]; let floors = S.venue.floors, wide = S.venue.wide, score = f.score, cost = 0, guard = 0;
+  const seatsNeed = () => demand() - tbl.reduce((a, l) => a + SHOP.seatsOf(l), 0);
+  const raw: Step["id"][] = [];
+  const done = () => seatsNeed() <= 0 && (f.nextAt == null || score >= f.nextAt);
+  if (done()) return null;
+  while (!done() && guard++ < 60) {
+    const sp = floors * (SHOP.perFloor + SHOP.perWide * wide) - tbl.length, gap = seatsNeed();
+    const lowLv = Math.min(...tbl), cands: { id: Step["id"]; c: number; seats: number; pts: number }[] = [];
+    if (sp > 0) cands.push({ id: "table", c: SHOP.tableCost(tbl.length + 1), seats: SHOP.seatsOf(1), pts: 0 });
+    if (lowLv < SHOP.maxLv) cands.push({ id: "up", c: SHOP.upCost(lowLv), seats: 1, pts: 0.25 });
+    cands.push({ id: "floor", c: SHOP.floorCost(floors - 1), seats: 0, pts: 0.8 }, { id: "wide", c: SHOP.wideCost(wide), seats: 0, pts: 0.5 });
+    const need = gap > 0 ? cands.filter(x => x.seats > 0) : cands.filter(x => x.pts > 0);
+    const pool = need.length ? need : cands;
+    pool.sort((a, b) => (gap > 0 && need.length ? a.c / a.seats - b.c / b.seats : a.c / a.pts - b.c / b.pts));
+    const best = pool[0]!; raw.push(best.id); cost += best.c;
+    if (best.id === "table") tbl.push(1); else if (best.id === "up") { tbl[tbl.indexOf(lowLv)]!++; score += 0.25; } else if (best.id === "floor") { floors++; score += 0.8; } else { wide++; score += 0.5; }
+    tbl.sort((a, b) => b - a);
+  }
+  if (!raw.length) return null;
+  const steps: Step[] = [];
+  raw.forEach(id => { const l = steps[steps.length - 1]; if (l && l.id === id) l.n++; else steps.push({ id, n: 1 }); });
+  return { steps, cost, to: f.next ? f.next.n : null };
+}
+/** làm theo lộ trình: mua lần lượt từng bước, dừng nếu hết xu */
+export function runPlan(steps: Step[]): boolean {
+  for (const st of steps) for (let i = 0; i < st.n; i++) if (!buyVenue(st.id)) return false;
+  return true;
+}
+
 /* ===== Tài sản (bảng xếp hạng): xu + đồ trang trí đã mua + nguyên liệu trong kho + đồ ăn trong tủ ===== */
 export function netWorth() {
   const decor = S.owned.reduce((a, id) => { const [k, v] = id.split(":"); return a + (roomItem(k as RoomKey, v).cost || 0); }, 0);
