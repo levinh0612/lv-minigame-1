@@ -418,4 +418,5 @@ export function fameModal() {
     <div class="fm-ladder">${FAME.map((x, i) => { const at = i ? FAME_AT[i - 1]! : 0, st = i < f.level ? "done" : i === f.level ? "now" : "";
       return `<div class="fm-step ${st}"><span>${i < f.level ? "✓" : i === f.level ? "★" : i + 1}</span><b>${esc(x.n)}</b><small>từ ${at.toFixed(1).replace(".", ",")} điểm</small><em>${x.seats} khách</em></div>`; }).join("")}</div>
     <div class="mbtns"><button class="b3" data-act="venue">Nâng cấp tiệm</button><button class="b3 w" data-close>Đóng</button></div>`);
+  document.querySelector(".fm-step.now")?.scrollIntoView({ block: "center" });      // 100 bậc: mở ra là thấy ngay bậc đang đứng
 }

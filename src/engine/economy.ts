@@ -13,7 +13,7 @@ export const packPrice = (k: StockKey, i: number, n: number) => Math.ceil(unitCo
 export const quickPrice = (k: StockKey, i: number) => Math.ceil(unitCost(k, i) * QUICK_MULT);
 export const stockOf = (k: StockKey, i: number) => S.stock[k][i] ?? 0;
 /** trần khách mỗi ca: 30, nổi tiếng từ bậc 2 trở đi thì tăng thêm 6 mỗi bậc (tối đa 56 ở bậc Huyền thoại) */
-export const customerCap = (fl = fameLevel()) => Math.max(30, 20 + 6 * fl);
+export const customerCap = (fl = fameLevel()) => Math.max(30, fl <= 16 ? 20 + 6 * fl : 116 + 2 * (fl - 16));   // từ bậc 17 tăng chậm lại để ca không dài vô tận
 export const expectedCustomers = () => Math.min(customerCap(), 6 + lvl() + fx("cust") + fameLevel() * 2);
 
 export function buy(k: StockKey, i: number, n: number, price = packPrice(k, i, n), cat: "stock" | "quick" = "stock", log = true): boolean {

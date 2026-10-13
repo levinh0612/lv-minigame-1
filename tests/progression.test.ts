@@ -124,3 +124,19 @@ describe("nhịp khách đến theo bậc danh tiếng", () => {
     v.slice(1).forEach((x, i) => expect(x).toBeLessThanOrEqual(v[i]!));
   });
 });
+
+describe("100 bậc danh tiếng", () => {
+  it("đủ 100 bậc, tên không trùng, điểm và khách cao điểm tăng dần", async () => {
+    const { FAME, FAME_AT } = await import("../src/content/game");
+    expect(FAME.length).toBe(100);
+    expect(FAME_AT.length).toBe(99);
+    expect(new Set(FAME.map(x => x.n)).size).toBe(100);
+    FAME_AT.slice(1).forEach((x, i) => expect(x).toBeGreaterThan(FAME_AT[i]!));
+    FAME.slice(1).forEach((x, i) => expect(x.seats).toBeGreaterThan(FAME[i]!.seats));
+  });
+  it("giá lầu và mở rộng không tụt khi qua mốc đổi công thức", async () => {
+    const { SHOP } = await import("../src/content/game");
+    for (let b = 1; b < 30; b++) { expect(SHOP.floorCost(b)).toBeGreaterThan(SHOP.floorCost(b - 1)); expect(SHOP.wideCost(b)).toBeGreaterThan(SHOP.wideCost(b - 1)); }
+    expect(SHOP.floorCost(3)).toBe(8000); expect(SHOP.wideCost(6)).toBe(128000);
+  });
+});

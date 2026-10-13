@@ -183,14 +183,19 @@ const BAKE_TEXT = BAKE_TIME.map(t => `Tự nhận đơn, ${String(t).replace("."
 /* Độ nổi tiếng: càng nổi tiếng càng nhiều bàn, khách đến càng dày */
 /* Bậc danh tiếng: số khách ngồi cùng lúc giờ cao điểm. Điểm danh tiếng = sao (0..3) + trang trí 0,4/món + cấp người chơi 0,3/cấp (cấp 100 được ~29,7) + đầu tư tiệm,
    nên các bậc cuối rải theo cấp: bậc Huyền thoại quanh cấp 40, các bậc sau cần cả cấp cao lẫn đầu tư thêm lầu, bàn, trang trí. */
+const FAME_LATE = [
+  "Đế chế matcha", "Đế quốc bánh ngọt", "Thiên đường bánh", "Cung điện đường mật", "Lâu đài kem bông", "Vương miện ẩm thực", "Báu vật quốc gia", "Di sản văn hóa", "Di sản thế giới", "Niềm tự hào dân tộc", "Biểu tượng thời đại", "Kỷ nguyên bánh ngọt", "Huyền thoại sống", "Bậc thầy vị giác", "Đại sư hương vị", "Thánh đường vị giác", "Đỉnh cao vị giác", "Nghệ nhân vàng", "Đầu bếp của các vì sao", "Ngôi sao mai", "Ngôi sao sáng", "Chòm sao bánh ngọt", "Thiên thạch ngọt ngào", "Sao chổi matcha", "Tinh vân kem tươi", "Dải ngân hà ngọt", "Thiên hà matcha", "Vũ trụ bánh ngọt", "Đa vũ trụ vị ngọt", "Hành tinh matcha", "Mặt trăng caramel", "Mặt trời bánh ngọt", "Cực quang đường", "Huyền thoại nửa đường", "Rồng vàng bánh ngọt", "Phượng hoàng kem", "Kỳ lân matcha", "Thần long ẩm thực", "Linh thú bảo hộ", "Thần giữ lửa lò", "Thần bếp", "Thần bánh", "Thần matcha", "Thần đường", "Vị thần ngọt ngào", "Thần thoại phố bánh", "Thần thoại thế giới", "Anh hùng vị giác", "Quán quân muôn thuở", "Kỷ lục gia thế giới", "Kỷ lục vũ trụ", "Bất khả chiến bại", "Vô địch thiên hạ", "Thiên hạ đệ nhất bánh", "Đệ nhất thiên hạ vị", "Chí tôn matcha", "Chí tôn bánh ngọt", "Hoàng đế vị giác", "Đại đế đường mật", "Thiên đế kem tươi", "Ngọc hoàng bánh ngọt", "Tiên bánh giáng trần", "Tiên matcha", "Cõi tiên ngọt ngào", "Bồng lai vị ngọt", "Thiên giới bánh ngọt", "Thiên cung matcha", "Cửu trùng ngọt ngào", "Tầng trời thứ chín", "Hào quang vĩnh cửu", "Ánh sáng bất diệt", "Muôn đời bất diệt", "Vĩnh hằng matcha", "Vĩnh hằng bánh ngọt", "Bất tử bánh ngọt", "Nguồn cội vị ngọt", "Khởi nguyên matcha", "Tinh hoa tối thượng", "Tối thượng bánh ngọt", "Tối thượng matcha", "Đỉnh cao vô cực", "Vô cực ngọt ngào", "Vua của mọi tiệm bánh"
+];   // tên 83 bậc cuối
 export const FAME = [
   { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Được săn đón", seats: 6 },
   { n: "Nổi như cồn", seats: 8 }, { n: "Địa điểm check-in", seats: 10 }, { n: "Huyền thoại", seats: 12 },
   { n: "Biểu tượng phố bánh", seats: 14 }, { n: "Điểm đến cả nước", seats: 16 }, { n: "Thánh địa matcha", seats: 18 }, { n: "Kỳ quan bánh ngọt", seats: 20 },
   { n: "Thương hiệu quốc tế", seats: 23 }, { n: "Điểm đến thế giới", seats: 26 }, { n: "Siêu sao ẩm thực", seats: 30 }, { n: "Thần tượng bánh ngọt", seats: 34 },
-  { n: "Truyền kỳ bất diệt", seats: 38 }, { n: "Vương quốc matcha", seats: 42 }
+  { n: "Truyền kỳ bất diệt", seats: 38 }, { n: "Vương quốc matcha", seats: 42 },
+  ...FAME_LATE.map((n, i) => ({ n, seats: 44 + 2 * i }))      // bậc 18 đến 100: mỗi bậc thêm 2 khách cao điểm
 ];
-export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 44];     // điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi)
+/** điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi): bậc 1 đến 16 như cũ, từ bậc 17 mỗi bậc cần thêm 2 điểm */
+export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 44, ...FAME_LATE.map((_, i) => 46 + 2 * i)];
 /* Sức chứa tiệm: viral = số khách giờ cao điểm. Mỗi bàn có cấp 1..3 và chứa 2/3/4 người (mỗi người một ghế).
    Mỗi lầu có 4 chỗ đặt bàn, mở rộng ngang thêm 1 chỗ mỗi lầu. */
 export const SHOP = {
@@ -198,8 +203,8 @@ export const SHOP = {
   seatsOf: (lv: number) => 1 + lv,
   tableCost: (n: number) => (n <= 2 ? 0 : n === 3 ? 300 : n === 4 ? 600 : n === 5 ? 1000 : 1000 + (n - 5) * 500),   // giá bàn thứ n
   upCost: (lv: number) => (lv <= 1 ? 400 : 800),                // nâng bàn từ cấp lv lên cấp lv + 1
-  floorCost: (built: number) => 1000 * 2 ** built,      // xây thêm lầu: lần 1 là 1.000, rồi gấp đôi
-  wideCost: (built: number) => 2000 * 2 ** built        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
+  floorCost: (built: number) => (built <= 9 ? 1000 * 2 ** built : 512000 * (built - 8)),      // xây thêm lầu: lần 1 là 1.000, rồi gấp đôi
+  wideCost: (built: number) => (built <= 9 ? 2000 * 2 ** built : 1024000 * (built - 8))        // mở rộng ngang: lần 1 là 2.000, rồi gấp đôi (đắt hơn lầu)
 };
 export type StaffId = string;     // 3 bé thợ bánh (PetId) hoặc id linh thú Gacha đã thuê
 /* Linh thú Gacha làm nhân viên: ăn và nhận thưởng như các bé, trả phí thuê một lần (đắt) và đổi lại mỗi bánh bé làm ra bán được giá hơn + tip.
