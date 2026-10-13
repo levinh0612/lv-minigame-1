@@ -261,7 +261,7 @@ export function createShop(o: ShopOpts): ShopScene {
   for (let k = 0; k < wide; k++) STATIONS[k % STATIONS.length]!(3.2 + 2 * k);
 
   /* tủ kính bánh: tủ đứng sát tường Tây, mặt kính quay ra phòng */
-  const caseG = new THREE.Group(); caseG.position.set(-3.35, 0, 2.05); root.add(caseG);
+  const caseG = new THREE.Group(); caseG.position.set(-3.35, 0, 1.5); root.add(caseG);
   const wood = counterBits.wood = T(R.counter === "mint" ? "#B6E6CF" : R.counter === "cafe" ? "#A06B45" : "#E9B98A");
   add(caseG, RB(.06, 1.0, 1.5, .02), T("#FFF3E4", { emissive: new THREE.Color("#FFE9C8"), emissiveIntensity: .55 }), -.45, .55, 0, { ol: "mid" });   // lưng tủ sáng nhẹ để thấy bánh bên trong
   ([-1, 1] as const).forEach(sd => add(caseG, RB(.95, 1.0, .06, .02), wood, 0, .55, sd * .72, { ol: "mid" }));
@@ -290,7 +290,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const decAnchor = (parent: THREE.Object3D, x: number, y: number, z: number) => { const a = new THREE.Object3D(); a.position.set(x, y, z); parent.add(a); return a; };
   const decHs = (k: string, label: string, obj: THREE.Object3D, wall: number | null, dy: number) => hotspots.push({ id: "dec-" + k, attr: "data-ddec", value: k, label, obj, wall, dy, on: () => cur[k] !== "0" });
   decHs("rug", "Chỉnh thảm", decAnchor(root, .3, .05, .95), null, 0);
-  decHs("plant", "Chỉnh cây", decAnchor(root, -3.5, .7, 2.5), null, 0);
+  decHs("plant", "Chỉnh cây", decAnchor(root, -2.5, .7, 2.75 + DD), null, 0);
   hotspots.push({ id: "dec-plant2", attr: "data-ddec", value: "plant", label: "Chỉnh cây", obj: decAnchor(root, 3.55 + (W - W0), .7, 2.8 + DD), wall: null, dy: 0, on: () => cur.plant !== "0" });
   decHs("lamp", "Chỉnh đèn", decAnchor(root, -.8, 2.1, -1.0), null, 0);
   decHs("wallItem", "Chỉnh đồ treo tường", frameAnchor, wi(wN), 0);
@@ -301,7 +301,6 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* đồ thêm theo thiết kế quán mới, đặt vào các chỗ trống: lò gạch + bàn trưng bánh (tường Tây), sofa (tường Đông), kệ gỗ + hộp hoa (tường Bắc), rào trắng */
   const WD = "#A06B45", WDD = "#6E452B", RDC = "#C8344E", CRM = "#FFF4EA", glowM = lantM;
-  const xe = W / 2 + CX;     // x của tường Đông (đổi theo mức mở rộng)
   {  // tủ lạnh trắng, góc Tây Bắc cạnh quầy
     const g = new THREE.Group(); g.position.set(-3.65, 0, -2.6); root.add(g);
     add(g, RB(.6, 1.7, .6, .08), T("#FFFFFF"), 0, .85, 0, { ol: "mid" }); add(g, RB(.62, .03, .62, .01), T("#C9C4C0"), 0, 1.15, 0, { ol: null });
@@ -319,8 +318,8 @@ export function createShop(o: ShopOpts): ShopScene {
     add(g, RB(.6, .07, .8, .03), T(WD), 0, .8, 0, { ol: "thin" }); ([[-.24, -.34], [.24, -.34], [-.24, .34], [.24, .34]] as const).forEach(([dx, dz]) => add(g, RB(.07, .8, .07, .01), T(WDD), dx, .4, dz, { ol: null }));
     [-.18, .2].forEach((dz, i) => { const c = cake(i, (i + 1) % 3, (i + 2) % 3, .55); c.position.set(0, .84, dz); g.add(c); });
   }
-  {  // sofa cong dựa tường Đông (quay mặt vào phòng)
-    const g = new THREE.Group(); g.position.set(xe - .55, 0, .75); g.visible = floors === 1; g.scale.z = .85; root.add(g);
+  {  // sofa dựa tường Nam ở góc Tây Nam, đối diện cầu thang
+    const g = new THREE.Group(); g.position.set(-3.4, 0, 2.6 + DD); g.rotation.y = -Math.PI / 2; g.scale.z = .65; root.add(g);
     add(g, RB(.8, .4, 1.7, .06), T(WD), 0, .22, 0, { ol: "mid" }); add(g, RB(.22, .85, 1.7, .06), T(WD), .3, .75, 0, { ol: "mid" });
     add(g, RB(.62, .2, 1.5, .08), T(RDC), -.04, .5, 0, { ol: "thin" }); add(g, RB(.12, .6, 1.5, .08), T("#E35A78"), .22, .85, 0, { ol: "thin" });
     [-.7, .7].forEach(dz => add(g, RB(.8, .56, .16, .05), T(WD), 0, .5, dz, { ol: "thin" }));
@@ -330,8 +329,6 @@ export function createShop(o: ShopOpts): ShopScene {
     ([-2.0, 2.3] as const).forEach(wx => { const x = wx - 0; add(wN.decor, RB(1.4, .18, .28, .03), T(WD, { transparent: true }), x, 1.04, .3, { ol: "thin" }); [-.5, -.17, .17, .5].forEach((dx, i) => add(wN.decor, SPH(.1, 8, 6), T(["#FF8FAB", "#FFE8A8", "#fff", "#FF6F9B"][i]!, { transparent: true }), x + dx, 1.2 + (i % 2) * .04, .3, { ol: null, cast: false })); });
     const kx = -3.4; add(wN.decor, RB(.9, .06, .3, .02), T(WD, { transparent: true }), kx, 1.85, .2, { ol: "thin" }); [-.28, 0, .28].forEach((dx, i) => add(wN.decor, CYL(.08, .08, .2, 10), T(i % 2 ? "#F7D9E2" : CRM, { transparent: true }), kx + dx, 1.98, .2, { ol: "thin" }));
   }
-  { const fn = new THREE.Group(); fn.position.set(-3.45, 0, ZS - .3); root.add(fn);   // rào trắng nhỏ cạnh cây góc Tây Nam
-    for (let i = 0; i < 4; i++) add(fn, RB(.1, .5, .05, .01), T("#FFF6F2"), i * .26 - .4, .27, 0, { ol: "thin" }); add(fn, RB(1.0, .06, .05, .01), T("#FFF6F2"), 0, .38, 0, { ol: null }); }
 
   /* thú cưng + chủ tiệm */
   const petMeta: [PetKind, number, string][] = [["dog", -2.9, "dog"], ["gold", -1.6, "gold"], ["white", -.3, "white"]];
@@ -485,7 +482,7 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* bóng tiếp đất cho đồ vật để không bị "dán" lên sàn */
   const blob = (x: number, z: number, rx: number, rz = rx, a = 1, par: THREE.Object3D = root) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(rx * 2, rz * 2), new THREE.MeshBasicMaterial({ map: blobMap(), transparent: true, opacity: a, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .014, z); par.add(m); };
-  blob(-.8, -1.55, 2.9, .85, .8); placed0.forEach(t => blob(t.x, t.z, .95, .95, 1, flG[0])); blob(-3.3, 2.05, .85, 1.1);
+  blob(-.8, -1.55, 2.9, .85, .8); placed0.forEach(t => blob(t.x, t.z, .95, .95, 1, flG[0])); blob(-3.3, 1.5, .85, 1.1);
   tbls.flat().forEach(st => blob(st.x, st.z, .4, .4, 1, flG[0])); [-2.6, -1.2, .2, 1.4].forEach(x => blob(x, -.95, .38, .38, .7));
   /* các lầu trên: cùng vỏ nhà, chỉ có bàn ghế riêng và đèn riêng; xem từng lầu bằng nút chuyển tầng */
   /* cầu thang nối các lầu (góc đông bắc): lầu dưới và lầu giữa có bậc đi lên, lầu trên cùng có miệng cầu thang xuống kèm lan can */
@@ -554,7 +551,7 @@ export function createShop(o: ShopOpts): ShopScene {
       for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; add(plantG, SPH(.3 * s, 12, 8), T("#6FB27A"), x + Math.cos(a) * .3 * s, 1.45 * s, z + Math.sin(a) * .3 * s, { s: [1, .22, .42], r: [0, -a, -.35], ol: "thin" }); }
     }
   };
-  const buildPlants = () => { plantAt(3.55 + (W - W0), 2.8 + DD, 1.1); plantAt(-3.5, 2.5 + DD, .9); }; buildPlants();
+  const buildPlants = () => { plantAt(3.55 + (W - W0), 2.8 + DD, 1.1); plantAt(-2.5, 2.75 + DD, .8); }; buildPlants();
 
   /* đèn */
   const lamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
