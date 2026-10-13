@@ -168,6 +168,7 @@ export function createShop(o: ShopOpts): ShopScene {
     }; bc(); curtainBuilds.push([cg, bc]);
   }
   windowOn(wN, -2.0); windowOn(wN, 2.3); windowOn(wW, .3);
+  { const ex = W - W0, n = Math.ceil(ex / 3); for (let k = 1; k <= n; k++) windowOn(wN, 2.3 + ex / n * k); }   // tường sau rộng ra thì thêm cửa sổ cho đỡ trống
 
   /* đồ treo tường: ảnh / khung đôi / đồng hồ mèo */
   const photoTex = o.photo ? (() => { const t = new THREE.TextureLoader().load(o.photo); t.colorSpace = THREE.SRGBColorSpace; disposables.push(t); return t; })() : null;
@@ -217,10 +218,11 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* quầy + máy tính tiền */
   const [c1, c2] = COUNTER_C[R.counter] || COUNTER_C.pink, cm1 = sel("counter", T(c1)), cm2 = sel("counter", T(c2));
-  add(root, RB(5, 1.0, .95, .04), cm1, -.8, .5, -1.9, { ol: "mid" });
-  for (let i = 0; i < 5; i++) add(root, RB(.8, .62, .02, .01), cm2, -2.8 + i * 1.0, .5, -1.4, { ol: null });
-  counterBits.top = T(R.counter === "mint" ? "#F2FBF6" : "#FFF8F0"); add(root, RB(5.15, .1, 1.1, .03), counterBits.top, -.8, 1.04, -1.9, { ol: "mid" });
-  [-2.6, -1.2, .2, 1.4].forEach(x => { add(root, CYL(.26, .24, .1, 22), T("#E8A0B4"), x, .7, -.95, { ol: "thin" }); add(root, CYL(.04, .04, .6, 10), T("#B98450"), x, .38, -.95, { ol: "thin" }); add(root, CYL(.2, .22, .04, 18), T("#B98450"), x, .04, -.95, { ol: "thin" }); });
+  const QX = W - W0;   // quầy dài thêm bằng phần phòng rộng ra
+  add(root, RB(5 + QX, 1.0, .95, .04), cm1, -.8 + QX / 2, .5, -1.9, { ol: "mid" });
+  for (let i = 0; i < 5 + QX; i++) add(root, RB(.8, .62, .02, .01), cm2, -2.8 + i * 1.0, .5, -1.4, { ol: null });
+  counterBits.top = T(R.counter === "mint" ? "#F2FBF6" : "#FFF8F0"); add(root, RB(5.15 + QX, .1, 1.1, .03), counterBits.top, -.8 + QX / 2, 1.04, -1.9, { ol: "mid" });
+  [-2.6, -1.2, .2, 1.4, ...Array.from({ length: Math.floor(QX / 1.4) }, (_, k) => 2.8 + 1.4 * k)].forEach(x => { add(root, CYL(.26, .24, .1, 22), T("#E8A0B4"), x, .7, -.95, { ol: "thin" }); add(root, CYL(.04, .04, .6, 10), T("#B98450"), x, .38, -.95, { ol: "thin" }); add(root, CYL(.2, .22, .04, 18), T("#B98450"), x, .04, -.95, { ol: "thin" }); });
   add(root, RB(.4, .3, .35, .03), T("#fff"), 1.65, 1.24, -1.85, { ol: "thin" }); add(root, RB(.34, .22, .03, .01), T("#3E5F48"), 1.65, 1.38, -1.7, { ol: null });
 
   /* tủ kính bánh: tủ đứng sát tường Tây, mặt kính quay ra phòng */
@@ -272,9 +274,12 @@ export function createShop(o: ShopOpts): ShopScene {
   const tableC = R.floor === "wood" ? "#C98E5A" : "#E9B98A", topC = R.counter === "mint" ? "#E4F6EC" : "#fff";
   const flG = Array.from({ length: floors }, () => { const g = new THREE.Group(); root.add(g); return g; });   // bàn ghế của từng lầu
   let curFloor = 0;
-  function table(x: number, z: number, seats: [string, number][], r = 1, par: THREE.Object3D = flG[0]!) {
+  function table(x: number, z: number, seats: [string, number][], r = 1, par: THREE.Object3D = flG[0]!, lv = 1) {
     const tt = T(topC), tl = T(tableC); tableTops.push(tt); tableLegs.push(tl);
-    add(par, CYL(.64 * r, .64 * r, .09, 36), tt, x, .78, z, { ol: "mid" }); add(par, CYL(.08, .1, .72, 14), tl, x, .38, z, { ol: "thin" }); add(par, CYL(.34 * r, .38 * r, .05, 26), tl, x, .03, z, { ol: "thin" });
+    add(par, CYL(.64 * r, .64 * r, .09, 36), tt, x, .78, z, { ol: "mid" });
+    if (lv >= 2) add(par, CYL(.64 * r + .03, .64 * r + .03, .03, 36), T(lv >= 3 ? "#E9C46A" : "#F29AB2"), x, .73, z, { ol: "thin" });   // viền màu quanh mặt bàn: hồng (cấp 2), vàng (cấp 3)
+    if (lv >= 3) add(par, CYL(.4 * r, .4 * r, .02, 28), T("#FF8FAB"), x, .835, z, { ol: null });   // khăn trải bàn cấp 3
+    if (lv >= 2) { add(par, CYL(.05, .06, .16, 10), T("#BFE6FF"), x + .3 * r, .9, z - .2 * r, { ol: "thin" }); add(par, SPH(.09, 10, 8), T(lv >= 3 ? "#FFD166" : "#FF8FAB"), x + .3 * r, 1.03, z - .2 * r, { ol: "thin" }); }   // bình hoa add(par, CYL(.08, .1, .72, 14), tl, x, .38, z, { ol: "thin" }); add(par, CYL(.34 * r, .38 * r, .05, 26), tl, x, .03, z, { ol: "thin" });
     return seats.map(([c, a]) => { const cx = x + Math.sin(a) * (.5 + .5 * r), cz = z + Math.cos(a) * (.5 + .5 * r), ch = new THREE.Group(); ch.position.set(cx, 0, cz); ch.rotation.y = a + Math.PI; par.add(ch);
       add(ch, RB(.46, .09, .46, .04), T(c), 0, .5, 0, { ol: "thin" }); add(ch, RB(.46, .5, .07, .03), T("#B98450"), 0, .8, -.2, { ol: "thin" });
       ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T("#B98450"), dx, .23, dz, { ol: null })); return { x: cx, z: cz, a: a + Math.PI }; });
@@ -291,8 +296,8 @@ export function createShop(o: ShopOpts): ShopScene {
     if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
     const cols = Math.max(2, Math.ceil(lvs.length / ROWS)), step = (W - 5.1) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
     return lvs.map((lv, i) => {
-      const x = -1.9 + step * (i % cols), z = ROWZ(Math.floor(i / cols)), r = .6 + .1 * lv, par = flG[f]!;
-      const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par);
+      const row = Math.floor(i / cols), inRow = Math.min(cols, lvs.length - row * cols), x = -1.9 + (W - 5.1) / 2 + ((i % cols) - (inRow - 1) / 2) * step, z = ROWZ(row), r = .6 + .1 * lv, par = flG[f]!;
+      const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par, lv);
       const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return { x, z, chairs };
     });
   };
