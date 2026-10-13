@@ -181,11 +181,16 @@ export const BAKE_TIME = [10, 7.5, 5, 3.5, 2.5, 2.2, 1.9, 1.7, 1.5, 1.3];
 export const MAX_STAFF_LV = BAKE_TIME.length;
 const BAKE_TEXT = BAKE_TIME.map(t => `Tự nhận đơn, ${String(t).replace(".", ",")} giây một bánh`);
 /* Độ nổi tiếng: càng nổi tiếng càng nhiều bàn, khách đến càng dày */
+/* Bậc danh tiếng: số khách ngồi cùng lúc giờ cao điểm. Điểm danh tiếng = sao (0..3) + trang trí 0,4/món + cấp người chơi 0,3/cấp (cấp 100 được ~29,7) + đầu tư tiệm,
+   nên các bậc cuối rải theo cấp: bậc Huyền thoại quanh cấp 40, các bậc sau cần cả cấp cao lẫn đầu tư thêm lầu, bàn, trang trí. */
 export const FAME = [
   { n: "Mới mở", seats: 3 }, { n: "Được biết đến", seats: 4 }, { n: "Đang hot", seats: 5 }, { n: "Được săn đón", seats: 6 },
-  { n: "Nổi như cồn", seats: 8 }, { n: "Địa điểm check-in", seats: 10 }, { n: "Huyền thoại", seats: 12 }
+  { n: "Nổi như cồn", seats: 8 }, { n: "Địa điểm check-in", seats: 10 }, { n: "Huyền thoại", seats: 12 },
+  { n: "Biểu tượng phố bánh", seats: 14 }, { n: "Điểm đến cả nước", seats: 16 }, { n: "Thánh địa matcha", seats: 18 }, { n: "Kỳ quan bánh ngọt", seats: 20 },
+  { n: "Thương hiệu quốc tế", seats: 23 }, { n: "Điểm đến thế giới", seats: 26 }, { n: "Siêu sao ẩm thực", seats: 30 }, { n: "Thần tượng bánh ngọt", seats: 34 },
+  { n: "Truyền kỳ bất diệt", seats: 38 }, { n: "Vương quốc matcha", seats: 42 }
 ];
-export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13];     // điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi)
+export const FAME_AT = [3, 4.5, 6, 8, 10.5, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 44];     // điểm nổi tiếng cần để lên từng bậc (bậc 1 trở đi)
 /* Sức chứa tiệm: viral = số khách giờ cao điểm. Mỗi bàn có cấp 1..3 và chứa 2/3/4 người (mỗi người một ghế).
    Mỗi lầu có 4 chỗ đặt bàn, mở rộng ngang thêm 1 chỗ mỗi lầu. */
 export const SHOP = {

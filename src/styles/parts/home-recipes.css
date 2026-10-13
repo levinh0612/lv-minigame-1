@@ -247,3 +247,13 @@
 .fm-next{margin:8px 0 0;font:700 12.5px var(--body);color:var(--soft)}.fm-warn{margin:8px 0 0;padding:8px 10px;border-radius:14px;background:#FFF1E0;font:800 12.5px var(--body);color:#B5651D}
 .fm-box,.fm-row,.fm-next,.fm-warn{text-align:left}.fm-row span{align-items:flex-start}
 .rc5 .cst{display:inline-flex;font:900 11px/1 var(--body);letter-spacing:1px}.rc5 .cst i{font-style:normal;color:#E0D2C8}.rc5 .cst i.on{color:#F2B84B}
+
+/* thang bậc danh tiếng trong dialog Khách cao điểm */
+.fm-ladder{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.fm-step{display:grid;grid-template-columns:24px 1fr auto auto;align-items:center;gap:8px;padding:6px 10px;border-radius:12px;background:#F6F1F3;text-align:left;opacity:.75}
+.fm-step span{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:800 11px var(--body);background:#E6DDE1;color:#8F7A84}
+.fm-step b{font:800 13px/1.2 var(--body);color:var(--ink2);min-width:0}
+.fm-step small{font:700 11.5px var(--body);color:var(--soft);white-space:nowrap}
+.fm-step em{font:800 12px var(--body);font-style:normal;color:#E5486C;white-space:nowrap;min-width:56px;text-align:right}
+.fm-step.done{opacity:1;background:#EAF7F0}.fm-step.done span{background:#5DBE95;color:#fff}
+.fm-step.now{opacity:1;background:#FFF2D3;box-shadow:inset 0 0 0 2px #F5B83D}.fm-step.now span{background:#F5B83D;color:#fff}

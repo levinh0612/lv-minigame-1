@@ -2,7 +2,7 @@
 import { ahead, diffLabels, lossLines, snapOf, type Snap } from "../engine/conflict";
 import { Sound, sfx, songName } from "../audio/sound";
 import { CFG, type EventKey, type PetId } from "../content/couple";
-import { FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
+import { FAME, FAME_AT, FOODS, HIM, PETS, RECIPES, WELCOME } from "../content/game";
 import { buyVenue, canAffordUpgrade, capacity, demand, fameParts, needUpgrade, seatsNow, spots, tableLvs, upgradeOptions } from "../engine/economy";
 import { addTickets } from "../engine/gacha";
 import { claimWelcome } from "../engine/economy";
@@ -447,5 +447,8 @@ export function fameModal() {
     ${row("Cấp của bạn", f.lv, "mỗi cấp từ cấp 2 được 0,3")}
     ${row("Đầu tư tiệm", f.venue, "mỗi lầu 0,8, mỗi lần mở rộng 0,5, mỗi cấp nâng của bàn 0,25")}
     ${toNext}
+    <div class="sh2"><b>Các bậc danh tiếng</b><span class="lav">${f.level + 1}/${FAME.length}</span></div>
+    <div class="fm-ladder">${FAME.map((x, i) => { const at = i ? FAME_AT[i - 1]! : 0, st = i < f.level ? "done" : i === f.level ? "now" : "";
+      return `<div class="fm-step ${st}"><span>${i < f.level ? "✓" : i === f.level ? "★" : i + 1}</span><b>${esc(x.n)}</b><small>từ ${at.toFixed(1).replace(".", ",")} điểm</small><em>${x.seats} khách</em></div>`; }).join("")}</div>
     <div class="mbtns"><button class="b3" data-act="venue">Nâng cấp tiệm</button><button class="b3 w" data-close>Đóng</button></div>`);
 }
