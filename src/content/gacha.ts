@@ -17,6 +17,8 @@ export const KIND_NAME: Record<GachaKind, string> = { recipe: "Công thức", de
 export const TICKET_COST = 300, PACK10_COST = 2700;     // 1 vé = 300 xu, gói 10 vé giảm 10%
 export const PITY_RARE = 10, PITY_ULTRA = 50;           // 10 lần chắc chắn có Hiếm trở lên, 50 lần chắc chắn có Cực hiếm
 export const DUST_PER_TICKET = 50;                      // 50 Bụi sao đổi 1 vé
+/** cấp +N của linh thú/quản lý (= số lần trùng): mỗi cấp cộng % chỉ số theo độ hiếm, tối đa +5; trùng quá mức thì Bụi sao nhân đôi */
+export const STAR_MAX = 5, STAR_STEP: Record<Rarity, number> = { common: 0.10, rare: 0.08, ultra: 0.06 };
 export const MASTERY_STEP = 0.08, MASTERY_MAX = 5;      // công thức trùng: mỗi lần +8% giá bán, tối đa 5 lần
 
 export interface CharFx { tip: number; pat: number; price: number }
@@ -110,7 +112,15 @@ export const GACHA_ITEMS: GachaItem[] = [
   { id: "m_rong1", kind: "mascot", rarity: "rare", n: "Rồng Con Pha Lê", desc: "Đồng hành 3D trong tiệm: giá +8%, tip +5%, chờ lâu hơn 6%", mascot: { img: "dragon1", model: "pet_dragon1", fx: { price: 0.08, tip: 0.05, pat: 0.06 } } },
   { id: "m_rong2", kind: "mascot", rarity: "ultra", n: "Rồng Pha Lê", desc: "Linh vật bay 3D trong tiệm: giá +10%, tip +8%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "dragon2", model: "pet_dragon2", fx: { price: 0.1, tip: 0.08, pat: 0.1, cust: 1 } } },
   { id: "m_baoden", kind: "mascot", rarity: "ultra", n: "Báo Đen", desc: "Linh vật 3D trong tiệm: giá +12%, tip +6%, thêm 1 khách mỗi ca", mascot: { img: "panther", model: "pet_panther", fx: { price: 0.12, tip: 0.06, cust: 1 } } },
-  { id: "m_phuonghoang", kind: "mascot", rarity: "ultra", n: "Phượng Hoàng", desc: "Linh vật bay 3D trong tiệm: giá +10%, tip +10%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "phoenix", model: "phoenix", art: true, fx: { price: 0.1, tip: 0.1, pat: 0.1, cust: 1 } } }
+  { id: "m_phuonghoang", kind: "mascot", rarity: "ultra", n: "Phượng Hoàng", desc: "Linh vật bay 3D trong tiệm: giá +10%, tip +10%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "phoenix", model: "phoenix", art: true, fx: { price: 0.1, tip: 0.1, pat: 0.1, cust: 1 } } },
+  { id: "m_meotoon", kind: "mascot", rarity: "common", n: "Mèo Toon", desc: "Đồng hành 3D trong tiệm: giá bánh +4%", mascot: { img: "toon_cat", model: "pet_toon_cat", fx: { price: 0.04 } } },
+  { id: "m_vit", kind: "mascot", rarity: "common", n: "Vịt Con", desc: "Đồng hành 3D trong tiệm: tip +5%", mascot: { img: "duck", model: "pet_duck", fx: { tip: 0.05 } } },
+  { id: "m_hamster", kind: "mascot", rarity: "common", n: "Hamster", desc: "Đồng hành 3D trong tiệm: khách chờ lâu hơn 6%", mascot: { img: "hamster", model: "pet_hamster", fx: { pat: 0.06 } } },
+  { id: "m_gacon", kind: "mascot", rarity: "common", n: "Gà Con", desc: "Đồng hành 3D trong tiệm: tip +5%", mascot: { img: "chick", model: "pet_chick", fx: { tip: 0.05 } } },
+  { id: "m_canhcut", kind: "mascot", rarity: "rare", n: "Chim Cánh Cụt", desc: "Đồng hành 3D trong tiệm: tip +5%, giá bánh +5%", mascot: { img: "penguin", model: "pet_penguin", fx: { tip: 0.05, price: 0.05 } } },
+  { id: "m_meochuoi", kind: "mascot", rarity: "rare", n: "Mèo Chuối", desc: "Đồng hành 3D trong tiệm: khách chờ lâu hơn 8%, tip +5%", mascot: { img: "bananacat", model: "pet_bananacat", fx: { pat: 0.08, tip: 0.05 } } },
+  { id: "m_thulang", kind: "mascot", rarity: "rare", n: "Thú Lạ", desc: "Đồng hành 3D trong tiệm: giá bánh +6%, khách chờ lâu hơn 6%", mascot: { img: "animal", model: "pet_animal", fx: { price: 0.06, pat: 0.06 } } },
+  { id: "m_pikachu", kind: "mascot", rarity: "ultra", n: "Pikachu", desc: "Linh vật 3D trong tiệm: giá +10%, tip +8%, chờ lâu hơn 10%, thêm 1 khách mỗi ca", mascot: { img: "pikachu", model: "pet_pikachu", fx: { price: 0.1, tip: 0.08, pat: 0.1, cust: 1 } } },
 ];
 /* tranh minh hoạ do người chơi cung cấp */
 for (const [id, full] of Object.entries({ c_n3: "lynae", m_phuonghoang: "phoenix", g_baizhi: "baizhi" })) { const it = GACHA_ITEMS.find(i => i.id === id); if (it) it.full = full; }

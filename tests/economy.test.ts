@@ -7,7 +7,7 @@ import { rollDay } from "../src/engine/progress";
 import { beginShift, breakCombo, createShift, finishShift, leaveCustomer, serve, tick, type Customer } from "../src/engine/shift";
 import { fame, staffIds, ownedMascotIds, trainCost, canHire, onDuty, mascotBonus, treat } from "../src/engine/economy";
 import { GACHA_ITEMS } from "../src/content/gacha";
-import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, clearStaff, floorOfStaff, gachaFx, packCost, placeStaff, pull, rollRarity, staffAt, staffPlaced, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
+import { addBond, addTickets, bondLevel, buyTickets, claimFreeTicket, countOf, exchangeDust, clearStaff, floorOfStaff, gachaFx, packCost, placeStaff, pull, rollRarity, starMul, starOf, staffAt, staffPlaced, specialRecipes, untilRare, untilUltra } from "../src/engine/gacha";
 import { fx, unlocked } from "../src/engine/progress";
 import { hostGift, seatsOfTables, visitFee } from "../src/engine/visit";
 import { resolve } from "../src/ui/router";
@@ -459,8 +459,8 @@ describe("ví: sổ thu chi", () => {
   describe("gacha", () => {
     const seq = (...v: number[]) => { let i = 0; return () => v[i++ % v.length]!; };
 
-    it("58 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
-      expect(GACHA_ITEMS.length).toBe(58);
+    it("66 vật phẩm, tỷ lệ 70/25/5, mỗi độ hiếm đều có đồ", () => {
+      expect(GACHA_ITEMS.length).toBe(66);
       ["common", "rare", "ultra"].forEach(r => expect(GACHA_ITEMS.some(i => i.rarity === r)).toBe(true));
       expect(rollRarity(() => 0.99)).toBe("common"); expect(rollRarity(() => 0.5)).toBe("common");
       expect(rollRarity(() => 0.1)).toBe("rare"); expect(rollRarity(() => 0.02)).toBe("ultra");
@@ -511,6 +511,15 @@ describe("ví: sổ thu chi", () => {
       expect(staffAt("mascot", 0)).toBeNull(); expect(placeStaff("mascot", m.id, 0)).toBe(false);
       S.gacha.owned[m.id] = 1; expect(placeStaff("mascot", m.id, 0)).toBe(true);
       expect(gachaFx("price")).toBeCloseTo(0.1); expect(fx("cust")).toBeGreaterThanOrEqual(1);
+    });
+
+    it("trùng thì lên +N: bước theo độ hiếm, tối đa +5, khách thêm giữ nguyên, Bụi sao nhân đôi khi đầy", () => {
+      const m = GACHA_ITEMS.find(i => i.id === "m_thienthan")!;            // Cực hiếm: +6%/cấp
+      S.gacha.owned[m.id] = 3; placeStaff("mascot", m.id, 0);
+      expect(starOf(m.id)).toBe(2); expect(gachaFx("price")).toBeCloseTo(0.1 * 1.12); expect(gachaFx("cust")).toBe(1);
+      S.gacha.owned[m.id] = 99; expect(starOf(m.id)).toBe(5); expect(gachaFx("price")).toBeCloseTo(0.1 * 1.3);
+      const c = GACHA_ITEMS.find(i => i.rarity === "common" && i.mascot)!;
+      expect(starMul({ ...c })).toBe(1); S.gacha.owned[c.id] = 6; expect(starMul(c)).toBeCloseTo(1.5);
     });
 
     it("thân thiết: mỗi cấp +12% chỉ số linh vật, số khách thêm giữ nguyên, lên cấp báo đúng", () => {

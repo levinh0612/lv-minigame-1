@@ -2,7 +2,7 @@
    Vé kiếm khi chơi (vé miễn phí mỗi ngày, đạt hết mục tiêu ca, nhận quà ngày) hoặc mua bằng xu. */
 import type { FxKey, Recipe } from "../content/game";
 import {
-  DUST_PER_TICKET, GACHA_ITEMS, MASTERY_MAX, MASTERY_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, asManager, gachaItem, itemsOf, mgrFx,
+  DUST_PER_TICKET, GACHA_ITEMS, MASTERY_MAX, MASTERY_STEP, STAR_MAX, STAR_STEP, PACK10_COST, PITY_RARE, PITY_ULTRA, RARITIES, RARITY, TICKET_COST, asManager, gachaItem, itemsOf, mgrFx,
   type GachaItem, type Rarity
 } from "../content/gacha";
 import { dayKey } from "./passive";
@@ -42,7 +42,7 @@ export function rollRarity(rng: () => number = Math.random): Rarity {
   return r;
 }
 function obtain(item: GachaItem): PullResult {
-  const had = countOf(item.id), dup = had > 0, dust = dup ? RARITY[item.rarity].dust : 0;
+  const had = countOf(item.id), dup = had > 0, dust = dup ? RARITY[item.rarity].dust * (had - 1 >= STAR_MAX ? 2 : 1) : 0;
   S.gacha.owned[item.id] = had + 1; S.gacha.dust += dust;
   if (!dup && item.decor) { const id = item.decor.k + ":" + item.decor.v; if (!S.owned.includes(id)) S.owned.push(id); }
   if (!dup && item.mascot) autoPlace("mascot", item.id);        // linh vật/quản lý mới tự đứng vào tầng còn trống đầu tiên
@@ -103,6 +103,12 @@ function autoPlace(k: StaffKind, id: string) {
 }
 /** chữ ký để vẽ lại cảnh 3D khi đổi người đứng */
 export const staffSig = () => JSON.stringify([S.gacha.mgrs, S.gacha.mascots, S.venue.floors]);
+/** cấp +N của vật phẩm (số lần trùng, tối đa STAR_MAX) và hệ số nhân chỉ số theo độ hiếm */
+export const starOf = (id: string) => Math.min(STAR_MAX, Math.max(0, countOf(id) - 1));
+export const starMul = (it: GachaItem) => 1 + STAR_STEP[it.rarity] * starOf(it.id);
+/** chỉ số đã nhân cấp +N (khách thêm mỗi ca giữ nguyên) */
+export const starFx = (it: GachaItem, fx: Partial<Record<FxKey, number>>) =>
+  Object.fromEntries(Object.entries(fx).map(([k, v]) => [k, k === "cust" ? v : v! * starMul(it)])) as Partial<Record<FxKey, number>>;
 /* Thân thiết: mỗi ca hoàn thành cùng linh vật thì thân thiết hơn; mỗi cấp tăng 12% các chỉ số của linh vật (trừ số khách thêm) */
 export const BOND_AT = [0, 3, 8, 15, 25], BOND_STEP = 0.12;
 export const bondOf = (id: string) => S.gacha.bond?.[id] ?? 0;
@@ -119,16 +125,16 @@ export function addBondTo(id: string, n: number) { (S.gacha.bond ??= {})[id] = b
 /** tổng chỉ số của mọi quản lý và linh vật đang đứng tầng */
 export const gachaFx = (k: FxKey) => {
   let sum = 0;
-  for (const m of staffPlaced("mascot")) { const v = m.mascot!.fx[k] ?? 0; sum += k === "cust" ? v : v * bondMul(m.id); }
-  for (const m of staffPlaced("mgr")) sum += mgrFx(m)[k] ?? 0;
+  for (const m of staffPlaced("mascot")) { const v = m.mascot!.fx[k] ?? 0; sum += k === "cust" ? v : v * starMul(m) * bondMul(m.id); }
+  for (const m of staffPlaced("mgr")) sum += starFx(m, mgrFx(m))[k] ?? 0;
   return sum;
 };
 /** chỉ số của quản lý và linh vật đứng ở tầng f (0 = tầng 1), tính giống gachaFx: hiện ở tiêu đề từng lầu */
 export function floorFx(f: number) {
   const fx: Partial<Record<FxKey, number>> = {}, add = (k: FxKey, v: number) => { fx[k] = (fx[k] ?? 0) + v; };
   const m = staffAt("mascot", f), g = staffAt("mgr", f);
-  if (m?.mascot) for (const [k, v] of Object.entries(m.mascot.fx) as [FxKey, number][]) add(k, k === "cust" ? v : v * bondMul(m.id));
-  if (g) for (const [k, v] of Object.entries(mgrFx(g)) as [FxKey, number][]) add(k, v);
+  if (m?.mascot) for (const [k, v] of Object.entries(m.mascot.fx) as [FxKey, number][]) add(k, k === "cust" ? v : v * starMul(m) * bondMul(m.id));
+  if (g) for (const [k, v] of Object.entries(starFx(g, mgrFx(g))) as [FxKey, number][]) add(k, v);
   return fx;
 }
 /** khách quen: các nhân vật đã trúng */

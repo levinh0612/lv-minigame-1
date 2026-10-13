@@ -3,7 +3,7 @@
 import { BAKE_TIME, PETS, type Food, type FxKey } from "../content/game";
 import { asManager, fxLine, gachaItem, mgrFx, roleOf, type GachaItem, type Rarity } from "../content/gacha";
 import type { PetId } from "../content/couple";
-import { bondLevel, countOf, floorOfStaff, hasItem } from "./gacha";
+import { bondLevel, countOf, floorOfStaff, hasItem, starFx, starOf } from "./gacha";
 import { foodDef, isMascotStaff, mascotBonus, mealOf, onDuty, plannedMeal, staffState } from "./economy";
 import { petName } from "./state";
 
@@ -29,7 +29,7 @@ export interface EntityInfo {
 const FX_LABEL: [FxKey, ChipTone, (v: number) => string][] = [["price", "price", v => `giá +${v}%`], ["tip", "tip", v => `tip +${v}%`], ["pat", "pat", v => `chờ +${v}%`], ["cust", "cust", v => `+${v} khách`]];
 const toChips = (fx: Partial<Record<FxKey, number>>): Chip[] => FX_LABEL.filter(([k]) => fx[k]).map(([k, tone, f]) => ({ tone, t: f(k === "cust" ? fx[k]! : Math.round(fx[k]! * 100)) }));
 export const bakeText = (lv: number) => `${String(BAKE_TIME[Math.min(BAKE_TIME.length, Math.max(1, lv)) - 1]).replace(".", ",")} giây/bánh`;
-const itemFx = (it: GachaItem): Partial<Record<FxKey, number>> => it.mascot ? it.mascot.fx : asManager(it) ? mgrFx(it) : {};
+const itemFx = (it: GachaItem): Partial<Record<FxKey, number>> => it.mascot ? starFx(it, it.mascot.fx) : asManager(it) ? starFx(it, mgrFx(it)) : {};
 
 /** gom toàn bộ thông tin hiển thị của một đối tượng (id thú cưng 3 bé hoặc id vật phẩm Gacha) */
 export function entityInfo(id: string): EntityInfo | null {
@@ -45,7 +45,7 @@ export function entityInfo(id: string): EntityInfo | null {
   if (staff) status = hungry ? { t: "Đói", tone: "bad" } : on ? { t: "Đi làm", tone: "on" } : { t: "Nghỉ", tone: "off" };
   else if (it) status = !owned ? { t: "Chưa có", tone: "lock" } : floor >= 0 ? { t: `Tầng ${floor + 1}`, tone: "on" } : mas && st.hired ? { t: "Thợ bánh", tone: "work" } : mgr || mas ? { t: "Rảnh", tone: "free" } : { t: `x${countOf(id)}`, tone: "free" };
   return {
-    id, kind, name: pet ? petName(id) : it!.n, rarity: it?.rarity ?? null, owned, count: countOf(id), tier, staff, onDuty: on, hungry,
+    id, kind, name: pet ? petName(id) : it!.n + (it && (mas || mgr) && starOf(id) ? ` +${starOf(id)}` : ""), rarity: it?.rarity ?? null, owned, count: countOf(id), tier, staff, onDuty: on, hungry,
     bake: tier ? bakeText(tier) : null, meal: staff ? foodDef(mealOf(id)) : null,
     bond: mas && owned ? bondLevel(id) : null, floor, role: it ? roleOf(it) : null, fx,
     workChips: mb ? toChips({ price: mb.price, tip: mb.tip }) : [], fxChips: toChips(fx), status

@@ -3,7 +3,7 @@ import { RECIPES, SEASON_LV, customRecipe, partsOfRecipe, seasonalNow, type FxKe
 import { mgrFx, type GachaItem } from "../content/gacha";
 import { ROOM_CATS, isDefault, roomItem, setStates, type RoomItem } from "../content/room";
 import { daysTogether } from "./dates";
-import { bondMul, floorCount, gachaFx, specialRecipes, staffAt } from "./gacha";
+import { bondMul, floorCount, gachaFx, starFx, starMul, specialRecipes, staffAt } from "./gacha";
 import { S, save } from "./state";
 import { recipeReady } from "./suppliers";
 import { upgradeFx, upgradeLv } from "./upgrades";
@@ -35,9 +35,9 @@ export function buffSources(): BuffRow[] {
   const rows: BuffRow[] = [];
   for (let f = 0; f < floorCount(); f++) {
     const m = staffAt("mgr", f), a = staffAt("mascot", f);
-    if (m) rows.push({ src: "mgr", name: m.n, sub: `Quản lý · Tầng ${f + 1}`, fx: { ...mgrFx(m) }, item: m });
+    if (m) rows.push({ src: "mgr", name: m.n, sub: `Quản lý · Tầng ${f + 1}`, fx: starFx(m, mgrFx(m)), item: m });
     if (a) rows.push({ src: "mascot", name: a.n, sub: `Linh thú · Tầng ${f + 1}`, item: a,
-      fx: Object.fromEntries(Object.entries(a.mascot!.fx).map(([k, v]) => [k, k === "cust" ? v : v! * bondMul(a.id)])) });
+      fx: Object.fromEntries(Object.entries(a.mascot!.fx).map(([k, v]) => [k, k === "cust" ? v : v! * starMul(a) * bondMul(a.id)])) });
   }
   ROOM_CATS.forEach(c => { const it = roomItem(c.k, S.room[c.k]); if (it.fx && Object.keys(it.fx).length) rows.push({ src: "decor", name: it.n, sub: c.n, fx: { ...it.fx }, decor: it }); });
   setStates(S.room).filter(st => Object.keys(st.fx).length).forEach(st => rows.push({ src: "decor", name: `Bộ ${st.set.n}`, sub: `Thưởng bộ trang trí · ${st.count} món`, fx: { ...st.fx } }));

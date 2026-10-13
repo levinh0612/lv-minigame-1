@@ -52,3 +52,7 @@ public/      icon app
 ## Cập nhật lộ trình
 
 Sửa `src/content/roadmap.ts`: đổi `status` (`done` / `doing` / `soon` / `later`), thêm mục, thêm bản vào `CHANGELOG`, rồi push.
+
+## Ghi công model 3D (Sketchfab, CC Attribution)
+
+Toon Cat (Omabuarts Studio), Toon Ducks (silverdelivery), HAMster (Kitsuneko), Pudgy Penguin (KillerBear), Animal (mrlegoboy), Cute Chick (iclartworks), Cute Cat in Cute Banana (otsosol), Pikachu (Raghav Gupta). Pikachu là fanart Pokémon, chỉ dùng cá nhân.

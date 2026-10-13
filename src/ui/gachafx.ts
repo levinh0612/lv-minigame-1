@@ -3,7 +3,7 @@
    Chạm để bỏ qua. Quay 10 lần: sau phim là 10 thẻ lật lần lượt, thẻ hiếm bung hạt khi lật. */
 import { rarityIcon, rarityText } from "./badges";
 import { sfx } from "../audio/sound";
-import { RARITIES, RARITY, KIND_NAME, itemImg, type GachaItem, type Rarity } from "../content/gacha";
+import { RARITIES, RARITY, STAR_MAX, asManager, KIND_NAME, itemImg, type GachaItem, type Rarity } from "../content/gacha";
 import { roomItem } from "../content/room";
 import type { PullResult } from "../engine/gacha";
 import { fmtN } from "../engine/util";
@@ -14,6 +14,11 @@ import { runWarp, WARP_MS } from "./gachawarp";
 import { mountTurntableLazy as mountTurntable } from "../scene/turntable";
 import { hydratePortraits, portraitHTML } from "./portrait";
 import type { Reveal3d } from "./gachareveal3d";
+
+/** quản lý/linh thú trùng thì lên cấp +N (tối đa +STAR_MAX), các món khác chỉ nhận Bụi sao */
+const isStaff = (r: PullResult) => !!r.item.mascot || !!asManager(r.item);
+const starTag = (r: PullResult) => (isStaff(r) ? `+${Math.min(STAR_MAX, r.count - 1)} · ` : "");
+const dupText = (r: PullResult) => `Trùng · ${isStaff(r) ? (r.count - 1 > STAR_MAX ? `đã tối đa +${STAR_MAX}` : `lên +${r.count - 1}`) + " · " : ""}+${r.dust} Bụi sao`;
 
 export const LOOK = { skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" };
 const PAL: Record<Rarity, string[]> = {
@@ -35,16 +40,16 @@ let previewMode = false;                                                   // xe
 const card = (r: PullResult, px: number, live: boolean) => {
   const R = RARITY[r.item.rarity];
   return `<div class="gcard r-${r.item.rarity}" style="--rc:${R.c};--rc2:${R.c2}"><span class="gtag">${R.n}</span><div class="gimg">${gachaArt(r.item, px, live)}</div>
-    <b>${esc(r.item.n)}</b><small>${KIND_NAME[r.item.kind]}</small>${previewMode ? `<em class="gnew">Xem trước</em>` : r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">Trùng · +${r.dust} Bụi sao</em>`}</div>`;
+    <b>${esc(r.item.n)}</b><small>${KIND_NAME[r.item.kind]}</small>${previewMode ? `<em class="gnew">Xem trước</em>` : r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="gdup">${dupText(r)}</em>`}</div>`;
 };
 const gridCard = (r: PullResult) => { const k = r.item.rarity;
   return `<div class="mc r-${k}" style="--bg:url(/gacha/fx2/bg-${k}.webp);--rc:${RARITY[k].c}"><div class="mc-art">${gachaArt(r.item, 64, false)}</div>
-    <b>${esc(r.item.n)}</b>${r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="mc-dup">+${r.dust} ✦</em>`}<i class="mc-fr" style="border-image-source:url(/gacha/frames/card-${k}.webp)"></i></div>`; };
+    <b>${esc(r.item.n)}</b>${r.isNew ? `<em class="gnew">Mới!</em>` : `<em class="mc-dup">${starTag(r)}+${r.dust} ✦</em>`}<i class="mc-fr" style="border-image-source:url(/gacha/frames/card-${k}.webp)"></i></div>`; };
 const STARS: Record<Rarity, string> = { common: "★", rare: "★★", ultra: "★★★" };
 /** màn "vật phẩm hiện to" trước khi ra thẻ: mỗi loại có chuyển động riêng (nhân vật bước vào, thú nảy, bánh xoay, trang trí lật) */
 function heroHTML(r: PullResult, px: number) {
   const it = r.item, R = RARITY[it.rarity];
-  const stamp = previewMode ? `<em class="gh-stamp dup">XEM TRƯỚC</em>` : r.isNew ? `<em class="gh-stamp">MỚI!</em>` : `<em class="gh-stamp dup">Trùng · +${r.dust} Bụi sao</em>`;
+  const stamp = previewMode ? `<em class="gh-stamp dup">XEM TRƯỚC</em>` : r.isNew ? `<em class="gh-stamp">MỚI!</em>` : `<em class="gh-stamp dup">${dupText(r)}</em>`;
   const info = `<div class="gh-name"><i>${STARS[it.rarity]}</i><b>${esc(it.n)}</b><span>${R.n} · ${KIND_NAME[it.kind]}</span></div>${stamp}<small class="gh-hint">Chạm để tiếp tục</small>`;
   if (it.full) {            // có tranh minh hoạ: tranh phủ kín màn hình (nền mờ cùng tranh lấp phần thừa), thông tin nằm dải dưới
     const url = `/gacha/full-${it.full}.webp`;
@@ -171,7 +176,7 @@ export function playReveal(results: PullResult[], onDone: () => void, preview = 
       ${img.full ? `<div class="gr3-fa" style="background-image:url(${img.url})"></div>` : ""}
       <div class="gr3-tt gr3-rl">${rarityText(best, 168)}</div>
       <div class="gr3-info"><div class="gr3-rate">${rarityIcon(best, 30)}</div>
-        <b>${esc(it.n)}</b><em>${esc(KIND_NAME[it.kind])}${previewMode ? " · Xem trước" : results.length === 1 ? (star.isNew ? " · Mới!" : ` · Trùng, +${star.dust} Bụi sao`) : ""}</em><span>${esc(it.desc || DESC[best])}</span>
+        <b>${esc(it.n)}</b><em>${esc(KIND_NAME[it.kind])}${previewMode ? " · Xem trước" : results.length === 1 ? (star.isNew ? " · Mới!" : ` · ${dupText(star)}`) : ""}</em><span>${esc(it.desc || DESC[best])}</span>
         <button class="b3 gr3-ok">${results.length > 1 ? "Tiếp tục" : "OK"}</button></div></div></div>`;
     const st = out.querySelector<HTMLElement>(".gr3-st")!, okb = out.querySelector<HTMLButtonElement>(".gr3-ok")!;
     const icUrl = `url(/gacha/fx/star-${best}.webp)`; st.style.setProperty("--ic", icUrl);
