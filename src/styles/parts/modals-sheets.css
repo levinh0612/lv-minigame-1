@@ -391,3 +391,6 @@ button.cm{position:relative}
 .outbuy{height:30px;padding:0 14px;border-radius:99px;background:var(--pink);color:#fff;font:800 13px var(--body);box-shadow:0 3px 0 var(--pink-d)}
 .outbuy:active{transform:translateY(2px);box-shadow:0 1px 0 var(--pink-d)}.outbuy:disabled{opacity:.45}
 .outpet{text-align:center}
+.vsug{display:block;margin:0 auto 10px;padding:8px 16px;border-radius:14px;background:var(--pink-l);box-shadow:0 3px 0 var(--sh);font:800 13px var(--display);color:var(--ink2)}
+.vhint{margin:0 0 10px;padding:9px 12px;border-radius:14px;background:#FFF6D6;font:700 12px/1.4 var(--body);color:var(--ink2)}
+.vopt.rec{outline:3px solid #E7B93C;outline-offset:-1px;background:#FFFBEA}

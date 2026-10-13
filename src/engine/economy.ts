@@ -242,6 +242,28 @@ export const upgradeOptions = () => [
   { id: "floor" as const, cost: SHOP.floorCost(S.venue.floors - 1), ok: true },
   { id: "wide" as const, cost: SHOP.wideCost(S.venue.wide), ok: true }
 ];
+/** đề xuất nâng cấp theo hiện trạng: thiếu ghế thì chọn cách thêm ghế rẻ nhất; đủ ghế thì chọn cách tăng danh tiếng lợi nhất theo xu */
+export function recommendUpgrade(): { id: "table" | "up" | "floor" | "wide"; why: string; short: number } | null {
+  const opts = upgradeOptions().filter(o => o.ok), gap = demand() - capacity();
+  const pick = (score: (id: string) => number, why: (id: string) => string) => {
+    const ranked = opts.filter(o => score(o.id) > 0).sort((a, b) => score(b.id) / Math.max(b.cost, 1) - score(a.id) / Math.max(a.cost, 1));
+    const best = ranked.find(o => S.coins >= o.cost) ?? ranked.sort((a, b) => a.cost - b.cost)[0];
+    return best ? { id: best.id, why: why(best.id), short: Math.max(0, best.cost - S.coins) } : null;
+  };
+  if (gap > 0) {
+    const seats = (id: string) => (id === "table" ? SHOP.seatsOf(1) : id === "up" ? 1 : 0);
+    if (opts.some(o => seats(o.id) > 0)) return pick(seats, id => `Đang thiếu ${gap} ghế. ${id === "table" ? "Mua bàn thêm 2 ghế" : "Nâng bàn thêm 1 ghế"} là cách rẻ nhất để đón đủ khách.`);
+    return pick(id => (id === "floor" ? 4 + 2 * S.venue.wide : id === "wide" ? 2 * S.venue.floors : 0), () => `Đang thiếu ${gap} ghế mà đã hết chỗ đặt bàn. Cần thêm chỗ đặt bàn rồi mới mua bàn được.`);
+  }
+  const f = fameParts();
+  if (!f.next || f.nextAt == null) {
+    const up = opts.find(o => o.id === "up");
+    return up ? { id: "up", why: "Đủ ghế và danh tiếng đã cao nhất. Nâng bàn giúp khách kiên nhẫn hơn và tip nhiều hơn.", short: Math.max(0, up.cost - S.coins) } : null;
+  }
+  const left = Math.max(0, f.nextAt - f.score).toFixed(1).replace(".", ",");
+  const gain = (id: string) => (id === "floor" ? 0.8 : id === "wide" ? 0.5 : id === "up" ? 0.25 : 0);
+  return pick(gain, id => `Đủ ghế rồi. Còn ${left} điểm nữa lên bậc ${f.next!.n}: ${id === "floor" ? "xây lầu +0,8 điểm" : id === "wide" ? "mở rộng +0,5 điểm" : "nâng bàn +0,25 điểm"} là cách lợi nhất theo xu.`);
+}
 export const canAffordUpgrade = () => upgradeOptions().some(o => o.ok && S.coins >= o.cost);
 export function buyVenue(id: "table" | "up" | "floor" | "wide"): boolean {
   const o = upgradeOptions().find(x => x.id === id)!;

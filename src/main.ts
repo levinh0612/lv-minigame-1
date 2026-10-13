@@ -71,6 +71,7 @@ document.addEventListener("click", e => {
       dropModal(); return startShift();
     case "start-anyway": dropModal(); return startShift();
     case "venue": sfx("click"); return upgradeModal(false);
+    case "venue-hint": sfx("click"); return upgradeModal(d.forced === "1", true);
     case "quickprep": { const r = quickPrep(); if (r.stock + r.food) { sfx("coin"); toast(`Đã chuẩn bị · ${r.stock + r.food} xu${r.food ? ` (có đồ ăn cho các bé)` : ""}`); } else toast("Không đủ xu để chuẩn bị"); return render(); }
     case "suggest": { const sp = buySuggested(); if (sp) { sfx("coin"); toast(`Đã nhập hàng · ${sp} xu`); } else toast("Không đủ xu để nhập theo gợi ý"); return render(); }
     case "tutorial": return tutorial();
