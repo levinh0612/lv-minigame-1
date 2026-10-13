@@ -353,8 +353,8 @@ export function createShop(o: ShopOpts): ShopScene {
     const tt = T(lv >= 3 ? "#FFF6D6" : lv === 2 ? "#FFD3E1" : topC), tl = T(lv >= 3 ? GOLD : tableC); tableTops.push(tt); tableLegs.push(tl);
     const ty = lv >= 3 ? .8 : .78;
     if (lv >= 2) {   // thảm dưới bàn
-      const rr = r + (lv >= 3 ? .62 : .5);
-      if (lv >= 3) add(par, CYL(rr + .07, rr + .07, .02, 44), T(GOLD), x, .015, z, { ol: null, cast: false });
+      const rr = r + (lv >= 3 ? .12 : .2);   // thảm vừa phải để các bàn kề nhau không dính thảm
+      if (lv >= 3) add(par, CYL(rr + .05, rr + .05, .02, 44), T(GOLD), x, .015, z, { ol: null, cast: false });
       add(par, CYL(rr, rr, .03, 44), T(lv >= 3 ? "#B8324A" : "#CDBDF5"), x, .02, z, { ol: null, cast: false });
     }
     if (lv === 1) add(par, CYL(.62 * r, .66 * r, .62, 30, ), T("#fff", { map: GINGHAM }), x, .5, z, { ol: "thin" });   // khăn caro hồng rủ quanh bàn
