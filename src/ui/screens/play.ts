@@ -466,9 +466,11 @@ let fitQ = 0;
 function fitQueueNow() {
   const p = $("#play"), q = $("#queue"); if (!p || !q || !SH) return;
   const sheetH = () => ($("#ohead")?.offsetHeight ?? 90) + ($("#rows")?.scrollHeight ?? 220) + ($("#give")?.offsetHeight ?? 54) + 54;      // chiều cao tự nhiên của phiếu (không dùng scrollHeight của phiếu vì chiều cao đó phụ thuộc vào hàng đợi)
-  const below = p.classList.contains("up") ? sheetH() - 20 : ($("#crewBox")?.offsetHeight ?? 0) + ($("#idle")?.offsetHeight ?? 0) + 70;
+  /* #idle co giãn (flex:1) nên offsetHeight của nó là cả phần thừa; chỉ cộng chiều cao nội dung thật của các khối con */
+  const idleH = [...($("#idle")?.children ?? [])].reduce((n, e) => n + (e as HTMLElement).offsetHeight + 12, 0);
+  const below = p.classList.contains("up") ? sheetH() - 20 : ($("#crewBox")?.offsetHeight ?? 0) + idleH + 90;
   const room = p.clientHeight - (q.getBoundingClientRect().top - p.getBoundingClientRect().top) - below - 12;
-  fitQueueEl(q, Math.max(120, Math.min(room, p.clientHeight * 0.55)));
+  fitQueueEl(q, Math.max(120, Math.min(room, p.clientHeight * 0.75)));
 }
 /** gộp nhiều lần gọi trong một khung hình */
 const scheduleFit = () => { cancelAnimationFrame(fitQ); fitQ = requestAnimationFrame(fitQueueNow); };
