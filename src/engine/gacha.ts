@@ -123,6 +123,14 @@ export const gachaFx = (k: FxKey) => {
   for (const m of staffPlaced("mgr")) sum += mgrFx(m)[k] ?? 0;
   return sum;
 };
+/** chỉ số của quản lý và linh vật đứng ở tầng f (0 = tầng 1), tính giống gachaFx: hiện ở tiêu đề từng lầu */
+export function floorFx(f: number) {
+  const fx: Partial<Record<FxKey, number>> = {}, add = (k: FxKey, v: number) => { fx[k] = (fx[k] ?? 0) + v; };
+  const m = staffAt("mascot", f), g = staffAt("mgr", f);
+  if (m?.mascot) for (const [k, v] of Object.entries(m.mascot.fx) as [FxKey, number][]) add(k, k === "cust" ? v : v * bondMul(m.id));
+  if (g) for (const [k, v] of Object.entries(mgrFx(g)) as [FxKey, number][]) add(k, v);
+  return fx;
+}
 /** khách quen: các nhân vật đã trúng */
 export const regulars = () => GACHA_ITEMS.filter(i => i.char && hasItem(i.id));
 export const ownedCount = () => GACHA_ITEMS.filter(i => hasItem(i.id)).length;

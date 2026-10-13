@@ -39,7 +39,7 @@ import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, tryDecor } from "./ui/screens/shop";
-import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
+import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, toggleFold, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
 
 initTeam();
 
@@ -161,6 +161,7 @@ document.addEventListener("click", e => {
   if (d.team) { setTeamTab(d.team as TeamTab); sfx("click"); return render(); }
   if (d.ing) { if (performance.now() - ingAt < 700) return; const [k, i] = d.ing.split(":"); return pickIngredient(k as PartKey, +i); }
   if (d.tier != null) return setTier(+d.tier);
+  if (d.qfold) return toggleFold(d.qfold);
   if (d.seat) return selectSeat(+d.seat);
   if (d.tick) return tickStock(d.tick);
   if (d.watch) return watchBaker(d.watch as PetId);

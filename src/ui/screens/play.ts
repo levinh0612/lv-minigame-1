@@ -2,31 +2,31 @@
    Các hàm *HTML là hàm thuần (chỉ đọc trạng thái, trả về chuỗi) để Storybook dùng lại. */
 import { STORIES } from "../../content/collection";
 import { VIPS } from "../../engine/vip";
-import { gachaFx, staffPlaced } from "../../engine/gacha";
+import { floorFx, staffAt } from "../../engine/gacha";
 import { gachaArt } from "../gachafx";
 import { gachaItem } from "../../content/gacha";
 import { entityAvatar, entityInfo } from "../components/entity";
 import { levelMedal, rarityIcon } from "../badges";
 import { Sound, sfx } from "../../audio/sound";
 import { staffAvatar } from "../staffav";
-import { CATS, KEYS, LABELS, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
+import { CATS, KEYS, LABELS, SHOP, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
 import { usedIdx } from "../../engine/progress";
-import { REFILL, staffIds, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
+import { REFILL, comfortPat, comfortTip, spots, staffIds, tableLvs, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
   beginShift, buildPicked, buildTotal, finishShift, freshBuild, goalDone, goalProgress, goalText, isComplete, isOver, matches, mineIdx, needAt, needOf, partAt, partsOfBuild, peek, release, remaining, serve, setPartAt, take, tick,
   COMBO_CAP, COMBO_LOSS, type Customer, type ServeResult, type Shift, applyService, autoService
 } from "../../engine/shift";
-import { S, petName, save } from "../../engine/state";
+import { S, meLook, petName, save } from "../../engine/state";
 import { fmtN } from "../../engine/util";
-import { cakeAnySVG, charSVG, ingSVG } from "../art";
+import { cakeAnySVG, charSVG, guestSVG, ingSVG } from "../art";
 import { $, bump, coinPill, esc, floatText, haptic, hasModal, modal, toast } from "../dom";
 import { himNote } from "../modals";
 import { ic } from "../icons";
 import { cloudSave } from "../../net/cloud";
 import { navigate } from "../router";
-import { applyQueue, queueHTML } from "./queue-fit";
+import { fitQueueEl, groupTables, type FloorGroup } from "./queue-tables";
 import { doCatchMouse, doMousePay as payMouseFor, mouseChip, moveRat, openMouseDlg as openMouseDlgFor, removeRat, renderMouse } from "./play-mouse";
 import { setResult } from "./result";
 import { advanceSkills, SKILL_NAME } from "../../engine/skills";
@@ -36,7 +36,7 @@ export let SH: Shift | null = null;
 let raf = 0, lastT = 0, leftShown = -1, drop: PartKey | null = null, stageDrop: PartKey | null = null, stageFree = 0, lastComboLost = 0;
 
 // phần tử DOM của từng khách trong hàng, cache để vòng lặp không phải tìm lại mỗi khung hình
-interface SlotView { el: HTMLElement; bar: HTMLElement; art: HTMLElement; cls: string }
+interface SlotView { el: HTMLElement; ring: HTMLElement; art: HTMLElement; cd: HTMLElement; cls: string }
 const views: (SlotView | null)[] = [];
 
 /* ---------- Giữ màn hình sáng trong ca (nếu trình duyệt cho phép) ---------- */
@@ -99,15 +99,31 @@ function loop(now: number) {
   raf = requestAnimationFrame(loop);
 }
 
+/** đang có người làm đơn này (bé thợ hoặc chủ tiệm): viền thể hiện tiến độ làm, không còn là kiên nhẫn */
+const cookOf = (sh: Shift, i: number) => !!sh.seats[i] && (!!sh.seats[i]!.by || mineIdx(sh) === i);
+const cookProg = (sh: Shift, i: number) => {
+  const c = sh.seats[i]; if (!c) return 0;
+  if (c.by) { const b = sh.bakers.find(x => x.id === c.by); return b ? Math.min(1, b.done / b.need) : 0; }
+  const t = buildTotal(sh.build); return t ? Math.min(1, buildPicked(sh.build) / t) : 0;
+};
+const patTone = (f: number) => (f < 0.3 ? "low" : f < 0.6 ? "mid" : "ok");
+/** số giây thật còn lại trước khi khách bỏ về (bé làm đơn thì kiên nhẫn trừ chậm một nửa) */
+const secsLeft = (sh: Shift, c: Customer) => Math.max(0, c.pat) / ((c.by ? 0.5 : 1) * (sh.patMul || 1));
+const CD_AT = 10;      // còn từng này giây thì hiện đếm ngược cạnh khách đang được làm đơn
+
 function updatePatience(c: Customer, i: number) {
-  const v = views[i]; if (!v) return;
-  const f = Math.max(0, c.pat / c.max), cls = f < 0.3 ? "low" : f < 0.6 ? "mid" : "";
-  v.bar.style.transform = `scaleX(${f.toFixed(3)})`;
-  if (v.cls === cls) return;
-  v.cls = cls; v.bar.style.background = cls === "low" ? "#FF6F91" : cls === "mid" ? "#FFD66B" : "#8FD9B6";
-  v.el.classList.toggle("low", cls === "low");
-  const mood = cls === "low" ? "impatient" : "happy";
-  if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, faceSize(SH!)); }
+  const v = views[i]; if (!v || !SH) return;
+  const f = Math.max(0, c.pat / c.max), cook = cookOf(SH, i), pt = patTone(f), tn = cook ? "cook" : pt;
+  v.ring.style.setProperty("--v", ((cook ? cookProg(SH, i) : f) * 100).toFixed(1));
+  const left = secsLeft(SH, c), showCd = cook && left <= CD_AT;
+  if (v.cd.hidden === showCd) v.cd.hidden = !showCd;
+  if (showCd) { const t = `${Math.ceil(left)}s`; if (v.cd.textContent !== t) v.cd.textContent = t; }
+  const key = tn + (pt === "low" ? "!" : "");
+  if (v.cls === key) return;
+  v.cls = key; v.ring.dataset.tn = tn;
+  v.el.classList.toggle("low", pt === "low");
+  const mood = pt === "low" ? "impatient" : "happy";
+  if (c.mood !== mood && !(mood === "happy" && !c.mood)) { c.mood = mood; v.art.innerHTML = charSVG(c.look, mood, faceSize(SH)); }
 }
 /* tiến độ các bé thợ bánh: dưới mặt khách và ở quầy */
 const bakeStep: Record<string, number> = {};
@@ -138,52 +154,102 @@ const CHEV = (up: boolean) => (up ? ic.chevU : ic.chevD)(16, 2.8, "none", "rose"
 const TICK = ic.check(13, 3.2, "none", "");
 const lowCount = () => STOCK_KEYS.reduce((a, k) => a + usedIdx(k).filter(i => stockOf(k, i) <= 2).length, 0);
 
-/* một khách trong hàng đợi: hình bánh đã gọi (không ghi nguyên liệu), mặt, kiên nhẫn, ai đang làm */
+/* một khách trong hàng đợi: viền quanh thẻ là thanh kiên nhẫn (đang có người làm thì là tiến độ làm), hình bánh khách gọi
+   (đang có người làm thì là hình người làm), mặt, tên, ai đang làm. Chip huy hiệu chỉ có một: Truyện > VIP > Quen */
+const RING = (v: number, tn: string) => `<div class="q6ring" data-tn="${tn}" style="--v:${(v * 100).toFixed(1)}"><svg viewBox="0 0 84 148" preserveAspectRatio="none" aria-hidden="true"><rect class="trk" x="1.5" y="1.5" width="81" height="145" rx="17" pathLength="100"/><rect class="val" x="1.5" y="1.5" width="81" height="145" rx="17" pathLength="100"/></svg></div>`;
+const byAvatar = (id: string, px: number) => { const ei = entityInfo(id); return ei ? entityAvatar(ei, px, "happy") : staffAvatar(id, px, "happy"); };
+const meAvatar = (px: number) => guestSVG({ ...meLook(), mood: "happy", ledge: false }, px);
+function badgeHTML(c: Customer) {
+  const stg = c.story ? STORIES.find(x => x.id === c.story) : null, rg = c.reg ? gachaItem(c.reg) : null;
+  if (stg) return `<i class="q6b b-s" title="${esc(stg.who)}: khách quen có truyện, giao từ 2 sao để nghe chuyện">Truyện</i>`;
+  if (c.vip) return `<i class="q6b b-v" title="${esc(VIPS[c.vip].n)}: ${esc(VIPS[c.vip].hint)}">VIP</i>`;
+  if (rg) { const perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");
+    return `<i class="q6b b-q" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>`; }
+  return "";
+}
 export function slotHTML(sh: Shift, i: number, state: "" | "low" | "ok" = "") {
   const c = sh.seats[i]; if (!c) return "";
-  const f = c.pat / c.max, S2 = faceSize(sh), mine = mineIdx(sh) === i;
-  const b = c.by ? sh.bakers.find(x => x.id === c.by) : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
-  
-  const bub = state === "ok" ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>` : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
-  
-  const whoTag = c.by 
-    ? `<div class="who by" data-bake="${c.by}">${staffAvatar(c.by, 20)}<span class="pc">${pct}%</span><i style="width:${pct}%"></i></div>`
-    : mine ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`;
-    
-  const rg = c.reg ? gachaItem(c.reg) : null, perk = [c.perkPrice ? `giá +${Math.round(c.perkPrice * 100)}%` : "", c.perkTip ? `tip +${Math.round(c.perkTip * 100)}%` : ""].filter(Boolean).join(" · ");
-  const svc = c.svc ? `<i class="stag" title="Khách xin ${svcLabel(c.svc).toLowerCase()}">${c.svc === "ship" ? ic.right(11, 2.8) : ic.gift(11, 2.4)}${svcLabel(c.svc)}</i>` : "";
-  const vip = rg ? `<i class="vtag vt-${rg.rarity}" title="Khách quen${perk ? ": " + perk : ""}">${rarityIcon(rg.rarity, 11)}Quen</i>` : "";
-  
-  const stg = c.story ? STORIES.find(x => x.id === c.story) : null;
-  const vp = stg ? `<i class="vtag vt-vip vt-story" title="${esc(stg.who)}: khách quen có truyện, giao từ 2 sao để nghe chuyện" aria-label="${esc(stg.who)}">${stg.e}</i>` : c.vip ? `<i class="vtag vt-vip" title="${esc(VIPS[c.vip].n)}: ${esc(VIPS[c.vip].hint)}" aria-label="${esc(VIPS[c.vip].n)}">${VIPS[c.vip].emoji}</i>` : "";
-  return `${vp}${vip}${svc}${bub}<div class="face"><span class="fc">${charSVG(c.look, state === "ok" ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><div class="burst"></div></div>
-    <div class="pat"><i style="transform:scaleX(${f.toFixed(3)});background:${f < 0.3 ? "#FF6F91" : f < 0.6 ? "#FFD66B" : "#8FD9B6"}"></i></div>
-    <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${whoTag}`;
+  const f = Math.max(0, c.pat / c.max), S2 = faceSize(sh), mine = mineIdx(sh) === i, cook = !!c.by || mine, ok = state === "ok";
+  const prog = cookProg(sh, i), pct = Math.round(prog * 100), val = ok ? 1 : cook ? prog : f, tn = ok ? "done" : cook ? "cook" : patTone(f);
+  const bub = ok ? `<div class="bub ok">+${c.r.price}<small>xu</small></div>`
+    : cook ? `<div class="bub cook">${c.by ? byAvatar(c.by, 38) : meAvatar(38)}<span class="mk">${cakeOf(c, 20)}</span></div>`
+    : `<div class="bub">${cakeOf(c, S2 * 0.72)}<span class="sw" title="${CATS.sweet[c.sweet][0]}">${ingSVG("sweet", c.sweet, 19)}</span></div>`;
+  const who = ok ? `<div class="q6who ok">Cảm ơn!</div>`
+    : c.by ? `<div class="q6who by" data-bake="${c.by}"><span class="nmx">${esc(petName(c.by))}</span><b class="pc">${pct}%</b></div>`
+    : mine ? `<div class="q6who me">Bạn nhận</div>` : `<div class="q6who">Chờ nhận</div>`;
+  const svc = c.svc && !ok ? `<i class="stag" title="Khách xin ${svcLabel(c.svc).toLowerCase()}">${c.svc === "ship" ? ic.right(11, 2.8) : ic.gift(11, 2.4)}${svcLabel(c.svc)}</i>` : "";
+  return `${RING(val, tn)}${badgeHTML(c)}${svc}${bub}<div class="face"><span class="fc">${charSVG(c.look, ok ? "love" : state === "low" ? "impatient" : c.mood || "happy", S2)}</span><span class="q6cd" hidden></span><div class="burst"></div></div>
+    <div class="nm">${c.him ? `<span class="hrt">♥︎</span>` : ""}${esc(c.who)}</div>${who}`;
 }
 
-const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (c?.vip ? " vipg" : "") + (c?.story ? " storyg" : "") + (c?.reg ? " reg reg-" + (gachaItem(c.reg)?.rarity ?? "common") : "") + (extra ? " " + extra : ""); };
-const slotLabel = (sh: Shift, i: number) => { const c = sh.seats[i]; return !c ? "Bàn trống" : c.by ? `${petName(c.by)} đang làm cho ${c.who}` : `Nhận đơn của ${c.who}`; };
+const slotClass = (sh: Shift, i: number, extra = "") => { const c = sh.seats[i]; return "slot q6" + (c ? "" : " empty") + (c && mineIdx(sh) === i ? " mine" : "") + (c?.by ? " taken" : "") + (extra ? " " + extra : ""); };
+const slotLabel = (sh: Shift, i: number) => { const c = sh.seats[i]; return !c ? "Ghế trống" : c.by ? `${petName(c.by)} đang làm cho ${c.who}` : `Nhận đơn của ${c.who}`; };
 const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
   `<button class="${slotClass(sh, i, st === "low" ? "low" : "")}" id="seat${i}" data-seat="${i}" aria-label="${esc(slotLabel(sh, i))}">${slotHTML(sh, i, st)}</button>`;
 
-/* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì */
-/* ô linh vật gacha đang đồng hành: hiện chỉ số đang cộng (đã nhân thân thiết) để thấy gacha có ích ngay lúc chơi */
-function staffChip() {
-  const mg = staffPlaced("mgr"), ms = staffPlaced("mascot"), lead = mg[0] ?? ms[0]; if (!lead) return "";
-  const pc = (k: "price" | "tip" | "pat") => Math.round(gachaFx(k) * 100), cu = gachaFx("cust");
-  const bits = [pc("price") && `giá +${pc("price")}%`, pc("tip") && `tip +${pc("tip")}%`, pc("pat") && `chờ +${pc("pat")}%`, cu && `+${cu} khách`].filter(Boolean).slice(0, 2).join(" · ");
-  return `<div class="cm mas">${gachaArt(lead, 34)}<div class="ct"><b>${mg.length} quản lý · ${ms.length} linh vật</b><small>${bits || "chưa có chỉ số"}</small></div></div>`;
+/* ===== hàng đợi theo lầu và bàn =====
+   Mỗi lầu một khối, mỗi bàn một hàng ghế (bàn cấp n có n+1 ghế) kèm dải tên bàn; khách ngồi cố định đúng ghế của mình nên ô không nhảy.
+   Lầu và bàn bấm để thu gọn; bàn không có khách tự thu gọn thành dải. Dải bàn có chấm màu từng ghế để thu gọn vẫn thấy tình hình. */
+const foldOpen = { f: new Set<number>(), t: new Set<number>() };      // lầu/bàn người chơi tự thu gọn (reset mỗi ca)
+const CHEV6 = `<svg class="q6chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const floorGroups = (sh: Shift): FloorGroup[] => groupTables(tableLvs(), SHOP.seatsOf, sh.seats.length, spots() / Math.max(1, S.venue.floors));
+const seatDot = (sh: Shift, i: number) => { const c = sh.seats[i]; if (!c) return `<i class="d e"></i>`; if (c.gone) return `<i class="d r"></i>`; return `<i class="d ${cookOf(sh, i) ? "c" : patTone(Math.max(0, c.pat / c.max))}"></i>`; };
+/** chỉ số buff của lầu, gọn: tối đa 3 mục (giá, tip, chờ, khách) */
+const floorBits = (f: number) => {
+  const fx = floorFx(f - 1), pc = (k: "price" | "tip" | "pat") => Math.round((fx[k] ?? 0) * 100);
+  return [pc("price") && `giá +${pc("price")}%`, pc("tip") && `tip +${pc("tip")}%`, pc("pat") && `chờ +${pc("pat")}%`, fx.cust && `+${fx.cust} khách`].filter(Boolean).slice(0, 3).join(" · ");
+};
+function queueBlock(sh: Shift, slot: (i: number) => string) {
+  const fl = floorGroups(sh);
+  const html = fl.map(f => {
+    const mg = staffAt("mgr", f.floor - 1), ms = staffAt("mascot", f.floor - 1), shut = foldOpen.f.has(f.floor);
+    return `<section class="q6f${shut ? " shut" : ""}" data-f="${f.floor}">
+      <button class="q6fh" data-qfold="f${f.floor}" aria-expanded="${!shut}"><b>Lầu ${f.floor}</b><span class="fav">${mg ? gachaArt(mg, 24) : ""}${ms ? gachaArt(ms, 24) : ""}</span><span class="fx">${floorBits(f.floor) || "chưa có quản lý, linh vật"}</span>
+        <span class="sum"><span data-sumw></span><em data-hot hidden></em></span>${CHEV6}</button>
+      <div class="q6fb"><div class="q6fi">${f.tables.map(t => { const tshut = foldOpen.t.has(t.n);
+        return `<div class="q6t lv${t.lv}${tshut ? " shut" : ""}" data-t="${t.n}">
+          <div class="q6sb"><div class="q6si"><div class="q6seats" style="--s:${t.seats.length}">${t.seats.map(i => `<div class="cell" data-i="${i}">${slot(i)}</div>`).join("")}</div></div></div>
+          <button class="q6top" data-qfold="t${t.n}" aria-expanded="${!tshut}"><b>Bàn ${t.n} · cấp ${t.lv}</b><span class="dots" data-dots></span><span class="perk">chờ +${Math.round((comfortPat(t.lv) - 1) * 100)}% · tip +${Math.round((comfortTip(t.lv) - 1) * 100)}%</span>${CHEV6}</button></div>`; }).join("")}</div></div>
+    </section>`;
+  }).join("");
+  return `<div class="queue nofx" id="queue"><div class="qin" id="qin">${html}</div></div>`;
 }
+/** cập nhật phần tóm tắt: số khách và khách sắp giận ở tiêu đề lầu, chấm từng ghế và trạng thái tự thu gọn ở dải bàn */
+function syncQueueMeta() {
+  const sh = SH, q = $("#queue"); if (!sh || !q) return;
+  q.querySelectorAll<HTMLElement>(".q6t").forEach(t => {
+    const idx = [...t.querySelectorAll<HTMLElement>(".cell")].map(e => Number(e.dataset.i));
+    t.classList.toggle("quiet", idx.every(i => !sh.seats[i]));
+    t.classList.toggle("shut", foldOpen.t.has(Number(t.dataset.t)));
+    setHTML(t.querySelector<HTMLElement>("[data-dots]")!, idx.map(i => seatDot(sh, i)).join(""));
+  });
+  q.querySelectorAll<HTMLElement>(".q6f").forEach(fe => {
+    const idx = [...fe.querySelectorAll<HTMLElement>(".cell")].map(e => Number(e.dataset.i)), n = idx.filter(i => sh.seats[i]).length;
+    const hot = idx.filter(i => { const c = sh.seats[i]; return c && !c.gone && !cookOf(sh, i) && c.pat / c.max < 0.3; }).length;
+    fe.classList.toggle("shut", foldOpen.f.has(Number(fe.dataset.f)));
+    fe.querySelector<HTMLElement>("[data-sumw]")!.textContent = `${n}/${idx.length} khách`;
+    const h = fe.querySelector<HTMLElement>("[data-hot]")!; h.hidden = !hot; h.textContent = `${hot} sắp giận`;
+  });
+  q.querySelectorAll<HTMLElement>("[data-qfold]").forEach(b => { const k = b.dataset.qfold!, n = Number(k.slice(1)); b.setAttribute("aria-expanded", String(!(k[0] === "f" ? foldOpen.f : foldOpen.t).has(n))); });
+}
+/** bấm tiêu đề lầu hoặc dải bàn: thu gọn hoặc mở lại */
+export function toggleFold(key: string) {
+  const set = key[0] === "f" ? foldOpen.f : foldOpen.t, n = Number(key.slice(1));
+  set.has(n) ? set.delete(n) : set.add(n);
+  sfx("tap"); syncQueueMeta(); scheduleFit(); setTimeout(scheduleFit, 360);
+}
+
+/* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì (quản lý + linh vật đã nằm ở tiêu đề từng lầu) */
 export function crewHTML(sh: Shift) {
   const ids = staffIds().filter(id => sh.working.includes(id));
-  if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>${staffChip() ? `<div class="crew" style="--n:1">${staffChip()}</div>` : ""}`;
-  return `<div class="crew" style="--n:${ids.length + (staffChip() ? 1 : 0)}">${ids.map(id => {
+  if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>`;
+  return `<div class="crew" style="--n:${ids.length}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
     const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
     return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${(() => { const ei = entityInfo(id); return ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"); })()}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
-  }).join("")}${staffChip()}</div>`;
+  }).join("")}</div>`;
 }
 /* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
 const bakerBuild = (c: Customer, pct: number) => {
@@ -344,7 +410,7 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
     <div class="mx-[18px] mb-1.5 h-1.5 overflow-hidden rounded-full bg-pink-l" role="progressbar" aria-label="Tiến độ ca" aria-valuenow="${Math.round(shiftPct(sh) * 100)}" aria-valuemin="0" aria-valuemax="100"><i id="shBar" class="block h-full origin-left rounded-full bg-mint-d transition-transform duration-500" style="transform:scaleX(${shiftPct(sh).toFixed(3)})"></i></div>
     <div id="comboBox">${comboHTML(sh)}</div>
     <div id="mouseBox">${mouseChip(sh)}</div>
-    ${queueHTML(sh.seats.map((c, i) => ({ html: slotBtn(sh, i, opts.states?.[i] ?? ""), off: !c })), Math.min(innerWidth, 430) - 28, QUEUE_H0)}
+    ${queueBlock(sh, i => slotBtn(sh, i, opts.states?.[i] ?? ""))}
     <div class="band"><div id="crewBox">${crewHTML(sh)}</div><div class="idle" id="idle">${idleHTML(sh)}</div><div class="stage" id="stage">${stageHTML(sh)}</div></div>
     <div class="osheet" id="osheet">
       <div class="oh" id="ohead"><div class="grab"></div><div class="ohr"><div class="ocake" id="cake">${cakeAnySVG(sh.build, { size: 82, done: opts.done })}</div><div class="oinfo" id="oinfo">${oinfoHTML(sh)}</div></div></div>
@@ -360,7 +426,6 @@ export function playHTML(sh: Shift, opts: { done?: boolean; states?: ("" | "low"
 /* ================= Cập nhật DOM trong ca ================= */
 let sheetOpen = true;
 /* ===== hàng đợi tự co (queue-fit.ts) ===== */
-const QUEUE_H0 = 330;      // chiều cao tạm cho lần vẽ đầu và Storybook, ngay sau đó fitQueueNow() tính lại theo khung thật
 let fitQ = 0;
 /** xếp lại hàng đợi: chiều cao cho phép = phần còn lại của màn trừ chỗ phiếu order (đang mở) hoặc dải thợ bánh + mục tiêu (đang rảnh) */
 function fitQueueNow() {
@@ -368,13 +433,13 @@ function fitQueueNow() {
   const sheetH = () => ($("#ohead")?.offsetHeight ?? 90) + ($("#rows")?.scrollHeight ?? 220) + ($("#give")?.offsetHeight ?? 54) + 54;      // chiều cao tự nhiên của phiếu (không dùng scrollHeight của phiếu vì chiều cao đó phụ thuộc vào hàng đợi)
   const below = p.classList.contains("up") ? sheetH() - 20 : ($("#crewBox")?.offsetHeight ?? 0) + ($("#idle")?.offsetHeight ?? 0) + 70;
   const room = p.clientHeight - (q.getBoundingClientRect().top - p.getBoundingClientRect().top) - below - 12;
-  applyQueue(q, q.clientWidth, Math.max(120, Math.min(room, p.clientHeight * 0.55)));
+  fitQueueEl(q, Math.max(120, Math.min(room, p.clientHeight * 0.55)));
 }
 /** gộp nhiều lần gọi trong một khung hình */
 const scheduleFit = () => { cancelAnimationFrame(fitQ); fitQ = requestAnimationFrame(fitQueueNow); };
 export function renderPlay() {
   if (!SH) return;
-  leftShown = -1; views.length = 0; lastComboLost = SH.comboLost;
+  leftShown = -1; views.length = 0; lastComboLost = SH.comboLost; foldOpen.f.clear(); foldOpen.t.clear();
   $("#app")!.innerHTML = playHTML(SH);
   SH.seats.forEach((_, i) => renderSlot(i));
   bindSheetDrag(); fitSheet(); fitQueueNow();
@@ -385,12 +450,11 @@ export function renderPlay() {
 function renderSlot(i: number, enter = false) {
   const el = $("#seat" + i); if (!el || !SH) return;
   const c = SH.seats[i];
-  el.closest(".cell")?.classList.toggle("off", !c);      // bàn trống thì ẩn, các khách còn lại được xếp lại và phóng to
-  scheduleFit();
   el.className = slotClass(SH, i, enter ? "enter" : "");
   el.innerHTML = slotHTML(SH, i);
   el.setAttribute("aria-label", slotLabel(SH, i));
-  views[i] = c ? { el, bar: el.querySelector<HTMLElement>(".pat i")!, art: el.querySelector<HTMLElement>(".fc")!, cls: "" } : null;
+  views[i] = c ? { el, ring: el.querySelector<HTMLElement>(".q6ring")!, art: el.querySelector<HTMLElement>(".fc")!, cd: el.querySelector<HTMLElement>(".q6cd")!, cls: "" } : null;
+  syncQueueMeta(); scheduleFit(); setTimeout(scheduleFit, 360);      // bàn đổi giữa trống và có khách thì tự thu gọn hoặc mở, đo lại chiều cao sau khi chuyển động xong
 }
 const renderCrew = () => { const b = $("#crewBox"); if (b && SH) b.innerHTML = crewHTML(SH); };
 /* phiếu order + đánh dấu khách của mình + nút nguyên liệu */
@@ -408,7 +472,7 @@ export function renderTicket() {
   SH.seats.forEach((c, i) => {
     const el = $("#seat" + i); if (!el || !c || c.gone) return;
     const was = el.classList.contains("mine"), now = m === i;
-    if (was !== now) { el.classList.toggle("mine", now); const w = el.querySelector(".who"); if (w && !c.by) w.outerHTML = now ? `<div class="who me">Bạn</div>` : `<div class="who"></div>`; }
+    if (was !== now) renderSlot(i);      // đổi người làm: ô bánh đổi thành hình bạn (hoặc ngược lại)
     el.classList.toggle("taken", !!c.by);
   });
 }
@@ -577,6 +641,8 @@ function showServed(res: Extract<ServeResult, { ok: true }>, by?: string) {
   v.el.querySelector(".bub")!.outerHTML = `<div class="bub ok">+${price + tip + bonus + tierBonus}<small>${by ? esc(petName(by)) : "xu"}</small></div>`;
   v.art.innerHTML = charSVG(c.look, "love", faceSize(SH));
   v.el.classList.remove("low", "taken", "mine");
+  v.ring.dataset.tn = "done"; v.ring.style.setProperty("--v", "100"); v.cd.hidden = true; v.cls = "done";
+  const who = v.el.querySelector(".q6who"); if (who) who.outerHTML = `<div class="q6who ok">Cảm ơn!</div>`;
   v.el.querySelector(".burst")!.innerHTML = Array.from({ length: 14 }, (_, i) => {
     const a = i / 14 * Math.PI * 2, d = 45 + (i % 3) * 18;
     return `<i style="font-size:${13 + (i % 3) * 6}px;color:${["#FF8FAB", "#FFC94D", "#8FD9B6"][i % 3]};--dx:${(Math.cos(a) * d).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px">${i % 2 ? "♥︎" : "✦"}</i>`;
@@ -596,10 +662,10 @@ function showServed(res: Extract<ServeResult, { ok: true }>, by?: string) {
 
 function onLeave(i: number) {
   const c = SH!.seats[i]!, v = views[i];
-  if (v) { v.art.innerHTML = charSVG(c.look, "impatient", faceSize(SH!)); v.el.classList.add("bye"); }
+  if (v) { v.art.innerHTML = charSVG(c.look, "impatient", faceSize(SH!)); v.ring.dataset.tn = "low"; v.cd.hidden = true; v.cls = "gone"; v.el.classList.add("angry"); setTimeout(() => v.el.classList.add("bye"), 700); }
   sfx("leave"); haptic(30); renderCrew(); renderTicket();
   if (SH!.comboLost && SH!.combo === 0 && lastComboLost !== SH!.comboLost) { toast(`Khách giận bỏ về, đứt combo. Mất ${fmtN(SH!.comboLost - lastComboLost)} xu thưởng dồn`); lastComboLost = SH!.comboLost; }
-  const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSlot(i); }, 500);
+  const sh = SH; setTimeout(() => { if (SH !== sh) return; sh!.seats[i] = null; renderSlot(i); }, 1150);
 }
 
 export function endShift() {

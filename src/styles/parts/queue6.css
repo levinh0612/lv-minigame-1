@@ -1,0 +1,61 @@
+/* Hàng đợi theo lầu và bàn (play.ts: queueBlock, slotHTML). Viền quanh thẻ là thanh kiên nhẫn, đang có người làm thì là tiến độ làm */
+.queue{margin:0 14px;flex:none;z-index:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.qin{display:flex;flex-direction:column;gap:8px;padding:2px 2px 6px}
+.q6f{display:flex;flex-direction:column;gap:6px}
+.q6fh{all:unset;box-sizing:border-box;cursor:pointer;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:14px;background:#EFEAFD;color:#6E58C0;font:800 11px/1.2 var(--body)}
+.q6fh:focus-visible,.q6top:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.q6fh>b{font:800 15px/1 var(--display);flex:none}
+.q6fh .fav{display:flex;gap:2px;flex:none}.q6fh .fav .gart{border-radius:8px;overflow:hidden}
+.q6fh .fx{flex:1;min-width:0;opacity:.85}
+.q6fh .sum{display:flex;flex-direction:column;align-items:flex-end;flex:none;font-weight:900;font-variant-numeric:tabular-nums}
+.q6fh .sum em{font-style:normal;color:#E5486C;font-size:10px}
+.q6chev{flex:none;transition:transform .2s}[aria-expanded=false]>.q6chev{transform:rotate(-90deg)}
+/* thu gọn bằng grid-template-rows để chiều cao chuyển mượt, không nhảy */
+.q6fb,.q6sb{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease}
+.q6fi,.q6si{min-height:0;overflow:hidden}
+.q6fi{display:flex;flex-direction:column;gap:8px}
+.q6f.shut>.q6fb,.q6t.shut>.q6sb,.q6t.quiet>.q6sb{grid-template-rows:0fr}
+.q6t{display:flex;flex-direction:column;gap:4px}
+.q6t.quiet .q6top{opacity:.65}
+.q6seats{display:grid;grid-template-columns:repeat(var(--s),minmax(0,92px));justify-content:center;gap:6px;padding-top:9px}
+.cell{height:148px;min-width:0}
+.cell>.slot{width:100%;height:100%}
+.q6top{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:12px;font:800 11px/1.2 var(--body)}
+.q6top>b{font-weight:900;flex:none}.q6top .perk{margin-left:auto;opacity:.85;text-align:right}
+.q6top .dots{display:inline-flex;gap:3px;flex:none}
+.q6t.lv1 .q6top{background:#EBCBA4;color:#6B4A2E}.q6t.lv2 .q6top{background:#BFE5D3;color:#2A6B54}.q6t.lv3 .q6top{background:#F4D683;color:#7A5A12}
+.d{width:8px;height:8px;border-radius:50%;background:#C9AEB9}
+.d.ok{background:#4FBF8F}.d.mid{background:#F5B83D}.d.low,.d.r{background:#F2799B}.d.c{background:#7F6AD6}.d.e{background:transparent;box-shadow:inset 0 0 0 1.5px currentColor;opacity:.5}
+
+/* thẻ khách */
+.slot.q6{position:relative;padding:7px 3px 5px;gap:2px;border:0;border-radius:18px;background:#fff;box-shadow:0 2px 0 #F0DCE0;align-items:center;transition:opacity .3s,transform .3s}
+.slot.q6.mine{transform:none;box-shadow:0 3px 0 #F7B9CB}
+.slot.q6.taken{background:#fff;box-shadow:0 3px 0 #DCD2F7}
+.slot.q6.empty{background:rgba(255,255,255,.5);border:2px dashed #F0DCE0;box-shadow:none;justify-content:center}
+.slot.q6.empty::after{content:"Ghế trống";font:800 11px var(--body);color:#C9AEB9}
+.slot.q6.angry{animation:q6shake .35s 2}.slot.q6.bye{animation:bye .45s ease-in forwards}
+@keyframes q6shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.slot.q6 .bub{width:min(100%,54px);height:40px;position:relative;margin-top:4px}
+.slot.q6 .bub.cook{background:#F4F0FF;box-shadow:0 2px 0 #DCD2F7;overflow:visible}
+.slot.q6 .bub.cook>svg,.slot.q6 .bub.cook>img{max-height:36px;width:auto}
+.slot.q6 .bub .mk{position:absolute;right:-7px;bottom:-7px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px #DCD2F7;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:2}
+.slot.q6 .face{height:46px}.slot.q6 .fc svg{max-height:46px;width:auto}
+.slot.q6 .nm{font:800 11.5px/1.15 var(--body);color:var(--ink2);text-align:center;white-space:normal;overflow-wrap:anywhere;max-height:2.3em;overflow:hidden}
+.q6b{position:absolute;top:-8px;left:5px;z-index:6;display:inline-flex;align-items:center;gap:3px;height:16px;padding:0 7px;border-radius:99px;font:900 10px/16px var(--body);font-style:normal;white-space:nowrap;box-shadow:0 0 0 2px #fff}
+.q6b.b-q{background:#E3ECFD;color:#3F6FD0}.q6b.b-v{background:#FFF2D3;color:#A9760A}.q6b.b-s{background:#EFEAFD;color:#6E58C0}
+.q6who{width:calc(100% - 6px);min-height:22px;border-radius:9px;margin-top:auto;font:800 11px/22px var(--body);text-align:center;color:#A58B9B}
+.q6who.me{background:var(--pink);color:#fff}.q6who.ok{color:#2E8F6E}
+.q6who.by{display:flex;flex-direction:column;gap:1px;padding:2px 3px;line-height:1.1;background:#EFEAFD;color:#6E58C0;min-height:30px;font-variant-numeric:tabular-nums}
+.q6who .nmx{font:900 10.5px/1.1 var(--body);overflow-wrap:anywhere}.q6who .pc{font:900 11px/1 var(--body)}
+/* đếm ngược nhỏ cạnh khách đang được làm đơn: còn ≤ 10 giây thì khách sắp bỏ về */
+.q6cd{position:absolute;right:-2px;top:2px;z-index:5;min-width:24px;padding:1px 5px;border-radius:99px;background:#E5486C;color:#fff;font:900 10.5px/14px var(--body);text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px #fff;animation:q6pulse 1s infinite}
+.q6cd[hidden]{display:none}
+/* viền tiến trình: pathLength=100, --v là phần trăm còn lại (kiên nhẫn) hoặc đã làm (tiến độ) */
+.q6ring{position:absolute;inset:0;pointer-events:none;z-index:3;--c:#4FBF8F}
+.q6ring[data-tn=mid]{--c:#F5B83D}.q6ring[data-tn=low]{--c:#F2799B}.q6ring[data-tn=cook]{--c:#7F6AD6}.q6ring[data-tn=done]{--c:#3E9F7E}
+.q6ring svg{width:100%;height:100%;display:block;overflow:visible}
+.q6ring .trk{fill:none;stroke:#EFE3E8;stroke-width:3}
+.q6ring .val{fill:none;stroke:var(--c);stroke-width:3;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--v));transition:stroke-dashoffset .15s linear,stroke .3s}
+.q6ring[data-tn=low] .val{animation:q6pulse 1s infinite}
+@keyframes q6pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.q6fb,.q6sb{transition:none}.q6ring .val{transition:none}.q6ring[data-tn=low] .val,.q6cd,.slot.q6.angry{animation:none}}

@@ -16,3 +16,4 @@
 @import "./parts/icons.css" layer(legacy);
 @import "./parts/minigame.css" layer(legacy);
 @import "./parts/hanzi.css" layer(legacy);
+@import "./parts/queue6.css" layer(components);   /* hàng đợi theo lầu và bàn: ghi đè các luật .slot cũ ở trên */

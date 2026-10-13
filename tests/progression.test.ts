@@ -89,23 +89,29 @@ describe("Bạch Chi là nhân vật (quản lý), không phải linh thú", () 
   });
 });
 
-describe("hàng đợi tự co", () => {
-  it("ít khách thì ô to (tới trần), đông thì nhỏ dần nhưng không nhỏ hơn mức chạm được", async () => {
-    const { fitQueue, K_MAX, K_MIN, SLOT_H, MAX_COLS } = await import("../src/ui/screens/queue-fit");
-    const W = 362, H = 330, k = (n: number) => fitQueue(n, W, H).k;
-    expect(k(3)).toBeCloseTo(K_MAX); expect(k(5)).toBeGreaterThan(k(12)); expect(k(12)).toBeGreaterThan(k(30));
-    const shape = (n: number) => { const L = fitQueue(n, W, H); return [L.cols, L.rows]; };
-    expect(shape(4)).toEqual([2, 2]); expect(shape(8)).toEqual([4, 2]); expect(shape(12)).toEqual([4, 3]); expect(shape(30)).toEqual([6, 5]);
-    for (let n = 1; n <= 40; n++) expect(fitQueue(n, W, H).cols).toBeLessThanOrEqual(MAX_COLS);
-    expect(fitQueue(8, W, H).k * 84).toBeGreaterThanOrEqual(80);    // 8 khách: mỗi ô rộng ≥ 80px
-    expect(fitQueue(30, W, H).k * 84).toBeGreaterThanOrEqual(50);   // 30 khách vẫn ≥ 50px
-    for (let n = 1; n <= 40; n++) { const L = fitQueue(n, W, H); expect(L.k).toBeGreaterThanOrEqual(K_MIN); expect(L.cols * L.rows).toBeGreaterThanOrEqual(n); if (L.fits) expect(L.h).toBeLessThanOrEqual(H); }
-    expect(fitQueue(60, W, H).fits).toBe(false);                 // quá đông: khung cao hơn, vùng này cuộn
-    expect(SLOT_H * K_MIN).toBeGreaterThanOrEqual(44 * 0.9);
+describe("hàng đợi theo bàn và lầu", () => {
+  const seatsOf = (lv: number) => 1 + lv;
+  it("cắt ghế theo từng bàn, đủ số ghế của ca, không bỏ sót hay trùng", async () => {
+    const { groupTables } = await import("../src/ui/screens/queue-tables");
+    const g = groupTables([3, 3, 2, 1], seatsOf, 12, 4);
+    expect(g).toHaveLength(1);
+    expect(g[0]!.tables.map(t => t.seats.length)).toEqual([4, 4, 3, 1]);
+    expect(g.flatMap(f => f.tables.flatMap(t => t.seats))).toEqual(Array.from({ length: 12 }, (_, i) => i));
   });
-  it("các dòng đều nhau: không bao giờ có dòng cuối chỉ lẻ một hai khách khi còn cách chia gọn hơn", async () => {
-    const { fitQueue, K_MIN } = await import("../src/ui/screens/queue-fit");
-    for (let n = 1; n <= 40; n++) { const L = fitQueue(n, 362, 330); expect(L.cols * L.rows - n).toBeLessThan(L.rows); expect(L.k).toBeGreaterThanOrEqual(K_MIN); }
-    for (const W of [320, 362, 402]) for (let n = 1; n <= 40; n++) expect(fitQueue(n, W, 330).w).toBeLessThanOrEqual(W + 1);   // iPhone SE, thường, Pro Max: không tràn bề ngang
+  it("ghế ít hơn sức chứa thì bàn cuối bị cắt, bàn không còn ghế thì bỏ", async () => {
+    const { groupTables } = await import("../src/ui/screens/queue-tables");
+    const g = groupTables([3, 3, 3], seatsOf, 5, 4);
+    expect(g[0]!.tables.map(t => t.seats.length)).toEqual([4, 1]);
+  });
+  it("mỗi lầu chứa tối đa số bàn cho phép, lầu đánh số từ 1", async () => {
+    const { groupTables } = await import("../src/ui/screens/queue-tables");
+    const g = groupTables([3, 3, 3, 3, 2, 2, 1], seatsOf, 99, 4);
+    expect(g.map(f => f.floor)).toEqual([1, 2]);
+    expect(g.map(f => f.tables.length)).toEqual([4, 3]);
+    expect(g[1]!.tables[0]!.n).toBe(5);
+  });
+  it("cỡ thu nhỏ nằm trong [K_MIN, 1]", async () => {
+    const { fitK, K_MIN } = await import("../src/ui/screens/queue-tables");
+    expect(fitK(300, 600)).toBe(1); expect(fitK(1000, 330)).toBe(K_MIN); expect(fitK(400, 330)).toBeCloseTo(330 / 400);
   });
 });

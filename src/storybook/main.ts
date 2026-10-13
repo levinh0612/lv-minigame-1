@@ -49,7 +49,7 @@ import { mountRooms } from "../ui/room3d";
 import { hydratePortraits } from "../ui/portrait";
 import { loadSprites } from "../ui/sprite";
 import { fitRooms, roomHTML } from "../ui/room";
-import { fitAllQueues } from "../ui/screens/queue-fit";
+import { fitAllQueues } from "../ui/screens/queue-tables";
 import { ROOM_CATS } from "../content/room";
 import { mountGift } from "../ui/minigames/gift";
 import { mountShip } from "../ui/minigames/ship";
