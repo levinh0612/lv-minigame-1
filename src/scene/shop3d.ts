@@ -168,7 +168,6 @@ export function createShop(o: ShopOpts): ShopScene {
     }; bc(); curtainBuilds.push([cg, bc]);
   }
   windowOn(wN, -2.0); windowOn(wN, 2.3); windowOn(wW, .3);
-  { const ex = W - W0, n = Math.ceil(ex / 3); for (let k = 1; k <= n; k++) windowOn(wN, 2.3 + ex / n * k); }   // tường sau rộng ra thì thêm cửa sổ cho đỡ trống
 
   /* đồ treo tường: ảnh / khung đôi / đồng hồ mèo */
   const photoTex = o.photo ? (() => { const t = new THREE.TextureLoader().load(o.photo); t.colorSpace = THREE.SRGBColorSpace; disposables.push(t); return t; })() : null;
@@ -218,12 +217,40 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* quầy + máy tính tiền */
   const [c1, c2] = COUNTER_C[R.counter] || COUNTER_C.pink, cm1 = sel("counter", T(c1)), cm2 = sel("counter", T(c2));
-  const QX = W - W0;   // quầy dài thêm bằng phần phòng rộng ra
-  add(root, RB(5 + QX, 1.0, .95, .04), cm1, -.8 + QX / 2, .5, -1.9, { ol: "mid" });
-  for (let i = 0; i < 5 + QX; i++) add(root, RB(.8, .62, .02, .01), cm2, -2.8 + i * 1.0, .5, -1.4, { ol: null });
-  counterBits.top = T(R.counter === "mint" ? "#F2FBF6" : "#FFF8F0"); add(root, RB(5.15 + QX, .1, 1.1, .03), counterBits.top, -.8 + QX / 2, 1.04, -1.9, { ol: "mid" });
-  [-2.6, -1.2, .2, 1.4, ...Array.from({ length: Math.floor(QX / 1.4) }, (_, k) => 2.8 + 1.4 * k)].forEach(x => { add(root, CYL(.26, .24, .1, 22), T("#E8A0B4"), x, .7, -.95, { ol: "thin" }); add(root, CYL(.04, .04, .6, 10), T("#B98450"), x, .38, -.95, { ol: "thin" }); add(root, CYL(.2, .22, .04, 18), T("#B98450"), x, .04, -.95, { ol: "thin" }); });
+    add(root, RB(5, 1.0, .95, .04), cm1, -.8, .5, -1.9, { ol: "mid" });
+  for (let i = 0; i < 5; i++) add(root, RB(.8, .62, .02, .01), cm2, -2.8 + i * 1.0, .5, -1.4, { ol: null });
+  counterBits.top = T(R.counter === "mint" ? "#F2FBF6" : "#FFF8F0"); add(root, RB(5.15, .1, 1.1, .03), counterBits.top, -.8, 1.04, -1.9, { ol: "mid" });
+  [-2.6, -1.2, .2, 1.4].forEach(x => { add(root, CYL(.26, .24, .1, 22), T("#E8A0B4"), x, .7, -.95, { ol: "thin" }); add(root, CYL(.04, .04, .6, 10), T("#B98450"), x, .38, -.95, { ol: "thin" }); add(root, CYL(.2, .22, .04, 18), T("#B98450"), x, .04, -.95, { ol: "thin" }); });
   add(root, RB(.4, .3, .35, .03), T("#fff"), 1.65, 1.24, -1.85, { ol: "thin" }); add(root, RB(.34, .22, .03, .01), T("#3E5F48"), 1.65, 1.38, -1.7, { ol: null });
+
+  /* mở rộng cửa hàng: thêm một dãy máy làm bánh hiện đại dọc tường sau, mỗi lần mở rộng thêm một máy (lò nướng, máy cà phê, tủ lạnh kính, máy trộn) */
+  const steel = T("#DADFE6"), dark = T("#3A4250"), glow = T("#FFE9B8", { emissive: new THREE.Color("#FFD98A"), emissiveIntensity: .7 });
+  const STATIONS: ((x: number) => void)[] = [
+    x => {   // lò nướng
+      add(root, RB(1.8, .9, .8, .04), cm1, x, .45, -2.7, { ol: "mid" }); add(root, RB(1.9, .08, .9, .03), steel, x, .94, -2.7, { ol: "thin" });
+      add(root, RB(1.5, .8, .6, .04), steel, x, 1.38, -2.78, { ol: "mid" }); add(root, RB(1.0, .5, .03, .01), glow, x - .15, 1.38, -2.46, { ol: null });
+      [-.55, .55].forEach(dx => add(root, CYL(.07, .07, .05, 12), dark, x + dx, 1.5, -2.45, { r: [Math.PI / 2, 0, 0], ol: null }));
+      add(root, RB(1.1, .06, .1, .02), dark, x - .15, 1.1, -2.44, { ol: null });
+    },
+    x => {   // máy cà phê
+      add(root, RB(1.8, .9, .8, .04), cm1, x, .45, -2.7, { ol: "mid" }); add(root, RB(1.9, .08, .9, .03), steel, x, .94, -2.7, { ol: "thin" });
+      add(root, RB(1.0, .6, .5, .04), dark, x - .2, 1.28, -2.8, { ol: "mid" }); add(root, RB(1.0, .08, .55, .02), steel, x - .2, 1.62, -2.8, { ol: "thin" });
+      [-.4, 0].forEach(dx => { add(root, CYL(.05, .05, .14, 10), steel, x - .2 + dx, 1.12, -2.55, { ol: "thin" }); add(root, CYL(.07, .06, .1, 12), T("#fff"), x - .2 + dx, .99, -2.52, { ol: "thin" }); });
+      add(root, SPH(.12, 12, 8), T("#E0567A"), x + .55, 1.06, -2.65, { ol: "thin" });
+    },
+    x => {   // tủ lạnh kính trưng bánh
+      add(root, RB(1.8, 1.9, .8, .04), steel, x, .95, -2.7, { ol: "mid" });
+      add(root, RB(1.5, 1.5, .04, .01), new THREE.MeshBasicMaterial({ color: "#DFF1FF", transparent: true, opacity: .35, depthWrite: false }), x, 1.0, -2.28, { ol: null, cast: false });
+      [.5, 1.0, 1.5].forEach((y, i) => { add(root, RB(1.5, .04, .6, .01), T("#fff"), x, y, -2.68, { ol: "thin" }); [-.45, 0, .45].forEach((dx, k) => { const ck = cake((i + k) % 3, (k + 1) % 3, (i * 2 + k) % 3, .5); ck.position.set(x + dx, y + .03, -2.65); root.add(ck); }); });
+    },
+    x => {   // máy trộn bột
+      add(root, RB(1.8, .9, .8, .04), cm1, x, .45, -2.7, { ol: "mid" }); add(root, RB(1.9, .08, .9, .03), steel, x, .94, -2.7, { ol: "thin" });
+      add(root, RB(.5, .15, .45, .04), T("#E0567A"), x - .3, 1.07, -2.75, { ol: "thin" }); add(root, RB(.2, .6, .22, .04), T("#E0567A"), x - .3, 1.4, -2.9, { ol: "thin" }); add(root, RB(.5, .2, .24, .05), T("#E0567A"), x - .3, 1.72, -2.78, { ol: "thin" });
+      add(root, CYL(.2, .15, .25, 18), steel, x - .3, 1.2, -2.68, { ol: "thin" });
+      add(root, RB(.5, .04, .4, .01), T("#fff"), x + .5, .98, -2.65, { ol: null }); add(root, CYL(.05, .05, .5, 10), T("#C9905A"), x + .5, 1.05, -2.65, { r: [0, 0, Math.PI / 2], ol: "thin" });
+    }
+  ];
+  for (let k = 0; k < wide; k++) STATIONS[k % STATIONS.length]!(3.2 + 2 * k);
 
   /* tủ kính bánh: tủ đứng sát tường Tây, mặt kính quay ra phòng */
   const caseG = new THREE.Group(); caseG.position.set(-3.35, 0, 2.05); root.add(caseG);
@@ -234,6 +261,11 @@ export function createShop(o: ShopOpts): ShopScene {
   add(caseG, RB(.04, .9, 1.4, .02), new THREE.MeshBasicMaterial({ color: "#E6F4FF", transparent: true, opacity: .14, depthWrite: false }), .47, .56, 0, { ol: null, cast: false, recv: false });
   add(caseG, RB(.86, .04, 1.4, .02), T("#fff"), 0, .58, 0, { ol: "thin" });
   o.cakes.slice(0, 6).forEach((c, i) => { const k = cake(c[0], c[1], c[2], i < 3 ? .8 : .6); k.position.set(.02, i < 3 ? 1.13 : .1, -.45 + (i % 3) * .45); k.rotation.y = Math.PI / 2; caseG.add(k); });
+  /* tủ hiện đại dần theo mức mở rộng: 1 khung inox, 2 dải đèn LED + kệ thêm, 3 biển sáng phía trên, 4 mặt kính nâng tới trần tủ */
+  if (wide >= 1) { ([-.78, .78] as const).forEach(z => add(caseG, RB(.05, 1.06, .05, .01), steel, .5, .56, z, { ol: "thin" })); add(caseG, RB(.06, .05, 1.64, .01), steel, .5, 1.1, 0, { ol: "thin" }); add(caseG, RB(.06, .05, 1.64, .01), steel, .5, .06, 0, { ol: "thin" }); }
+  if (wide >= 2) { add(caseG, RB(.03, .03, 1.4, .01), glow, .46, 1.02, 0, { ol: null, cast: false }); add(caseG, RB(.03, .03, 1.4, .01), glow, .46, .52, 0, { ol: null, cast: false }); }
+  if (wide >= 3) { add(caseG, RB(.12, .34, 1.1, .03), T("#2F3A48"), .1, 1.45, 0, { ol: "mid" }); add(caseG, RB(.02, .22, .95, .01), glow, .17, 1.45, 0, { ol: null, cast: false }); }
+  if (wide >= 4) { add(caseG, RB(.04, .9, 1.4, .02), new THREE.MeshBasicMaterial({ color: "#E6F4FF", transparent: true, opacity: .1, depthWrite: false }), .5, .56, 0, { ol: null, cast: false, recv: false }); add(caseG, RB(.8, .03, 1.3, .01), glow, 0, 1.0, 0, { ol: null, cast: false }); }
   const caseAnchor = new THREE.Object3D(); caseAnchor.position.set(.5, .6, 0); caseG.add(caseAnchor);
   hotspots.push({ id: "case", attr: "data-act", value: "cakes", label: "Tủ bánh: xem bánh đang bán", obj: caseAnchor, wall: null, dy: 0 });
 
