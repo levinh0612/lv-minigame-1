@@ -11,7 +11,7 @@ describe("fxDiff", () => {
 
 import { setStates } from "../src/content/room";
 describe("thưởng bộ trang trí", () => {
-  const base = { wall: "pink", floor: "check", counter: "pink", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0", sign: "0", awning: "0", flower: "0" };
+  const base = { wall: "pink", floor: "check", counter: "pink", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0", sign: "0", awning: "0", flower: "0", bunting: "0", pot: "0", bench: "0" };
   it("đồ mặc định không tính vào bộ nào", () => expect(setStates(base)).toEqual([]));
   it("đủ 3 món thì nhận thưởng bậc 1, đủ 5 thì thay bằng bậc 2", () => {
     const three = setStates({ ...base, curtain: "1", lamp: "1", plant: "4" }).find(s => s.set.id === "pink")!;

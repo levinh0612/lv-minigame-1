@@ -69,6 +69,9 @@ const WALL: Record<string, () => { color: string; map: THREE.Texture }> = {
   starry: () => ({ color: "#fff", map: tex(64, 64, (g, w, h) => { g.fillStyle = "#2B2F6B"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFF6B0"; g.beginPath(); g.arc(16, 18, 2.4, 0, 7); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.arc(46, 40, 1.6, 0, 7); g.arc(30, 54, 1.2, 0, 7); g.arc(54, 10, 1.2, 0, 7); g.fill(); }, [10, 4]) }),
   peach: () => ({ color: "#fff", map: stripes("#FFE4D0", "#FFD9BE", [10, 1]) }),
   sky: () => ({ color: "#fff", map: stripes("#E2F1FF", "#D3E8FA", [10, 1]) }),
+  butter: () => ({ color: "#fff", map: stripes("#FFF1BD", "#FFE8A0", [10, 1]) }),
+  sage: () => ({ color: "#fff", map: stripes("#DCE8D2", "#CFDFC3", [10, 1]) }),
+  navy: () => ({ color: "#fff", map: stripes("#3B4672", "#333E68", [10, 1]) }),
   brick: () => ({ color: "#fff", map: tex(128, 64, (g, w, h) => { g.fillStyle = "#EBC9B4"; g.fillRect(0, 0, w, h); g.fillStyle = "#D99A82"; for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) { const ox = r % 2 ? w / 4 : 0; g.fillRect(((c * w / 2 + ox) % w) + 2, r * h / 4 + 2, w / 2 - 4, h / 4 - 4); } }, [6, 3]) })
 };
 const FLOOR: Record<string, () => THREE.Texture> = {
@@ -77,12 +80,18 @@ const FLOOR: Record<string, () => THREE.Texture> = {
   dark: () => tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? "#8A5A3C" : "#9A6846"; g.fillRect(0, i * h / 8, w, h / 8); g.fillStyle = "rgba(40,20,10,.4)"; g.fillRect(0, i * h / 8, w, 3); } }, [4, 3]),
   marble: () => tex(128, 128, (g, w, h) => { g.fillStyle = "#F4F4F6"; g.fillRect(0, 0, w, h); g.fillStyle = "#E3E5EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); g.strokeStyle = "rgba(150,160,175,.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(10, 20); g.lineTo(50, 60); g.moveTo(80, 70); g.lineTo(120, 110); g.stroke(); }, [6, 4]),
   tile: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#FFE3EA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [8, 6]),
+  herring: () => tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? "#D9B07C" : "#E8C79A"; g.fillRect(0, i * h / 8, w, h / 8); g.fillStyle = "rgba(120,70,30,.35)"; g.fillRect(0, i * h / 8, w, 3); g.fillRect(((i * 97) % w), i * h / 8, 3, h / 8); } }, [4, 3]),
+  mintTile: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#CFEFE0"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [8, 6]),
+  slate: () => tex(128, 128, (g, w, h) => { g.fillStyle = "#B9BFC9"; g.fillRect(0, 0, w, h); g.fillStyle = "#A7AEBA"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [6, 4]),
   rainbow: () => tex(128, 64, (g, w, h) => { ["#FFB3C7", "#FFE3A0", "#BDF0CF", "#BFE0FF"].forEach((c, i) => { g.fillStyle = c; g.fillRect(i * w / 4, 0, w / 4, h); }); }, [4, 6]),
   sakura: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#FFEFF3"; g.fillRect(0, 0, w, h); g.fillStyle = "#FF9FB8"; [[16, 16], [48, 44], [44, 12], [14, 50]].forEach(([x, y]) => { g.beginPath(); g.arc(x!, y!, 4, 0, 7); g.fill(); }); }, [8, 6])
 };
-const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"], candy: ["#FF9FC5", "#FFD1E3"], gold: ["#E9B949", "#F7D675"] };
+const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"], candy: ["#FF9FC5", "#FFD1E3"], sky: ["#A9D3F5", "#C3E2FA"], lilac: ["#C9B8F0", "#DDD0F8"], lemon: ["#FFE27A", "#FFEFA8"], gold: ["#E9B949", "#F7D675"] };
 
-const FLOWERS: Record<string, string[]> = { "0": ["#FF8FAB", "#FFD66B", "#fff", "#C9B8F0"], "1": ["#FF5C7A", "#FF8FAB", "#FFC0CE"], "2": ["#B79CFF", "#D9CCFF", "#9B7BEF"], "3": ["#FFD66B", "#fff", "#FFB347"], "4": ["#6FB27A", "#8FD18A", "#4FA36A"] };   // màu hoa trong hộp hoa mặt tiền
+const FLOWERS: Record<string, string[]> = { "0": ["#FF8FAB", "#FFD66B", "#fff", "#C9B8F0"], "1": ["#FF5C7A", "#FF8FAB", "#FFC0CE"], "2": ["#B79CFF", "#D9CCFF", "#9B7BEF"], "3": ["#FFD66B", "#fff", "#FFB347"], "4": ["#6FB27A", "#8FD18A", "#4FA36A"], "5": ["#FFC93C", "#FFE27A", "#E8A317"], "6": ["#8FB8FF", "#B8D2FF", "#6F9BEF"] };   // màu hoa trong hộp hoa mặt tiền
+const POTS: Record<string, [string, string, string, string?]> = { "0": ["#E9A27C", "#7BC47F", "#6FB27A"], "1": ["#FFFFFF", "#7BC47F", "#6FB27A"], "2": ["#FF9FB8", "#8FD18A", "#6FB27A", "#FFF3F6"], "3": ["#7FC9C0", "#6FB27A", "#4FA36A", "#FFD66B"], "4": ["#8A5A3A", "#6FB27A", "#7BC47F", "#FF8FAB"] };   // chậu cây trước cửa: [màu chậu, lá, lá, hoa]
+const BENCHES: Record<string, [string, string]> = { "0": ["#C9966A", "#4A4F5C"], "1": ["#FF9FB8", "#fff"], "2": ["#8FD9B6", "#4A4F5C"], "3": ["#F1E9DF", "#C9966A"], "4": ["#6F7A8C", "#2E323C"] };   // ghế đá trước tiệm: [mặt ghế, chân]
+const BUNTING: Record<string, string[]> = { "1": ["#FF8FAB", "#fff"], "2": ["#FF8FAB", "#FFD66B", "#8FD9B6", "#9EC9FF", "#B79CFF"], "3": ["#FFE9A0", "#FFD27A"], "4": ["#8FD9B6", "#fff", "#6FB27A"] };   // dây cờ treo trên biển hiệu (kiểu 3: đèn dây phát sáng)
 const W0 = 8, D = 6, HH = 3.2, PET_S = .92;
 const DOOR_X = 1.3, DOOR_W = 1.5, DOOR_H = 2.35;   // lối cửa chính trên tường Nam
 let blobTex: THREE.CanvasTexture | null = null;
@@ -470,7 +479,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const outside = new THREE.Group(); outside.visible = false; root.add(outside);
   const extGlass: THREE.MeshToonMaterial[] = [], neon: THREE.MeshBasicMaterial[] = [];
   const z0 = D / 2 + .2, x0 = W / 2 + CX + .2;
-  ([["sign", "Chỉnh biển hiệu", 0, 2.88, z0 + .2], ["awning", "Chỉnh mái hiên", 2.4, 2.3, z0 + .75], ["flower", "Chỉnh hộp hoa", -2.2, .5, z0 + .3]] as const).forEach(([k, label, x, y, z]) =>
+  ([["sign", "Chỉnh biển hiệu", 0, 2.88, z0 + .2], ["awning", "Chỉnh mái hiên", 2.4, 2.3, z0 + .75], ["flower", "Chỉnh hộp hoa", -2.2, .5, z0 + .3], ["bunting", "Chỉnh dây cờ", -2.4, 3.3, z0 + .3], ["pot", "Chỉnh chậu cây", 1.35, .6, z0 + .55], ["bench", "Chỉnh ghế đá", -2.6, .75, z0 + 2.4]] as const).forEach(([k, label, x, y, z]) =>
     hotspots.push({ id: "dec-" + k, attr: "data-ddec", value: k, label, obj: decAnchor(outside, x, y, z), wall: null, dy: 0, ext: true }));
   const streetPl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); streetPl.position.set(-4.9, 3.1, z0 + 1.7); outside.add(streetPl);
   const lampBulb = new THREE.MeshStandardMaterial({ color: "#FFF1CC", emissive: new THREE.Color("#FFD27A"), emissiveIntensity: 0 });
@@ -513,7 +522,9 @@ export function createShop(o: ShopOpts): ShopScene {
       "0": { bg: PKM, edge: "#fff", text: "#fff", ink: PKD, board: PKD },
       "1": { bg: "#C9966A", edge: "#8A5A3A", text: "#FFF3E0", ink: "#6E4529", board: "#8A5A3A" },
       "2": { bg: "#2B2640", edge: "#FF6FB5", text: "#FFE3F2", ink: "#FF3D9A", board: "#1E1A2E" },
-      "3": { bg: "#3E4A43", edge: "#D9A66B", text: "#fff", ink: "#2A332E", board: "#5E6F5B" }
+      "3": { bg: "#3E4A43", edge: "#D9A66B", text: "#fff", ink: "#2A332E", board: "#5E6F5B" },
+      "4": { bg: "#BFE0FF", edge: "#fff", text: "#3F6FA8", ink: "#6FA8DC", board: "#6FA8DC" },
+      "5": { bg: "#7FBF86", edge: "#E8F5E0", text: "#fff", ink: "#3F7A4A", board: "#4F8F5C" }
     }, sg = SIGN[R.sign ?? "0"] ?? SIGN["0"]!;
     const signTex = (() => { const c = document.createElement("canvas"); c.width = 768; c.height = 160; const g = c.getContext("2d")!;
       g.fillStyle = sg.bg; g.beginPath(); g.roundRect(6, 6, 756, 148, 40); g.fill(); g.lineWidth = 8; g.strokeStyle = sg.edge; g.stroke();
@@ -523,8 +534,14 @@ export function createShop(o: ShopOpts): ShopScene {
     add(outside, RB(3.1, .66, .12, .04), sel("sign", T(sg.board)), 0, 2.88, z0 + .06, { ol: "thin" });
     { const sm = new THREE.MeshBasicMaterial({ map: signTex, transparent: true }); neon.push(sm); const sp = new THREE.Mesh(new THREE.PlaneGeometry(2.95, .6), sm); sp.position.set(0, 2.88, z0 + .13); outside.add(sp); }
     // mái hiên sọc
-    const awnMat = sel("awning", T("#fff", { map: stripes([PK, "#8FD9B6", "#FFD66B", "#9EC9FF"][+(R.awning ?? 0)] ?? PK, "#fff", [9, 1]) }));
+    const awnMat = sel("awning", T("#fff", { map: stripes([PK, "#8FD9B6", "#FFD66B", "#9EC9FF", "#B79CFF", "#FFA970", "#E8505B"][+(R.awning ?? 0)] ?? PK, "#fff", [9, 1]) }));
     add(outside, RB(7.4, .1, 1.1, .03), awnMat, 0, 2.38, z0 + .55, { r: [.38, 0, 0], ol: "thin" });
+    // dây cờ / đèn dây treo phía trên biển hiệu
+    { const bt = R.bunting ?? "0", cols = BUNTING[bt]; if (cols) {
+      const n = 13; add(outside, CYL(.012, .012, 6.6, 6), sel("bunting", T(INK)), 0, 3.42, z0 + .3, { ol: null, cast: false, r: [0, 0, Math.PI / 2] });
+      for (let i = 0; i < n; i++) { const x = -3.3 + i * 6.6 / (n - 1), c = cols[i % cols.length]!, sag = 3.42 - .16 * Math.sin(i / (n - 1) * Math.PI);
+        if (bt === "3") add(outside, SPH(.07, 8, 6), sel("bunting", T(c, { emissive: new THREE.Color(c), emissiveIntensity: .6 })), x, sag - .08, z0 + .3, { ol: null, cast: false });
+        else add(outside, CONE(.12, .26, 3), sel("bunting", T(c)), x, sag - .14, z0 + .3, { ol: "thin", cast: false, r: [Math.PI, 0, 0] }); } } }
     // cửa sổ trưng bày + hộp hoa
     const extWin = (x: number, y: number, z: number, ry: number, w2: number, h2: number, flowers: boolean) => {
       const gp = new THREE.Group(); gp.position.set(x, y, z); gp.rotation.y = ry; outside.add(gp);
@@ -539,13 +556,15 @@ export function createShop(o: ShopOpts): ShopScene {
     extWin(-W0 / 2 - .2, 1.45, -1.0, -Math.PI / 2, 1.8, 1.4, false); extWin(-W0 / 2 - .2, 1.45, 1.6, -Math.PI / 2, 1.8, 1.4, false);
     // tấm bảng menu đứng, thảm chùi chân, chậu cây
     add(outside, RB(.9, 1.1, .08, .02), T("#5E6F5B"), 3.2, .62, z0 + 1.1, { r: [-.12, .3, 0], ol: "mid" }); add(outside, RB(.78, .98, .03, .01), T("#fff", { map: menuTex }), 3.2, .62, z0 + 1.15, { r: [-.12, .3, 0], ol: null });
-    [[.3, "#7BC47F"], [2.4, "#6FB27A"]].forEach(([x, c]) => { add(outside, CYL(.26, .2, .5, 16), T("#E9A27C"), x as number, -.1, z0 + .55, { ol: "mid" }); [[0, .45, 0, .3], [.15, .7, .05, .22], [-.14, .65, -.04, .2]].forEach(([dx, dy, dz, rr]) => add(outside, SPH(rr, 12, 10), T(c as string), (x as number) + dx, dy - .15, z0 + .55 + dz, { ol: "thin" })); });
+    const pt = POTS[R.pot ?? "0"] ?? POTS["0"]!;
+    [[.3, pt[1]], [2.4, pt[2]]].forEach(([x, c]) => { add(outside, CYL(.26, .2, .5, 16), sel("pot", T(pt[0])), x as number, -.1, z0 + .55, { ol: "mid" }); if (pt[3]) [[-.12, .62], [.14, .72], [0, .55]].forEach(([dx, dy]) => add(outside, SPH(.09, 8, 6), T(pt[3]!), (x as number) + dx!, dy! - .1, z0 + .85, { ol: "thin" })); [[0, .45, 0, .3], [.15, .7, .05, .22], [-.14, .65, -.04, .2]].forEach(([dx, dy, dz, rr]) => add(outside, SPH(rr, 12, 10), T(c as string), (x as number) + dx, dy - .15, z0 + .55 + dz, { ol: "thin" })); });
     // đèn đường, cây, ghế đá, thùng rác
     add(outside, CYL(.06, .09, 3.3, 10), T("#4A4F5C"), -4.9, 1.3, z0 + 1.7, { ol: "thin" }); add(outside, SPH(.2, 12, 10), lampBulb, -4.9, 3.05, z0 + 1.7, { ol: "thin", cast: false });
     add(outside, CYL(.4, .45, .12, 14), T("#4A4F5C"), -4.9, -.28, z0 + 1.7, { ol: "thin" });
     const tree = (x: number, z: number, sc: number) => { add(outside, CYL(.13 * sc, .18 * sc, 1.3 * sc, 10), T("#9A6A45"), x, .3 * sc, z, { ol: "mid" }); [[0, 1.5, 0, .75], [.5, 1.2, .1, .55], [-.5, 1.25, -.1, .55], [0, 2.0, 0, .5]].forEach(([dx, dy, dz, rr]) => add(outside, SPH(rr * sc, 14, 12), T("#8FD18A"), x + dx * sc, dy * sc - .1, z + dz * sc, { ol: "thin" })); };
     tree(5.6, z0 + 1.4, 1.1); tree(-5.4, -2.5, 1.0); tree(6.2, -1.5, 1.2);
-    add(outside, RB(1.4, .1, .5, .03), T("#C9966A"), -2.6, .35, z0 + 2.4, { ol: "thin" }); add(outside, RB(1.4, .5, .08, .03), T("#C9966A"), -2.6, .62, z0 + 2.62, { ol: "thin" }); [-.55, .55].forEach(dx => add(outside, RB(.08, .4, .4, .02), T("#4A4F5C"), -2.6 + dx, .12, z0 + 2.4, { ol: null }));
+    { const bn = BENCHES[R.bench ?? "0"] ?? BENCHES["0"]!;
+      add(outside, RB(1.4, .1, .5, .03), sel("bench", T(bn[0])), -2.6, .35, z0 + 2.4, { ol: "thin" }); add(outside, RB(1.4, .5, .08, .03), sel("bench", T(bn[0])), -2.6, .62, z0 + 2.62, { ol: "thin" }); [-.55, .55].forEach(dx => add(outside, RB(.08, .4, .4, .02), sel("bench", T(bn[1])), -2.6 + dx, .12, z0 + 2.4, { ol: null })); }
     add(outside, CYL(.2, .17, .5, 12), T("#9FB8C9"), 4.5, -.08, z0 + 2.2, { ol: "thin" });
     // vài bụi cây thấp quanh nhà
     [[-3.6, z0 + .35], [3.7, z0 + .35], [x0 + .45, 3.0], [x0 + .45, -2.6]].forEach(([x, z]) => [0, 1, 2].forEach(i => add(outside, SPH(.28, 10, 8), T("#7BC47F"), (x as number) + i * .32 - .3, -.1, z as number, { ol: "thin" })));

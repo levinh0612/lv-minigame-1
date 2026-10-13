@@ -1,6 +1,6 @@
 import { ROOM_CATS, fxDiff, fxText, setStates, isDefault, roomCat, roomItem, type RoomItem } from "../../content/room";
 import { tableLvs } from "../../engine/economy";
-import { dcat, trial } from "../../engine/decor";
+import { dcat, ownsDecor, trial } from "../../engine/decor";
 import { decorCount, lvl, unlocked } from "../../engine/progress";
 import { S } from "../../engine/state";
 import { fmtD, parse } from "../../engine/util";
@@ -23,9 +23,9 @@ const setLine = (room: Record<string, string>) => setStates(room).map(st => {
 export function decorHTML() {
   const C = ROOM_CATS[dcat], room = { ...S.room }, tr = trial;
   if (tr) room[tr.k] = tr.v;
-  const trIt = tr ? roomItem(tr.k, tr.v) : null, trOwn = tr ? isDefault(tr.k, tr.v) || S.owned.includes(tr.k + ":" + tr.v) : false;
+  const trIt = tr ? roomItem(tr.k, tr.v) : null, trOwn = tr ? ownsDecor(tr.k, tr.v) : false;
   const items = C.items.map(it => {
-    const own = isDefault(C.k, it.v) || S.owned.includes(C.k + ":" + it.v), eq = S.room[C.k] === it.v, sel = tr?.k === C.k && tr.v === it.v;
+    const own = ownsDecor(C.k, it.v), eq = S.room[C.k] === it.v, sel = tr?.k === C.k && tr.v === it.v;
     return `<button class="ditem ${sel ? "sel" : eq ? "eq" : ""}" data-dtry="${C.k}:${it.v}"><span class="sw" style="background:${it.sw};background-size:${it.sws || "auto"}">${it.glyph || ""}</span>
       <span class="dn">${esc(it.n)}</span><span class="tg ${eq ? "use" : own ? "own" : it.gacha ? "gacha" : "buy"}">${eq ? "Đang dùng" : own ? "Đã có" : it.gacha ? "Gacha" : lvl() < (it.lv ?? 0) ? `Cấp ${it.lv}` : `${it.cost} xu`}</span></button>`;
   }).join("");

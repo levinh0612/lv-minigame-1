@@ -1,9 +1,13 @@
 /* Trang trí tiệm: chọn nhóm, thử món, mua / dùng, cất. Không đụng giao diện để kiểm thử được. */
 import { ROOM_CATS, isDefault, roomItem, type RoomKey } from "../content/room";
+import { GACHA_ITEMS } from "../content/gacha";
 import { lvl } from "./progress";
 import { S, save } from "./state";
 import { spend } from "./wallet";
 
+/** đã có món này chưa: mặc định, đã mua, hoặc quay trúng từ Gacha (bản lưu cũ có thể thiếu trong S.owned) */
+export const ownsDecor = (k: RoomKey, v: string) => isDefault(k, v) || S.owned.includes(k + ":" + v)
+  || GACHA_ITEMS.some(g => g.decor?.k === k && g.decor.v === v && (S.gacha.owned[g.id] ?? 0) > 0);
 export let dcat = 0, trial: { k: RoomKey; v: string } | null = null;   // nhóm đang chọn, món đang thử
 export const setDecorCat = (i: number) => { dcat = i; trial = null; };
 export function tryDecor(k: RoomKey, v: string) { trial = S.room[k] === v ? null : { k, v }; }
@@ -18,7 +22,7 @@ export function stashDecor(): string {
 /* mua (nếu chưa có) và dùng món đang thử; trả về thông báo hoặc "" nếu không làm gì */
 export function applyDecor(): string {
   if (!trial) return "";
-  const { k, v } = trial, it = roomItem(k, v), id = k + ":" + v, own = isDefault(k, v) || S.owned.includes(id);
+  const { k, v } = trial, it = roomItem(k, v), id = k + ":" + v, own = ownsDecor(k, v);
   if (!own) { if (it.gacha || S.coins < it.cost || lvl() < (it.lv ?? 0)) return ""; spend("decor", it.cost, `Mua ${it.n}`); S.owned.push(id); }
   S.room[k] = v; trial = null; save();
   return own ? `Đã đổi sang ${it.n}` : `Đã mua ${it.n}`;
