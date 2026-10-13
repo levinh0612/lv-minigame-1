@@ -307,15 +307,37 @@ export function createShop(o: ShopOpts): ShopScene {
   const tableC = R.floor === "wood" ? "#C98E5A" : "#E9B98A", topC = R.counter === "mint" ? "#E4F6EC" : "#fff";
   const flG = Array.from({ length: floors }, () => { const g = new THREE.Group(); root.add(g); return g; });   // bàn ghế của từng lầu
   let curFloor = 0;
+  /* ba cấp bàn nhìn khác hẳn nhau (từ trên cao vẫn nhận ra): cấp 1 bàn gỗ trắng trơn; cấp 2 bàn hồng có thảm tròn, bình hoa, ghế đệm hồng/tím, thảm tím nhạt;
+     cấp 3 bàn hoàng gia: mặt kem viền vàng dày, khăn đỏ, chân vàng, nến sáng, bình hoa vàng, ghế nhung đỏ lưng cao viền vàng, thảm đỏ viền vàng. */
+  const GOLD = "#E9C46A", flame = T("#FFE9B8", { emissive: new THREE.Color("#FFD98A"), emissiveIntensity: .9 });
   function table(x: number, z: number, seats: [string, number][], r = 1, par: THREE.Object3D = flG[0]!, lv = 1) {
-    const tt = T(topC), tl = T(tableC); tableTops.push(tt); tableLegs.push(tl);
-    add(par, CYL(.64 * r, .64 * r, .09, 36), tt, x, .78, z, { ol: "mid" });
-    if (lv >= 2) add(par, CYL(.64 * r + .03, .64 * r + .03, .03, 36), T(lv >= 3 ? "#E9C46A" : "#F29AB2"), x, .73, z, { ol: "thin" });   // viền màu quanh mặt bàn: hồng (cấp 2), vàng (cấp 3)
-    if (lv >= 3) add(par, CYL(.4 * r, .4 * r, .02, 28), T("#FF8FAB"), x, .835, z, { ol: null });   // khăn trải bàn cấp 3
-    if (lv >= 2) { add(par, CYL(.05, .06, .16, 10), T("#BFE6FF"), x + .3 * r, .9, z - .2 * r, { ol: "thin" }); add(par, SPH(.09, 10, 8), T(lv >= 3 ? "#FFD166" : "#FF8FAB"), x + .3 * r, 1.03, z - .2 * r, { ol: "thin" }); }   // bình hoa add(par, CYL(.08, .1, .72, 14), tl, x, .38, z, { ol: "thin" }); add(par, CYL(.34 * r, .38 * r, .05, 26), tl, x, .03, z, { ol: "thin" });
-    return seats.map(([c, a]) => { const cx = x + Math.sin(a) * (.5 + .5 * r), cz = z + Math.cos(a) * (.5 + .5 * r), ch = new THREE.Group(); ch.position.set(cx, 0, cz); ch.rotation.y = a + Math.PI; par.add(ch);
-      add(ch, RB(.46, .09, .46, .04), T(c), 0, .5, 0, { ol: "thin" }); add(ch, RB(.46, .5, .07, .03), T("#B98450"), 0, .8, -.2, { ol: "thin" });
-      ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T("#B98450"), dx, .23, dz, { ol: null })); return { x: cx, z: cz, a: a + Math.PI }; });
+    const tt = T(lv >= 3 ? "#FFF6D6" : lv === 2 ? "#FFD3E1" : topC), tl = T(lv >= 3 ? GOLD : tableC); tableTops.push(tt); tableLegs.push(tl);
+    const ty = lv >= 3 ? .8 : .78;
+    if (lv >= 2) {   // thảm dưới bàn
+      const rr = r + (lv >= 3 ? .62 : .5);
+      if (lv >= 3) add(par, CYL(rr + .07, rr + .07, .02, 44), T(GOLD), x, .015, z, { ol: null, cast: false });
+      add(par, CYL(rr, rr, .03, 44), T(lv >= 3 ? "#B8324A" : "#CDBDF5"), x, .02, z, { ol: null, cast: false });
+    }
+    add(par, CYL(.1, lv >= 3 ? .16 : .1, ty - .06, 14), tl, x, (ty - .06) / 2 + .03, z, { ol: "thin" });      // chân bàn
+    add(par, CYL(.36 * r, .4 * r, .05, 26), tl, x, .05, z, { ol: "thin" });                                     // đế
+    add(par, CYL(.64 * r, .64 * r, lv >= 3 ? .12 : .09, 36), tt, x, ty, z, { ol: "mid" });                     // mặt bàn
+    if (lv === 2) add(par, CYL(.64 * r + .04, .64 * r + .04, .05, 36), T("#F06C93"), x, ty - .04, z, { ol: "thin" });   // viền hồng đậm
+    if (lv >= 3) {
+      add(par, CYL(.64 * r + .06, .64 * r + .06, .07, 36), T(GOLD), x, ty - .05, z, { ol: "thin" });             // viền vàng dày
+      add(par, CYL(.5 * r, .5 * r, .02, 32), T("#C73A56"), x, ty + .065, z, { ol: null });                        // khăn đỏ giữa bàn
+      add(par, CYL(.05, .05, .2, 10), T("#fff"), x - .22 * r, ty + .16, z + .12 * r, { ol: "thin" }); add(par, SPH(.045, 8, 6), flame, x - .22 * r, ty + .3, z + .12 * r, { ol: null });   // nến
+      add(par, CYL(.05, .07, .18, 12), T(GOLD), x + .26 * r, ty + .15, z - .16 * r, { ol: "thin" }); add(par, SPH(.12, 10, 8), T("#FF6B8B"), x + .26 * r, ty + .34, z - .16 * r, { ol: "thin" });   // bình vàng, hoa hồng đỏ
+    } else if (lv === 2) {
+      add(par, CYL(.05, .06, .16, 10), T("#BFE6FF"), x + .3 * r, ty + .12, z - .2 * r, { ol: "thin" }); add(par, SPH(.1, 10, 8), T("#FF8FAB"), x + .3 * r, ty + .27, z - .2 * r, { ol: "thin" });
+    }
+    return seats.map(([c, a], k) => {
+      const cx = x + Math.sin(a) * (.5 + .5 * r), cz = z + Math.cos(a) * (.5 + .5 * r), ch = new THREE.Group(); ch.position.set(cx, 0, cz); ch.rotation.y = a + Math.PI; par.add(ch);
+      const seat = lv >= 3 ? "#C0392B" : lv === 2 ? (k % 2 ? "#B9A3E8" : "#F29AB2") : c, back = lv >= 3 ? GOLD : lv === 2 ? "#F29AB2" : "#B98450", leg = lv >= 3 ? GOLD : "#B98450", bh = lv >= 3 ? .74 : .5;
+      add(ch, RB(.46, .09, .46, .04), T(seat), 0, .5, 0, { ol: "thin" }); add(ch, RB(.46, bh, .07, .03), T(back), 0, .5 + bh / 2 + .05, -.2, { ol: "thin" });
+      if (lv >= 3) add(ch, RB(.36, .5, .03, .02), T("#C0392B"), 0, 1.0, -.16, { ol: null });                      // đệm lưng nhung đỏ
+      ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T(leg), dx, .23, dz, { ol: null }));
+      return { x: cx, z: cz, a: a + Math.PI };
+    });
   }
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
   const GROUND = 4 + 2 * wide;         // chỗ đặt bàn mỗi lầu: 4, mỗi lần mở rộng thêm 2
@@ -370,6 +392,7 @@ export function createShop(o: ShopOpts): ShopScene {
     for (let i = 0; i < n; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: col })), a = i / n * Math.PI * 2; sp.position.set(Math.sin(a) * .46, .15 + i * .2, Math.cos(a) * .46); g.add(sp); }
     host.add(g); auras.push({ g, host });
   };
+  const STAFF_Z = -1.7;      // đứng trước dãy máy làm bánh (máy chiếm z -3,1 đến -2,3 từ x 2,3) để không bị máy che
   /* quản lý (x 3.1) và linh vật (x 2.1) của từng tầng đứng trên bệ ở sát tường sau, chỉ hiện khi xem tầng đó */
   (o.staff ?? []).slice(0, floors).forEach((st, f) => {
     const par = flG[f]!;
@@ -377,8 +400,8 @@ export function createShop(o: ShopOpts): ShopScene {
       if (!sl) return;
       const fly = !!(sl.model && PROPS[sl.model]?.fly), host = new THREE.Group();
       const cm = sl.char ? (() => { const a = personActor({ skin: "#FFE9DA", hair: "#3B2A26", coat: "#444", shirt: "#fff", eye: "#5FA6C9" }, sl.char); a.mode("idle"); return { group: a.group, update: (t: number) => a.update(t) }; })() : glbProp(sl.model!);
-      host.position.set(x, .5, -2.45); par.add(host); cm.group.position.set(x, .5, -2.45); cm.group.rotation.y = ry; par.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, host);
-      if (!fly) add(par, CYL(.4, .45, .5, 22), T(PKM), x, .25, -2.45, { ol: "mid" });
+      host.position.set(x, .5, STAFF_Z); par.add(host); cm.group.position.set(x, .5, STAFF_Z); cm.group.rotation.y = ry; par.add(cm.group); ups.push(cm.update); compSkip.push(cm.group, host);
+      if (!fly) add(par, CYL(.4, .45, .5, 22), T(PKM), x, .25, STAFF_Z, { ol: "mid" });
       if (sl.rarity !== "common") addAura(host, sl.rarity);
     });
   });

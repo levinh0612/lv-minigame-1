@@ -22,6 +22,7 @@ import { myStats } from "./engine/stats";
 import { statsDialog } from "./ui/statsdlg";
 import { askVisit, visitStatsDialog } from "./ui/screens/visit";
 import { gachaAct, openInGacha } from "./ui/screens/gacha";
+import { nlatGift } from "./ui/gift-nlat";
 import { accountPanel, adminPanel, claimGoals, fameModal, giftSheet, goalsSheet, coinModal, conflictModal, openLetter, pauseMenu, rewardModal, settings, tutorial, upgradeModal, refundModal, venueBuy, venueGo, venueSel, visitGiftModal, wallet, welcome, whatsNew } from "./ui/modals";
 import { loadCachedConfig, syncGameConfig } from "./net/gamecfg";
 import { flushSave, isLocked, loggedIn, pull, peekCloud, resolveConflict, setInShift, startAutoSave, trackHidden, visitClaim, visitPending } from "./net/cloud";
@@ -195,6 +196,7 @@ setInterval(() => {
 /* thưởng thụ động: đền bù một lần và thưởng theo cấp + chuỗi ngày cho lần đăng nhập đầu tiên mỗi ngày (qua ngày mới giữa lúc đang mở app cũng nhận) */
 function passive() {
   if (document.hidden || isLocked() || SH || hasModal() || !S.tut || !S.welcome) return;     // người mới: xem hướng dẫn và quà khai trương trước
+  if (nlatGift()) return;
   const c = claimPassive(); if (!c.daily && !c.comp) return;
   save(); sfx("level"); rewardModal(c); render();
 }

@@ -33,7 +33,7 @@ export interface State {
   v: number; coins: number; xp: number; decor: string[]; reviews: Review[]; letters: Letter[]; served: number; shifts: number;
   names: { her: string };     // chỉ tên chủ tiệm là của riêng mỗi người; tên người gửi, thú cưng, khách do admin cấu hình (CFG)
   pets: Record<string, PetState>;   // thân thiết của 3 bé và của linh thú Gacha đã thuê (tạo khi cần)
-  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number;
+  daily: Daily; streak: number; lastDay: string; sound: boolean; music: boolean; song?: string; vibe: boolean; refund?: number; gifts?: string[];
   stock: Record<StockKey, number[]>; suppliers: string[]; custom: CustomCake[];   // suppliers: nhà cung cấp đã ký hợp đồng (không gồm "home")
   staff: Record<string, StaffState>; tut: boolean;   // khoá: PetId của 3 bé thợ bánh hoặc id linh thú Gacha đã thuê
   food: Partial<Record<FoodId, number>>; welcome: boolean; autoTake: boolean; svcOn?: boolean; shipAt?: number;   // svcOn: nhận dịch vụ gói/giao (mặc định bật; tắt thì khách mới không xin)

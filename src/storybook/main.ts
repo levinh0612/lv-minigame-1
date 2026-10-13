@@ -149,6 +149,8 @@ const STORIES: Story[] = [
     html: () => { lvState(2, s => { s.cloud.named = true; s.cloud.name = "Tiệm của Vinh"; s.cloud.at = new Date().toISOString(); }); return homeHTML(); } },
   { id: "home-buff", sec: "screens", title: "Bắt đầu · 3 tầng, có buff", desc: "Cột TẦNG hiện đủ T1-T3, hàng buff có số, danh hiệu diệt chuột, hạng #256", kind: "screen",
     html: () => { lvState(13, buffed); return homeHTML(); } },
+  { id: "room-tiers", sec: "screens", title: "Cảnh tiệm · bàn đủ 3 cấp, quản lý và linh thú", desc: "Kiểm tra bàn cấp 1-2-3 khác nhau rõ và linh thú, quản lý không bị che", kind: "screen",
+    html: () => { lvState(13, s => { buffed(s); s.venue = { tbl: [3, 3, 2, 2, 1, 1], floors: 2, wide: 1 }; s.gacha.owned = { c_n3: 1, m_thienthan: 1, g_goku: 1, m_baodom: 1 }; s.gacha.mgrs = ["g_goku", "c_n3"]; s.gacha.mascots = ["m_thienthan", "m_baodom"]; }); return homeHTML(); } },
   { id: "visit", sec: "screens", title: "Ghé thăm tiệm bạn", desc: "Cùng khung với màn của mình: thẻ hồ sơ, hàng thông tin, 3 số thống kê", kind: "screen",
     html: () => { lvState(13, buffed); setVisiting({ username: "nlat", lv: 16, earned: 52486, shop: "", served: 944, decor: 9, hired: 3, room: { ...S.room }, me: { ...S.me }, venue: { tbl: [1, 1, 2], floors: 3, wide: 0 } }); return visitHTML("nlat"); } },
   { id: "reveal-ultra", sec: "screens", title: "Mở thẻ Gacha · Cực hiếm", desc: "Hiệu ứng triệu hồi rồi thẻ kết quả (xem trước, không đổi dữ liệu)", kind: "screen",
@@ -420,7 +422,7 @@ if (q.has("list")) {
   fitAllQueues();
   hydratePortraits();
   hydrateMinigames();
-  if (q.has("live")) void mountRooms();   // ?live=1: dựng cảnh 3D thật cho story có cảnh tiệm
+  if (q.has("live")) void mountRooms().then(() => setTimeout(() => { const z = +(q.get("zoom") || 0), l = (window as unknown as { __live?: { scene: { zoomBy(f: number): void; rotate(d: number): void } } }).__live; if (z && l) l.scene.zoomBy(z); if (q.has("rot") && l) l.scene.rotate(+q.get("rot")!); }, 2500));   // ?live=1: dựng cảnh 3D thật cho story có cảnh tiệm
   // báo kích thước thật cho script chụp ảnh
   void document.fonts.ready.then(() => setTimeout(() => {
     const r = document.getElementById("shot")!.getBoundingClientRect();
