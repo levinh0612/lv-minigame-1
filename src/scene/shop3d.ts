@@ -341,7 +341,7 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
   const GROUND = 4 + 2 * wide;         // chỗ đặt bàn mỗi lầu: 4, mỗi lần mở rộng thêm 2
-  const ROWS = 2 + Math.floor(wide / 2), ROWZ = (r: number) => .7 + 1.5 * r;   // càng mở rộng càng nhiều hàng bàn: 2, 2, 3, 3, 4
+  const ROWS = 2 + Math.floor(wide / 2), ROWZ = (r: number) => .1 + Math.min(2.4, (ZS - 1) / Math.max(1, ROWS - 1)) * r;   // càng mở rộng càng nhiều hàng bàn: 2, 2, 3, 3, 4
   const COLS = Math.ceil(GROUND / ROWS), STEP = COLS > 1 ? (W - 5.1) / (COLS - 1) : 0;   // chừa góc đông cho cầu thang   // các cột bàn trải đều theo chiều rộng phòng
   const SPOTS: [number, number][] = Array.from({ length: ROWS * COLS }, (_, i) => [-1.9 + STEP * (i % COLS), ROWZ(Math.floor(i / COLS))]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
   const ANG = [2.4, -2.4, .1, 3.14];
