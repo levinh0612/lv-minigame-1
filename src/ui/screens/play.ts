@@ -68,7 +68,17 @@ function loop(now: number) {
   if (!SH) return;
   const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
   if (!SH.paused) {
-    const ev = tick(SH, dt);
+    let ev: ReturnType<typeof tick>;
+    try { ev = tick(SH, dt); } catch (e) { console.error("tick", e); raf = requestAnimationFrame(loop); return; }
+    try { frame(ev, now, dt); } catch (e) { console.error("frame", e); }
+    if (isOver(SH)) return endShift();
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+function frame(ev: ReturnType<typeof tick>, now: number, dt: number) {
+  if (!SH) return;
+  {
     if (ev.rush) { sfx("level"); toast(`Giờ vàng! Khách đông bất ngờ, thêm ${ev.rush} khách`); }
     if (ev.mouse.appeared) { sfx("bell"); haptic([40, 30, 40]); if (!hasModal()) openMouseDlg(); }
     if (ev.mouse.fainted) { renderCrew(); sfx("wrong"); }
@@ -94,9 +104,7 @@ function loop(now: number) {
     updateBaking();
     const left = remaining(SH);
     if (leftShown !== left) { leftShown = left; const e = $("#shLeft"); if (e) e.textContent = `Hàng đợi: còn ${left} khách`; const pb = $("#shBar"); if (pb && SH) pb.style.transform = `scaleX(${shiftPct(SH).toFixed(3)})`; }
-    if (isOver(SH)) return endShift();
   }
-  raf = requestAnimationFrame(loop);
 }
 
 /** đang có người làm đơn này (bé thợ hoặc chủ tiệm): viền thể hiện tiến độ làm, không còn là kiên nhẫn */
