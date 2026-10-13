@@ -193,7 +193,7 @@ const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
 const foldOpen = { f: new Set<number>(), t: new Set<number>() };      // lầu/bàn người chơi tự thu gọn (reset mỗi ca)
 const CHEV6 = `<svg class="q6chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const floorGroups = (sh: Shift): FloorGroup[] => groupTables(tableLvs(), SHOP.seatsOf, sh.seats.length, spots() / Math.max(1, S.venue.floors));
-const seatDot = (sh: Shift, i: number) => { const c = sh.seats[i]; if (!c) return `<i class="d e"></i>`; if (c.gone) return `<i class="d r"></i>`; return `<i class="d ${cookOf(sh, i) ? "c" : patTone(Math.max(0, c.pat / c.max))}"></i>`; };
+const seatDot = (sh: Shift, i: number) => { const c = sh.seats[i]; if (!c) return `<i class="q6d e"></i>`; if (c.gone) return `<i class="q6d r"></i>`; return `<i class="q6d ${cookOf(sh, i) ? "c" : patTone(Math.max(0, c.pat / c.max))}"></i>`; };
 /** chỉ số buff của lầu, gọn: tối đa 3 mục (giá, tip, chờ, khách) */
 const floorBits = (f: number) => {
   const fx = floorFx(f - 1), pc = (k: "price" | "tip" | "pat") => Math.round((fx[k] ?? 0) * 100);
@@ -209,7 +209,7 @@ function queueBlock(sh: Shift, slot: (i: number) => string) {
       <div class="q6fb"><div class="q6fi">${f.tables.map(t => { const tshut = foldOpen.t.has(t.n);
         return `<div class="q6t lv${t.lv}${tshut ? " shut" : ""}" data-t="${t.n}">
           <div class="q6sb"><div class="q6si"><div class="q6seats" style="--s:${t.seats.length}">${t.seats.map(i => `<div class="cell" data-i="${i}">${slot(i)}</div>`).join("")}</div></div></div>
-          <button class="q6top" data-qfold="t${t.n}" aria-expanded="${!tshut}"><b>Bàn ${t.n} · cấp ${t.lv}</b><span class="dots" data-dots></span><span class="perk">chờ +${Math.round((comfortPat(t.lv) - 1) * 100)}% · tip +${Math.round((comfortTip(t.lv) - 1) * 100)}%</span>${CHEV6}</button></div>`; }).join("")}</div></div>
+          <button class="q6top" data-qfold="t${t.n}" aria-expanded="${!tshut}"><b>Bàn ${t.n} · cấp ${t.lv}</b><span class="q6dots" data-dots></span><span class="perk">chờ +${Math.round((comfortPat(t.lv) - 1) * 100)}% · tip +${Math.round((comfortTip(t.lv) - 1) * 100)}%</span>${CHEV6}</button></div>`; }).join("")}</div></div>
     </section>`;
   }).join("");
   return `<div class="queue nofx" id="queue"><div class="qin" id="qin">${html}</div></div>`;
@@ -300,10 +300,10 @@ export function watchBaker(id: string) {
 
 const svcOn = () => S.svcOn !== false;
 const toggleHTML = () => `<span class="tgs"><button class="toggle ${svcOn() ? "on" : ""}" data-act="svc" role="switch" aria-checked="${svcOn()}"><span>Nhận dịch vụ</span><i></i></button><button class="toggle ${S.autoTake ? "on" : ""}" data-act="auto" role="switch" aria-checked="${S.autoTake}"><span>Tự nhận đơn</span><i></i></button></span>`;
-function idleHTML(sh: Shift) {
-  const busy = sh.seats.some(x => x && !x.gone && !x.by), any = sh.seats.some(x => x && !x.gone);
+/* thống kê ca (khách vui, xu, giận, mục tiêu): gom vào một dialog */
+function statsHTML(sh: Shift) {
   const earned = sh.coins + sh.tips + sh.bonus;
-  /* mục tiêu ca: 3 ô ngang gọn (số tiến độ, tên, thanh, thưởng) thay cho danh sách dài */
+  /* mục tiêu ca: 3 cột trong một thẻ (số tiến độ, tên, thanh, thưởng) */
   const goals = sh.goals.map(g => {
     const done = goalDone(sh, g), calm = g.id === "calm", cur = goalProgress(sh, g), fail = calm && sh.left > 0;
     const pct = calm ? (sh.left ? 0 : 100) : Math.min(100, Math.round(cur / g.n * 100));
@@ -313,10 +313,29 @@ function idleHTML(sh: Shift) {
       <i class="block h-1 w-full overflow-hidden rounded-full bg-[#F1E6DA]"><u class="block h-full rounded-full no-underline ${done ? "bg-[#7FD1AE]" : "bg-[#FFC94D]"} transition-[width] duration-500" style="width:${pct}%"></u></i>
       <em class="text-[10.5px] font-black not-italic text-[#A77A0E]">+${g.reward}</em></div>`;
   }).join("");
-  return `<div class="ihead"><div><b>Đang rảnh tay</b><small class="${busy ? "hint" : ""}">${busy ? "↑ Chạm vào khách để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small></div>${toggleHTML()}</div>
-    <p class="text-center text-[13px] font-extrabold text-soft"><b class="text-ink">${sh.served}</b> khách vui · <b class="text-mint-d">+${fmtN(earned)}</b> xu · <b class="${sh.left ? "text-red" : "text-ink"}">${sh.left}</b> giận</p>
-    <div class="grid grid-cols-3 divide-x divide-[#F1E6DA] rounded-2xl bg-white py-2 shadow-[0_2px_0_#EBD9C2]" aria-label="Mục tiêu ca này">${goals}</div>
-    <p class="itip">💡 Giao đúng mà không xem công thức: thưởng +50%</p>`;
+  return `<h2>Thống kê ca này</h2>
+    <p class="text-center text-[14px] font-extrabold text-soft"><b class="text-ink">${sh.served}</b> khách vui · <b class="text-mint-d">+${fmtN(earned)}</b> xu · <b class="${sh.left ? "text-red" : "text-ink"}">${sh.left}</b> giận</p>
+    <div class="mt-3 grid grid-cols-3 divide-x divide-[#F1E6DA] rounded-2xl bg-white py-2.5 shadow-[0_2px_0_#EBD9C2]" aria-label="Mục tiêu ca này">${goals}</div>
+    <p class="itip mt-3">💡 Giao đúng mà không xem công thức: thưởng +50%</p>
+    <div class="mbtns"><button class="b3" data-close>Xong</button></div>`;
+}
+export const openStats = () => { if (SH) modal(statsHTML(SH)); };
+/* cài đặt chơi: hai công tắc, đổi xong vẽ lại ngay trong dialog */
+const settingsHTML = () => `<h2>Cài đặt ca chơi</h2>
+  <p class="sub">Nhận dịch vụ: khách có thể xin gói quà hoặc giao hàng (bé phải chơi minigame).<br>Tự nhận đơn: làm xong đơn nào thì được gán đơn mới ngay; tắt thì các bé nhận hết, bạn chạm vào khách để tự làm.</p>
+  <div class="my-3 flex flex-col gap-2">${toggleHTML()}</div>
+  <div class="mbtns"><button class="b3" data-close>Xong</button></div>`;
+export const openSettings = () => modal(settingsHTML());
+/** công tắc trong dialog: bật tắt xong vẽ lại dialog, thanh dưới đổi nhãn theo */
+const refreshSettings = () => { const box = document.querySelector<HTMLElement>("#modal .mscroll"); if (box && box.querySelector(".tgs")) box.querySelector<HTMLElement>(".tgs")!.outerHTML = toggleHTML(); if (SH) setHTML($("#idle")!, idleHTML(SH)); };
+function idleHTML(sh: Shift) {
+  const busy = sh.seats.some(x => x && !x.gone && !x.by), any = sh.seats.some(x => x && !x.gone);
+  const auto = !!S.autoTake;
+  const hint = busy ? "↑ Chạm vào khách để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…";
+  return `<div class="ibar">
+    <button class="ichip ${auto ? "auto" : ""}" data-act="settings" aria-label="Cài đặt ca chơi: ${auto ? "Đang nhận đơn" : "Đang rảnh tay"}">${ic.gear(20, 2.2, "none", "")}<span><b>${auto ? "Đang nhận đơn" : "Đang rảnh tay"}</b><small class="${busy ? "hint" : ""}">${hint}</small></span>${ic.chevron(16, 2.4, "none", "")}</button>
+    <button class="ibtn" data-act="stats" aria-label="Thống kê ca này">${ic.stats(22, 2.2, "none", "")}</button>
+  </div>`;
 }
 
 /* nút nguyên liệu: icon + tên + số trong kho; đúng/sai chỉ hiện khi đã xem công thức */
@@ -594,7 +613,7 @@ export function selectSeat(i: number) {
 }
 export function doPeek() { if (!SH || mineIdx(SH) < 0) return; peek(SH); renderTicket(); sfx("tap"); }
 export function toggleAuto() {
-  S.autoTake = !S.autoTake; save();
+  S.autoTake = !S.autoTake; save(); refreshSettings();
   // tắt tự nhận đơn: trả đơn đang giữ để các bé làm luôn
   if (SH && !S.autoTake && mineIdx(SH) >= 0) { release(SH); resetBuild(); renderBuild(); }
   if (SH) renderTicket();
@@ -602,7 +621,7 @@ export function toggleAuto() {
 }
 
 export function toggleSvc() {
-  S.svcOn = !svcOn(); save();
+  S.svcOn = !svcOn(); save(); refreshSettings();
   if (SH) renderTicket();
   toast(S.svcOn ? "Nhận dịch vụ: bật. Khách mới có thể xin gói quà / giao hàng (bé phải chơi minigame)" : "Nhận dịch vụ: tắt. Khách mới sẽ không xin gói quà / giao hàng");
 }

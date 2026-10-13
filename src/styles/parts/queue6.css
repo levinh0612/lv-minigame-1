@@ -22,10 +22,10 @@
 .cell>.slot{width:100%;height:100%}
 .q6top{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:12px;font:800 11px/1.2 var(--body)}
 .q6top>b{font-weight:900;flex:none}.q6top .perk{margin-left:auto;opacity:.85;text-align:right}
-.q6top .dots{display:inline-flex;gap:3px;flex:none}
+.q6top .q6dots{display:inline-flex;gap:3px;flex:none}
 .q6t.lv1 .q6top{background:#EBCBA4;color:#6B4A2E}.q6t.lv2 .q6top{background:#BFE5D3;color:#2A6B54}.q6t.lv3 .q6top{background:#F4D683;color:#7A5A12}
-.d{width:8px;height:8px;border-radius:50%;background:#C9AEB9}
-.d.ok{background:#4FBF8F}.d.mid{background:#F5B83D}.d.low,.d.r{background:#F2799B}.d.c{background:#7F6AD6}.d.e{background:transparent;box-shadow:inset 0 0 0 1.5px currentColor;opacity:.5}
+.q6d{width:8px;height:8px;border-radius:50%;background:#C9AEB9}
+.q6d.ok{background:#4FBF8F}.q6d.mid{background:#F5B83D}.q6d.low,.q6d.r{background:#F2799B}.q6d.c{background:#7F6AD6}.q6d.e{background:transparent;box-shadow:inset 0 0 0 1.5px currentColor;opacity:.5}
 
 /* thẻ khách */
 .slot.q6{position:relative;padding:7px 3px 5px;gap:2px;border:0;border-radius:18px;background:#fff;box-shadow:0 2px 0 #F0DCE0;align-items:center;transition:opacity .3s,transform .3s}
@@ -74,3 +74,13 @@
 .crew .cm.wk .cmw{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:30px;height:30px;margin-right:5px;border-radius:50%;display:grid;place-items:center;background:#EFEAFD;color:#6E58C0}
 .crew .cm.wk .cmw:active{transform:scale(.9)}
 .cm.squish .cmo>svg{animation:squish .45s cubic-bezier(.3,1.6,.5,1)}
+/* thanh dưới khi rảnh tay: chip trạng thái mở cài đặt, nút thống kê */
+.ibar{display:flex;gap:8px;align-items:stretch}
+.ichip{all:unset;box-sizing:border-box;cursor:pointer;flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:18px;background:#fff;box-shadow:0 2px 0 #EBD9C2;color:#6E58C0}
+.ichip>span{text-align:left;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ichip b{font:800 15px/1.1 var(--display);color:var(--ink2)}
+.ichip small{font:700 12px/1.2 var(--body);color:var(--soft)}
+.ichip.auto{color:#2E8F6E}
+.ichip:active,.ibtn:active{transform:scale(.97)}
+.ichip:focus-visible,.ibtn:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.ibtn{all:unset;box-sizing:border-box;cursor:pointer;flex:none;width:54px;border-radius:18px;background:#fff;box-shadow:0 2px 0 #EBD9C2;display:grid;place-items:center;color:#6E58C0}

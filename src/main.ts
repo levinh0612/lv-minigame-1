@@ -39,7 +39,7 @@ import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
 import { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, tryDecor } from "./ui/screens/shop";
-import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, flashSeat, toggleFold, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
+import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, flashSeat, openSettings, openStats, toggleFold, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
 
 initTeam();
 
@@ -105,6 +105,8 @@ document.addEventListener("click", e => {
     case "peek": return doPeek();
     case "auto": return toggleAuto();
     case "svc": return toggleSvc();
+    case "settings": return openSettings();
+    case "stats": return openStats();
     case "sheet": return toggleSheet();
     case "stock": return openStock(!document.querySelector("#ssheet.on"));
     case "tickall": return tickAll();
