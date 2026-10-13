@@ -91,24 +91,23 @@ describe("Bạch Chi là nhân vật (quản lý), không phải linh thú", () 
 
 describe("hàng đợi theo bàn và lầu", () => {
   const seatsOf = (lv: number) => 1 + lv;
-  it("cắt ghế theo từng bàn, đủ số ghế của ca, không bỏ sót hay trùng", async () => {
+  it("ghế đánh số liên tục theo thứ tự bàn, không bỏ sót hay trùng", async () => {
     const { groupTables } = await import("../src/ui/screens/queue-tables");
-    const g = groupTables([3, 3, 2, 1], seatsOf, 12, 4);
+    const g = groupTables([3, 3, 2, 1], seatsOf, 1, 4);
     expect(g).toHaveLength(1);
-    expect(g[0]!.tables.map(t => t.seats.length)).toEqual([4, 4, 3, 1]);
-    expect(g.flatMap(f => f.tables.flatMap(t => t.seats))).toEqual(Array.from({ length: 12 }, (_, i) => i));
+    expect(g[0]!.tables.map(t => t.seats.length)).toEqual([4, 4, 3, 2]);
+    expect(g.flatMap(f => f.tables.flatMap(t => t.seats))).toEqual(Array.from({ length: 13 }, (_, i) => i));
   });
-  it("ghế ít hơn sức chứa thì bàn cuối bị cắt, bàn không còn ghế thì bỏ", async () => {
+  it("bàn chia đều cho các tầng như cảnh 3D (bàn k ở tầng k % số tầng), tầng đánh số từ 1", async () => {
     const { groupTables } = await import("../src/ui/screens/queue-tables");
-    const g = groupTables([3, 3, 3], seatsOf, 5, 4);
-    expect(g[0]!.tables.map(t => t.seats.length)).toEqual([4, 1]);
+    const g = groupTables([3, 3, 2, 2, 1, 1, 1], seatsOf, 3, 4);
+    expect(g.map(f => f.floor)).toEqual([1, 2, 3]);
+    expect(g.map(f => f.tables.map(t => t.n))).toEqual([[1, 4, 7], [2, 5], [3, 6]]);
   });
-  it("mỗi lầu chứa tối đa số bàn cho phép, lầu đánh số từ 1", async () => {
+  it("mỗi tầng chứa tối đa số bàn cho phép", async () => {
     const { groupTables } = await import("../src/ui/screens/queue-tables");
-    const g = groupTables([3, 3, 3, 3, 2, 2, 1], seatsOf, 99, 4);
-    expect(g.map(f => f.floor)).toEqual([1, 2]);
-    expect(g.map(f => f.tables.length)).toEqual([4, 3]);
-    expect(g[1]!.tables[0]!.n).toBe(5);
+    const g = groupTables([1, 1, 1, 1, 1], seatsOf, 1, 4);
+    expect(g[0]!.tables).toHaveLength(4);
   });
   it("cỡ thu nhỏ nằm trong [K_MIN, 1]", async () => {
     const { fitK, K_MIN } = await import("../src/ui/screens/queue-tables");

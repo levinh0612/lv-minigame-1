@@ -3,15 +3,15 @@
 export interface TableGroup { n: number; lv: number; seats: number[] }
 export interface FloorGroup { floor: number; tables: TableGroup[] }
 
-/** tbl: cấp từng bàn (đúng thứ tự tableLvs), seatsOf: số ghế theo cấp, count: số ghế đang dùng trong ca, spots: số bàn tối đa mỗi lầu */
-export function groupTables(tbl: number[], seatsOf: (lv: number) => number, count: number, spots: number): FloorGroup[] {
-  const floors: FloorGroup[] = []; let at = 0;
+/** Xếp bàn lên tầng giống cảnh 3D ở màn chính (shop3d: bàn thứ k nằm ở tầng k % số tầng, mỗi tầng tối đa perFloor bàn).
+    tbl: cấp từng bàn (đúng thứ tự tableLvs), seatsOf: số ghế theo cấp. Ghế đánh số liên tục theo thứ tự bàn, nên ghế có số >= số ghế đang dùng trong ca là ghế dư. */
+export function groupTables(tbl: number[], seatsOf: (lv: number) => number, floors: number, perFloor: number): FloorGroup[] {
+  const nf = Math.max(1, floors), out: FloorGroup[] = Array.from({ length: nf }, (_, f) => ({ floor: f + 1, tables: [] })); let at = 0;
   tbl.forEach((lv, k) => {
-    const take = Math.min(seatsOf(lv), count - at); if (take <= 0) return;
-    const f = Math.floor(k / Math.max(1, spots)), t: TableGroup = { n: k + 1, lv, seats: Array.from({ length: take }, (_, j) => at + j) };
-    (floors[f] ??= { floor: f + 1, tables: [] }).tables.push(t); at += take;
+    const n = seatsOf(lv), seats = Array.from({ length: n }, (_, j) => at + j); at += n;
+    const f = out[k % nf]!; if (f.tables.length < Math.max(1, perFloor)) f.tables.push({ n: k + 1, lv, seats });
   });
-  return floors;
+  return out.filter(f => f.tables.length);
 }
 /** cỡ thu nhỏ của cả hàng đợi: vừa chiều cao còn trống thì thu lại, nhưng không nhỏ hơn K_MIN (dưới mức đó thì cuộn trong khung) */
 export const K_MIN = 0.8;

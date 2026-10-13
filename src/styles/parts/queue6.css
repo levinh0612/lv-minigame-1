@@ -93,3 +93,11 @@
 .opt small{font:700 13px/1.35 var(--body);color:var(--soft)}
 .opt.on{border-color:#5DBE95;background:#F2FBF6}.opt.on em{background:#5DBE95;color:#fff}
 .opt:active{transform:scale(.98)}.opt:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+/* ghế dư (có ở màn chính nhưng ca này không dùng): mờ, nhỏ, không bấm được */
+.cell.spare{height:148px;opacity:.45;pointer-events:none}
+.cell.spare .slot.q6::after{content:"Ghế dư"}
+/* quầy phía dưới gọn lại để hàng đợi có thêm chỗ */
+.band{padding-top:10px;gap:8px;margin-top:8px}
+.idle{gap:8px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+.crew{padding:2px 0}
+.qin{gap:6px}

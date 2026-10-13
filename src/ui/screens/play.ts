@@ -11,7 +11,7 @@ import { Sound, sfx } from "../../audio/sound";
 import { staffAvatar } from "../staffav";
 import { CATS, KEYS, LABELS, SHOP, STOCK_KEYS, tiersOf, type PartKey, type StockKey } from "../../content/game";
 import { usedIdx } from "../../engine/progress";
-import { REFILL, comfortPat, comfortTip, spots, staffIds, tableLvs, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
+import { REFILL, comfortPat, comfortTip, staffIds, tableLvs, fame, quickBuy, quickPrice, refill, refillCost, stockOf } from "../../engine/economy";
 import { lvl, xpFor } from "../../engine/progress";
 import {
   makeCustomer,
@@ -192,7 +192,7 @@ const slotBtn = (sh: Shift, i: number, st: "" | "low" | "ok" = "") =>
    Lầu và bàn bấm để thu gọn; bàn không có khách tự thu gọn thành dải. Dải bàn có chấm màu từng ghế để thu gọn vẫn thấy tình hình. */
 const foldOpen = { f: new Set<number>(), t: new Set<number>() };      // lầu/bàn người chơi tự thu gọn (reset mỗi ca)
 const CHEV6 = `<svg class="q6chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const floorGroups = (sh: Shift): FloorGroup[] => groupTables(tableLvs(), SHOP.seatsOf, sh.seats.length, spots() / Math.max(1, S.venue.floors));
+const floorGroups = (): FloorGroup[] => groupTables(tableLvs(), SHOP.seatsOf, S.venue.floors, SHOP.perFloor + SHOP.perWide * S.venue.wide);
 const seatDot = (sh: Shift, i: number) => { const c = sh.seats[i]; if (!c) return `<i class="q6d e"></i>`; if (c.gone) return `<i class="q6d r"></i>`; return `<i class="q6d ${cookOf(sh, i) ? "c" : patTone(Math.max(0, c.pat / c.max))}"></i>`; };
 /** chỉ số buff của lầu, gọn: tối đa 3 mục (giá, tip, chờ, khách) */
 const floorBits = (f: number) => {
@@ -200,15 +200,15 @@ const floorBits = (f: number) => {
   return [pc("price") && `giá +${pc("price")}%`, pc("tip") && `tip +${pc("tip")}%`, pc("pat") && `chờ +${pc("pat")}%`, fx.cust && `+${fx.cust} khách`].filter(Boolean).slice(0, 3).join(" · ");
 };
 function queueBlock(sh: Shift, slot: (i: number) => string) {
-  const fl = floorGroups(sh);
+  const fl = floorGroups();
   const html = fl.map(f => {
     const mg = staffAt("mgr", f.floor - 1), ms = staffAt("mascot", f.floor - 1), shut = foldOpen.f.has(f.floor);
     return `<section class="q6f${shut ? " shut" : ""}" data-f="${f.floor}">
-      <button class="q6fh" data-qfold="f${f.floor}" aria-expanded="${!shut}"><b>Lầu ${f.floor}</b><span class="fav">${mg ? gachaArt(mg, 24) : ""}${ms ? gachaArt(ms, 24) : ""}</span><span class="fx">${floorBits(f.floor) || "chưa có quản lý, linh vật"}</span>
+      <button class="q6fh" data-qfold="f${f.floor}" aria-expanded="${!shut}"><b>Tầng ${f.floor}</b><span class="fav">${mg ? gachaArt(mg, 24) : ""}${ms ? gachaArt(ms, 24) : ""}</span><span class="fx">${floorBits(f.floor) || "chưa có quản lý, linh vật"}</span>
         <span class="sum"><span data-sumw></span><em data-hot hidden></em></span>${CHEV6}</button>
       <div class="q6fb"><div class="q6fi">${f.tables.map(t => { const tshut = foldOpen.t.has(t.n);
         return `<div class="q6t lv${t.lv}${tshut ? " shut" : ""}" data-t="${t.n}">
-          <div class="q6sb"><div class="q6si"><div class="q6seats" style="--s:${t.seats.length}">${t.seats.map(i => `<div class="cell" data-i="${i}">${slot(i)}</div>`).join("")}</div></div></div>
+          <div class="q6sb"><div class="q6si"><div class="q6seats" style="--s:${t.seats.length}">${t.seats.map(i => i < sh.seats.length ? `<div class="cell" data-i="${i}">${slot(i)}</div>` : `<div class="cell spare" title="Ghế dư: chỉ dùng khi đông giờ vàng"><span class="slot q6 empty"></span></div>`).join("")}</div></div></div>
           <button class="q6top" data-qfold="t${t.n}" aria-expanded="${!tshut}"><b>Bàn ${t.n} · cấp ${t.lv}</b><span class="q6dots" data-dots></span><span class="perk">chờ +${Math.round((comfortPat(t.lv) - 1) * 100)}% · tip +${Math.round((comfortTip(t.lv) - 1) * 100)}%</span>${CHEV6}</button></div>`; }).join("")}</div></div>
     </section>`;
   }).join("");
@@ -218,13 +218,13 @@ function queueBlock(sh: Shift, slot: (i: number) => string) {
 function syncQueueMeta() {
   const sh = SH, q = $("#queue"); if (!sh || !q) return;
   q.querySelectorAll<HTMLElement>(".q6t").forEach(t => {
-    const idx = [...t.querySelectorAll<HTMLElement>(".cell")].map(e => Number(e.dataset.i));
+    const idx = [...t.querySelectorAll<HTMLElement>(".cell[data-i]")].map(e => Number(e.dataset.i));
     t.classList.toggle("quiet", idx.every(i => !sh.seats[i]));
     t.classList.toggle("shut", foldOpen.t.has(Number(t.dataset.t)));
     setHTML(t.querySelector<HTMLElement>("[data-dots]")!, idx.map(i => seatDot(sh, i)).join(""));
   });
   q.querySelectorAll<HTMLElement>(".q6f").forEach(fe => {
-    const idx = [...fe.querySelectorAll<HTMLElement>(".cell")].map(e => Number(e.dataset.i)), n = idx.filter(i => sh.seats[i]).length;
+    const idx = [...fe.querySelectorAll<HTMLElement>(".cell[data-i]")].map(e => Number(e.dataset.i)), n = idx.filter(i => sh.seats[i]).length;
     const hot = idx.filter(i => { const c = sh.seats[i]; return c && !c.gone && !cookOf(sh, i) && c.pat / c.max < 0.3; }).length;
     fe.classList.toggle("shut", foldOpen.f.has(Number(fe.dataset.f)));
     fe.querySelector<HTMLElement>("[data-sumw]")!.textContent = `${n}/${idx.length} khách`;
@@ -241,10 +241,10 @@ export function toggleFold(key: string) {
 
 /* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì (quản lý + linh vật đã nằm ở tiêu đề từng lầu) */
 const EYE = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>`;
-/* vị trí ghế: " · Bàn 2 · Lầu 1" (chỉ ghi lầu khi tiệm có nhiều lầu) */
-function seatPlace(sh: Shift, i: number) {
-  const fl = floorGroups(sh), f = fl.find(x => x.tables.some(t => t.seats.includes(i))), t = f?.tables.find(x => x.seats.includes(i));
-  return t && f ? ` · Bàn ${t.n}${fl.length > 1 ? ` · Lầu ${f.floor}` : ""}` : "";
+/* vị trí ghế: " · Bàn 2 · Tầng 1" (chỉ ghi lầu khi tiệm có nhiều lầu) */
+function seatPlace(i: number) {
+  const fl = floorGroups(), f = fl.find(x => x.tables.some(t => t.seats.includes(i))), t = f?.tables.find(x => x.seats.includes(i));
+  return t && f ? ` · Bàn ${t.n}${fl.length > 1 ? ` · Tầng ${f.floor}` : ""}` : "";
 }
 /** chạm chip thợ: mở lầu, bàn của ghế đó nếu đang thu gọn, cuộn tới và nháy thẻ khách */
 export function flashSeat(i: number) {
@@ -259,7 +259,7 @@ export function crewHTML(sh: Shift) {
   if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>`;
   return `<div class="crew" style="--n:${ids.length}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
-    const sub = b && c ? `<small>→ ${esc(c.who)}${seatPlace(sh, b.seat)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
+    const sub = b && c ? `<small>→ ${esc(c.who)}${seatPlace(b.seat)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
     const ei = entityInfo(id), av = ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"), nm = esc(petName(id));
@@ -469,8 +469,8 @@ function fitQueueNow() {
   const p = $("#play"), q = $("#queue"); if (!p || !q || !SH) return;
   const sheetH = () => ($("#ohead")?.offsetHeight ?? 90) + ($("#rows")?.scrollHeight ?? 220) + ($("#give")?.offsetHeight ?? 54) + 54;      // chiều cao tự nhiên của phiếu (không dùng scrollHeight của phiếu vì chiều cao đó phụ thuộc vào hàng đợi)
   /* #idle co giãn (flex:1) nên offsetHeight của nó là cả phần thừa; chỉ cộng chiều cao nội dung thật của các khối con */
-  const idleH = [...($("#idle")?.children ?? [])].reduce((n, e) => n + (e as HTMLElement).offsetHeight + 12, 0);
-  const below = p.classList.contains("up") ? sheetH() - 20 : ($("#crewBox")?.offsetHeight ?? 0) + idleH + 90;
+  const idleH = [...($("#idle")?.children ?? [])].reduce((n, e) => n + (e as HTMLElement).offsetHeight + 8, 0);
+  const below = p.classList.contains("up") ? sheetH() - 20 : ($("#crewBox")?.offsetHeight ?? 0) + idleH + 56;
   const room = p.clientHeight - (q.getBoundingClientRect().top - p.getBoundingClientRect().top) - below - 12;
   fitQueueEl(q, Math.max(120, Math.min(room, p.clientHeight * 0.75)));
 }
