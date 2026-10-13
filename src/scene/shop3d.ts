@@ -103,7 +103,7 @@ let blobTex: THREE.CanvasTexture | null = null;
 const blobMap = () => blobTex ??= (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d")!, gr = g.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(60,30,40,.55)"); gr.addColorStop(1, "rgba(60,30,40,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
 
 export function createShop(o: ShopOpts): ShopScene {
-  const floors = Math.max(1, Math.min(8, o.floors | 0)), FH = HH + .15, TOP = (floors - 1) * FH;   // FH: khoảng cách các lầu khi xem từ ngoài
+  const floors = Math.max(1, o.floors | 0), FH = HH + .15, TOP = (floors - 1) * FH;   // FH: khoảng cách các lầu khi xem từ ngoài
   const wide = Math.max(0, Math.min(4, o.wide | 0)), W = W0 + 2 * wide, CX = (W - W0) / 2, DX = DOOR_X - CX;
   const DD = 1.5 * wide, D = D0 + DD, CZ = DD / 2, ZS = D0 / 2 + DD;   // mở rộng cũng sâu thêm 1,5 mỗi lần về phía mặt tiền (tường Bắc giữ nguyên); CZ = tâm mới theo chiều sâu, ZS = z của tường Nam   // phòng mở rộng về phía đông; CX = tâm mới, DX = tọa độ cửa trong khung tường Nam
   const r = getRenderer(), scene = new THREE.Scene(), root = new THREE.Group(); scene.add(root);
