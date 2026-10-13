@@ -335,8 +335,8 @@ function idleHTML(sh: Shift) {
   const auto = !!S.autoTake;
   const hint = busy ? "↑ Chạm vào khách để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…";
   return `<div class="ibar">
-    <button class="ichip ${auto ? "auto" : ""}" data-act="settings" aria-label="Cài đặt ca chơi: ${auto ? "Đang nhận đơn" : "Đang rảnh tay"}">${ic.gear(20, 2.2, "none", "")}<span><b>${auto ? "Đang nhận đơn" : "Đang rảnh tay"}</b><small class="${busy ? "hint" : ""}">${hint}</small></span>${ic.chevron(16, 2.4, "none", "")}</button>
-    <button class="ibtn" data-act="stats" aria-label="Thống kê ca này">${ic.stats(22, 2.2, "none", "")}</button>
+    <button class="ichip ${auto ? "auto" : ""}" data-act="playmode" aria-label="Cách chơi ca này: ${auto ? "Đang nhận đơn" : "Đang rảnh tay"}">${ic.gear(20, 2.2, "none", "")}<span><b>${auto ? "Đang nhận đơn" : "Đang rảnh tay"}</b><small class="${busy ? "hint" : ""}">${hint}</small></span>${ic.chevron(16, 2.4, "none", "")}</button>
+    <button class="ibtn" data-act="shiftstats" aria-label="Thống kê ca này">${ic.stats(22, 2.2, "none", "")}</button>
   </div>`;
 }
 

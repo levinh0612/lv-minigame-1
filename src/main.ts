@@ -105,8 +105,8 @@ document.addEventListener("click", e => {
     case "peek": return doPeek();
     case "auto": return toggleAuto();
     case "svc": return toggleSvc();
-    case "settings": return openSettings();
-    case "stats": return openStats();
+    case "playmode": return openSettings();
+    case "shiftstats": return openStats();
     case "sheet": return toggleSheet();
     case "stock": return openStock(!document.querySelector("#ssheet.on"));
     case "tickall": return tickAll();
