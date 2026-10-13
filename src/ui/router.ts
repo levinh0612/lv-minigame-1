@@ -1,6 +1,6 @@
 /* Router theo hash: mỗi màn có đường dẫn riêng, nút Back của điện thoại hoạt động đúng.
    Thêm màn mới: thêm một dòng vào ROUTES. */
-export type ShopTab = "decor" | "pets" | "gift";
+export type ShopTab = "decor" | "edit" | "pets" | "gift";
 export type Route =
   | { name: "home" } | { name: "goals" } | { name: "progress" } | { name: "roadmap" } | { name: "prep" }
   | { name: "shop"; tab: ShopTab } | { name: "play" } | { name: "result" } | { name: "rank" } | { name: "visit"; user: string } | { name: "gacha" } | { name: "hanzi" };
@@ -10,6 +10,7 @@ const ROUTES: [string, Route][] = [
   ["/muc-tieu", { name: "goals" }],
   ["/thanh-tich", { name: "progress" }],
   ["/cua-hang", { name: "shop", tab: "decor" }],
+  ["/cua-hang/sua-tiem", { name: "shop", tab: "edit" }],
   ["/cua-hang/thu-cung", { name: "shop", tab: "pets" }],
   ["/cua-hang/qua-tang", { name: "shop", tab: "gift" }],
   ["/sap-ra-mat", { name: "roadmap" }],

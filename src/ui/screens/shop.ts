@@ -20,11 +20,12 @@ const setLine = (room: Record<string, string>) => setStates(room).map(st => {
   const got = cur ? fxText({ fx: cur[1] } as RoomItem) : "";
   return `<span class="dset ${cur ? "on" : ""}">${st.set.icon} ${esc(st.set.n)} ${st.count}/${nxt ? nxt[0] : t[t.length - 1]![0]}${got ? ` · ${esc(got)}` : nxt ? ` · còn ${nxt[0] - st.count} món để ${esc(fxText({ fx: nxt[1] } as RoomItem))}` : ""}</span>`;
 }).join("");
-export function decorHTML() {
-  const C = ROOM_CATS[dcat], room = { ...S.room }, tr = trial;
+/** edit = vào từ nút Sửa tiệm: chỉ hiện đồ đã có, chỉ thử / dùng / cất, không mua */
+export function decorHTML(edit = false) {
+  const C = ROOM_CATS[dcat], room = { ...S.room }, tr = trial && (!edit || ownsDecor(trial.k, trial.v)) ? trial : null;
   if (tr) room[tr.k] = tr.v;
   const trIt = tr ? roomItem(tr.k, tr.v) : null, trOwn = tr ? ownsDecor(tr.k, tr.v) : false;
-  const items = C.items.map(it => {
+  const items = C.items.filter(it => !edit || ownsDecor(C.k, it.v)).map(it => {
     const own = ownsDecor(C.k, it.v), eq = S.room[C.k] === it.v, sel = tr?.k === C.k && tr.v === it.v;
     return `<button class="ditem ${sel ? "sel" : eq ? "eq" : ""}" data-dtry="${C.k}:${it.v}"><span class="sw" style="background:${it.sw};background-size:${it.sws || "auto"}">${it.glyph || ""}</span>
       <span class="dn">${esc(it.n)}</span><span class="tg ${eq ? "use" : own ? "own" : it.gacha ? "gacha" : "buy"}">${eq ? "Đang dùng" : own ? "Đã có" : it.gacha ? "Gacha" : lvl() < (it.lv ?? 0) ? `Cấp ${it.lv}` : `${it.cost} xu`}</span></button>`;
@@ -36,8 +37,8 @@ export function decorHTML() {
     : S.coins >= trIt!.cost ? `<button class="b3" data-act="dbuy">Mua · ${trIt!.cost} xu</button>` : `<button class="b3 off" disabled>Chưa đủ xu · ${trIt!.cost} xu</button>`;
   const fx = trIt ? fxText(trIt) : "", diff = tr && trIt ? fxDiff(roomItem(tr.k, S.room[tr.k]), trIt) : "";
   return `<div class="scr decor4">
-    ${pageHead("Trang trí tiệm", "")}
-    <p class="dsub">Đã có ${decorCount()} món · chạm chấm trên đồ để chỉnh</p>
+    ${pageHead(edit ? "Sửa tiệm" : "Trang trí tiệm", "")}
+    <p class="dsub">Đã có ${decorCount()} món · ${edit ? "chọn đồ đã có để thử, dùng hoặc cất. Muốn mua thêm, vào Cửa hàng" : "chạm chấm trên đồ để chỉnh"}</p>
     <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, edit: true, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
     ${tr && S.room[tr.k] !== tr.v ? `<p class="dsub dd">So với đang dùng: ${diff ? esc(diff) : "chỉ số không đổi"}</p>` : ""}
@@ -59,6 +60,7 @@ export function giftBody() {
 }
 
 export function shopHTML(tab: ShopTab) {
+  if (tab === "edit") return decorHTML(true);
   if (tab === "pets") return teamHTML(pageHead);
   if (tab === "decor") return decorHTML();
   return `<div class="scr gift4">${pageHead("Quà & thư")}${giftBody()}</div>`;

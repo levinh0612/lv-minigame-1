@@ -151,9 +151,9 @@
 .ditem .dn{font:800 11.5px/1.15 var(--body);color:var(--ink2);text-align:center;min-height:27px;display:flex;align-items:center}
 .ditem .tg{height:20px;padding:0 6px;border-radius:10px;font:900 11px/20px var(--body);white-space:nowrap}
 .ditem .tg.use{background:var(--mint-bg);color:#2F8A66}.ditem .tg.own{background:var(--bg);color:var(--soft)}.ditem .tg.buy{background:#FFF0C9;color:var(--gold-t)}
-.dfoot{position:fixed;left:0;right:0;bottom:0;z-index:5;max-width:430px;margin:0 auto;display:flex;gap:10px;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%)}
+.dfoot{position:fixed;left:0;right:0;bottom:0;z-index:5;max-width:430px;margin:0 auto;display:flex;gap:10px;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));background:var(--bg);box-shadow:0 -6px 14px rgba(0,0,0,.06)}
 body.has-gnav .dfoot{bottom:calc(78px + env(safe-area-inset-bottom,0px));padding-bottom:10px}
-body.has-gnav .decor4{padding-bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+body.has-gnav #app .decor4{padding-bottom:calc(180px + env(safe-area-inset-bottom,0px))}
 .dfoot .b3{height:56px;border-radius:22px;font-size:20px;flex:1}
 .dfoot .b3.w{flex:none;padding:0 18px;font:800 16px var(--display);color:var(--soft)}
 .dfoot .b3.use{background:#7FD1AE;box-shadow:0 6px 0 #4FB08A}

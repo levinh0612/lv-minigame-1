@@ -85,7 +85,7 @@ export function homeHTML() {
       <div class="h5-row">
         ${te.length ? "" : `<button class="h5-mail" data-act="letter" aria-label="${ln ? "Thư hôm nay đã đến, chạm để mở" : "Đọc lại thư hôm nay"}">${ENV}${ln ? `<i class="dot"></i>` : ""}</button>`}
         <button class="b3 h5-open" data-go="/chuan-bi"><span>${ic.store(26, 2.4)}Mở tiệm</span><small>Ca ${S.shifts + 1} · dự kiến ${expectedCustomers()} khách</small></button>
-        <button class="h5-fix2" data-go="/cua-hang" aria-label="Sửa tiệm">${PEN}</button>
+        <button class="h5-fix2" data-go="/cua-hang/sua-tiem" aria-label="Sửa tiệm">${PEN}</button>
       </div>
     </div>
   </div>`;
