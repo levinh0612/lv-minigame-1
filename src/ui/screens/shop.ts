@@ -1,6 +1,6 @@
 import { ROOM_CATS, fxDiff, fxText, setStates, isDefault, roomCat, roomItem, type RoomItem } from "../../content/room";
 import { tableLvs } from "../../engine/economy";
-import { dcat, ownsDecor, trial } from "../../engine/decor";
+import { dcat, dopen, ownsDecor, trial } from "../../engine/decor";
 import { decorCount, lvl, unlocked } from "../../engine/progress";
 import { S } from "../../engine/state";
 import { fmtD, parse } from "../../engine/util";
@@ -13,7 +13,7 @@ import type { ShopTab } from "../router";
 import { claimBtn, goalsList } from "./goals";
 
 /* ===== Trang trí tiệm (DecorScreen của Claude Design): chạm để thử, rồi mua hoặc dùng. Logic ở engine/decor.ts ===== */
-export { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, tryDecor } from "../../engine/decor";
+export { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, toggleDecorSheet, tryDecor } from "../../engine/decor";
 /* tiến độ các bộ trang trí theo phòng đang xem (gồm món đang thử): "🍓 Hồng ngọt 2/3 · còn 1 món để tip +3%" */
 const setLine = (room: Record<string, string>) => setStates(room).map(st => {
   const t = st.set.tiers, cur = t.filter(([n]) => st.count >= n).pop(), nxt = t.find(([n]) => st.count < n);
@@ -36,16 +36,19 @@ export function decorHTML(edit = false) {
     : lvl() < (trIt!.lv ?? 0) ? `<button class="b3 off" disabled>Mở khoá ở cấp ${trIt!.lv}</button>`
     : S.coins >= trIt!.cost ? `<button class="b3" data-act="dbuy">Mua · ${trIt!.cost} xu</button>` : `<button class="b3 off" disabled>Chưa đủ xu · ${trIt!.cost} xu</button>`;
   const fx = trIt ? fxText(trIt) : "", diff = tr && trIt ? fxDiff(roomItem(tr.k, S.room[tr.k]), trIt) : "";
-  return `<div class="scr decor4">
+  return `<div class="scr decor4 ${dopen ? "open" : ""}">
     ${pageHead(edit ? "Sửa tiệm" : "Trang trí tiệm", "")}
     <p class="dsub">Đã có ${decorCount()} món · ${edit ? "chọn đồ đã có để thử, dùng hoặc cất. Muốn mua thêm, vào Cửa hàng" : "chạm chấm trên đồ để chỉnh"}</p>
     <div class="droom">${room3dHTML(room, { hl: tr ? roomCat(tr.k).hl : C.hl, ext: !!(tr ? roomCat(tr.k) : C).ext, edit: true, recipes: unlocked().length, event: todayEvents().length > 0, guests: Math.min(2, S.served ? 2 : 1), tables: tableLvs().join(","), wide: S.venue.wide, floors: S.venue.floors }, true)}
       ${tr && S.room[tr.k] !== tr.v ? `<div class="trying">Đang thử: ${esc(trIt!.n)}${fx ? ` · ${esc(fx)}` : ""}</div>` : ""}</div>
     ${tr && S.room[tr.k] !== tr.v ? `<p class="dsub dd">So với đang dùng: ${diff ? esc(diff) : "chỉ số không đổi"}</p>` : ""}
     ${(sl => sl ? `<div class="dsets">${sl}</div>` : "")(setLine(room))}
-    <div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
-    <div class="ditems">${items}</div>
-    <div class="dfoot">${!tr && !isDefault(C.k, S.room[C.k]) ? `<button class="b3 w" data-act="dstash">Cất đồ này</button>` : `<button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>`}${act}</div>
+    <div class="dsheet ${dopen ? "" : "shut"}">
+      <button class="dgrab" data-act="dsheet" aria-label="${dopen ? "Thu gọn danh sách" : "Mở danh sách"}"><i></i><span>${dopen ? "Thu gọn" : `${esc(C.n)} · mở danh sách`}</span></button>
+      <div class="dbody"><div class="dcats">${ROOM_CATS.map((c, i) => `<button class="${i === dcat ? "on" : ""}" data-dcat="${i}">${c.n}</button>`).join("")}</div>
+      <div class="ditems">${items}</div></div>
+      <div class="dfoot">${!tr && !isDefault(C.k, S.room[C.k]) ? `<button class="b3 w" data-act="dstash">Cất đồ này</button>` : `<button class="b3 w" data-act="dcancel" ${tr ? "" : "disabled"}>Bỏ thử</button>`}${act}</div>
+    </div>
   </div>`;
 }
 

@@ -9,6 +9,8 @@ import { spend } from "./wallet";
 export const ownsDecor = (k: RoomKey, v: string) => isDefault(k, v) || S.owned.includes(k + ":" + v)
   || GACHA_ITEMS.some(g => g.decor?.k === k && g.decor.v === v && (S.gacha.owned[g.id] ?? 0) > 0);
 export let dcat = 0, trial: { k: RoomKey; v: string } | null = null;   // nhóm đang chọn, món đang thử
+export let dopen = true;                                // hộp danh sách đang mở hay thu gọn
+export const toggleDecorSheet = () => { dopen = !dopen; };
 export const setDecorCat = (i: number) => { dcat = i; trial = null; };
 export function tryDecor(k: RoomKey, v: string) { trial = S.room[k] === v ? null : { k, v }; }
 export const cancelDecor = () => { trial = null; };

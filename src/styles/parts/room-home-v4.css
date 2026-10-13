@@ -134,7 +134,6 @@
 .nav4 .nd{position:absolute;top:-4px;right:calc(50% - 34px);min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--k-ff4f7a);border:2px solid #fff;color:#fff;font:900 11px/14px var(--body);text-align:center}
 
 /* ===== Trang trí tiệm v4 ===== */
-.decor4{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .dsub{margin:2px 16px 0 66px;font:700 12px var(--body);color:var(--soft)}
 .dsub.dd{margin:16px 16px 0;text-align:center}
 .dsets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 16px 0}.dset{padding:3px 9px;border-radius:12px;background:var(--lav);font:800 11px/1.4 var(--body);color:var(--soft)}.dset.on{background:var(--pink-l);color:var(--pink-d)}
@@ -151,9 +150,17 @@
 .ditem .dn{font:800 11.5px/1.15 var(--body);color:var(--ink2);text-align:center;min-height:27px;display:flex;align-items:center}
 .ditem .tg{height:20px;padding:0 6px;border-radius:10px;font:900 11px/20px var(--body);white-space:nowrap}
 .ditem .tg.use{background:var(--mint-bg);color:#2F8A66}.ditem .tg.own{background:var(--bg);color:var(--soft)}.ditem .tg.buy{background:#FFF0C9;color:var(--gold-t)}
-.dfoot{position:fixed;left:0;right:0;bottom:0;z-index:5;max-width:430px;margin:0 auto;display:flex;gap:10px;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));background:var(--bg);box-shadow:0 -6px 14px rgba(0,0,0,.06)}
-body.has-gnav .dfoot{bottom:calc(78px + env(safe-area-inset-bottom,0px));padding-bottom:10px}
-body.has-gnav #app .decor4{padding-bottom:calc(180px + env(safe-area-inset-bottom,0px))}
+/* hộp danh sách trượt từ dưới lên, phủ cả thanh điều hướng; cảnh tiệm luôn nằm phía trên */
+.decor4{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+body.has-gnav #app .decor4{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+body.has-gnav #app .decor4.open{padding-bottom:calc(46vh + 24px)}
+.dsheet{position:fixed;left:0;right:0;bottom:0;z-index:40;max-width:430px;margin:0 auto;height:46vh;min-height:320px;display:flex;flex-direction:column;border-radius:26px 26px 0 0;background:var(--bg);box-shadow:0 -8px 24px rgba(0,0,0,.14)}
+.dsheet.shut{height:auto;min-height:0}.dsheet.shut .dbody{display:none}
+.dgrab{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 4px;width:100%}
+.dgrab i{width:42px;height:5px;border-radius:3px;background:var(--k-e3b3c0)}.dgrab span{font:800 11px var(--body);color:var(--soft)}
+.dbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:12px}
+.dbody .dcats{padding-top:6px}
+.dfoot{flex:none;display:flex;gap:10px;padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);box-shadow:0 -4px 10px rgba(0,0,0,.05)}
 .dfoot .b3{height:56px;border-radius:22px;font-size:20px;flex:1}
 .dfoot .b3.w{flex:none;padding:0 18px;font:800 16px var(--display);color:var(--soft)}
 .dfoot .b3.use{background:#7FD1AE;box-shadow:0 6px 0 #4FB08A}

@@ -38,7 +38,7 @@ import { progressAct } from "./ui/screens/progress";
 import { rankSheet } from "./ui/screens/rank";
 import { applyUpdate, checkVersion, hardReload, justUpdated, newVersion, setRegistration, triedRecently } from "./net/update";
 import { CHANGELOG } from "./content/roadmap";
-import { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, tryDecor } from "./ui/screens/shop";
+import { applyDecor, cancelDecor, pickDecorCat, setDecorCat, stashDecor, toggleDecorSheet, tryDecor } from "./ui/screens/shop";
 import { SH, doMousePay, openMouseDlg, doPeek, doRefill, doServe, openStock, pickIngredient, selectSeat, setTier, startShift, tickAll, tickStock, toggleAuto, flashSeat, openSettings, openStats, toggleFold, toggleSheet, toggleSvc, watchBaker } from "./ui/screens/play";
 
 initTeam();
@@ -112,13 +112,14 @@ document.addEventListener("click", e => {
     case "stock": return openStock(!document.querySelector("#ssheet.on"));
     case "tickall": return tickAll();
     case "refill": return doRefill();
+    case "dsheet": toggleDecorSheet(); sfx("tap"); return render();
     case "dcancel": cancelDecor(); return render();
     case "dstash": { const m = stashDecor(); if (m) { sfx("tap"); toast(m); } return render(); }
     case "dbuy": { const m = applyDecor(); if (m) { sfx("level"); toast(m); } return render(); }
   }
   if (d.ddec) { pickDecorCat(d.ddec); sfx("tap"); return render(); }
   if (d.dcat) { setDecorCat(+d.dcat); sfx("tap"); return render(); }
-  if (d.dtry) { const [k, v] = d.dtry.split(":"); tryDecor(k as RoomKey, v); sfx("tap"); return render(); }
+  if (d.dtry) { const [k, v] = d.dtry.split(":"); tryDecor(k as RoomKey, v); sfx("tap"); const sc = document.querySelector(".dbody")?.scrollTop ?? 0; render(); const nb = document.querySelector(".dbody"); if (nb) nb.scrollTop = sc; return; }
   if (d.ingBuy) {
     const [k, i, n] = d.ingBuy.split(":"), key = k as StockKey;
     if (buy(key, +i, +n)) { sfx("tap"); toast(`+${n} ${CATS[key][+i][0]} · ${packPrice(key, +i, +n)} xu`); } else toast("Không đủ xu");
