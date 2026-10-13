@@ -1,5 +1,6 @@
 /* Màn Chính (HomeScreen của Claude Design): mái hiên, cảnh tiệm, thư hôm nay, Mở tiệm, 4 nút dưới */
-import { capacity, demand, expectedCustomers, fame, tableLvs } from "../../engine/economy";
+import { capacity, demand, expectedCustomers, fameParts, tableLvs } from "../../engine/economy";
+import { FAME_AT } from "../../content/game";
 import { daysTogether, eventNote, todayEvents } from "../../engine/dates";
 import { fx, giftReady, letterNew, lvl, unlocked, xpFor } from "../../engine/progress";
 import { S, meLook } from "../../engine/state";
@@ -28,6 +29,15 @@ export const buffText = (k: (typeof BUFFS)[number][0]) => k === "cust" ? `+${fx(
 export const BUFF_LABEL = Object.fromEntries(BUFFS.map(b => [b[0], b[2]])) as Record<(typeof BUFFS)[number][0], string>;
 export const buffIcon = (k: (typeof BUFFS)[number][0], size: number, fill = "none") => BUFFS.find(b => b[0] === k)![1](size, 2.4, fill);
 
+/* hàng bậc danh tiếng: tên bậc, thanh tiến tới bậc kế (điểm còn thiếu), bấm xem thang đầy đủ */
+function fameRow() {
+  const f = fameParts(), at = f.level ? FAME_AT[f.level - 1]! : 0, nx = f.nextAt, pct = nx == null ? 100 : Math.max(0, Math.min(100, (f.score - at) / (nx - at) * 100));
+  const num = (v: number) => v.toFixed(1).replace(".", ",");
+  return `<button class="pc-fame" data-act="fame" aria-label="Bậc danh tiếng ${esc(f.now.n)}, bấm xem chi tiết">${ic.crown(20, 2)}
+    <span class="pf-t"><small>Bậc danh tiếng</small><b>${esc(f.now.n)}</b></span>
+    <span class="pf-n"><i><u style="width:${pct}%"></u></i><small>${f.next && nx != null ? `còn ${num(Math.max(0, nx - f.score))} điểm lên ${esc(f.next.n)}` : "Bậc cao nhất"}</small></span>${ic.chevron(18, 2.6)}</button>`;
+}
+
 /* Thẻ hồ sơ: avatar có vòng kinh nghiệm, tên tiệm, danh hiệu, sức chứa / độ viral, hàng buff */
 function profileCard(L: number, cur: number, need: number) {
   const nm = S.shop.trim() || account(), len = [...nm || "Matcha"].length, fs = len <= 8 ? 28 : len <= 12 ? 24 : len <= 16 ? 21 : 18, pct = Math.min(100, cur / need * 100), title = mouseTitle();
@@ -38,9 +48,10 @@ function profileCard(L: number, cur: number, need: number) {
         <small>${ic.sprout(16, 2.2)}${nm ? "Tiệm Bánh của" : "Tiệm Bánh"}</small>
         <b style="font-size:${fs}px">${esc(nm || "Matcha")}</b>
         ${title ? `<em class="pc-title">${ic.crown(13, 2.4)}${esc(title)}</em>` : ""}
-        <div class="pc-stats" data-act="fame" role="button" tabindex="0" aria-label="Chi tiết bậc danh tiếng, sức chứa và khách cao điểm"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${capacity()} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Khách cao điểm</small><b>${demand()} khách</b></i></span><span>${ic.crown(20, 2)}<i><small>Bậc danh tiếng</small><b>${esc(fame().n)}</b></i></span></div>
+        <div class="pc-stats" data-act="fame" role="button" tabindex="0" aria-label="Giải thích sức chứa và khách cao điểm"><span>${ic.seat(20, 2)}<i><small>Sức chứa</small><b>${capacity()} ghế</b></i></span><span>${ic.fire(20, 2)}<i><small>Khách cao điểm</small><b>${demand()} khách</b></i></span></div>
       </div>
     </div>
+    ${fameRow()}
     <button class="pc-buffs" data-act="buff" aria-label="Buff đang có">${BUFFS.map(([k, f]) => `<span class="bf ${k} ${fx(k) ? "" : "zero"}">${f(15, 2.4)}${buffText(k)}</span>`).join("")}<i>${ic.chevron(18, 2.6)}</i></button>
     ${shopStatsHTML()}
   </div>`;
