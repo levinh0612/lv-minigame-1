@@ -34,6 +34,7 @@ export const ROOM_CATS: RoomCat[] = [
     { v: "rainbow", n: "Sàn cầu vồng", cost: 0, gacha: true, sw: "repeating-linear-gradient(90deg,#FFB3C7 0 12px,#FFE3A0 12px 24px,#BDF0CF 24px 36px,#BFE0FF 36px 48px)", fx: { pat: .05 } },
     { v: "sakura", n: "Sàn hoa anh đào", cost: 0, gacha: true, sw: "radial-gradient(#FF9FB8 3px,transparent 3.5px) 0 0/18px 18px,#FFEFF3", fx: { pat: .08, cust: 1 } }] },
   { k: "counter", n: "Quầy", hl: "counter", items: [
+    { v: "cafe", n: "Quầy gỗ quán", cost: 0, sw: "repeating-linear-gradient(90deg,#A06B45 0 10px,#8A5A3A 10px 20px)" },
     { v: "pink", n: "Quầy dâu", cost: 0, sw: "repeating-linear-gradient(90deg,#FFB3C7 0 10px,#FFC7D5 10px 20px)" },
     { v: "mint", n: "Quầy matcha", cost: 220, lv: 5, sw: "repeating-linear-gradient(90deg,#9FDCC0 0 10px,#B6E6CF 10px 20px)", fx: { price: .06 } },
     { v: "wood", n: "Quầy gỗ", cost: 200, lv: 5, sw: "repeating-linear-gradient(90deg,#D9A66B 0 10px,#E3B47D 10px 20px)", fx: { price: .06 } },
@@ -121,7 +122,7 @@ export const ROOM_CATS: RoomCat[] = [
     { v: "4", n: "Ghế sắt đen", cost: 270, lv: 10, sw: "linear-gradient(#6F7A8C 60%,#2E323C 60%)", fx: { pat: .09 } }] }
 ];
 
-export const DEFAULT_ROOM: Room = { wall: "pink", floor: "check", counter: "pink", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0", sign: "0", awning: "0", flower: "0", bunting: "0", pot: "0", bench: "0" };
+export const DEFAULT_ROOM: Room = { wall: "pink", floor: "check", counter: "cafe", curtain: "0", lamp: "0", wallItem: "0", plant: "0", rug: "0", sign: "0", awning: "0", flower: "0", bunting: "0", pot: "0", bench: "0" };
 export const roomCat = (k: RoomKey) => ROOM_CATS.find(c => c.k === k)!;
 export const roomItem = (k: RoomKey, v: string) => roomCat(k).items.find(i => i.v === v) ?? roomCat(k).items[0];
 export const isDefault = (k: RoomKey, v?: string) => !v || roomCat(k).items[0].v === v;   // thiếu giá trị (bản lưu / tiệm người khác từ trước khi có nhóm mới) = mặc định

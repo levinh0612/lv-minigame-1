@@ -89,8 +89,10 @@ const FLOOR: Record<string, () => THREE.Texture> = {
   rainbow: () => tex(128, 64, (g, w, h) => { ["#FFB3C7", "#FFE3A0", "#BDF0CF", "#BFE0FF"].forEach((c, i) => { g.fillStyle = c; g.fillRect(i * w / 4, 0, w / 4, h); }); }, [4, 6]),
   sakura: () => tex(64, 64, (g, w, h) => { g.fillStyle = "#FFEFF3"; g.fillRect(0, 0, w, h); g.fillStyle = "#FF9FB8"; [[16, 16], [48, 44], [44, 12], [14, 50]].forEach(([x, y]) => { g.beginPath(); g.arc(x!, y!, 4, 0, 7); g.fill(); }); }, [8, 6])
 };
-const COUNTER_C: Record<string, [string, string]> = { pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"], candy: ["#FF9FC5", "#FFD1E3"], sky: ["#A9D3F5", "#C3E2FA"], lilac: ["#C9B8F0", "#DDD0F8"], lemon: ["#FFE27A", "#FFEFA8"], gold: ["#E9B949", "#F7D675"] };
+const COUNTER_C: Record<string, [string, string]> = { cafe: ["#A06B45", "#8A5A3A"], pink: ["#FFB3C7", "#FFC7D5"], mint: ["#9FDCC0", "#B6E6CF"], wood: ["#D9A66B", "#E3B47D"], choco: ["#8B5A3C", "#A06E4B"], white: ["#F1E9DF", "#FFFFFF"], candy: ["#FF9FC5", "#FFD1E3"], sky: ["#A9D3F5", "#C3E2FA"], lilac: ["#C9B8F0", "#DDD0F8"], lemon: ["#FFE27A", "#FFEFA8"], gold: ["#E9B949", "#F7D675"] };
 
+const GINGHAM = tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(244,143,170,.75)"; g.fillRect(0, 0, w, h / 2); g.fillRect(0, h / 2, w / 2, h / 2); g.fillStyle = "rgba(244,143,170,.35)"; g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [6, 1]);
+const AWN = tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#F28AA6"; g.fillRect(0, 0, w / 2, h); }, [5, 1]);
 const FLOWERS: Record<string, string[]> = { "0": ["#FF8FAB", "#FFD66B", "#fff", "#C9B8F0"], "1": ["#FF5C7A", "#FF8FAB", "#FFC0CE"], "2": ["#B79CFF", "#D9CCFF", "#9B7BEF"], "3": ["#FFD66B", "#fff", "#FFB347"], "4": ["#6FB27A", "#8FD18A", "#4FA36A"], "5": ["#FFC93C", "#FFE27A", "#E8A317"], "6": ["#8FB8FF", "#B8D2FF", "#6F9BEF"] };   // màu hoa trong hộp hoa mặt tiền
 const POTS: Record<string, [string, string, string, string?]> = { "0": ["#E9A27C", "#7BC47F", "#6FB27A"], "1": ["#FFFFFF", "#7BC47F", "#6FB27A"], "2": ["#FF9FB8", "#8FD18A", "#6FB27A", "#FFF3F6"], "3": ["#7FC9C0", "#6FB27A", "#4FA36A", "#FFD66B"], "4": ["#8A5A3A", "#6FB27A", "#7BC47F", "#FF8FAB"] };   // chậu cây trước cửa: [màu chậu, lá, lá, hoa]
 const BENCHES: Record<string, [string, string]> = { "0": ["#C9966A", "#4A4F5C"], "1": ["#FF9FB8", "#fff"], "2": ["#8FD9B6", "#4A4F5C"], "3": ["#F1E9DF", "#C9966A"], "4": ["#6F7A8C", "#2E323C"] };   // ghế đá trước tiệm: [mặt ghế, chân]
@@ -151,6 +153,7 @@ export function createShop(o: ShopOpts): ShopScene {
   const wi = (w: typeof wN) => walls.indexOf(w);
 
   /* cửa sổ + rèm */
+  const lantM = T("#FFE9B8", { emissive: new THREE.Color("#FFD98A"), emissiveIntensity: .5 });   // đèn lồng: tối thì sáng hẳn lên
   const winGlass = T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .3 });
   const curtainTexOf = (c: string) => c === "1" ? stripes(PKM, "#fff", [4, 1]) : c === "3" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#FFF3C4"; g.fillRect(0, 0, w, h); g.fillStyle = "#F2B84B"; g.beginPath(); g.arc(w / 2, h / 2, 9, 0, 7); g.fill(); }, [3, 4]) : c === "4" ? stripes("#D9CCFF", "#fff", [4, 1]) : c === "2" ? tex(64, 64, (g, w, h) => { g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#8FD9B6"; g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2); }, [2, 3]) : null;
   const curtainBuilds: [THREE.Group, () => void][] = [];
@@ -160,6 +163,8 @@ export function createShop(o: ShopOpts): ShopScene {
     fr(ww + .24, .1, 0, y + wh / 2 + .05); fr(ww + .24, .1, 0, y - wh / 2 - .05); fr(.1, wh, -ww / 2 - .05, y); fr(.1, wh, ww / 2 + .05, y); fr(.06, wh, 0, y);
     add(w.decor, new THREE.PlaneGeometry(ww, wh), winGlass, x, y, .02, { ol: null, cast: false });
     add(w.decor, RB(ww + .1, .1, .22, .03), T("#fff"), x, y - wh / 2 - .14, .16, { ol: "thin" });
+    add(w.decor, RB(ww + .5, .06, .55, .02), T("#fff", { map: AWN, transparent: true }), x, y + wh / 2 + .42, .38, { r: [.5, 0, 0], ol: "thin" });   // mái hiên sọc hồng trắng
+    add(w.decor, RB(.14, .2, .14, .02), T("#6E452B", { transparent: true }), x - ww / 2 - .35, y + wh / 2 + .1, .2, { ol: "thin", cast: false }); add(w.decor, RB(.1, .14, .1, .02), lantM, x - ww / 2 - .35, y + wh / 2 + .1, .2, { ol: null, cast: false });   // đèn lồng cạnh cửa sổ
     const cg = new THREE.Group(); w.decor.add(cg);
     const bc = () => {
     const curtainTex = curtainTexOf(cur.curtain);
@@ -257,7 +262,7 @@ export function createShop(o: ShopOpts): ShopScene {
 
   /* tủ kính bánh: tủ đứng sát tường Tây, mặt kính quay ra phòng */
   const caseG = new THREE.Group(); caseG.position.set(-3.35, 0, 2.05); root.add(caseG);
-  const wood = counterBits.wood = T(R.counter === "mint" ? "#B6E6CF" : "#E9B98A");
+  const wood = counterBits.wood = T(R.counter === "mint" ? "#B6E6CF" : R.counter === "cafe" ? "#A06B45" : "#E9B98A");
   add(caseG, RB(.06, 1.0, 1.5, .02), T("#FFF3E4", { emissive: new THREE.Color("#FFE9C8"), emissiveIntensity: .55 }), -.45, .55, 0, { ol: "mid" });   // lưng tủ sáng nhẹ để thấy bánh bên trong
   ([-1, 1] as const).forEach(sd => add(caseG, RB(.95, 1.0, .06, .02), wood, 0, .55, sd * .72, { ol: "mid" }));
   add(caseG, RB(1.0, .08, 1.56, .02), wood, 0, 1.08, 0, { ol: "mid" }); add(caseG, RB(1.0, .1, 1.56, .02), wood, 0, .05, 0, { ol: "mid" });
@@ -269,6 +274,7 @@ export function createShop(o: ShopOpts): ShopScene {
   if (wide >= 2) { add(caseG, RB(.03, .03, 1.4, .01), glow, .46, 1.02, 0, { ol: null, cast: false }); add(caseG, RB(.03, .03, 1.4, .01), glow, .46, .52, 0, { ol: null, cast: false }); }
   if (wide >= 3) { add(caseG, RB(.12, .34, 1.1, .03), T("#2F3A48"), .1, 1.45, 0, { ol: "mid" }); add(caseG, RB(.02, .22, .95, .01), glow, .17, 1.45, 0, { ol: null, cast: false }); }
   if (wide >= 4) { add(caseG, RB(.04, .9, 1.4, .02), new THREE.MeshBasicMaterial({ color: "#E6F4FF", transparent: true, opacity: .1, depthWrite: false }), .5, .56, 0, { ol: null, cast: false, recv: false }); add(caseG, RB(.8, .03, 1.3, .01), glow, 0, 1.0, 0, { ol: null, cast: false }); }
+  add(caseG, RB(1.06, .04, 1.6, .02), T("#FFF4EA"), 0, 1.14, 0, { ol: "thin" });   // mặt đá cẩm thạch kem
   const caseAnchor = new THREE.Object3D(); caseAnchor.position.set(.5, .6, 0); caseG.add(caseAnchor);
   hotspots.push({ id: "case", attr: "data-act", value: "cakes", label: "Tủ bánh: xem bánh đang bán", obj: caseAnchor, wall: null, dy: 0 });
 
@@ -285,13 +291,47 @@ export function createShop(o: ShopOpts): ShopScene {
   const decHs = (k: string, label: string, obj: THREE.Object3D, wall: number | null, dy: number) => hotspots.push({ id: "dec-" + k, attr: "data-ddec", value: k, label, obj, wall, dy, on: () => cur[k] !== "0" });
   decHs("rug", "Chỉnh thảm", decAnchor(root, .3, .05, .95), null, 0);
   decHs("plant", "Chỉnh cây", decAnchor(root, -3.5, .7, 2.5), null, 0);
-  hotspots.push({ id: "dec-plant2", attr: "data-ddec", value: "plant", label: "Chỉnh cây", obj: decAnchor(root, 3.3 + (W - W0), .7, 2.3 + DD), wall: null, dy: 0, on: () => cur.plant !== "0" });
+  hotspots.push({ id: "dec-plant2", attr: "data-ddec", value: "plant", label: "Chỉnh cây", obj: decAnchor(root, 3.55 + (W - W0), .7, 2.8 + DD), wall: null, dy: 0, on: () => cur.plant !== "0" });
   decHs("lamp", "Chỉnh đèn", decAnchor(root, -.8, 2.1, -1.0), null, 0);
   decHs("wallItem", "Chỉnh đồ treo tường", frameAnchor, wi(wN), 0);
   hotspots.push({ id: "dec-wall", attr: "data-ddec", value: "wall", label: "Chỉnh tường", obj: decAnchor(wN.decor, -.2, .7, .1), wall: wi(wN), dy: 0 });
   hotspots.push({ id: "dec-floor", attr: "data-ddec", value: "floor", label: "Chỉnh sàn", obj: decAnchor(root, 1.3, .02, .9), wall: null, dy: 0 });
   hotspots.push({ id: "dec-counter", attr: "data-ddec", value: "counter", label: "Chỉnh quầy", obj: decAnchor(root, -2.0, .55, -1.42), wall: null, dy: 0 });
   hotspots.push({ id: "dec-curtain", attr: "data-ddec", value: "curtain", label: "Chỉnh rèm", obj: decAnchor(wN.decor, -2.0, 1.2, .3), wall: wi(wN), dy: 0, on: () => cur.curtain !== "0" });
+
+  /* đồ thêm theo thiết kế quán mới, đặt vào các chỗ trống: lò gạch + bàn trưng bánh (tường Tây), sofa (tường Đông), kệ gỗ + hộp hoa (tường Bắc), rào trắng */
+  const WD = "#A06B45", WDD = "#6E452B", RDC = "#C8344E", CRM = "#FFF4EA", glowM = lantM;
+  const xe = W / 2 + CX;     // x của tường Đông (đổi theo mức mở rộng)
+  {  // tủ lạnh trắng, góc Tây Bắc cạnh quầy
+    const g = new THREE.Group(); g.position.set(-3.65, 0, -2.6); root.add(g);
+    add(g, RB(.6, 1.7, .6, .08), T("#FFFFFF"), 0, .85, 0, { ol: "mid" }); add(g, RB(.62, .03, .62, .01), T("#C9C4C0"), 0, 1.15, 0, { ol: null });
+    add(g, RB(.04, .4, .05, .01), T("#3B2A2E"), .31, 1.45, -.18, { ol: null }); add(g, RB(.04, .5, .05, .01), T("#3B2A2E"), .31, .78, -.18, { ol: null });
+  }
+  {  // lò gạch (thấp để không che cửa sổ tường Tây)
+    const g = new THREE.Group(); g.position.set(-3.45, 0, -.8); root.add(g);
+    add(g, RB(1.0, .7, 1.0, .05), T("#D8A57E"), 0, .35, 0, { ol: "mid" }); [.18, .36, .54].forEach(y => add(g, RB(1.02, .02, 1.02, .005), T("#C58E66"), 0, y, 0, { ol: null }));
+    add(g, new THREE.SphereGeometry(.5, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), T("#EBC09B"), 0, .7, 0, { ol: "mid", s: [1, .6, 1] });
+    add(g, RB(.05, .34, .46, .02), T("#2A1612"), .5, .38, 0, { ol: null }); add(g, RB(.03, .26, .38, .01), glowM, .52, .36, 0, { ol: null, cast: false });
+    add(g, RB(.28, .3, .28, .03), T("#C58E66"), -.2, 1.0, -.25, { ol: "thin" });   // ống khói thấp
+  }
+  {  // bàn trưng bánh
+    const g = new THREE.Group(); g.position.set(-3.7, 0, .25); root.add(g);
+    add(g, RB(.6, .07, .8, .03), T(WD), 0, .8, 0, { ol: "thin" }); ([[-.24, -.34], [.24, -.34], [-.24, .34], [.24, .34]] as const).forEach(([dx, dz]) => add(g, RB(.07, .8, .07, .01), T(WDD), dx, .4, dz, { ol: null }));
+    [-.18, .2].forEach((dz, i) => { const c = cake(i, (i + 1) % 3, (i + 2) % 3, .55); c.position.set(0, .84, dz); g.add(c); });
+  }
+  {  // sofa cong dựa tường Đông (quay mặt vào phòng)
+    const g = new THREE.Group(); g.position.set(xe - .55, 0, .75); g.visible = floors === 1; g.scale.z = .85; root.add(g);
+    add(g, RB(.8, .4, 1.7, .06), T(WD), 0, .22, 0, { ol: "mid" }); add(g, RB(.22, .85, 1.7, .06), T(WD), .3, .75, 0, { ol: "mid" });
+    add(g, RB(.62, .2, 1.5, .08), T(RDC), -.04, .5, 0, { ol: "thin" }); add(g, RB(.12, .6, 1.5, .08), T("#E35A78"), .22, .85, 0, { ol: "thin" });
+    [-.7, .7].forEach(dz => add(g, RB(.8, .56, .16, .05), T(WD), 0, .5, dz, { ol: "thin" }));
+    [-.35, .35].forEach((dz, i) => add(g, RB(.16, .3, .3, .06), T(i ? "#FFD3DE" : "#FFE9B8"), .12, .78, dz, { ol: null }));
+  }
+  {  // hộp hoa dưới cửa sổ + kệ gỗ treo tường Bắc
+    ([-2.0, 2.3] as const).forEach(wx => { const x = wx - 0; add(wN.decor, RB(1.4, .18, .28, .03), T(WD, { transparent: true }), x, 1.04, .3, { ol: "thin" }); [-.5, -.17, .17, .5].forEach((dx, i) => add(wN.decor, SPH(.1, 8, 6), T(["#FF8FAB", "#FFE8A8", "#fff", "#FF6F9B"][i]!, { transparent: true }), x + dx, 1.2 + (i % 2) * .04, .3, { ol: null, cast: false })); });
+    const kx = -3.4; add(wN.decor, RB(.9, .06, .3, .02), T(WD, { transparent: true }), kx, 1.85, .2, { ol: "thin" }); [-.28, 0, .28].forEach((dx, i) => add(wN.decor, CYL(.08, .08, .2, 10), T(i % 2 ? "#F7D9E2" : CRM, { transparent: true }), kx + dx, 1.98, .2, { ol: "thin" }));
+  }
+  { const fn = new THREE.Group(); fn.position.set(-3.45, 0, ZS - .3); root.add(fn);   // rào trắng nhỏ cạnh cây góc Tây Nam
+    for (let i = 0; i < 4; i++) add(fn, RB(.1, .5, .05, .01), T("#FFF6F2"), i * .26 - .4, .27, 0, { ol: "thin" }); add(fn, RB(1.0, .06, .05, .01), T("#FFF6F2"), 0, .38, 0, { ol: null }); }
 
   /* thú cưng + chủ tiệm */
   const petMeta: [PetKind, number, string][] = [["dog", -2.9, "dog"], ["gold", -1.6, "gold"], ["white", -.3, "white"]];
@@ -320,6 +360,7 @@ export function createShop(o: ShopOpts): ShopScene {
       if (lv >= 3) add(par, CYL(rr + .07, rr + .07, .02, 44), T(GOLD), x, .015, z, { ol: null, cast: false });
       add(par, CYL(rr, rr, .03, 44), T(lv >= 3 ? "#B8324A" : "#CDBDF5"), x, .02, z, { ol: null, cast: false });
     }
+    if (lv === 1) add(par, CYL(.62 * r, .66 * r, .62, 30, ), T("#fff", { map: GINGHAM }), x, .5, z, { ol: "thin" });   // khăn caro hồng rủ quanh bàn
     add(par, CYL(.1, lv >= 3 ? .16 : .1, ty - .06, 14), tl, x, (ty - .06) / 2 + .03, z, { ol: "thin" });      // chân bàn
     add(par, CYL(.36 * r, .4 * r, .05, 26), tl, x, .05, z, { ol: "thin" });                                     // đế
     add(par, CYL(.64 * r, .64 * r, lv >= 3 ? .12 : .09, 36), tt, x, ty, z, { ol: "mid" });                     // mặt bàn
@@ -334,8 +375,9 @@ export function createShop(o: ShopOpts): ShopScene {
     }
     return seats.map(([c, a], k) => {
       const cx = x + Math.sin(a) * (.5 + .5 * r), cz = z + Math.cos(a) * (.5 + .5 * r), ch = new THREE.Group(); ch.position.set(cx, 0, cz); ch.rotation.y = a + Math.PI; par.add(ch);
-      const seat = lv >= 3 ? "#C0392B" : lv === 2 ? (k % 2 ? "#B9A3E8" : "#F29AB2") : c, back = lv >= 3 ? GOLD : lv === 2 ? "#F29AB2" : "#B98450", leg = lv >= 3 ? GOLD : "#B98450", bh = lv >= 3 ? .74 : .5;
-      add(ch, RB(.46, .09, .46, .04), T(seat), 0, .5, 0, { ol: "thin" }); add(ch, RB(.46, bh, .07, .03), T(back), 0, .5 + bh / 2 + .05, -.2, { ol: "thin" });
+      const seat = lv >= 3 ? "#C0392B" : lv === 2 ? (k % 2 ? "#B9A3E8" : "#F29AB2") : c, back = lv >= 3 ? GOLD : lv === 2 ? "#F29AB2" : "#8A5A3A", leg = lv >= 3 ? GOLD : "#6E452B", bh = lv >= 3 ? .74 : .5;
+      add(ch, RB(.46, .09, .46, .04), T(seat), 0, .5, 0, { ol: "thin" }); if (lv >= 2) add(ch, RB(.46, bh, .07, .03), T(back), 0, .5 + bh / 2 + .05, -.2, { ol: "thin" });
+      else { ([-.17, 0, .17] as const).forEach(dx => add(ch, RB(.06, .46, .05, .02), T(back), dx, .78, -.2, { ol: "thin" })); add(ch, RB(.46, .08, .06, .02), T(back), 0, 1.04, -.2, { ol: "thin" }); }   // lưng ghế gỗ có nan
       if (lv >= 3) add(ch, RB(.36, .5, .03, .02), T("#C0392B"), 0, 1.0, -.16, { ol: null });                      // đệm lưng nhung đỏ
       ([[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]] as const).forEach(([dx, dz]) => add(ch, CYL(.03, .03, .46, 8), T(leg), dx, .23, dz, { ol: null }));
       return { x: cx, z: cz, a: a + Math.PI };
@@ -344,8 +386,8 @@ export function createShop(o: ShopOpts): ShopScene {
   /* mỗi bàn vẽ đúng số ghế theo cấp (2/3/4), xếp thành hai hàng, tối đa 6 bàn trong cảnh */
   const GROUND = 4 + 2 * wide;         // chỗ đặt bàn mỗi lầu: 4, mỗi lần mở rộng thêm 2
   const ROWS = 2 + Math.floor(wide / 2), ROWZ = (r: number) => .1 + Math.min(2.4, (ZS - 1) / Math.max(1, ROWS - 1)) * r;   // càng mở rộng càng nhiều hàng bàn: 2, 2, 3, 3, 4
-  const COLS = Math.ceil(GROUND / ROWS), STEP = COLS > 1 ? (W - 5.1) / (COLS - 1) : 0;   // chừa góc đông cho cầu thang   // các cột bàn trải đều theo chiều rộng phòng
-  const SPOTS: [number, number][] = Array.from({ length: ROWS * COLS }, (_, i) => [-1.9 + STEP * (i % COLS), ROWZ(Math.floor(i / COLS))]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
+  const COLS = Math.ceil(GROUND / ROWS), STEP = COLS > 1 ? (W - 5.8) / (COLS - 1) : 0;   // chừa góc đông cho cầu thang   // các cột bàn trải đều theo chiều rộng phòng
+  const SPOTS: [number, number][] = Array.from({ length: ROWS * COLS }, (_, i) => [-1.2 + STEP * (i % COLS), ROWZ(Math.floor(i / COLS))]), CHAIRS = ["#C8344E", "#D9455E"];
   const ANG = [2.4, -2.4, .1, 3.14];
   /** dựng các bàn của lầu f vào nhóm lầu đó; lầu trệt luôn có ít nhất 2 bàn (khách ngồi) */
   const tableGs: { lv: number; g: THREE.Group }[] = [];      // mỗi bàn (kèm ghế, bánh) một nhóm riêng để nhảy báo hiệu vừa mua/nâng
@@ -354,9 +396,9 @@ export function createShop(o: ShopOpts): ShopScene {
   const buildTables = (f: number) => {
     let lvs = o.tables.filter((_, i) => i % floors === f).slice(0, GROUND);          // bàn chia đều cho các lầu
     if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
-    const cols = Math.max(2, Math.ceil(lvs.length / ROWS)), step = (W - 5.1) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
+    const cols = Math.max(2, Math.ceil(lvs.length / ROWS)), step = (W - 5.8) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
     return lvs.map((lv, i) => {
-      const row = Math.floor(i / cols), inRow = Math.min(cols, lvs.length - row * cols), x = -1.9 + (W - 5.1) / 2 + ((i % cols) - (inRow - 1) / 2) * step, z = ROWZ(row), r = .6 + .1 * lv, par = flG[f]!;
+      const row = Math.floor(i / cols), inRow = Math.min(cols, lvs.length - row * cols), x0 = -1.2 + (W - 5.8) / 2 + ((i % cols) - (inRow - 1) / 2) * step, x = row === ROWS - 1 && x0 >= DOOR_X - 1.2 && x0 <= DOOR_X + 1.2 ? DOOR_X + 1.4 : x0, z = ROWZ(row), r = .6 + .1 * lv, par = flG[f]!;
       const tg = new THREE.Group(); par.add(tg); tableGs.push({ lv, g: tg });
       const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, tg, lv);
       const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); tg.add(ck); return { x, z, chairs };
@@ -512,7 +554,7 @@ export function createShop(o: ShopOpts): ShopScene {
       for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; add(plantG, SPH(.3 * s, 12, 8), T("#6FB27A"), x + Math.cos(a) * .3 * s, 1.45 * s, z + Math.sin(a) * .3 * s, { s: [1, .22, .42], r: [0, -a, -.35], ol: "thin" }); }
     }
   };
-  const buildPlants = () => { plantAt(3.3 + (W - W0), 2.3 + DD, 1.2); plantAt(-3.5, 2.5 + DD, .9); }; buildPlants();
+  const buildPlants = () => { plantAt(3.55 + (W - W0), 2.8 + DD, 1.1); plantAt(-3.5, 2.5 + DD, .9); }; buildPlants();
 
   /* đèn */
   const lamps: { pl: THREE.PointLight; bulb: THREE.Mesh }[] = [];
@@ -526,7 +568,7 @@ export function createShop(o: ShopOpts): ShopScene {
     else if (kind === "4") add(lampG, CONE(.22, .2, 16), T("#3F4452"), x, 2.28, z, { ol: "thin", cast: false });
     else if (cloud) { [[0, 0], [.18, .06], [-.17, .05]].forEach(([dx, dy]) => add(lampG, SPH(.2, 14, 10), T(col), x + dx, 2.18 + dy, z, { ol: "thin", cast: false })); } else add(lampG, new THREE.SphereGeometry(.3, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2), T(col, { side: THREE.DoubleSide }), x, 2.1, z, { ol: "thin", cast: false });
     const bulb = add(lampG, SPH(.1, 12, 10), bulbMat, x, 2.1, z, { ol: null, cast: false });
-    const pl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); pl.position.set(x, 2.0, z); if (lamps.length % 2 === 0) lampG.add(pl); lamps.push({ pl, bulb });      // đèn lẻ chỉ có bóng phát sáng, ánh sáng do đèn bên cạnh (mạnh hơn) lo
+    const pl = new THREE.PointLight("#FFC27A", 0, 8, 1.5); pl.position.set(x, 2.0, z); if (lamps.length % 2 === 0) lampG.add(pl); lamps.push({ pl, bulb });      // đèn lẻ chỉ có bóng phát sáng, ánh sáng do đèn bên cạnh (mạnh hơn) lo
   };
   const bulbsStr: THREE.Mesh[] = [];
   const buildLamps = () => {
@@ -553,6 +595,8 @@ export function createShop(o: ShopOpts): ShopScene {
   const streetPl = new THREE.PointLight("#FFD27A", 0, 8, 1.5); streetPl.position.set(-4.9, 3.1, z0 + 1.7); outside.add(streetPl);
   const lampBulb = new THREE.MeshStandardMaterial({ color: "#FFF1CC", emissive: new THREE.Color("#FFD27A"), emissiveIntensity: 0 });
   // cửa chính: khung + cánh cửa quay quanh bản lề; mở khi có người đi qua
+  add(root, RB(1.3, .04, .8, .03), T("#F7A3BA"), DOOR_X, .03, ZS - .5, { ol: "thin", cast: false }); add(root, RB(.95, .02, .5, .01), T("#FFE0E8"), DOOR_X, .06, ZS - .5, { ol: null, cast: false });   // thảm chùi chân trong cửa
+  ([-1, 1] as const).forEach(sd => { const lx = DOOR_X + sd * 1.15; add(root, RB(.3, .06, .3, .01), T("#6E452B"), lx, .03, ZS - .3, { ol: "thin" }); add(root, RB(.2, .34, .2, .04), lantM, lx, .23, ZS - .3, { ol: "thin", cast: false }); add(root, CONE(.18, .14, 4), T("#6E452B"), lx, .47, ZS - .3, { ol: "thin", cast: false, r: [0, Math.PI / 4, 0] }); });   // đèn lồng sàn hai bên cửa
   const doorPivot = new THREE.Group(); doorPivot.position.set(DX - DOOR_W / 2 + .03, 0, 0); wS.group.add(doorPivot);
   { const lw = DOOR_W - .06, wood = T("#8A5A3A", { transparent: true }), frame = T("#6E4529", { transparent: true });
     wS.mats.push(wood, frame);
@@ -639,9 +683,9 @@ export function createShop(o: ShopOpts): ShopScene {
     // vài bụi cây thấp quanh nhà
     [[-3.6, z0 + .35], [3.7, z0 + .35], [x0 + .45, 3.0 + DD], [x0 + .45, -2.6]].forEach(([x, z]) => [0, 1, 2].forEach(i => add(outside, SPH(.28, 10, 8), T("#7BC47F"), (x as number) + i * .32 - .3, -.1, z as number, { ol: "thin" })));
     // sân trang trí, bảng quảng cáo (trái, phải, trên mái), bãi đáp trực thăng đón khách VIP
-    const roofY = HH + TOP + .46, yardUp = buildYard(outside, { z0, zs: ZS, x0, cx: CX, cz: CZ, w: W, d: D, roofY, rx: Math.min(x0 + 2.6, 7.3 + wide), ads: o.ads ?? { l: "", r: "", roof: "" }, screens: [], keep: disposables, glow: lampBulb,
+    const roofY = HH + TOP + .46, yardUp = buildYard(outside, { z0, zs: ZS, x0, cx: CX, cz: CZ, w: W, d: D, roofY, rx: Math.min(x0 + 2.6, 7.3 + wide), ads: ((ad) => ({ l: ad.l || o.photo || "", r: ad.r || o.photo || "", roof: ad.roof || o.photo || "" }))(o.ads ?? { l: "", r: "", roof: "" }), screens: [], keep: disposables, glow: lampBulb,
       hotspot: (id, label, obj) => hotspots.push({ id, attr: "data-act", value: id, label, obj, wall: null, dy: 0, ext: true }) });
-    heli = buildHeli(outside, { px: CX + W / 2 - 2.2, py: roofY, pz: CZ + .3 });
+    heli = buildHeli(outside, { px: CX + W / 2 - 2.9, py: roofY, pz: CZ + .3 });
     ups.push(t => { if (outside.visible) { yardUp(t); heli!.update(t); } });
     setHour(skyState.h);                                // áp lại giờ hiện tại cho kính, đèn mới dựng
   }
@@ -731,9 +775,9 @@ export function createShop(o: ShopOpts): ShopScene {
     const t = Math.max(0, Math.min(1, (h - 6) / 12)), ang = t * Math.PI;
     sun.position.set(CX + Math.cos(ang) * -9, Math.sin(ang) * 11 + 3, 7);
     sun.color.copy(n > .55 ? C("#8FA8FF") : lerpC("#FFFFFF", "#FFB070", warm)); sun.intensity = n > .55 ? .5 : 2.4 - n * 1.5;
-    hemi.intensity = .95 - n * .3; hemi.color.copy(lerpC("#fff2e0", "#7C8CD6", n)); hemi.groundColor.copy(lerpC("#c9a37a", "#34406e", n));
+    hemi.intensity = .95 - n * .1; hemi.color.copy(lerpC("#fff2e0", "#F0B48A", n)); hemi.groundColor.copy(lerpC("#c9a37a", "#7A4E3A", n)); lantM.emissiveIntensity = .5 + n * 1.4;   // đêm: ánh ấm cam như ảnh
     skyState = { h, n, warm }; drawSky();
-    [...lamps, ...upLamps].forEach(p => { p.pl.intensity = n * 4.2 * (p.pl.parent ? 1.7 : 1); (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
+    [...lamps, ...upLamps].forEach(p => { p.pl.intensity = n * 5.4 * (p.pl.parent ? 1.7 : 1); (p.bulb.material as THREE.MeshStandardMaterial).emissiveIntensity = n * 1.8; });
     traffic?.setNight(n); streetPl.intensity = n * 6; lampBulb.emissiveIntensity = n * 2.2; extGlass.forEach(m => { m.emissiveIntensity = .3 + n * .8; m.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); m.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n)); });
     winGlass.emissiveIntensity = .3 + n * .55; winGlass.color.copy(lerpC("#BFE6FF", "#2A3A86", n)); winGlass.emissive.copy(lerpC("#BFE6FF", "#FFD27A", n));
   }
@@ -785,7 +829,7 @@ export function createShop(o: ShopOpts): ShopScene {
     if (keys.includes("wall") && outsideBuilt) return false;
     if (keys.includes("wall") && !ev) { const st = (WALL[nr.wall!] || WALL.pink)(); wallMains.forEach(([m, len]) => { m.map?.dispose(); m.color.set(st.color); m.map = st.map.clone(); m.map.repeat.set(len / W0 * 10, 1); m.map.needsUpdate = true; m.needsUpdate = true; }); st.map.dispose(); }
     if (keys.includes("floor")) { fm.map?.dispose(); fm.map = (FLOOR[nr.floor!] || FLOOR.check)(); fm.needsUpdate = true; tableLegs.forEach(m => m.color.set(nr.floor === "wood" ? "#C98E5A" : "#E9B98A")); }
-    if (keys.includes("counter")) { const [a, b] = COUNTER_C[nr.counter!] || COUNTER_C.pink, mint = nr.counter === "mint"; cm1.color.set(a); cm2.color.set(b); counterBits.top?.color.set(mint ? "#F2FBF6" : "#FFF8F0"); counterBits.wood?.color.set(mint ? "#B6E6CF" : "#E9B98A"); tableTops.forEach(m => m.color.set(mint ? "#E4F6EC" : "#fff")); }
+    if (keys.includes("counter")) { const [a, b] = COUNTER_C[nr.counter!] || COUNTER_C.pink, mint = nr.counter === "mint"; cm1.color.set(a); cm2.color.set(b); counterBits.top?.color.set(mint ? "#F2FBF6" : "#FFF8F0"); counterBits.wood?.color.set(mint ? "#B6E6CF" : nr.counter === "cafe" ? "#A06B45" : "#E9B98A"); tableTops.forEach(m => m.color.set(mint ? "#E4F6EC" : "#fff")); }
     Object.assign(cur, nr);
     if (keys.includes("curtain")) curtainBuilds.forEach(([g, b]) => { purge(g); b(); });
     if (keys.includes("wallItem")) { purge(wallG); buildWall(); syncPhoto(); }

@@ -29,7 +29,9 @@ function billboard(parent: THREE.Object3D, x: number, y: number, z: number, w: n
   const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; parent.add(g);
   const def = poster(kind); keep.push(def);
   const mat = new THREE.MeshBasicMaterial({ map: def });
-  const set = (t: THREE.Texture) => { t.colorSpace = THREE.SRGBColorSpace; mat.map = t; mat.needsUpdate = true; keep.push(t); };
+  let fit = (_a: number) => { /* gán sau khi có khung */ };
+  const set = (t: THREE.Texture) => { t.colorSpace = THREE.SRGBColorSpace; mat.map = t; mat.needsUpdate = true; keep.push(t);
+    const im = t.image as { width?: number; height?: number; videoWidth?: number; videoHeight?: number } | undefined, iw = im?.videoWidth || im?.width || 0, ih = im?.videoHeight || im?.height || 0; if (iw && ih) fit(iw / ih); };   // khung co theo tỉ lệ ảnh thật: không méo, thấy y như ảnh đã đặt
   if (src && isVideo(src)) {
     const v = document.createElement("video"); v.crossOrigin = "anonymous"; v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.src = src;
     v.addEventListener("error", () => { mat.map = def; mat.needsUpdate = true; }, { once: true });
@@ -39,8 +41,9 @@ function billboard(parent: THREE.Object3D, x: number, y: number, z: number, w: n
   } else if (src) {
     new THREE.TextureLoader().setCrossOrigin("anonymous").load(src, t => set(t), undefined, () => { mat.map = def; mat.needsUpdate = true; });
   }
-  add(g, RB(w + .22, h + .22, .12, .04), T(frame), 0, h / 2 + .9, 0, { ol: "thin" });
+  const fr = add(g, RB(w + .22, h + .22, .12, .04), T(frame), 0, h / 2 + .9, 0, { ol: "thin" });
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); scr.position.set(0, h / 2 + .9, .07); g.add(scr); screen(scr);
+  fit = asp => { const tall = asp < 1 ? 1.45 : 1, sw = asp > w / h ? w : h * tall * asp, sh = asp > w / h ? w / asp : h * tall, kx = (sw + .22) / (w + .22), ky = (sh + .22) / (h + .22); scr.scale.set(sw / w, sh / h, 1); scr.position.y = sh / 2 + .9; fr.scale.set(kx, ky, 1); fr.position.y = sh / 2 + .9; };
   ([-1, 1] as const).forEach(s => add(g, CYL(.055, .07, .9 + (h > 1.5 ? .0 : 0), 8), T("#4A4F5C"), s * (w / 2 - .25), .45, -.02, { ol: "thin" }));
   return g;
 }
@@ -104,9 +107,9 @@ export function buildYard(out: THREE.Group, o: YardOpts): (t: number) => void {
   const { z0, zs, x0, keep } = o, rx = o.rx, lx = -6.4;
   const mk = (id: string, label: string, x: number, y: number, z: number) => { const a = new THREE.Object3D(); a.position.set(x, y, z); out.add(a); o.hotspot(id, label, a); };
   // quảng cáo trái / phải trên sân, trên mái phía sau
-  billboard(out, lx, -.34, zs - 1.2, 2.5, 1.4, .25, o.ads.l, 0, "#4A4F5C", keep, s => o.screens.push(s)); mk("ads-l", "Chỉnh quảng cáo bên trái", lx, 1.9, zs - 1.1);
-  billboard(out, rx, -.34, zs - 1.2, 2.5, 1.4, -.25, o.ads.r, 1, "#4A4F5C", keep, s => o.screens.push(s)); mk("ads-r", "Chỉnh quảng cáo bên phải", rx, 1.9, zs - 1.1);
-  billboard(out, o.cx - .7, o.roofY, o.cz - o.d / 2 + .7, 3.6, 1.7, 0, o.ads.roof, 2, "#B7791F", keep, s => o.screens.push(s)); mk("ads-roof", "Chỉnh quảng cáo trên mái", o.cx - .7, o.roofY + 2.2, o.cz - o.d / 2 + .75);
+  billboard(out, lx, -.34, zs - 1.2, 3.6, 2.2, .25, o.ads.l, 0, "#4A4F5C", keep, s => o.screens.push(s)); mk("ads-l", "Chỉnh quảng cáo bên trái", lx, 1.9, zs - 1.1);
+  billboard(out, rx, -.34, zs - 1.2, 3.6, 2.2, -.25, o.ads.r, 1, "#4A4F5C", keep, s => o.screens.push(s)); mk("ads-r", "Chỉnh quảng cáo bên phải", rx, 1.9, zs - 1.1);
+  billboard(out, o.cx - .7, o.roofY, o.cz - o.d / 2 + .7, 5.2, 2.8, 0, o.ads.roof, 2, "#B7791F", keep, s => o.screens.push(s)); mk("ads-roof", "Chỉnh quảng cáo trên mái", o.cx - .7, o.roofY + 3.0, o.cz - o.d / 2 + .75);
   // sân trái
   fountain(out, lx, zs + 1.45, keep); flowerBed(out, lx + 1.6, zs - 2.2, 3, 0); flowerBed(out, lx - 1.0, zs - 2.2, 2, 2); bin(out, -3.95, z0 + 1.6); mailbox(out, -3.2, z0 + .4); lantern(out, lx - 1.5, zs + .4, o.glow);
   // sân phải
@@ -118,7 +121,7 @@ export function buildYard(out: THREE.Group, o: YardOpts): (t: number) => void {
 
 /** bãi đáp trực thăng trên mái + chuyến bay đón khách VIP lâu lâu một lần */
 export function buildHeli(out: THREE.Group, o: { px: number; py: number; pz: number }): Heli {
-  const pad = new THREE.Group(); pad.position.set(o.px, o.py, o.pz); out.add(pad);
+  const pad = new THREE.Group(); pad.position.set(o.px, o.py, o.pz); pad.scale.setScalar(1.6); out.add(pad);
   add(pad, CYL(1.35, 1.4, .08, 32), T("#5A5F6D"), 0, .04, 0, { ol: "thin", cast: false });
   add(pad, new THREE.RingGeometry(1.1, 1.2, 32), new THREE.MeshBasicMaterial({ color: "#FFD66B", side: THREE.DoubleSide }), 0, .1, 0, { ol: null, cast: false }).rotation.x = -Math.PI / 2;
   const mark = new THREE.Mesh(new THREE.PlaneGeometry(.9, .9), new THREE.MeshBasicMaterial({ color: "#FFD66B", transparent: true, map: (() => { const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d")!; g.fillStyle = "#FFD66B"; g.font = "800 120px Nunito, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("H", 64, 70); return new THREE.CanvasTexture(c); })() }));
@@ -126,7 +129,7 @@ export function buildHeli(out: THREE.Group, o: { px: number; py: number; pz: num
   const blob = add(pad, new THREE.CircleGeometry(.9, 20), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0 }), 0, .12, 0, { ol: null, cast: false }); blob.rotation.x = -Math.PI / 2;
 
   // trực thăng: mũi hướng +x
-  const heli = new THREE.Group(); heli.visible = false; out.add(heli);
+  const heli = new THREE.Group(); heli.visible = false; heli.scale.setScalar(1.6); out.add(heli);
   const body = new THREE.Group(); heli.add(body);
   add(body, SPH(.55, 16, 12), T("#FF8FAB"), 0, .55, 0, { ol: "mid", cast: false, s: [1.35, 1, .95] });
   add(body, SPH(.38, 12, 10), T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .25 }), .52, .62, 0, { ol: "thin", cast: false, s: [1, .85, .95] });

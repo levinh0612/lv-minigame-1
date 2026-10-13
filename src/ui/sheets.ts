@@ -188,7 +188,7 @@ export function adsSheet(slot: string) {
     const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
     inp.addEventListener("change", async () => {
       const f = inp.files?.[0]; if (!f) return;
-      try { S.ads = { ...S.ads, [k]: await shrink(f, 640) }; done("Đã đổi quảng cáo 📣"); }
+      try { S.ads = { ...S.ads, [k]: await shrink(f, 800) }; done("Đã đổi quảng cáo 📣"); }
       catch { toast("Không đọc được ảnh này, thử ảnh khác nha"); }
     });
     inp.click();
