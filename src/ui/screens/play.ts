@@ -240,15 +240,28 @@ export function toggleFold(key: string) {
 }
 
 /* dải thợ bánh ở quầy: mỗi bé đang làm cho ai, bao nhiêu phần trăm, hoặc thiếu gì (quản lý + linh vật đã nằm ở tiêu đề từng lầu) */
+/* vị trí ghế: " · Bàn 2 · Lầu 1" (chỉ ghi lầu khi tiệm có nhiều lầu) */
+function seatPlace(sh: Shift, i: number) {
+  const fl = floorGroups(sh), f = fl.find(x => x.tables.some(t => t.seats.includes(i))), t = f?.tables.find(x => x.seats.includes(i));
+  return t && f ? ` · Bàn ${t.n}${fl.length > 1 ? ` · Lầu ${f.floor}` : ""}` : "";
+}
+/** chạm chip thợ: mở lầu, bàn của ghế đó nếu đang thu gọn, cuộn tới và nháy thẻ khách */
+export function flashSeat(i: number) {
+  const el = $(`#seat${i}`); if (!el || !SH) return;
+  const cell = el.closest<HTMLElement>(".cell"), t = el.closest<HTMLElement>(".q6t"), f = el.closest<HTMLElement>(".q6f");
+  if (t) foldOpen.t.delete(Number(t.dataset.t)); if (f) foldOpen.f.delete(Number(f.dataset.f));
+  syncQueueMeta(); sfx("tap");
+  setTimeout(() => { (cell ?? el).scrollIntoView({ block: "nearest", behavior: "smooth" }); bump(el, "ping"); }, 320);
+}
 export function crewHTML(sh: Shift) {
   const ids = staffIds().filter(id => sh.working.includes(id));
   if (!ids.length) return `<div class="crew none">Hôm nay các bé nghỉ, mình tự làm hết nha</div>`;
   return `<div class="crew" style="--n:${ids.length}">${ids.map(id => {
     const b = sh.bakers.find(x => x.id === id), c = b ? sh.seats[b.seat] : null, pct = b ? Math.round(b.done / b.need * 100) : 0;
-    const sub = b && c ? `<small>→ ${esc(c.who)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
+    const sub = b && c ? `<small>→ ${esc(c.who)}${seatPlace(sh, b.seat)}</small><div class="pb" data-bake="${id}"><i style="width:${pct}%"></i></div>`
       : sh.fainted.includes(id) ? `<small class="bad">Ngất xỉu 😵</small>` : sh.lack[id] ? `<small class="bad">Thiếu ${esc(sh.lack[id]!)}</small>` : `<small>Đang nghỉ</small>`;
     const cake = b && c ? `<span class="cmk">${cakeAnySVG(bakerBuild(c, pct), { size: 30, still: true })}</span>` : "";
-    return `<button class="cm" data-crew="${id}" data-watch="${id}" aria-label="Xem ${esc(petName(id))} làm bánh">${(() => { const ei = entityInfo(id); return ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"); })()}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
+    return `<button class="cm" data-crew="${id}" ${b && c ? `data-flash="${b.seat}"` : `data-watch="${id}"`} aria-label="${b && c ? `${esc(petName(id))} đang làm cho ${esc(c.who)}, chạm để xem ghế` : `Xem ${esc(petName(id))}`}">${(() => { const ei = entityInfo(id); return ei ? entityAvatar(ei, 34, b ? "happy" : sh.lack[id] ? "impatient" : "open") : staffAvatar(id, 38, "open"); })()}<div class="ct"><b>${esc(petName(id))}</b>${sub}</div>${cake}</button>`;
   }).join("")}</div>`;
 }
 /* bánh bé đang làm tới đâu: lần lượt đế, kem của từng tầng, topping, độ ngọt theo phần trăm */
@@ -292,15 +305,15 @@ function idleHTML(sh: Shift) {
     const done = goalDone(sh, g), calm = g.id === "calm", cur = goalProgress(sh, g), fail = calm && sh.left > 0;
     const pct = calm ? (sh.left ? 0 : 100) : Math.min(100, Math.round(cur / g.n * 100));
     const num = calm ? (fail ? `${sh.left} giận` : "✓") : `${Math.min(cur, g.n)}/${g.n}`;
-    return `<div class="flex flex-col items-center gap-1 rounded-2xl bg-white px-2 pb-2 pt-2.5 text-center shadow-[0_2px_0_#EBD9C2] ${done ? "text-mint-d" : fail ? "text-red" : "text-ink"}">
-      <b class="font-display text-[15px] leading-none">${num}</b><small class="text-[11px] font-bold leading-tight text-soft">${goalText(g)}</small>
-      <i class="block h-1.5 w-full overflow-hidden rounded-full bg-[#F1E6DA]"><u class="block h-full rounded-full no-underline ${done ? "bg-[#7FD1AE]" : "bg-[#FFC94D]"} transition-[width] duration-500" style="width:${pct}%"></u></i>
-      <em class="text-[11px] font-black not-italic text-[#A77A0E]">+${g.reward}</em></div>`;
+    return `<div class="flex flex-col items-center gap-0.5 px-2 text-center ${done ? "text-mint-d" : fail ? "text-red" : "text-ink"}">
+      <b class="font-display text-[14px] leading-none">${num}</b><small class="text-[10.5px] font-bold leading-tight text-soft">${goalText(g)}</small>
+      <i class="block h-1 w-full overflow-hidden rounded-full bg-[#F1E6DA]"><u class="block h-full rounded-full no-underline ${done ? "bg-[#7FD1AE]" : "bg-[#FFC94D]"} transition-[width] duration-500" style="width:${pct}%"></u></i>
+      <em class="text-[10.5px] font-black not-italic text-[#A77A0E]">+${g.reward}</em></div>`;
   }).join("");
   return `<div class="ihead"><div><b>Đang rảnh tay</b><small class="${busy ? "hint" : ""}">${busy ? "↑ Chạm vào khách để nhận đơn" : any ? "Các bé đang lo hết đơn rồi" : "Chờ khách vào tiệm…"}</small></div>${toggleHTML()}</div>
     <p class="text-center text-[13px] font-extrabold text-soft"><b class="text-ink">${sh.served}</b> khách vui · <b class="text-mint-d">+${fmtN(earned)}</b> xu · <b class="${sh.left ? "text-red" : "text-ink"}">${sh.left}</b> giận</p>
-    <div class="grid grid-cols-3 gap-2" aria-label="Mục tiêu ca này">${goals}</div>
-    <p class="itip">💡 Không bấm "Xem công thức" mà giao đúng được thưởng +50%</p>`;
+    <div class="grid grid-cols-3 divide-x divide-[#F1E6DA] rounded-2xl bg-white py-2 shadow-[0_2px_0_#EBD9C2]" aria-label="Mục tiêu ca này">${goals}</div>
+    <p class="itip">💡 Giao đúng mà không xem công thức: thưởng +50%</p>`;
 }
 
 /* nút nguyên liệu: icon + tên + số trong kho; đúng/sai chỉ hiện khi đã xem công thức */

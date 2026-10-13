@@ -59,3 +59,11 @@
 .q6ring[data-tn=low] .val{animation:q6pulse 1s infinite}
 @keyframes q6pulse{50%{opacity:.55}}
 @media (prefers-reduced-motion:reduce){.q6fb,.q6sb{transition:none}.q6ring .val{transition:none}.q6ring[data-tn=low] .val,.q6cd,.slot.q6.angry{animation:none}}
+/* chip thợ ở dải dưới: gọn một dòng, chạm để nháy ghế đang làm */
+.crew .cm{padding:4px 10px 4px 4px;gap:7px;border-radius:14px}
+.crew .cm b{font-size:12.5px}
+.crew .cm small{font-size:11px}
+.crew .cm .pb{height:3px}
+.slot.q6.ping{animation:q6ping .9s ease 2}
+@keyframes q6ping{50%{transform:scale(1.07);box-shadow:0 0 0 4px #CFC3F6}}
+@media (prefers-reduced-motion:reduce){.slot.q6.ping{animation:none;box-shadow:0 0 0 4px #CFC3F6}}
