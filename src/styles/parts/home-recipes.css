@@ -269,3 +269,6 @@
 .pc-fame .pf-n u{display:block;height:100%;border-radius:99px;background:#F5B83D;text-decoration:none}
 .pc-fame .pf-n small{font:700 10.5px/1.15 var(--body);color:var(--soft)}
 .pc-fame>svg:last-child{flex:none;color:var(--soft)}
+
+/* danh hiệu dài: thu vào đúng cột bên trái (không chui dưới cột chỉ số), cắt "…" thay vì bị che */
+.pc-title{min-width:0;max-width:100%;overflow:hidden}.pc-title>svg{flex:none}.pc-title{align-items:flex-start;line-height:1.2;white-space:normal}.pc-title>svg{margin-top:1px}.pc-title>span{min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
