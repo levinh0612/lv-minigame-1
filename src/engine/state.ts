@@ -5,6 +5,12 @@ import { gachaItem } from "../content/gacha";
 import { DEFAULT_ROOM, OLD_TO_ROOM, type Room } from "../content/room";
 import { freshBook, type Book } from "./wallet";
 
+/** bảng quảng cáo ngoài tiệm: trái, phải, trên mái */
+export interface Ads { l: string; r: string; roof: string }
+export const ADS_SLOTS = ["l", "r", "roof"] as const;
+export const AD_MAX = 400_000;   // giới hạn độ dài mỗi mục (ký tự), tránh làm phình bản lưu
+export const cleanAd = (v: unknown) => typeof v === "string" && v.length <= AD_MAX && /^(data:image\/(jpeg|png|webp);base64,|https:\/\/)/.test(v) ? v : "";
+
 export const KEY = "tiem-banh-matcha-v1";
 
 export interface Review { who: string; look: Look; s: number; txt: string; love: boolean }
@@ -51,6 +57,7 @@ export interface State {
   theme: string;                  // theme màu giao diện (content/theme.ts)
   scene3d: boolean;               // cảnh tiệm 3D ở màn chính (tắt trên máy yếu thì dùng cảnh 2D)
   photo: string;                  // ảnh treo tường tiệm (data URL đã thu nhỏ)
+  ads: Ads;                       // quảng cáo ngoài tiệm: ảnh (data URL) hoặc liên kết ảnh/video; rỗng = áp phích mặc định
   comp?: number;                  // đã nhận khoản đền bù một lần chưa
   loginDay?: string;              // ngày (YYYY-MM-DD) đã nhận thưởng đăng nhập gần nhất
   extra?: Extra;
@@ -77,7 +84,7 @@ export function fresh(): State {
     stock: Object.fromEntries(STOCK_KEYS.map(k => [k, CATS[k].map((_, i) => i < 3 ? STARTER_STOCK : 0)])) as Record<StockKey, number[]>, suppliers: [], custom: [],
     staff: petMap(() => ({ hired: false, lv: 1, onDuty: false })), tut: false,
     food: { kibble: 0, pate: 0, chicken: 0, salmon: 0, steak: 0 }, welcome: false, autoTake: true, pins: [], venue: { tbl: [], floors: 1, wide: 0 }, mouse: { king: 0, last: -9 }, gacha: { tickets: 0, dust: 0, pulls: 0, sinceRare: 0, sinceUltra: 0, owned: {}, mascot: "", freeDay: "" },
-    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, prog: freshProg(), book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "",
+    room: { ...DEFAULT_ROOM }, owned: [], earned: 0, prog: freshProg(), book: freshBook(), me: { ...DEFAULT_ME }, shop: "", theme: "pink", scene3d: true, photo: "", ads: { l: "", r: "", roof: "" },
     cloud: { code: "", name: "", show: true, at: "", morning: true, night: true, push: false, rev: 0, named: false, pair: "" }
   };
 }
@@ -172,6 +179,7 @@ export function loadState(raw: string | null): State {
   s.book = Object.assign(freshBook(), s.book || {});
   s.me = Object.assign({ ...DEFAULT_ME }, s.me || {}); if (!(s.me.sprite in SPRITES)) s.me = { ...DEFAULT_ME };
   s.shop = typeof s.shop === "string" ? s.shop : ""; s.theme = typeof s.theme === "string" ? s.theme : "pink"; s.scene3d = s.scene3d !== false;
+  s.ads = { l: cleanAd(s.ads?.l), r: cleanAd(s.ads?.r), roof: cleanAd(s.ads?.roof) };
   return s;
 }
 

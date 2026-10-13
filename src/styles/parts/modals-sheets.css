@@ -418,3 +418,6 @@ button.cm{position:relative}
 .vgo:active{transform:translateY(2px);box-shadow:0 1px 0 var(--pink-d)}.vgo:disabled{opacity:.5}
 .vnote{margin:0;font:700 12px var(--body);color:var(--soft2)}
 .vopt .vpv{color:var(--ink2)}
+
+.adprev{margin:10px auto 0;max-width:300px;min-height:60px;padding:8px;border-radius:16px;background:#FFE9B8;border:3px solid var(--k-4a3438);box-shadow:0 6px 0 var(--sh);text-align:center}
+.adprev img,.adprev video{display:block;width:100%;border-radius:8px}

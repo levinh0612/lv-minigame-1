@@ -8,7 +8,8 @@ import { daysTogether, events } from "../engine/dates";
 import { hasItem, masteryOf, specialRecipes } from "../engine/gacha";
 import { recipeReady } from "../engine/suppliers";
 import { featured, lvl, unlocked } from "../engine/progress";
-import { S, save } from "../engine/state";
+import { S, cleanAd, save } from "../engine/state";
+import { stayOutside } from "./room3d";
 import { flushSave } from "../net/cloud";
 import { fmtD, fmtN, parse } from "../engine/util";
 import { SONGS, Sound } from "../audio/sound";
@@ -168,6 +169,36 @@ export function photoSheet() {
     <div class="mbtns"><button class="b3" id="phNew">Đổi ảnh khác</button><button class="b3 w" id="phDel">Gỡ ảnh xuống</button></div>`);
   $("#phNew")!.addEventListener("click", pickPhoto);
   $("#phDel")!.addEventListener("click", () => { S.photo = ""; save(); flushSave(true); closeModal(); render(); toast("Đã gỡ ảnh"); });
+}
+
+
+/* ===== Quảng cáo ngoài tiệm: ảnh từ máy (thu nhỏ rồi lưu) hoặc liên kết ảnh/video ===== */
+const AD_NAME = { l: "bên trái", r: "bên phải", roof: "trên mái" } as const;
+export function adsSheet(slot: string) {
+  const k = slot as keyof typeof AD_NAME; if (!(k in AD_NAME)) return;
+  const cur = S.ads[k], vid = /\.(mp4|webm|ogv)(\?|#|$)/i.test(cur);
+  const done = (msg: string) => { stayOutside(); save(); flushSave(true); closeModal(); render(); toast(msg); };
+  modal(`<h2>Quảng cáo ${AD_NAME[k]}</h2>
+    <div class="adprev">${!cur ? `<p class="sub small">Đang dùng áp phích mặc định của tiệm</p>` : vid ? `<video src="${esc(cur)}" muted loop autoplay playsinline></video>` : `<img src="${esc(cur)}" alt="Quảng cáo ${AD_NAME[k]}">`}</div>
+    <div class="mbtns"><button class="b3" id="adPick">Chọn ảnh từ máy</button></div>
+    <label class="field">Hoặc dán liên kết ảnh / video (https, .mp4 .webm)<input id="adUrl" inputmode="url" placeholder="https://..." value="${cur.startsWith("https://") ? esc(cur) : ""}"></label>
+    <p class="sub small">Video chạy tự động, không tiếng. Nếu liên kết không tải được, bảng sẽ quay về áp phích mặc định.</p>
+    <div class="mbtns"><button class="b3" id="adUse">Dùng liên kết</button>${cur ? `<button class="b3 w" id="adDel">Về mặc định</button>` : ""}</div>`);
+  $("#adPick")!.addEventListener("click", () => {
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
+    inp.addEventListener("change", async () => {
+      const f = inp.files?.[0]; if (!f) return;
+      try { S.ads = { ...S.ads, [k]: await shrink(f, 640) }; done("Đã đổi quảng cáo 📣"); }
+      catch { toast("Không đọc được ảnh này, thử ảnh khác nha"); }
+    });
+    inp.click();
+  });
+  $("#adUse")!.addEventListener("click", () => {
+    const v = ($("#adUrl") as HTMLInputElement).value.trim(), ok = cleanAd(v);
+    if (!ok) return toast("Liên kết phải bắt đầu bằng https://");
+    S.ads = { ...S.ads, [k]: ok }; done("Đã đổi quảng cáo 📣");
+  });
+  $("#adDel")?.addEventListener("click", () => { S.ads = { ...S.ads, [k]: "" }; done("Đã về áp phích mặc định"); });
 }
 
 /* Nhạc nền: bật/tắt và chọn bài; chạm bài nào là nghe thử ngay */

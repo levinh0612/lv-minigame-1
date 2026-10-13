@@ -32,7 +32,7 @@ import { ingAct, ingredientSheet } from "./ui/ingredients";
 import { fmtN } from "./engine/util";
 import { initTeam, setTeamTab, staffDialogAct, staffSheet, teamAct, type TeamTab } from "./ui/team";
 import { collectionSheet, eventSheet } from "./ui/collection";
-import { buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet } from "./ui/sheets";
+import { adsSheet, buffSheet, cakesSheet, daysSheet, menuSheet, moreSheet, musicSheet, photoSheet } from "./ui/sheets";
 import { setPrepTab, type PrepTab } from "./ui/screens/prep";
 import { MAX_PINS, togglePin } from "./engine/progress";
 import { progressAct } from "./ui/screens/progress";
@@ -98,6 +98,7 @@ document.addEventListener("click", e => {
     case "collect": return collectionSheet();
     case "events": return eventSheet();
     case "photo": return photoSheet();
+    case "ads-l": case "ads-r": case "ads-roof": sfx("tap"); return adsSheet(d.act.slice(4));
     case "wallet": if (!SH) wallet(); return;
     case "update": return void applyUpdate();
     case "checkver": return void checkVersion(true).then(r => { if (r) void applyUpdate(); else toast(`Đang là bản mới nhất (${__APP_VERSION__}) ✓`); });

@@ -8,6 +8,7 @@ import { glbProp, PROPS } from "./glbprop";
 import { APPROACH } from "./figure3d";
 import { person, personActor, type Actor, type PersonLook } from "./people";
 import { buildTraffic, type Traffic } from "./vehicles";
+import { buildHeli, buildYard, type Heli } from "./outdoor";
 
 export interface StaffSlot { model?: string; char?: string; rarity: "common" | "rare" | "ultra" }   // char: sprite khách quen làm quản lý (đứng yên trên bệ)   // model: id GLB trong public/models/gacha
 export interface ShopOpts {
@@ -20,6 +21,7 @@ export interface ShopOpts {
   hop?: number;                            // cấp bàn vừa mua/nâng: các bàn cấp này nhảy lên báo hiệu (bàn này không gộp tĩnh để còn chuyển động)
   tables: number[];                        // cấp từng bàn (1..3): bàn cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4. Cảnh vẽ tối đa 6 bàn
   giftDot: boolean;
+  ads?: { l: string; r: string; roof: string };   // quảng cáo ngoài tiệm: ảnh (data URL) hoặc liên kết ảnh/video, rỗng = áp phích mặc định
   photo: string;                           // ảnh treo tường (data URL) hoặc ""
   cakes: [number, number, number][];       // bánh trong tủ kính (đế, kem, topping)
   me: { sprite: string; look: PersonLook };
@@ -565,7 +567,7 @@ export function createShop(o: ShopOpts): ShopScene {
     // thảm chùi chân trước cửa
     add(outside, RB(1.2, .04, .7, .02), T("#B98450"), DOOR_X, -.32, z0 + .7, { ol: null }); }
   /* mặt tiền, vỉa hè, đường, cây... chỉ dựng khi bấm xem ngoài tiệm (cảnh trong tiệm dựng nhanh hơn) */
-  let outsideBuilt = false, traffic: Traffic | null = null;
+  let outsideBuilt = false, traffic: Traffic | null = null, heli: Heli | null = null;
   ups.push(t => { if (outside.visible) traffic?.update(t); });   // xe chỉ chạy khi đang xem ngoài tiệm
   function buildOutside() {
     if (outsideBuilt) return; outsideBuilt = true;
@@ -636,6 +638,11 @@ export function createShop(o: ShopOpts): ShopScene {
     add(outside, CYL(.2, .17, .5, 12), T("#9FB8C9"), 4.5, -.08, z0 + 2.2, { ol: "thin" });
     // vài bụi cây thấp quanh nhà
     [[-3.6, z0 + .35], [3.7, z0 + .35], [x0 + .45, 3.0 + DD], [x0 + .45, -2.6]].forEach(([x, z]) => [0, 1, 2].forEach(i => add(outside, SPH(.28, 10, 8), T("#7BC47F"), (x as number) + i * .32 - .3, -.1, z as number, { ol: "thin" })));
+    // sân trang trí, bảng quảng cáo (trái, phải, trên mái), bãi đáp trực thăng đón khách VIP
+    const roofY = HH + TOP + .46, yardUp = buildYard(outside, { z0, zs: ZS, x0, cx: CX, cz: CZ, w: W, d: D, roofY, rx: Math.min(x0 + 2.6, 7.3 + wide), ads: o.ads ?? { l: "", r: "", roof: "" }, screens: [], keep: disposables, glow: lampBulb,
+      hotspot: (id, label, obj) => hotspots.push({ id, attr: "data-act", value: id, label, obj, wall: null, dy: 0, ext: true }) });
+    heli = buildHeli(outside, { px: CX + W / 2 - 2.2, py: roofY, pz: CZ + .3 });
+    ups.push(t => { if (outside.visible) { yardUp(t); heli!.update(t); } });
     setHour(skyState.h);                                // áp lại giờ hiện tại cho kính, đèn mới dựng
   }
   let exterior = false;
@@ -816,7 +823,7 @@ export function createShop(o: ShopOpts): ShopScene {
     /* hình học và ảnh của nhân vật 3D dùng chung giữa các cảnh (userData.keep): giữ lại để khỏi tải lại lên GPU */
     dispose() { running = false; cancelAnimationFrame(raf); scene.traverse(ob => { const m = ob as THREE.Mesh; if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); const mt = m.material as THREE.Material | THREE.Material[] | undefined; (Array.isArray(mt) ? mt : mt ? [mt] : []).forEach(x => { const mp = (x as THREE.MeshToonMaterial).map; if (mp && !mp.userData.keep) mp.dispose(); x.dispose(); }); }); disposables.forEach(d => d.dispose()); },
     project(hs) { if (curFloor) return { x: 0, y: 0, show: false }; hs.obj.getWorldPosition(v); v.y += hs.dy; v.project(cam); const wl = hs.wall === null ? null : walls[hs.wall]; const show = wl ? (wl.nx * Math.sin(az) + wl.nz * Math.cos(az)) < .45 : true; const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return { x, y, show: show && exterior === !!hs.ext && (hs.on ? hs.on() : true) && x > 8 && x < w - 8 && y > 8 && y < h - 8 }; },
-    tags() { if (!exterior || !traffic) return []; return traffic.active().flatMap((c, i) => { v.set(c.x, 1.25, c.g.position.z); outside.localToWorld(v); v.project(cam); const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return x > 20 && x < w - 20 && y > 20 && y < h - 20 ? [{ id: i, text: c.label, x, y }] : []; }); },
+    tags() { if (!exterior || !traffic) return []; const vt = heli?.tag(), vip = vt ? (() => { v.copy(vt.pos); outside.localToWorld(v); v.project(cam); const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return x > 20 && x < w - 20 && y > 20 && y < h - 20 ? [{ id: 99, text: vt.text, x, y }] : []; })() : []; return vip.concat(traffic.active().flatMap((c, i) => { v.set(c.x, 1.25, c.g.position.z); outside.localToWorld(v); v.project(cam); const x = (v.x * .5 + .5) * w, y = (-v.y * .5 + .5) * h; return x > 20 && x < w - 20 && y > 20 && y < h - 20 ? [{ id: i, text: c.label, x, y }] : []; })); },
     setInsets(top, bottom) { insTop = top; insBot = bottom; },
     setExterior(on) { if (on) { buildOutside(); callDelivery(); } exterior = on; outside.visible = on; zoomT = on ? .78 : 1; panT = 0; el = (on ? 30 : 38) * Math.PI / 180; },
     isExterior() { return exterior; },
