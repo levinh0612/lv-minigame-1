@@ -622,12 +622,13 @@ export function createShop(o: ShopOpts): ShopScene {
     for (let i = -6; i <= 6; i++) { const dsh = add(outside, new THREE.PlaneGeometry(.9, .14), T("#FFF1A8"), i * 2.2, -.33, road.z, { cast: false, ol: null }); dsh.rotation.x = -Math.PI / 2; }
     traffic = buildTraffic(outside, road.z, PK, DOOR_X); callDelivery();
     // các lầu trên (nhìn từ ngoài): khối tường có dải cửa sổ
+    const upperWall = sel("wall", T(wstyle.color, { map: wstyle.map.clone() })); (upperWall.map as THREE.Texture).repeat.set(W / W0 * 10, 1); (upperWall.map as THREE.Texture).needsUpdate = true; wallMains.push([upperWall, W]);
     for (let f = 1; f < floors; f++) {
-      add(outside, RB(W + .1, FH - .1, D + .1, .04), T(R.wall === "mint" ? "#DDF3E8" : "#FFD9E3"), CX, f * FH + HH / 2 - .05, CZ, { ol: "mid" });
-      for (let i = 0; i < 3 + wide; i++) add(outside, RB(1.1, .8, .05, .02), T("#BFE6FF", { emissive: new THREE.Color("#BFE6FF"), emissiveIntensity: .25 }), CX - W / 2 + (i + .5) * W / (3 + wide), f * FH + HH / 2 + .1, ZS + .08, { ol: "thin" });
+      add(outside, RB(W + .1, FH - .1, D + .1, .04), upperWall, CX, f * FH + HH / 2 - .05, CZ, { ol: "mid" });   // cùng màu/hoa văn tường tầng 1
+      add(outside, RB(W + .3, .14, D + .3, .03), T("#fff"), CX, f * FH + .02, CZ, { ol: "thin" });
     }
     // mái nhà
-    add(outside, RB(W + .6, .28, D + .6, .05), T(R.wall === "mint" ? "#CDEBDD" : PKM), CX, HH + TOP + .14, CZ, { ol: "mid" });
+    add(outside, RB(W + .6, .28, D + .6, .05), T("#34303A"), CX, HH + TOP + .14, CZ, { ol: "mid" });
     add(outside, RB(W + .3, .18, D + .3, .04), T("#fff"), CX, HH + TOP + .37, CZ, { ol: "thin" });
     add(outside, RB(1.0, .5, .8, .04), T("#DDEBF2"), -2.2, HH + TOP + .7, -1.2, { ol: "thin" });                          // máy lạnh trên mái
     // biển hiệu
@@ -667,7 +668,17 @@ export function createShop(o: ShopOpts): ShopScene {
     extWin(x0, 1.45, -1.3, Math.PI / 2, 1.8, 1.4, true); extWin(x0, 1.45, 1.4, Math.PI / 2, 1.8, 1.4, true);
     if (DD) { extWin(x0, 1.45, 1.4 + DD, Math.PI / 2, 1.8, 1.4, true); extWin(-W0 / 2 - .2, 1.45, 1.6 + DD, -Math.PI / 2, 1.8, 1.4, false); }
     extWin(-1.6, 1.45, -D0 / 2 - .2, Math.PI, 2.2, 1.4, false); extWin(2.0, 1.45, -D0 / 2 - .2, Math.PI, 2.2, 1.4, false);
-    extWin(-W0 / 2 - .2, 1.45, -1.0, -Math.PI / 2, 1.8, 1.4, false); extWin(-W0 / 2 - .2, 1.45, 1.6, -Math.PI / 2, 1.8, 1.4, false);
+    extWin(-W0 / 2 - .2, 1.45, -1.0, -Math.PI / 2, 1.8, 1.4, false);
+    // các lầu trên: cửa sổ có hộp hoa, mái hiên sọc và đèn lồng như tầng 1
+    for (let f = 1; f < floors; f++) {
+      const n = 3 + wide, wy = f * FH + HH / 2 + .1;
+      for (let i = 0; i < n; i++) {
+        const wx = CX - W / 2 + (i + .5) * W / n;
+        extWin(wx, wy, ZS + .06, 0, 1.2, .95, true);
+        add(outside, RB(1.5, .08, .5, .02), awnMat, wx, wy + .78, ZS + .3, { r: [.45, 0, 0], ol: "thin" });
+        if (i % 2 === 0) { add(outside, RB(.14, .22, .14, .02), lantM, wx + .85, wy + .1, ZS + .16, { ol: "thin", cast: false }); }
+      }
+    } extWin(-W0 / 2 - .2, 1.45, 1.6, -Math.PI / 2, 1.8, 1.4, false);
     // tấm bảng menu đứng, thảm chùi chân, chậu cây
     add(outside, RB(.9, 1.1, .08, .02), T("#5E6F5B"), 3.2, .62, z0 + 1.1, { r: [-.12, .3, 0], ol: "mid" }); add(outside, RB(.78, .98, .03, .01), T("#fff", { map: menuTex }), 3.2, .62, z0 + 1.15, { r: [-.12, .3, 0], ol: null });
     const pt = POTS[R.pot ?? "0"] ?? POTS["0"]!;
