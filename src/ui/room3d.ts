@@ -14,6 +14,9 @@ import { roomHTML, type RoomOpts } from "./room";
 
 interface Live { el: HTMLElement; sig: string; base: string; scene: ShopScene; btns: [Hotspot, HTMLButtonElement][]; timer: number; raf: number; ro: ResizeObserver }
 let live: Live | null = null, kept: Live | null = null, token = 0;
+let pendingHop: { lv: number; at: number } | null = null;
+/** báo cho cảnh 3D: các bàn cấp lv nhảy lên (dùng sau khi mua/nâng bàn; cảnh dựng lại xong mới nhảy) */
+export function hopTables(lv: number) { pendingHop = { lv, at: Date.now() }; }
 /** vùng chứa cảnh: bên trong là cảnh 2D cũ làm dự phòng */
 export function room3dHTML(r: Parameters<typeof roomHTML>[0], o: RoomOpts, still = false, full = false) {
   // still: màn trang trí. Cảnh dựng theo đúng bộ đồ đang thử (r), làm nổi bật nhóm đang chọn, không có nút chạm
@@ -47,6 +50,7 @@ const staffOf = (it: GachaItem | null) => { if (it?.char) return { char: it.char
 function optsOf(el: HTMLElement): ShopOpts {
   const n = +(el.dataset.recipes || 4), vs = el.dataset.user ? visiting() : null, g = vs ? (vs.me as unknown as typeof S.me) : S.me, look = (l: Record<string, string>) => ({ skin: l.skin, hair: l.hair, coat: l.coat, shirt: l.shirt, eye: l.eye, pants: l.pants, shoes: l.shoes, style: l.style ?? STYLE_OF[l.sprite ?? ""] ?? "" });
   return {
+    hop: pendingHop && Date.now() - pendingHop.at < 8000 && !el.dataset.user ? pendingHop.lv : undefined,
     room: (el.dataset.room ? JSON.parse(el.dataset.room) : S.room) as Record<string, string>, hl: el.dataset.hl || undefined, event: el.dataset.event === "1", guests: +(el.dataset.guests || 0), shipAt: vs ? undefined : S.shipAt, staff: vs ? [] : Array.from({ length: +(el.dataset.floors || 1) }, (_, f) => ({ mgr: staffOf(staffAt("mgr", f)), pet: staffOf(staffAt("mascot", f)) })), regulars: vs ? [] : regulars().map(i => ({ sprite: i.char!.sprite, rarity: i.rarity })), tables: (el.dataset.tables || "1,1,1").split(",").map(Number), wide: +(el.dataset.wide || 0), floors: +(el.dataset.floors || 1), giftDot: el.dataset.gift === "1", photo: vs ? "" : S.photo, menuCount: n, shopName: vs ? vs.shop.trim() || vs.username : S.shop.trim() || account() || "Matcha",
     cakes: RECIPES.slice(0, Math.min(n, 6)).map(r => [r.base, r.cream, r.top] as [number, number, number]),
     me: { sprite: g.sprite, look: look(g as unknown as Record<string, string>) },
@@ -142,6 +146,8 @@ export async function mountRooms() {
     live = { el: box, sig, base: baseOf(box), scene, btns, timer: 0, raf: 0, ro: new ResizeObserver(() => 0) };
     if (import.meta.env.DEV) (window as unknown as { __live?: Live }).__live = live;     // chỉ để đo hiệu năng khi dev
     fixObserver(live); run(live);
+    if (pendingHop && Date.now() - pendingHop.at < 8000 && !box.dataset.user) scene.hop(pendingHop.lv);
+    pendingHop = null;
   } catch (e) { console.warn("Không dựng được cảnh 3D, dùng cảnh 2D", e); }
 }
 /** ResizeObserver riêng cho mỗi cảnh: đổi cỡ khung thì đổi cỡ canvas */

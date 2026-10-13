@@ -17,6 +17,7 @@ export interface ShopOpts {
   floors: number;                          // số lầu (xem từng lầu bằng nút chuyển tầng)
   regulars: { sprite: string; rarity: "common" | "rare" | "ultra" }[];   // khách quen đã trúng gacha: đi lại trong tiệm, Hiếm và Cực hiếm có hào quang
   wide: number;                            // số lần mở rộng ngang: mỗi lần rộng thêm 2 về phía đông
+  hop?: number;                            // cấp bàn vừa mua/nâng: các bàn cấp này nhảy lên báo hiệu (bàn này không gộp tĩnh để còn chuyển động)
   tables: number[];                        // cấp từng bàn (1..3): bàn cấp 1 có 2 ghế, cấp 2 có 3, cấp 3 có 4. Cảnh vẽ tối đa 6 bàn
   giftDot: boolean;
   photo: string;                           // ảnh treo tường (data URL) hoặc ""
@@ -35,7 +36,7 @@ export interface ShopScene {
   resize(w: number, h: number): void; rotate(dir: number): void; setHour(h: number): void; bounce(id: string): void;
   start(): void; stop(): void; dispose(): void; project(h: Hotspot): { x: number; y: number; show: boolean }; tags(): { id: number; text: string; x: number; y: number }[];
   phases(): string[]; breakdown(): Record<string, number>; stats(): { sky: string; upMs: number; drawMs: number; calls: number; tris: number; q: number; fps: number };
-  update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; setFloor(f: number): void; floor(): number; floors: number; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
+  update(room: Record<string, string>, hl?: string): boolean; setInsets(top: number, bottom: number): void; setExterior(on: boolean): void; isExterior(): boolean; setFloor(f: number): void; floor(): number; hop(lv: number): void; floors: number; dragStart(): void; drag(dx: number, dy?: number): void; dragEnd(): void; zoomBy(f: number): void; resetView(): void; zoomLevel(): number;
 }
 
 let seenShip = 0;   // đơn giao đã cho xe tới rồi (nhớ giữa các lần dựng lại cảnh)
@@ -323,14 +324,18 @@ export function createShop(o: ShopOpts): ShopScene {
   const SPOTS: [number, number][] = Array.from({ length: ROWS * COLS }, (_, i) => [-1.9 + STEP * (i % COLS), ROWZ(Math.floor(i / COLS))]), CHAIRS = ["#7FC8D6", "#E8A0B4"];
   const ANG = [2.4, -2.4, .1, 3.14];
   /** dựng các bàn của lầu f vào nhóm lầu đó; lầu trệt luôn có ít nhất 2 bàn (khách ngồi) */
+  const tableGs: { lv: number; g: THREE.Group }[] = [];      // mỗi bàn (kèm ghế, bánh) một nhóm riêng để nhảy báo hiệu vừa mua/nâng
+  let hopLv = 0, hopT = -9;
+  ups.push(t => { const dt = t - hopT; tableGs.forEach(b => { b.g.position.y = b.lv === hopLv && dt >= 0 && dt < 2.4 ? Math.abs(Math.sin(dt * 7)) * .14 * (1 - dt / 2.4) : 0; }); });
   const buildTables = (f: number) => {
     let lvs = o.tables.filter((_, i) => i % floors === f).slice(0, GROUND);          // bàn chia đều cho các lầu
     if (!f && lvs.length < 2) lvs = [...lvs, 1, 1].slice(0, 2);                       // lầu trệt luôn có 2 bàn đầu cho khách ngồi
     const cols = Math.max(2, Math.ceil(lvs.length / ROWS)), step = (W - 5.1) / (cols - 1);   // bàn trải đều theo chiều rộng phòng
     return lvs.map((lv, i) => {
       const row = Math.floor(i / cols), inRow = Math.min(cols, lvs.length - row * cols), x = -1.9 + (W - 5.1) / 2 + ((i % cols) - (inRow - 1) / 2) * step, z = ROWZ(row), r = .6 + .1 * lv, par = flG[f]!;
-      const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, par, lv);
-      const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); par.add(ck); return { x, z, chairs };
+      const tg = new THREE.Group(); par.add(tg); tableGs.push({ lv, g: tg });
+      const chairs = table(x, z, ANG.slice(0, 1 + lv).map((a, k) => [CHAIRS[k % 2]!, a] as [string, number]), r, tg, lv);
+      const ck = cake((i * 2) % 3, (i + 1) % 3, i % 3, 1); ck.position.set(x, .83, z); tg.add(ck); return { x, z, chairs };
     });
   };
   const placed0 = buildTables(0), tbls = placed0.map(t => t.chairs);
@@ -762,7 +767,7 @@ export function createShop(o: ShopOpts): ShopScene {
   }
   /* gộp nội thất tĩnh để giảm số lần vẽ; nhóm còn chuyển động hoặc dựng lại thì bỏ qua */
   if (!new URLSearchParams(location.search).has("nomerge")) {
-    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...flG.slice(1), ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...compSkip, ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
+    const skip = new Set<THREE.Object3D>([lampG, plantG, rugG, outside, gift, me.group, ...flG.slice(1), ...walls.map(w2 => w2.group), ...bulbsStr, ...slots.map(sl => sl.actor.group), ...compSkip, ...tableGs.filter(b => b.lv === o.hop).map(b => b.g), ...[...petObjs.values()].map(p => p.g), ...hotspots.map(hs => hs.obj)]);
     const protect = new Set<THREE.Material>([...glowMats, ...Object.values(selAll).flat(), ...wallMains.map(x => x[0]), ...tableTops, ...tableLegs, ...[counterBits.top, counterBits.wood].filter((x): x is THREE.MeshToonMaterial => !!x)]);
     mergeStatic(root, skip, protect);
   }
@@ -793,6 +798,7 @@ export function createShop(o: ShopOpts): ShopScene {
     setExterior(on) { if (on) { buildOutside(); callDelivery(); } exterior = on; outside.visible = on; zoomT = on ? .78 : 1; panT = 0; el = (on ? 30 : 38) * Math.PI / 180; },
     isExterior() { return exterior; },
     floors, floor: () => curFloor,
+    hop(lv) { hopLv = lv; hopT = performance.now() / 1000; },   // chỉ thấy khi cảnh được dựng với opts.hop = lv
     setFloor(f) {
       curFloor = Math.max(0, Math.min(floors - 1, f)); r.shadowMap.needsUpdate = true;
       flG.forEach((g, i) => { g.visible = i === curFloor; });

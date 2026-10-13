@@ -7,6 +7,7 @@ import { S } from "../engine/state";
 import { fmtN } from "../engine/util";
 import { closeModal, confirmSpend, modal, toast } from "./dom";
 import { render } from "./app";
+import { hopTables } from "./room3d";
 
 const VENUE_OPT = {
   floor: { ic: "🏢", n: "Xây thêm lầu", d: () => `Thêm ${SHOP.perFloor + SHOP.perWide * S.venue.wide} chỗ đặt bàn · lầu ${S.venue.floors + 1}`, pts: FAME_GAIN.floor },
@@ -92,6 +93,7 @@ export function venueSel(v: string) {
 }
 /** mua xong: báo kết quả, dựng lại cảnh tiệm, giữ hộp thoại (hoặc đóng nếu đã đủ bàn khi bị buộc nâng) */
 function after(msg: string, lv = 0) {
+  if (lv) hopTables(lv);
   sfx("level"); render(true); toast(msg); last = msg; flashLv = lv;
   if (ctx.forced && needUpgrade()) return upgradeModal(true, false, true);
   if (ctx.forced) { closeModal(); toast("Đủ bàn rồi, bắt đầu ca thôi!"); return; }
